@@ -1,0 +1,29 @@
+{
+ "mine_lqi": {
+  "Ts": 0.001,
+  "latency": 0.002
+ },
+ "ryung_pid": {
+  "Ts": 0.01,
+  "latency": 0.03,
+  "autosign": true,
+  "vel_loop": {
+   "Kp": 0.05,
+   "Ki": 0.1,
+   "bw_meas": 8.0
+  },
+  "note": "their actual deployment: 100 Hz PC loop, ~30 ms PC+Python I/O latency, ODrive velocity mode (hall), most favourable ODrive vel gains found by sweep"
+ },
+ "ryung_pid_on_mcu": {
+  "src": "ryung_pid",
+  "Ts": 0.01,
+  "latency": 0.002,
+  "autosign": true,
+  "vel_loop": {
+   "Kp": 0.05,
+   "Ki": 0.1,
+   "bw_meas": 8.0
+  },
+  "note": "same code, as if run on an MCU with CAN (2 ms latency), 100 Hz"
+ }
+}

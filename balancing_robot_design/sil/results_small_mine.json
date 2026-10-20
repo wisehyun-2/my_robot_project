@@ -1,0 +1,19 @@
+{
+ "mine_lqi": {
+  "max_tilt_deg": 40.0,
+  "max_push_N_100ms": 60.0,
+  "vstep_rise_s": 1.2375,
+  "vstep_overshoot_pct": 23.358067721387833,
+  "vstep_peak_pitch_deg": 9.227659362743935,
+  "vstep_ok": true,
+  "max_latency_ms": 30.0,
+  "leg_change_ok": true,
+  "leg_change_peak_pitch_deg": 0.08048325288605479,
+  "rest_torque_rms_Nm": 0.09795903728967244,
+  "rest_pitch_rms_deg": 0.02209288502576748,
+  "name": "mine: LQI torque, 1 kHz, online Riccati, gain-scheduled on leg length",
+  "Ts": 0.001,
+  "sign": 1.0,
+  "output": "torque"
+ }
+}
