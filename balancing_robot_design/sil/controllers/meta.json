@@ -257,5 +257,27 @@
    9
   ],
   "note": "same law with THEIR published robot parameters (1 + 5 kg, COM 0.25 m) -> their exact K, output scale searched"
+ },
+ "kollarcik_lqi": {
+  "py": "kollarcik_lqi",
+  "Ts": 0.001,
+  "latency": 0.002,
+  "autosign": true,
+  "note": "Kollarcik CTU 2021 thesis (GitLab): 4-state dLQR + speed integral, their Q/R on this robot, hips held by PD (outside the loop)"
+ },
+ "kollarcik_lqi_native": {
+  "py": "kollarcik_lqi",
+  "Ts": 0.001,
+  "latency": 0.002,
+  "autosign": true,
+  "params": {
+   "native": 1
+  },
+  "scale_search": [
+   -1,
+   1,
+   9
+  ],
+  "note": "their exact planar K for their 4.6 kg robot, output scale searched"
  }
 }

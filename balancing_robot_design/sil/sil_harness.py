@@ -19,7 +19,8 @@ from twip_model import TWIPParams, G  # noqa: E402
 
 ROBOTS = {
     "small": TWIPParams(name="small_5kg", M_b=3.2, m_w=0.65, r=0.065, l=0.16, I_b=0.07, b_x=0.3, d=0.30, I_z=0.08, tau_max=5.0, Kt=0.45),
-    "large": TWIPParams(name="large_10kg", M_b=7.0, m_w=0.65, r=0.0825, l=0.25, I_b=0.20, b_x=0.5, d=0.40, I_z=0.25, tau_max=5.0, Kt=0.45),
+    "large": TWIPParams(name="large_10kg", M_b=7.0, m_w=0.65, r=0.0825, l=0.25, I_b=0.20, b_x=0.5, d=0.40, I_z=0.25, tau_max=5.0, Kt=0.45),    # Kollarcik (CTU 2021) Stoupento: pendulum 4.0 kg, wheels 0.3 kg, r 70 mm, l 0.29 m, Ipy 0.0119, I_w 7.35e-4, eX8108 1:16.5 +-2 Nm
+    "kollarcik": TWIPParams(name="kollarcik_ctu_4.6kg", M_b=4.0, m_w=0.3, r=0.07, l=0.29, I_b=0.0119, I_w_factor=0.5, b_x=0.3, d=0.29, I_z=0.03, tau_max=2.0, Kt=0.1),
 }
 DT = 5e-4
 
