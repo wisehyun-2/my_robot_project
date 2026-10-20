@@ -329,5 +329,45 @@
   "name": "upkie MPCBalancer (qpmpc + ProxQP, N=50 x 20 ms, 200 Hz) -> moteus wheel velocity",
   "Ts": 0.005,
   "note": "does not balance with either sign on this robot"
+ },
+ "wheelleg_lqr4": {
+  "max_tilt_deg": 22.5,
+  "max_push_N_100ms": 60.0,
+  "vstep_rise_s": 3.0295,
+  "vstep_overshoot_pct": -9.662482452214945,
+  "vstep_peak_pitch_deg": 2.802361422123525,
+  "vstep_ok": true,
+  "max_latency_ms": 40.0,
+  "leg_change_ok": true,
+  "leg_change_peak_pitch_deg": 0.052552196673978584,
+  "rest_torque_rms_Nm": 0.08405683480954562,
+  "rest_pitch_rms_deg": 0.01944698844149299,
+  "name": "WheelLeg_LQR (1772631792): 4-state cart-pole dLQR, THEIR Q=diag(20,2,300,5) R=0.1 designed on this robot, 1 kHz",
+  "Ts": 0.001,
+  "sign": 1.0,
+  "output": "torque",
+  "scale": null,
+  "params": null
+ },
+ "wheelleg_lqr4_native": {
+  "max_tilt_deg": 30.0,
+  "max_push_N_100ms": 70.0,
+  "vstep_rise_s": 1.8980000000000001,
+  "vstep_overshoot_pct": -0.780677136379207,
+  "vstep_peak_pitch_deg": 5.0808908679221,
+  "vstep_ok": true,
+  "max_latency_ms": 60.0,
+  "leg_change_ok": true,
+  "leg_change_peak_pitch_deg": 0.094462211230332,
+  "rest_torque_rms_Nm": 0.03482900307158117,
+  "rest_pitch_rms_deg": 0.03780732602639112,
+  "name": "WheelLeg_LQR (1772631792): their 4-state cart-pole dLQR K as published (base 1 + body 5 kg, COM 0.25 m), force -> wheel torque, 1 kHz",
+  "Ts": 0.001,
+  "sign": 1.0,
+  "output": "torque",
+  "scale": 0.5623413251903491,
+  "params": {
+   "native": 1
+  }
  }
 }

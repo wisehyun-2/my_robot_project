@@ -18,6 +18,8 @@
 | U1 upkie WheelBalancer, 무른 휠 속도 루프(Kp 0.2) | 1.18 s / 0.41 m/s / 0.02 m / 1.00 Nm | 실패 |
 | U2 upkie pd_balancing.py (1 kHz, 속도모드 PD) | 0.05 s / 0.98 m/s / 0.20 m / 5.00 Nm | 실패 |
 | U3 upkie MPCBalancer (qpmpc+ProxQP, 200 Hz, 실제 Python 코드) | 4.81 s / 0.36 m/s / 0.16 m / 0.34 Nm | 실패 |
+| B10 WheelLeg_LQR(1772631792): 4상태 카트-폴 dLQR 1 kHz, 그들의 Q/R을 이 로봇에 설계 | 1.45 s / 0.27 m/s / 0.02 m / 1.02 Nm | 실패 |
+| B10 WheelLeg_LQR: 그들의 로봇(1+5 kg, COM 0.25 m) K 그대로 | 1.12 s / 0.29 m/s / 0.02 m / 1.04 Nm | 실패 |
 | A1 fern 구조 + 내 Q/R (속도 PI 0.15/0.3) | 0.77 s / 0.35 m/s / 0.00 m / 1.47 Nm | 3.14 s / 1.36 m/s / 0.01 m / 0.96 Nm |
 
 **10 kg급 — 고정 시나리오** (정착시간(1°) / 최대 속도 / 최종 변위 / 최대 토크·휠)
@@ -40,4 +42,6 @@
 | U2 upkie pd_balancing.py (1 kHz, 속도모드 PD) | 5.00 s / 0.96 m/s / 0.42 m / 5.00 Nm | 실패 |
 | U3 upkie MPCBalancer (qpmpc+ProxQP, 200 Hz, 실제 Python 코드) | 2.70 s / 0.50 m/s / 0.20 m / 0.73 Nm | 3.52 s / 1.12 m/s / 0.59 m / 0.93 Nm |
 | U4 upkie torque_balancing.py (200 Hz, 토크 P만) | 실패 | 실패 |
+| B10 WheelLeg_LQR(1772631792): 4상태 카트-폴 dLQR 1 kHz, 그들의 Q/R을 이 로봇에 설계 | 1.27 s / 0.40 m/s / 0.02 m / 1.33 Nm | 1.85 s / 0.69 m/s / 0.03 m / 0.63 Nm |
+| B10 WheelLeg_LQR: 그들의 로봇(1+5 kg, COM 0.25 m) K 그대로 | 2.54 s / 0.44 m/s / 0.00 m / 0.75 Nm | 2.67 s / 0.71 m/s / 0.00 m / 0.56 Nm |
 | A1 fern 구조 + 내 Q/R (속도 PI 0.15/0.3) | 0.67 s / 0.48 m/s / 0.00 m / 1.97 Nm | 2.05 s / 0.79 m/s / 0.00 m / 0.97 Nm |

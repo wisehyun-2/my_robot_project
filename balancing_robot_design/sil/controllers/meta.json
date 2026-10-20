@@ -236,5 +236,26 @@
    "bw_meas": 100.0
   },
   "note": "their MPC with a soft wheel velocity loop Kp 0.2"
+ },
+ "wheelleg_lqr4": {
+  "Ts": 0.001,
+  "latency": 0.002,
+  "autosign": true,
+  "note": "1772631792/WheelLeg_LQR: 4-state cart-pole LQR (p, v, pitch, rate), their Q/R + exact-ZOH Riccati design on this robot; legs only hold height"
+ },
+ "wheelleg_lqr4_native": {
+  "src": "wheelleg_lqr4",
+  "Ts": 0.001,
+  "latency": 0.002,
+  "autosign": true,
+  "params": {
+   "native": 1
+  },
+  "scale_search": [
+   -1,
+   1,
+   9
+  ],
+  "note": "same law with THEIR published robot parameters (1 + 5 kg, COM 0.25 m) -> their exact K, output scale searched"
  }
 }

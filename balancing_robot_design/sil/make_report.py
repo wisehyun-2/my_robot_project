@@ -34,14 +34,18 @@ LABEL = {
     "upkie_mpc": "U3 upkie MPCBalancer (qpmpc+ProxQP, 200 Hz, 실제 Python 코드)",
     "upkie_mpc_softdrv": "U3 upkie MPCBalancer, 무른 휠 속도 루프(Kp 0.2)",
     "upkie_torque_p": "U4 upkie torque_balancing.py (200 Hz, 토크 P만)",
+    "wheelleg_lqr4": "B10 WheelLeg_LQR(1772631792): 4상태 카트-폴 dLQR 1 kHz, 그들의 Q/R을 이 로봇에 설계",
+    "wheelleg_lqr4_native": "B10 WheelLeg_LQR: 그들의 로봇(1+5 kg, COM 0.25 m) K 그대로",
 }
 LABEL_EN = {"upkie_wheel_balancer": "U1 upkie WheelBalancer 1 kHz", "upkie_mpc": "U3 upkie MPC 200 Hz", "upkie_pd": "U2 upkie PD 1 kHz", "mine_lqi": "mine: LQI 1 kHz", "fern_lqr3": "A1 fern LQR3 500 Hz", "lzu_lqr4": "A2 LZU LQR4 1 kHz",
             "pow_lqr4": "A4 Pow_WBR LQR4 125 Hz", "mushibo_lqr4": "A5 MuShibo 4P ~1 kHz", "wl1_cascade": "A6 WL1 cascade PID",
             "venus_cascade": "A7 Venus-1 cascade PID", "ryung_pid_on_mcu": "A9 Ryung PID (MCU)", "zephyr_lqr4_vflip": "A3 zephyr LQR4 (vflip)",
-            "zephyr_lqr4": "A3 zephyr LQR4", "sonic_pid": "A8 SonicRobot PID", "ryung_pid": "A9 Ryung PID (PC)", "fern_lqr3_ff2": "A1 fern +FF2"}
+            "zephyr_lqr4": "A3 zephyr LQR4", "sonic_pid": "A8 SonicRobot PID", "ryung_pid": "A9 Ryung PID (PC)", "fern_lqr3_ff2": "A1 fern +FF2",
+            "wheelleg_lqr4": "B10 WheelLeg_LQR cart-pole dLQR", "wheelleg_lqr4_native": "B10 WheelLeg_LQR native K"}
 ORDER = ["mine_lqi", "fern_lqr3", "fern_lqr3_ff2", "fern_lqr3_retuned", "fern_lqr3_retuned_softpi", "lzu_lqr4", "zephyr_lqr4", "zephyr_lqr4_vflip", "pow_lqr4",
          "mushibo_lqr4", "wl1_cascade", "venus_cascade", "sonic_pid", "ryung_pid", "ryung_pid_on_mcu",
-         "upkie_wheel_balancer", "upkie_wheel_balancer_softdrv", "upkie_pd", "upkie_mpc", "upkie_mpc_softdrv", "upkie_torque_p"]
+         "upkie_wheel_balancer", "upkie_wheel_balancer_softdrv", "upkie_pd", "upkie_mpc", "upkie_mpc_softdrv", "upkie_torque_p",
+         "wheelleg_lqr4", "wheelleg_lqr4_native"]
 
 
 def f(v, fmt="{:.2f}", none="—"):

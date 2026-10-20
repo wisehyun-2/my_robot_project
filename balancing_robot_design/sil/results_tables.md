@@ -23,6 +23,8 @@
 | U3 upkie MPCBalancer (qpmpc+ProxQP, 200 Hz, 실제 Python 코드) | 37.5 | 20 | 0.81 / 12 / 12.3 | 30 | O / 1.0 | 0.004 / 0.072 | — |
 | U3 upkie MPCBalancer, 무른 휠 속도 루프(Kp 0.2) | 균형 불가 (does not balance with either sign on this robot) | | | | | | |
 | U4 upkie torque_balancing.py (200 Hz, 토크 P만) | 균형 불가 (no output scale makes it balance on this robot) | | | | | | |
+| B10 WheelLeg_LQR(1772631792): 4상태 카트-폴 dLQR 1 kHz, 그들의 Q/R을 이 로봇에 설계 | 32.5 | 30 | 2.70 / -4 / 3.6 | 40 | O / 0.0 | 0.046 / 0.018 | — |
+| B10 WheelLeg_LQR: 그들의 로봇(1+5 kg, COM 0.25 m) K 그대로 | 32.5 | 30 | 2.74 / -5 / 3.5 | 40 | O / 0.1 | 0.047 / 0.019 | 1 |
 
 **10 kg급 로봇 (r 82.5 mm, l 0.25 m, 5 Nm/휠)**
 
@@ -49,3 +51,5 @@
 | U3 upkie MPCBalancer (qpmpc+ProxQP, 200 Hz, 실제 Python 코드) | 27.5 | 40 | 0.74 / 23 / 12.0 | 50 | O / 0.2 | 0.010 / 0.049 | — |
 | U3 upkie MPCBalancer, 무른 휠 속도 루프(Kp 0.2) | 균형 불가 (does not balance with either sign on this robot) | | | | | | |
 | U4 upkie torque_balancing.py (200 Hz, 토크 P만) | 2.5 | 5 | — / -96 / 0.5 | 0 | O / 0.4 | 0.028 / 0.159 | 0.316 |
+| B10 WheelLeg_LQR(1772631792): 4상태 카트-폴 dLQR 1 kHz, 그들의 Q/R을 이 로봇에 설계 | 22.5 | 60 | 3.03 / -10 / 2.8 | 40 | O / 0.1 | 0.084 / 0.019 | — |
+| B10 WheelLeg_LQR: 그들의 로봇(1+5 kg, COM 0.25 m) K 그대로 | 30.0 | 70 | 1.90 / -1 / 5.1 | 60 | O / 0.1 | 0.035 / 0.038 | 0.562 |

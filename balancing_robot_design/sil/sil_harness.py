@@ -82,6 +82,8 @@ def make_controller(nm, META, cdir=None):
         ctrl = Controller(os.path.join(cdir, m.get("src", nm) + ".c"), Ts=m.get("Ts", 1e-3))
     for k, v in m.get("params", {}).items():
         ctrl.set_param(k, v)
+    if hasattr(ctrl, "lib") and m.get("params"):
+        ctrl.name = ctrl.lib.ctrl_name().decode()          # name may depend on the parameters (e.g. wheelleg native)
     return ctrl
 
 
