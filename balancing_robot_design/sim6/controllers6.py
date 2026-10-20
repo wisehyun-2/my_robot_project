@@ -42,7 +42,7 @@ class Base:
 class MineLQI6(Base):
     """6-state LQR with velocity integral, designed online from the plant linearisation (Bryson weights),
     re-designed when L0 changes by > 1 cm (gain scheduling).  Both outputs (T, Tp) come from the same LQR."""
-    name = "mine: LQI6 torque (online dLQR on [th, thd, v, phi, phid, int v], Q=1/(.3,3,1,.15,3,1)^2 R=1/(1.5,4)^2), 1 kHz"
+    name = "mine: LQI6 torque (online dLQR on [th, thd, v, phi, phid, int v], Q=1/(.3,3,1,.15,3,1)^2 R=1/(.25 Tw_max, .15 Tp_max)^2), 1 kHz"
     Ts = 1e-3
 
     def init(self, plant):
@@ -57,8 +57,10 @@ class MineLQI6(Base):
         # Bryson weights.  First design (theta 0.2 rad, phi 0.1 rad, R from 50 % of the torque limits) balanced
         # everything but tolerated < 5 ms of latency (K_Tp(theta) = 104); the weights below give 20 ms with the
         # same 40 deg / 110 N limits and 4x less rest chatter (sweep in the report, sec. 8.4).
+        # R scales with the robot's torque capability (25 % of the wheel limit, 15 % of the hip limit: 1.5 / 4.5 Nm on the
+        # RM plant) -- with absolute R the 0.6 kg Skythinker plant (0.2 Nm motors) got a bang-bang controller.
         Q = np.diag([1 / 0.3**2, 1 / 3.0**2, 1 / 1.0**2, 1 / 0.15**2, 1 / 3.0**2, 1 / 1.0**2])
-        R = np.diag([1 / 1.5**2, 1 / 4.0**2])
+        R = np.diag([1 / (0.25 * self.plant.tau_wheel_max)**2, 1 / (0.15 * self.plant.tau_hip_max)**2])
         import control as ct
         sysd = ct.c2d(ct.ss(Aa, Ba, np.eye(6), np.zeros((6, 2))), self.Ts)
         Ad, Bd = np.asarray(sysd.A), np.asarray(sysd.B)
