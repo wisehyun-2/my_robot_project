@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from sil_harness import Controller, ROBOTS, simulate  # noqa: E402
+from sil_harness import Controller, ROBOTS, simulate, make_controller  # noqa: E402
 
 LABEL = {
     "mine_lqi": "**내 제어기: LQI 1 kHz (온라인 리카티)**",
@@ -28,13 +28,20 @@ LABEL = {
     "sonic_pid": "A8 SonicRobot: PID→속도모드 100 Hz",
     "ryung_pid": "A9 Ryung: 3중 PID→속도모드, 실제 배치(100 Hz, 30 ms)",
     "ryung_pid_on_mcu": "A9 Ryung: 같은 코드, MCU 가정(100 Hz, 2 ms)",
+    "upkie_wheel_balancer": "U1 upkie WheelBalancer(스파인 1 kHz, 속도 PI→moteus 속도모드)",
+    "upkie_wheel_balancer_softdrv": "U1 upkie WheelBalancer, 무른 휠 속도 루프(Kp 0.2)",
+    "upkie_pd": "U2 upkie pd_balancing.py (1 kHz, 속도모드 PD)",
+    "upkie_mpc": "U3 upkie MPCBalancer (qpmpc+ProxQP, 200 Hz, 실제 Python 코드)",
+    "upkie_mpc_softdrv": "U3 upkie MPCBalancer, 무른 휠 속도 루프(Kp 0.2)",
+    "upkie_torque_p": "U4 upkie torque_balancing.py (200 Hz, 토크 P만)",
 }
-LABEL_EN = {"mine_lqi": "mine: LQI 1 kHz", "fern_lqr3": "A1 fern LQR3 500 Hz", "lzu_lqr4": "A2 LZU LQR4 1 kHz",
+LABEL_EN = {"upkie_wheel_balancer": "U1 upkie WheelBalancer 1 kHz", "upkie_mpc": "U3 upkie MPC 200 Hz", "upkie_pd": "U2 upkie PD 1 kHz", "mine_lqi": "mine: LQI 1 kHz", "fern_lqr3": "A1 fern LQR3 500 Hz", "lzu_lqr4": "A2 LZU LQR4 1 kHz",
             "pow_lqr4": "A4 Pow_WBR LQR4 125 Hz", "mushibo_lqr4": "A5 MuShibo 4P ~1 kHz", "wl1_cascade": "A6 WL1 cascade PID",
             "venus_cascade": "A7 Venus-1 cascade PID", "ryung_pid_on_mcu": "A9 Ryung PID (MCU)", "zephyr_lqr4_vflip": "A3 zephyr LQR4 (vflip)",
             "zephyr_lqr4": "A3 zephyr LQR4", "sonic_pid": "A8 SonicRobot PID", "ryung_pid": "A9 Ryung PID (PC)", "fern_lqr3_ff2": "A1 fern +FF2"}
 ORDER = ["mine_lqi", "fern_lqr3", "fern_lqr3_ff2", "fern_lqr3_retuned", "fern_lqr3_retuned_softpi", "lzu_lqr4", "zephyr_lqr4", "zephyr_lqr4_vflip", "pow_lqr4",
-         "mushibo_lqr4", "wl1_cascade", "venus_cascade", "sonic_pid", "ryung_pid", "ryung_pid_on_mcu"]
+         "mushibo_lqr4", "wl1_cascade", "venus_cascade", "sonic_pid", "ryung_pid", "ryung_pid_on_mcu",
+         "upkie_wheel_balancer", "upkie_wheel_balancer_softdrv", "upkie_pd", "upkie_mpc", "upkie_mpc_softdrv", "upkie_torque_p"]
 
 
 def f(v, fmt="{:.2f}", none="—"):
@@ -80,9 +87,7 @@ def plot_responses(robot, names, out_png):
             if "max_tilt_deg" not in r:
                 continue
             m = META[nm]
-            c = Controller(os.path.join(HERE, "controllers", m.get("src", nm) + ".c"), Ts=m.get("Ts", 1e-3))
-            for k, v in m.get("params", {}).items():
-                c.set_param(k, v)
+            c = make_controller(nm, META)
             if r.get("scale"):
                 c.set_scale(r["scale"])
             vl = m.get("vel_loop") if c.out_type == 1 else None
@@ -110,7 +115,7 @@ if __name__ == "__main__":
     open(os.path.join(HERE, "results_tables.md"), "w").write(md)
     print(md)
     figdir = os.path.join(HERE, "..", "figures")
-    sel = ["mine_lqi", "fern_lqr3", "lzu_lqr4", "pow_lqr4", "mushibo_lqr4", "wl1_cascade", "venus_cascade", "ryung_pid_on_mcu"]
+    sel = ["mine_lqi", "fern_lqr3", "lzu_lqr4", "pow_lqr4", "mushibo_lqr4", "ryung_pid_on_mcu", "upkie_wheel_balancer", "upkie_mpc"]
     for robot in ("small", "large"):
         if os.path.exists(os.path.join(HERE, f"results_{robot}.json")):
             plot_responses(robot, sel, os.path.join(figdir, f"sil_responses_{robot}.png"))

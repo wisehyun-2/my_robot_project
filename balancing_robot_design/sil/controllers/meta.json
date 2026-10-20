@@ -168,5 +168,73 @@
    "r": 0.16
   },
   "note": "fern structure + my weights, with their softer velocity-PI setting"
+ },
+ "upkie_wheel_balancer": {
+  "Ts": 0.001,
+  "latency": 0.002,
+  "autosign": true,
+  "vel_loop": {
+   "Kp": 1.0,
+   "Ki": 0.0,
+   "bw_meas": 100.0
+  },
+  "note": "spine controller as-is (ground-velocity units); stiff moteus velocity loop Kp 1.0 Nm/(rad/s)"
+ },
+ "upkie_wheel_balancer_softdrv": {
+  "src": "upkie_wheel_balancer",
+  "Ts": 0.001,
+  "latency": 0.002,
+  "autosign": true,
+  "vel_loop": {
+   "Kp": 0.2,
+   "Ki": 0.0,
+   "bw_meas": 100.0
+  },
+  "note": "same, soft wheel velocity loop Kp 0.2 (shows how much the velocity-mode law relies on the driver loop)"
+ },
+ "upkie_pd": {
+  "Ts": 0.001,
+  "latency": 0.002,
+  "autosign": true,
+  "vel_loop": {
+   "Kp": 1.0,
+   "Ki": 0.0,
+   "bw_meas": 100.0
+  },
+  "note": "pd_balancing.py as-is"
+ },
+ "upkie_torque_p": {
+  "Ts": 0.005,
+  "latency": 0.002,
+  "scale_search": [
+   -1.0,
+   1.5,
+   11
+  ],
+  "note": "torque_balancing.py, P only; scale searched (as-is = scale 1)"
+ },
+ "upkie_mpc": {
+  "py": "upkie_mpc",
+  "Ts": 0.005,
+  "latency": 0.002,
+  "autosign": true,
+  "vel_loop": {
+   "Kp": 1.0,
+   "Ki": 0.0,
+   "bw_meas": 100.0
+  },
+  "note": "their Python MPCBalancer run in the loop (qpmpc+ProxQP), leg_length = robot COM height"
+ },
+ "upkie_mpc_softdrv": {
+  "py": "upkie_mpc",
+  "Ts": 0.005,
+  "latency": 0.002,
+  "autosign": true,
+  "vel_loop": {
+   "Kp": 0.2,
+   "Ki": 0.0,
+   "bw_meas": 100.0
+  },
+  "note": "their MPC with a soft wheel velocity loop Kp 0.2"
  }
 }

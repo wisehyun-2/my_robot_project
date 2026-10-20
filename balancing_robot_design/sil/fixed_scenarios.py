@@ -2,7 +2,7 @@
 Reports settling time (|pitch|<1 deg), peak speed and run-off displacement, so that 'max push' can be interpreted."""
 import json, os, sys, numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
-from sil_harness import Controller, ROBOTS, simulate
+from sil_harness import Controller, ROBOTS, simulate, make_controller
 from make_report import LABEL, ORDER
 META = json.load(open(os.path.join(HERE, "controllers", "meta.json")))
 out_md = []
@@ -12,8 +12,7 @@ for robot in ("small", "large"):
     for nm in ORDER + ["fern_lqr3_retuned_softpi"]:
         r = res.get(nm, {});
         if "max_tilt_deg" not in r: continue
-        m = META[nm]; c = Controller(os.path.join(HERE, "controllers", m.get("src", nm) + ".c"), Ts=m.get("Ts", 1e-3))
-        for k, v in m.get("params", {}).items(): c.set_param(k, v)
+        m = META[nm]; c = make_controller(nm, META)
         if r.get("scale"): c.set_scale(r["scale"])
         vl = m.get("vel_loop") if c.out_type == 1 else None
         p = ROBOTS[robot]; cells = [LABEL.get(nm, nm)]

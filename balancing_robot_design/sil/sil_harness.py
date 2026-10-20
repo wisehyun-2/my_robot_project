@@ -68,6 +68,23 @@ class Controller:
         return float(out[0]), float(out[1])
 
 
+def make_controller(nm, META, cdir=None):
+    """Build the controller named `nm` from controllers/meta.json: a compiled C controller (default) or, when the
+    entry has "py": "<module>", a Python controller module exposing make(Ts, **kw) with the same duck-type interface."""
+    cdir = cdir or os.path.join(HERE, "controllers")
+    m = META[nm]
+    if m.get("py"):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(m["py"], os.path.join(cdir, m["py"] + ".py"))
+        mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+        ctrl = mod.make(m.get("Ts", 1e-3), **m.get("py_kwargs", {}))
+    else:
+        ctrl = Controller(os.path.join(cdir, m.get("src", nm) + ".c"), Ts=m.get("Ts", 1e-3))
+    for k, v in m.get("params", {}).items():
+        ctrl.set_param(k, v)
+    return ctrl
+
+
 def simulate(p, ctrl, T=4.0, x0=None, push=None, v_ref_fn=None, latency=0.002, noise=True, leg_fn=None,
              sign=+1.0, vel_loop=None, seed=0):
     """vel_loop: dict(Kp, Ki, bw_meas) for CTRL_OUT_WHEELVEL controllers (driver speed loop made of torque)."""
@@ -187,10 +204,8 @@ if __name__ == "__main__":
     results = {}
     for nm in names:
         m = META.get(nm, {})
-        ctrl = Controller(os.path.join(cdir, m.get("src", nm) + ".c"), Ts=m.get("Ts", 1e-3))
+        ctrl = make_controller(nm, META, cdir)
         vel_loop = m.get("vel_loop") if ctrl.out_type == 1 else None
-        for k, v in m.get("params", {}).items():
-            ctrl.set_param(k, v)
         if m.get("scale_search"):
             best = None
             for s_ in np.logspace(m["scale_search"][0], m["scale_search"][1], m["scale_search"][2]):

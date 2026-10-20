@@ -17,6 +17,12 @@
 | A8 SonicRobot: PID→속도모드 100 Hz | 20.0 | 5 | 실패 | 5 | O / 0.6 | 0.267 / 0.192 | 0.562 |
 | A9 Ryung: 3중 PID→속도모드, 실제 배치(100 Hz, 30 ms) | 0.0 | 0 | 실패 | 5 | X / 12.0 | — / — | — |
 | A9 Ryung: 같은 코드, MCU 가정(100 Hz, 2 ms) | 12.5 | 5 | 실패 | 5 | O / 0.1 | 0.225 / 0.044 | — |
+| U1 upkie WheelBalancer(스파인 1 kHz, 속도 PI→moteus 속도모드) | 40.0 | 10 | 실패 | 60 | O / 0.1 | 0.199 / 0.029 | — |
+| U1 upkie WheelBalancer, 무른 휠 속도 루프(Kp 0.2) | 40.0 | 10 | 실패 | 30 | O / 0.1 | 0.039 / 0.034 | — |
+| U2 upkie pd_balancing.py (1 kHz, 속도모드 PD) | 15.0 | 5 | 실패 | 25 | O / 0.1 | 1.112 / 0.043 | — |
+| U3 upkie MPCBalancer (qpmpc+ProxQP, 200 Hz, 실제 Python 코드) | 37.5 | 20 | 0.81 / 12 / 12.3 | 30 | O / 1.0 | 0.004 / 0.072 | — |
+| U3 upkie MPCBalancer, 무른 휠 속도 루프(Kp 0.2) | 균형 불가 (does not balance with either sign on this robot) | | | | | | |
+| U4 upkie torque_balancing.py (200 Hz, 토크 P만) | 균형 불가 (no output scale makes it balance on this robot) | | | | | | |
 
 **10 kg급 로봇 (r 82.5 mm, l 0.25 m, 5 Nm/휠)**
 
@@ -37,3 +43,9 @@
 | A8 SonicRobot: PID→속도모드 100 Hz | 0.0 | 5 | 실패 | 0 | X / 4.5 | 0.902 / 0.293 | 1.78 |
 | A9 Ryung: 3중 PID→속도모드, 실제 배치(100 Hz, 30 ms) | 0.0 | 0 | 실패 | 20 | X / 4.6 | — / — | — |
 | A9 Ryung: 같은 코드, MCU 가정(100 Hz, 2 ms) | 12.5 | 10 | 실패 | 20 | O / 0.1 | 0.185 / 0.044 | — |
+| U1 upkie WheelBalancer(스파인 1 kHz, 속도 PI→moteus 속도모드) | 40.0 | 20 | 0.32 / 117 / 17.9 | 50 | O / 0.1 | 0.156 / 0.033 | — |
+| U1 upkie WheelBalancer, 무른 휠 속도 루프(Kp 0.2) | 균형 불가 (does not balance with either sign on this robot) | | | | | | |
+| U2 upkie pd_balancing.py (1 kHz, 속도모드 PD) | 10.0 | 10 | 실패 | 30 | O / 0.1 | 0.867 / 0.037 | — |
+| U3 upkie MPCBalancer (qpmpc+ProxQP, 200 Hz, 실제 Python 코드) | 27.5 | 40 | 0.74 / 23 / 12.0 | 50 | O / 0.2 | 0.010 / 0.049 | — |
+| U3 upkie MPCBalancer, 무른 휠 속도 루프(Kp 0.2) | 균형 불가 (does not balance with either sign on this robot) | | | | | | |
+| U4 upkie torque_balancing.py (200 Hz, 토크 P만) | 2.5 | 5 | — / -96 / 0.5 | 0 | O / 0.4 | 0.028 / 0.159 | 0.316 |

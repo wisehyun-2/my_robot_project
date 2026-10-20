@@ -1,0 +1,79 @@
+{
+ "upkie_wheel_balancer": {
+  "max_tilt_deg": 40.0,
+  "max_push_N_100ms": 10.0,
+  "vstep_ok": false,
+  "max_latency_ms": 60.0,
+  "leg_change_ok": true,
+  "leg_change_peak_pitch_deg": 0.08699372537241773,
+  "rest_torque_rms_Nm": 0.19921806442755702,
+  "rest_pitch_rms_deg": 0.02850749433399832,
+  "name": "upkie WheelBalancer (spine, 1 kHz): velocity PI on pitch+position -> moteus wheel velocity",
+  "Ts": 0.001,
+  "sign": 1.0,
+  "output": "wheel-velocity",
+  "scale": null,
+  "params": null
+ },
+ "upkie_wheel_balancer_softdrv": {
+  "max_tilt_deg": 40.0,
+  "max_push_N_100ms": 10.0,
+  "vstep_ok": false,
+  "max_latency_ms": 30.0,
+  "leg_change_ok": true,
+  "leg_change_peak_pitch_deg": 0.12523989430631968,
+  "rest_torque_rms_Nm": 0.03944357827199177,
+  "rest_pitch_rms_deg": 0.03368490529845793,
+  "name": "upkie WheelBalancer (spine, 1 kHz): velocity PI on pitch+position -> moteus wheel velocity",
+  "Ts": 0.001,
+  "sign": 1.0,
+  "output": "wheel-velocity",
+  "scale": null,
+  "params": null
+ },
+ "upkie_pd": {
+  "max_tilt_deg": 15.0,
+  "max_push_N_100ms": 5.0,
+  "vstep_ok": false,
+  "max_latency_ms": 25.0,
+  "leg_change_ok": true,
+  "leg_change_peak_pitch_deg": 0.1175714740386521,
+  "rest_torque_rms_Nm": 1.111663377948926,
+  "rest_pitch_rms_deg": 0.043290573789195055,
+  "name": "upkie pd_balancing.py (1 kHz): v_cmd = 10*pitch + 1*x + 0.1*xdot, |v| <= 0.99 m/s",
+  "Ts": 0.001,
+  "sign": 1.0,
+  "output": "wheel-velocity",
+  "scale": null,
+  "params": null
+ },
+ "upkie_mpc": {
+  "max_tilt_deg": 37.5,
+  "max_push_N_100ms": 20.0,
+  "vstep_rise_s": 0.8140000000000001,
+  "vstep_overshoot_pct": 12.174194077865256,
+  "vstep_peak_pitch_deg": 12.260580297436633,
+  "vstep_ok": true,
+  "max_latency_ms": 30.0,
+  "leg_change_ok": true,
+  "leg_change_peak_pitch_deg": 0.9683595190470864,
+  "rest_torque_rms_Nm": 0.003864581261601898,
+  "rest_pitch_rms_deg": 0.07248755825136806,
+  "name": "upkie MPCBalancer (qpmpc + ProxQP, N=50 x 20 ms, 200 Hz) -> moteus wheel velocity",
+  "Ts": 0.005,
+  "sign": 1.0,
+  "output": "wheel-velocity",
+  "scale": null,
+  "params": null
+ },
+ "upkie_mpc_softdrv": {
+  "name": "upkie MPCBalancer (qpmpc + ProxQP, N=50 x 20 ms, 200 Hz) -> moteus wheel velocity",
+  "Ts": 0.005,
+  "note": "does not balance with either sign on this robot"
+ },
+ "upkie_torque_p": {
+  "name": "upkie torque_balancing.py (200 Hz): tau_wheel = 10 Nm/rad * pitch (P only)",
+  "Ts": 0.005,
+  "note": "no output scale makes it balance on this robot"
+ }
+}
