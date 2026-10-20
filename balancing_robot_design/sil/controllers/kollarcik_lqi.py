@@ -25,15 +25,18 @@ class PyController:
     has_scale = True
     name = "Kollarcik (CTU 2021): 4-state dLQR + speed integrator, THEIR Q/R designed on this robot, fixed K, 1 kHz"
 
-    def __init__(self, Ts, native=0):
-        self.Ts = Ts; self.native = int(native); self.scale = 1.0
+    def __init__(self, Ts, native=0, ref_in_state=0):
+        self.Ts = Ts; self.native = int(native); self.ref_in_state = int(ref_in_state); self.scale = 1.0
         self.K = None; self.z = 0.0; self.umax = 2.0
         if self.native:
             self.name = "Kollarcik (CTU 2021): their exact planar K (mb 4 kg, l 0.29 m, r 0.07 m), fixed, 1 kHz"
+        if self.ref_in_state:
+            self.name += " + speed reference also subtracted from the xdot state (error form)"
 
     def set_scale(self, s): self.scale = float(s)
     def set_param(self, name, v):
-        if name == "native": self.native = int(v); self.__init__(self.Ts, self.native)
+        if name == "native": self.native = int(v); self.__init__(self.Ts, self.native, self.ref_in_state)
+        if name == "ref_in_state": self.ref_in_state = int(v); self.__init__(self.Ts, self.native, self.ref_in_state)
 
     def design(self, mb, mw, J, r, l, Ipy, calpha):
         g = 9.81
@@ -63,7 +66,8 @@ class PyController:
 
     def step(self, theta, theta_dot, x_dot, psi_dot, leg_len, r, v_ref, yaw_ref, t):
         self.z += (x_dot - v_ref) * self.Ts
-        u = -self.scale * float(self.K @ np.array([x_dot, theta_dot, theta, self.z]))     # total wheel torque
+        xs = x_dot - v_ref if self.ref_in_state else x_dot          # thesis eq. 3.19: reference enters only via the integrator
+        u = -self.scale * float(self.K @ np.array([xs, theta_dot, theta, self.z]))        # total wheel torque
         w = float(np.clip(u / 2, -self.umax, self.umax))                                   # per wheel, +-2 Nm (theirs)
         return (w, w)
 

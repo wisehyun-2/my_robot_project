@@ -279,5 +279,15 @@
    9
   ],
   "note": "their exact planar K for their 4.6 kg robot, output scale searched"
+ },
+ "kollarcik_lqi_vref": {
+  "py": "kollarcik_lqi",
+  "Ts": 0.001,
+  "latency": 0.002,
+  "autosign": true,
+  "params": {
+   "ref_in_state": 1
+  },
+  "note": "same design, speed reference also applied to the xdot state (error form) -- the thesis text implies integral-only, the real robot tracked in ~1 s"
  }
 }

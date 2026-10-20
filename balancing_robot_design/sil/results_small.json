@@ -366,5 +366,45 @@
   "params": {
    "native": 1
   }
+ },
+ "kollarcik_lqi": {
+  "max_tilt_deg": 40.0,
+  "max_push_N_100ms": 115.0,
+  "vstep_rise_s": null,
+  "vstep_overshoot_pct": -98.390156111996,
+  "vstep_peak_pitch_deg": 0.09514637889426711,
+  "vstep_ok": true,
+  "max_latency_ms": 40.0,
+  "leg_change_ok": true,
+  "leg_change_peak_pitch_deg": 0.09432985060337862,
+  "rest_torque_rms_Nm": 0.06388067867140713,
+  "rest_pitch_rms_deg": 0.026041203242669782,
+  "name": "Kollarcik (CTU 2021): 4-state dLQR + speed integrator, THEIR Q/R designed on this robot, fixed K, 1 kHz",
+  "Ts": 0.001,
+  "sign": 1.0,
+  "output": "torque",
+  "scale": null,
+  "params": null
+ },
+ "kollarcik_lqi_native": {
+  "max_tilt_deg": 40.0,
+  "max_push_N_100ms": 105.0,
+  "vstep_rise_s": null,
+  "vstep_overshoot_pct": -98.53888610708039,
+  "vstep_peak_pitch_deg": 0.0880300233463335,
+  "vstep_ok": true,
+  "max_latency_ms": 60.0,
+  "leg_change_ok": true,
+  "leg_change_peak_pitch_deg": 0.08835029668065375,
+  "rest_torque_rms_Nm": 0.0350939296191156,
+  "rest_pitch_rms_deg": 0.028053959611388984,
+  "name": "Kollarcik (CTU 2021): their exact planar K (mb 4 kg, l 0.29 m, r 0.07 m), fixed, 1 kHz",
+  "Ts": 0.001,
+  "sign": 1.0,
+  "output": "torque",
+  "scale": 0.5623413251903491,
+  "params": {
+   "native": 1
+  }
  }
 }
