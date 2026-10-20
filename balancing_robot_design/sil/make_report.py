@@ -16,6 +16,8 @@ LABEL = {
     "mine_lqi": "**내 제어기: LQI 1 kHz (온라인 리카티)**",
     "fern_lqr3": "A1 fern: 3상태 LQR 500 Hz (그들의 Q/R)",
     "fern_lqr3_ff2": "A1 fern + 중력 FF2 0.5",
+    "fern_lqr3_retuned": "A1 fern 구조 + 내 Q/R (속도 PI 0.3/0.6)",
+    "fern_lqr3_retuned_softpi": "A1 fern 구조 + 내 Q/R (속도 PI 0.15/0.3)",
     "lzu_lqr4": "A2 LZU_ASCENTO: 4상태 LQR 1 kHz",
     "zephyr_lqr4": "A3 zephyr_ascento: 4상태 LQR 1 kHz (코드 부호)",
     "zephyr_lqr4_vflip": "A3 zephyr_ascento (v·x 부호 반전)",
@@ -27,7 +29,11 @@ LABEL = {
     "ryung_pid": "A9 Ryung: 3중 PID→속도모드, 실제 배치(100 Hz, 30 ms)",
     "ryung_pid_on_mcu": "A9 Ryung: 같은 코드, MCU 가정(100 Hz, 2 ms)",
 }
-ORDER = ["mine_lqi", "fern_lqr3", "fern_lqr3_ff2", "lzu_lqr4", "zephyr_lqr4", "zephyr_lqr4_vflip", "pow_lqr4",
+LABEL_EN = {"mine_lqi": "mine: LQI 1 kHz", "fern_lqr3": "A1 fern LQR3 500 Hz", "lzu_lqr4": "A2 LZU LQR4 1 kHz",
+            "pow_lqr4": "A4 Pow_WBR LQR4 125 Hz", "mushibo_lqr4": "A5 MuShibo 4P ~1 kHz", "wl1_cascade": "A6 WL1 cascade PID",
+            "venus_cascade": "A7 Venus-1 cascade PID", "ryung_pid_on_mcu": "A9 Ryung PID (MCU)", "zephyr_lqr4_vflip": "A3 zephyr LQR4 (vflip)",
+            "zephyr_lqr4": "A3 zephyr LQR4", "sonic_pid": "A8 SonicRobot PID", "ryung_pid": "A9 Ryung PID (PC)", "fern_lqr3_ff2": "A1 fern +FF2"}
+ORDER = ["mine_lqi", "fern_lqr3", "fern_lqr3_ff2", "fern_lqr3_retuned", "fern_lqr3_retuned_softpi", "lzu_lqr4", "zephyr_lqr4", "zephyr_lqr4_vflip", "pow_lqr4",
          "mushibo_lqr4", "wl1_cascade", "venus_cascade", "sonic_pid", "ryung_pid", "ryung_pid_on_mcu"]
 
 
@@ -81,7 +87,7 @@ def plot_responses(robot, names, out_png):
                 c.set_scale(r["scale"])
             vl = m.get("vel_loop") if c.out_type == 1 else None
             out = simulate(p, c, latency=m.get("latency", 0.002), sign=r.get("sign", 1.0), vel_loop=vl, **skw)
-            lab = LABEL.get(nm, nm).replace("**", "")
+            lab = LABEL_EN.get(nm, nm)
             axs[row, 0].plot(out["t"], np.rad2deg(out["x"][:, 2]), lw=1, label=lab)
             axs[row, 1].plot(out["t"], out["x"][:, 1], lw=1)
             axs[row, 2].plot(out["t"], out["u"] / 2, lw=0.8)

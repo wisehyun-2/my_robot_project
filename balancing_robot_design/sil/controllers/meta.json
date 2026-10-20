@@ -138,5 +138,35 @@
    13
   ],
   "note": "1 kHz; current command +-16000 scaled"
+ },
+ "fern_lqr3_retuned": {
+  "src": "fern_lqr3",
+  "Ts": 0.002,
+  "latency": 0.002,
+  "params": {
+   "vel_kp": 0.3,
+   "vel_ki": 0.6,
+   "ff2": 0.0,
+   "q_pitch": 25.0,
+   "q_rate": 0.25,
+   "q_vel": 1.0,
+   "r": 0.16
+  },
+  "note": "fern STRUCTURE (3-state LQR + velocity PI -> theta_ref) with MY weights -> isolates structure from weights"
+ },
+ "fern_lqr3_retuned_softpi": {
+  "src": "fern_lqr3",
+  "Ts": 0.002,
+  "latency": 0.002,
+  "params": {
+   "vel_kp": 0.15,
+   "vel_ki": 0.3,
+   "ff2": 0.0,
+   "q_pitch": 25.0,
+   "q_rate": 0.25,
+   "q_vel": 1.0,
+   "r": 0.16
+  },
+  "note": "fern structure + my weights, with their softer velocity-PI setting"
  }
 }

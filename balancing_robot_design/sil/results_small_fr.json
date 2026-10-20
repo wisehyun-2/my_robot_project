@@ -1,0 +1,29 @@
+{
+ "fern_lqr3_retuned": {
+  "max_tilt_deg": 40.0,
+  "max_push_N_100ms": 160.0,
+  "vstep_rise_s": 0.8300000000000001,
+  "vstep_overshoot_pct": 38.71457956423455,
+  "vstep_peak_pitch_deg": 17.826019205941527,
+  "vstep_ok": true,
+  "max_latency_ms": 30.0,
+  "leg_change_ok": true,
+  "leg_change_peak_pitch_deg": 0.4768763894855155,
+  "rest_torque_rms_Nm": 0.07420491751840197,
+  "rest_pitch_rms_deg": 0.10249916050647664,
+  "name": "fernandomierhicks wheeled-leg-robot: 500 Hz 3-state LQR (their Q/R), gain-scheduled, vel PI->theta_ref, FF2",
+  "Ts": 0.002,
+  "sign": 1.0,
+  "output": "torque",
+  "scale": null,
+  "params": {
+   "vel_kp": 0.3,
+   "vel_ki": 0.6,
+   "ff2": 0.0,
+   "q_pitch": 25.0,
+   "q_rate": 0.25,
+   "q_vel": 1.0,
+   "r": 0.16
+  }
+ }
+}

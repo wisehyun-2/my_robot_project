@@ -18,6 +18,7 @@
 static float DT, K[N], vel_integral = 0, theta_ref_rlt = 0, l_last = -1;
 static ctrl_params_t P;
 static float VEL_KP = 0.15f, VEL_KI = 0.3f, FF2 = 0.0f, THETA_REF_MAX = 0.26f, RATE_LIM = 0.52f; /* rad, rad/s */
+static double QW[3] = {0.01, 0.1884, 0.00508442}, RW = 100.0;   /* THEIR weights by default; overridable (q_pitch, q_rate, q_vel, r) */
 
 static void build_model(float l, double Ad[N*N], double Bd[N]) {      /* states [theta, theta_dot, v] */
     const double g = 9.81; double I_b = P.I_b * (l/P.l)*(l/P.l);
@@ -54,12 +55,14 @@ static void dlqr(const double Ad[N*N], const double Bd[N], const double Q[N], do
     for (int j = 0; j < N; j++) Kout[j] = (float)Kd[j];
 }
 static void design(float l) { double Ad[N*N], Bd[N]; build_model(l, Ad, Bd);
-    double Q[N] = {0.01, 0.1884, 0.00508442}; double R = 100.0;       /* THEIR weights (lqr.py self-test) */
+    double Q[N] = {QW[0], QW[1], QW[2]}; double R = RW;
     dlqr(Ad, Bd, Q, R, K); }
 
 void ctrl_init(float dt, const ctrl_params_t* p) { DT = dt; P = *p; vel_integral = theta_ref_rlt = 0; l_last = P.l; design(P.l); }
 void ctrl_set_scale(float s) { (void)s; }
-void ctrl_set_param(const char* n, float v) { if (!strcmp(n, "vel_kp")) VEL_KP = v; else if (!strcmp(n, "vel_ki")) VEL_KI = v; else if (!strcmp(n, "ff2")) FF2 = v; }
+void ctrl_set_param(const char* n, float v) { if (!strcmp(n, "vel_kp")) VEL_KP = v; else if (!strcmp(n, "vel_ki")) VEL_KI = v; else if (!strcmp(n, "ff2")) FF2 = v;
+    else if (!strcmp(n, "q_pitch")) QW[0] = v; else if (!strcmp(n, "q_rate")) QW[1] = v; else if (!strcmp(n, "q_vel")) QW[2] = v; else if (!strcmp(n, "r")) RW = v;
+    if (P.r > 0) design(P.l); }
 void ctrl_get_gains(float* k) { for (int i = 0; i < N; i++) k[i] = K[i]; }
 int ctrl_output_type(void) { return CTRL_OUT_TORQUE; }
 const char* ctrl_name(void) { return "fernandomierhicks wheeled-leg-robot: 500 Hz 3-state LQR (their Q/R), gain-scheduled, vel PI->theta_ref, FF2"; }
