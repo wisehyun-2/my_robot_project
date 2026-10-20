@@ -21,17 +21,16 @@ LABEL = {
     "qdu": "B4 QDU-Robomaster Wheelleg: 10상태/4출력 LQR, K(L_l,L_r) 2변수 2차",
     "multivac": "B5 Multivac11: 6상태 LQR(다리별), K(L0) 3차",
     "zhouzzw": "B6 Zhouzzw: 6상태 LQR(다리별), K(L) 3차, Q=diag(16000,…,70000,…)",
-    "liu": "B7 LiuDingchuan(Webots, 15 kg): 6상태 LQR, K(L0) 3차",
     "at": "B8 lyz1202dt ATWheelLeg: 6상태 LQR 500 Hz, 17점 게인 표",
     "ljw": "B9 LJW0401 (코드 그대로): 바퀴 T = 0.4×LQR 1행, 고관절 = CyberGear 위치 루프",
     "ljw_fullK": "B9' LJW0401 MATLAB K를 2×6 전체 상태 피드백으로 (가정; 펌웨어는 이렇게 안 씀)",
 }
 LABEL_EN = {"mine_lqi6": "mine: LQI6 1 kHz", "jerry": "B1 USTB Reborn LQR", "sky": "B2 Skythinker dLQR 5 ms", "hnust": "B3 HNUST LQR",
-            "qdu": "B4 QDU LQR", "multivac": "B5 Multivac LQR", "zhouzzw": "B6 Zhouzzw LQR", "liu": "B7 Liu LQR", "at": "B8 ATWheelLeg LQR 500 Hz",
+            "qdu": "B4 QDU LQR", "multivac": "B5 Multivac LQR", "zhouzzw": "B6 Zhouzzw LQR", "at": "B8 ATWheelLeg LQR 500 Hz",
             "ljw": "B9 LJW (as coded)", "ljw_fullK": "B9' LJW full K"}
-ORDER = ["mine_lqi6", "jerry", "sky", "hnust", "qdu", "multivac", "zhouzzw", "liu", "at", "ljw", "ljw_fullK"]
+ORDER = ["mine_lqi6", "jerry", "sky", "hnust", "qdu", "multivac", "zhouzzw", "at", "ljw", "ljw_fullK"]   # liu (B7) dropped from the report
 PLANT_TITLE = {"rm": "RM급 5절링크 로봇 (USTB Reborn 파라미터: 몸체 7.0 kg, 다리 1.9 kg, 바퀴 0.47 kg, r 76 mm, L0 0.20 m, 휠 6 Nm, 고관절 30 Nm)",
-               "liu": "Liu Webots 로봇 (몸체 12 kg, 다리 1.6 kg, 바퀴 6 kg, r 50 mm, L0 0.25 m, l = 0)",
+               "liu": "15 kg급 Webots 모델 (몸체 12 kg, 다리 1.6 kg, 바퀴 6 kg, r 50 mm, L0 0.25 m, l = 0)",
                "sky": "Skythinker 탁상 로봇 (몸체 0.33 kg, 다리 0.025 kg, 바퀴 0.25 kg, r 20 mm, L0 0.07 m, 휠 0.2 Nm, 고관절 0.3 Nm)",
                "small": "5 kg급 5절링크 가정 (몸체 3.0 kg, 다리 0.6 kg, 바퀴 1.3 kg, r 65 mm, L0 0.16 m, 휠 5 Nm, 고관절 12 Nm)",
                "large": "10 kg급 5절링크 가정 (몸체 6.5 kg, 다리 1.2 kg, 바퀴 1.3 kg, r 82.5 mm, L0 0.25 m, 휠 5 Nm, 고관절 24 Nm)"}
@@ -131,7 +130,7 @@ if __name__ == "__main__":
     md = "\n".join(out)
     open(os.path.join(HERE, "results6_tables.md"), "w").write(md); print(md)
     figdir = os.path.join(HERE, "..", "figures")
-    sel = ["mine_lqi6", "jerry", "hnust", "qdu", "multivac", "zhouzzw", "liu", "at", "ljw"]
+    sel = ["mine_lqi6", "jerry", "hnust", "qdu", "multivac", "zhouzzw", "at", "ljw"]
     for pk in ("rm", "small", "large"):
         if os.path.exists(os.path.join(HERE, f"results6_{pk}.json")):
             plot_responses(pk, sel, os.path.join(figdir, f"sil6_responses_{pk}.png")); print("plotted", pk)
