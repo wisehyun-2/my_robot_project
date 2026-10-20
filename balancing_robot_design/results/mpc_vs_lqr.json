@@ -1,0 +1,120 @@
+{
+ "setup": {
+  "robot": {
+   "name": "planned_10kg_speed_torque_limited",
+   "M_b": 7.0,
+   "m_w": 1.2,
+   "r": 0.0825,
+   "l": 0.25,
+   "I_b": 0.2,
+   "I_w_factor": 0.7,
+   "b_x": 0.5,
+   "d": 0.4,
+   "I_z": 0.25,
+   "tau_max": 5.0,
+   "Kt": 0.5
+  },
+  "tau_max_total": 10.0,
+  "v_max": 1.5,
+  "v_no_load": 2.1,
+  "Ts": 0.01,
+  "N": 30,
+  "latency": 0.002,
+  "K_dlqr_100Hz": [
+   1.2259429878846176e-18,
+   -2.223096610011014,
+   -21.519053642383067,
+   -3.261424295998646
+  ]
+ },
+ "max_recoverable_tilt_deg": {
+  "LQR_sat_100Hz": 40.0,
+  "MPC_100Hz": 40.0
+ },
+ "max_survivable_push_N_100ms": {
+  "LQR_sat_100Hz": 100.0,
+  "MPC_100Hz": 100.0
+ },
+ "velocity_steps": {
+  "1.0": {
+   "LQR, raw reference": {
+    "stable": true,
+    "peak_speed": 1.1435962483543591,
+    "peak_pitch_deg": 7.135528075624317,
+    "peak_torque_per_wheel": 1.1527568725173225
+   },
+   "LQR, ref clipped to 1.5 + ramp 1 m/s^2": {
+    "stable": true,
+    "peak_speed": 0.963591191371494,
+    "peak_pitch_deg": 5.567149784289258,
+    "peak_torque_per_wheel": 0.33556828543349243
+   },
+   "MPC (soft |v|<=1.5, torque-speed envelope)": {
+    "stable": true,
+    "peak_speed": 1.1305688110681655,
+    "peak_pitch_deg": 7.054520772895861,
+    "peak_torque_per_wheel": 1.1394863880524775
+   }
+  },
+  "1.5": {
+   "LQR, raw reference": {
+    "stable": true,
+    "peak_speed": 1.7148958810471444,
+    "peak_pitch_deg": 10.721226165320413,
+    "peak_torque_per_wheel": 1.6673224575082606
+   },
+   "LQR, ref clipped to 1.5 + ramp 1 m/s^2": {
+    "stable": true,
+    "peak_speed": 1.4004767694641997,
+    "peak_pitch_deg": 6.985895085041996,
+    "peak_torque_per_wheel": 0.41322227001484674
+   },
+   "MPC (soft |v|<=1.5, torque-speed envelope)": {
+    "stable": true,
+    "peak_speed": 1.693167325927721,
+    "peak_pitch_deg": 10.599113516287206,
+    "peak_torque_per_wheel": 1.6483031191870043
+   }
+  },
+  "2.0": {
+   "LQR, raw reference": {
+    "stable": true,
+    "peak_speed": 2.1093975602156654,
+    "peak_pitch_deg": 14.328790098240198,
+    "peak_torque_per_wheel": 2.223096610011014
+   },
+   "LQR, ref clipped to 1.5 + ramp 1 m/s^2": {
+    "stable": true,
+    "peak_speed": 1.4004767694641997,
+    "peak_pitch_deg": 6.985895085041996,
+    "peak_torque_per_wheel": 0.41322227001484674
+   },
+   "MPC (soft |v|<=1.5, torque-speed envelope)": {
+    "stable": true,
+    "peak_speed": 1.693167325927721,
+    "peak_pitch_deg": 10.599113516287206,
+    "peak_torque_per_wheel": 1.6483031191870043
+   }
+  }
+ },
+ "osqp_solve_time_ms_on_this_pc": {
+  "mean": 0.5058830871498036,
+  "p95": 0.7359770503853724,
+  "max": 3.7679249999200692,
+  "iters_mean": 48.392857142857146,
+  "iters_p95": 50.0,
+  "iters_max": 400,
+  "fallbacks": 19,
+  "n_vars": 185,
+  "n_constraints": 401
+ },
+ "teensy_mpc_estimate": {
+  "iters_typ": 48.392857142857146,
+  "iters_p95": 50.0,
+  "teensy_ms_typ_conservative_152us": 7.355714285714286,
+  "teensy_ms_p95_conservative_152us": 7.6,
+  "teensy_ms_typ_optimistic_45us": 2.1776785714285714,
+  "teensy_ms_p95_optimistic_45us": 2.25,
+  "note": "152 us/iter = poster N=30 12-state; 45 us/iter = poster 4-state figure scaled to N=30"
+ }
+}

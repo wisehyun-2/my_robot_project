@@ -1,0 +1,102 @@
+{
+ "tilt_recovery_12deg": {
+  "LQR torque, 1 kHz, 1 ms latency": {
+   "stable": true,
+   "peak_torque_total_Nm": 7.67,
+   "peak_torque_per_wheel_Nm": 3.84,
+   "peak_speed_m_s": 0.49,
+   "settle_1deg_s": 1.0484,
+   "rms_torque_total_Nm": 0.599
+  },
+  "LQR torque, 500 Hz, 3 ms latency": {
+   "stable": true,
+   "peak_torque_total_Nm": 7.6,
+   "peak_torque_per_wheel_Nm": 3.8,
+   "peak_speed_m_s": 0.5,
+   "settle_1deg_s": 1.0196,
+   "rms_torque_total_Nm": 0.606
+  },
+  "LQR torque, 100 Hz, 15 ms latency": {
+   "stable": true,
+   "peak_torque_total_Nm": 7.09,
+   "peak_torque_per_wheel_Nm": 3.54,
+   "peak_speed_m_s": 0.63,
+   "settle_1deg_s": 1.0492000000000001,
+   "rms_torque_total_Nm": 0.735
+  },
+  "LQR torque, 100 Hz, 40 ms latency (PC + Python I/O path)": {
+   "stable": true,
+   "peak_torque_total_Nm": 9.27,
+   "peak_torque_per_wheel_Nm": 4.64,
+   "peak_speed_m_s": 1.15,
+   "settle_1deg_s": 3.1136000000000004,
+   "rms_torque_total_Nm": 3.021
+  },
+  "Cascade PID torque (LQR-equivalent gains), 1 kHz, 1 ms": {
+   "stable": true,
+   "peak_torque_total_Nm": 7.58,
+   "peak_torque_per_wheel_Nm": 3.79,
+   "peak_speed_m_s": 0.49,
+   "settle_1deg_s": 1.0642,
+   "rms_torque_total_Nm": 0.605
+  },
+  "Cascade PID, NO wheel-speed feedback (repo-1 structure), 1 kHz": {
+   "stable": true,
+   "peak_torque_total_Nm": 7.72,
+   "peak_torque_per_wheel_Nm": 3.86,
+   "peak_speed_m_s": 0.35,
+   "settle_1deg_s": 0.45120000000000005,
+   "rms_torque_total_Nm": 0.479
+  }
+ },
+ "push_40N_100ms": {
+  "LQR torque, 1 kHz, 1 ms latency": {
+   "stable": true,
+   "peak_torque_total_Nm": 2.72,
+   "peak_torque_per_wheel_Nm": 1.36,
+   "peak_speed_m_s": 0.72,
+   "settle_1deg_s": 1.9832,
+   "rms_torque_total_Nm": 0.492
+  },
+  "LQR torque, 500 Hz, 3 ms latency": {
+   "stable": true,
+   "peak_torque_total_Nm": 2.69,
+   "peak_torque_per_wheel_Nm": 1.35,
+   "peak_speed_m_s": 0.72,
+   "settle_1deg_s": 1.9652,
+   "rms_torque_total_Nm": 0.482
+  },
+  "LQR torque, 100 Hz, 15 ms latency": {
+   "stable": true,
+   "peak_torque_total_Nm": 3.11,
+   "peak_torque_per_wheel_Nm": 1.55,
+   "peak_speed_m_s": 0.83,
+   "settle_1deg_s": 2.0074,
+   "rms_torque_total_Nm": 0.57
+  },
+  "LQR torque, 100 Hz, 40 ms latency (PC + Python I/O path)": {
+   "stable": true,
+   "peak_torque_total_Nm": 7.62,
+   "peak_torque_per_wheel_Nm": 3.81,
+   "peak_speed_m_s": 1.22,
+   "settle_1deg_s": 3.6572,
+   "rms_torque_total_Nm": 2.343
+  },
+  "Cascade PID torque (LQR-equivalent gains), 1 kHz, 1 ms": {
+   "stable": true,
+   "peak_torque_total_Nm": 2.69,
+   "peak_torque_per_wheel_Nm": 1.35,
+   "peak_speed_m_s": 0.72,
+   "settle_1deg_s": 1.9626000000000001,
+   "rms_torque_total_Nm": 0.493
+  },
+  "Cascade PID, NO wheel-speed feedback (repo-1 structure), 1 kHz": {
+   "stable": true,
+   "peak_torque_total_Nm": 1.74,
+   "peak_torque_per_wheel_Nm": 0.87,
+   "peak_speed_m_s": 0.53,
+   "settle_1deg_s": 0.0,
+   "rms_torque_total_Nm": 0.248
+  }
+ }
+}

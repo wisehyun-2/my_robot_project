@@ -1,0 +1,44 @@
+[repo1_like_105mm_wheels] unstable pole = 8.23 rad/s  (tau = 122 ms), hold 10deg = 1.23 Nm, hold 20deg = 2.42 Nm, slope 10deg = 0.47 Nm total
+[planned_10kg_6p5in_hub] unstable pole = 6.88 rad/s  (tau = 145 ms), hold 10deg = 2.98 Nm, hold 20deg = 5.87 Nm, slope 10deg = 1.32 Nm total
+[heavy_15kg_8in_hub] unstable pole = 6.22 rad/s  (tau = 161 ms), hold 10deg = 7.15 Nm, hold 20deg = 14.09 Nm, slope 10deg = 2.59 Nm total
+
+LQR gains K = [k_x, k_xdot, k_theta, k_thetadot] = [ -4.     -7.27  -36.015  -5.87 ]
+LQI gains (Ts=1ms) K = [k_x(0), k_xdot, k_theta, k_thetadot, k_int] = [ -0.     -7.164 -35.588  -5.8    -3.94 ]
+closed-loop poles: [-18.83+0.j    -9.45+0.j    -0.98+0.47j  -0.98-0.47j]
+margins at plant input: {'gain_margin_dB': np.float64(-12.93), 'phase_margin_deg': 72.39, 'crossover_rad_s': 29.6, 'delay_margin_ms': 42.69}
+  dLQR @   100 Hz: K = [ -3.441  -6.275 -32.017  -5.215]
+  dLQR @   200 Hz: K = [ -3.71   -6.754 -33.94   -5.53 ]
+  dLQR @   500 Hz: K = [ -3.881  -7.059 -35.166  -5.731]
+  dLQR @  1000 Hz: K = [ -3.94   -7.164 -35.588  -5.8  ]
+  dLQR @  2000 Hz: K = [ -3.97   -7.217 -35.801  -5.835]
+
+Cascade PID equivalent: inner Kp_theta=36.02 Nm/rad, Kd_theta=5.870 Nm s/rad, outer Kp_v=0.2019 rad/(m/s)  (theta_ref per m/s), Ki_v=0.1211
+[repo1_like_105mm_wheels] max tolerated latency (ms) vs loop rate (LQR redesigned per rate): {50: 30, 100: 30, 200: 30, 500: 30, 1000: 30}
+[planned_10kg_6p5in_hub] max tolerated latency (ms) vs loop rate (LQR redesigned per rate): {50: 40, 100: 40, 200: 40, 500: 40, 1000: 40}
+[heavy_15kg_8in_hub] max tolerated latency (ms) vs loop rate (LQR redesigned per rate): {50: 40, 100: 40, 200: 40, 500: 40, 1000: 40}
+[repo1_like, VELOCITY-mode: P-only speed loop, outer PD(theta)+wheel-speed fb, hall-sensor speed (8 Hz)] max tolerated latency ms @100/500 Hz: {100: 40, 500: 40}
+[repo1_like, VELOCITY-mode: P-only speed loop, outer PD(theta)+wheel-speed fb, encoder speed (50 Hz)] max tolerated latency ms @100/500 Hz: {100: 40, 500: 40}
+[repo1_like, VELOCITY-mode: PI speed loop (ODrive default), outer PD(theta) only  [repo-1 structure]] max tolerated latency ms @100/500 Hz: {100: None, 500: None}
+[repo1_like, VELOCITY-mode: P-only speed loop, outer PD(theta) only (no wheel fb)] max tolerated latency ms @100/500 Hz: {100: None, 500: None}
+[repo1_like, TORQUE mode] max tolerated latency ms @100/500 Hz: {100: 30, 500: 30}
+
+Time-domain metrics:
+  tilt_recovery_12deg    | LQR torque, 1 kHz, 1 ms latency                      | {'stable': True, 'peak_torque_total_Nm': 7.67, 'peak_torque_per_wheel_Nm': 3.84, 'peak_speed_m_s': 0.49, 'settle_1deg_s': 1.0484, 'rms_torque_total_Nm': 0.599}
+  tilt_recovery_12deg    | LQR torque, 500 Hz, 3 ms latency                     | {'stable': True, 'peak_torque_total_Nm': 7.6, 'peak_torque_per_wheel_Nm': 3.8, 'peak_speed_m_s': 0.5, 'settle_1deg_s': 1.0196, 'rms_torque_total_Nm': 0.606}
+  tilt_recovery_12deg    | LQR torque, 100 Hz, 15 ms latency                    | {'stable': True, 'peak_torque_total_Nm': 7.09, 'peak_torque_per_wheel_Nm': 3.54, 'peak_speed_m_s': 0.63, 'settle_1deg_s': 1.0492000000000001, 'rms_torque_total_Nm': 0.735}
+  tilt_recovery_12deg    | LQR torque, 100 Hz, 40 ms latency (PC + Python I/O path) | {'stable': True, 'peak_torque_total_Nm': 9.27, 'peak_torque_per_wheel_Nm': 4.64, 'peak_speed_m_s': 1.15, 'settle_1deg_s': 3.1136000000000004, 'rms_torque_total_Nm': 3.021}
+  tilt_recovery_12deg    | Cascade PID torque (LQR-equivalent gains), 1 kHz, 1 ms | {'stable': True, 'peak_torque_total_Nm': 7.58, 'peak_torque_per_wheel_Nm': 3.79, 'peak_speed_m_s': 0.49, 'settle_1deg_s': 1.0642, 'rms_torque_total_Nm': 0.605}
+  tilt_recovery_12deg    | Cascade PID, NO wheel-speed feedback (repo-1 structure), 1 kHz | {'stable': True, 'peak_torque_total_Nm': 7.72, 'peak_torque_per_wheel_Nm': 3.86, 'peak_speed_m_s': 0.35, 'settle_1deg_s': 0.45120000000000005, 'rms_torque_total_Nm': 0.479}
+  push_40N_100ms         | LQR torque, 1 kHz, 1 ms latency                      | {'stable': True, 'peak_torque_total_Nm': 2.72, 'peak_torque_per_wheel_Nm': 1.36, 'peak_speed_m_s': 0.72, 'settle_1deg_s': 1.9832, 'rms_torque_total_Nm': 0.492}
+  push_40N_100ms         | LQR torque, 500 Hz, 3 ms latency                     | {'stable': True, 'peak_torque_total_Nm': 2.69, 'peak_torque_per_wheel_Nm': 1.35, 'peak_speed_m_s': 0.72, 'settle_1deg_s': 1.9652, 'rms_torque_total_Nm': 0.482}
+  push_40N_100ms         | LQR torque, 100 Hz, 15 ms latency                    | {'stable': True, 'peak_torque_total_Nm': 3.11, 'peak_torque_per_wheel_Nm': 1.55, 'peak_speed_m_s': 0.83, 'settle_1deg_s': 2.0074, 'rms_torque_total_Nm': 0.57}
+  push_40N_100ms         | LQR torque, 100 Hz, 40 ms latency (PC + Python I/O path) | {'stable': True, 'peak_torque_total_Nm': 7.62, 'peak_torque_per_wheel_Nm': 3.81, 'peak_speed_m_s': 1.22, 'settle_1deg_s': 3.6572, 'rms_torque_total_Nm': 2.343}
+  push_40N_100ms         | Cascade PID torque (LQR-equivalent gains), 1 kHz, 1 ms | {'stable': True, 'peak_torque_total_Nm': 2.69, 'peak_torque_per_wheel_Nm': 1.35, 'peak_speed_m_s': 0.72, 'settle_1deg_s': 1.9626000000000001, 'rms_torque_total_Nm': 0.493}
+  push_40N_100ms         | Cascade PID, NO wheel-speed feedback (repo-1 structure), 1 kHz | {'stable': True, 'peak_torque_total_Nm': 1.74, 'peak_torque_per_wheel_Nm': 0.87, 'peak_speed_m_s': 0.53, 'settle_1deg_s': 0.0, 'rms_torque_total_Nm': 0.248}
+LQI 1 m/s step: {'peak_torque_per_wheel_Nm': 3.7040341013229594, 'peak_lean_deg': 13.711363348559336, 'rise_time_90pct_s': 0.7536}
+[repo1_like_105mm_wheels] sizing: {'recover_5deg_peak_Nm_per_wheel': 0.56, 'recover_5deg_peak_speed_m_s': 0.17, 'recover_10deg_peak_Nm_per_wheel': 1.13, 'recover_10deg_peak_speed_m_s': 0.35, 'recover_15deg_peak_Nm_per_wheel': 1.69, 'recover_15deg_peak_speed_m_s': 0.53, 'recover_20deg_peak_Nm_per_wheel': 2.25, 'recover_20deg_peak_speed_m_s': 0.72, 'accel_1m_s2_Nm_per_wheel': 0.16, 'slope_10deg_hold_Nm_per_wheel': np.float64(0.23), 'slope_15deg_hold_Nm_per_wheel': np.float64(0.35), 'speed_1p5m_s_wheel_rpm': 272.8}
+[planned_10kg_6p5in_hub] sizing: {'recover_5deg_peak_Nm_per_wheel': 1.56, 'recover_5deg_peak_speed_m_s': 0.2, 'recover_10deg_peak_Nm_per_wheel': 3.12, 'recover_10deg_peak_speed_m_s': 0.41, 'recover_15deg_peak_Nm_per_wheel': 4.69, 'recover_15deg_peak_speed_m_s': 0.62, 'recover_20deg_peak_Nm_per_wheel': 6.25, 'recover_20deg_peak_speed_m_s': 0.85, 'accel_1m_s2_Nm_per_wheel': 0.46, 'slope_10deg_hold_Nm_per_wheel': np.float64(0.66), 'slope_15deg_hold_Nm_per_wheel': np.float64(0.98), 'speed_1p5m_s_wheel_rpm': 173.6}
+[heavy_15kg_8in_hub] sizing: {'recover_5deg_peak_Nm_per_wheel': 3.2, 'recover_5deg_peak_speed_m_s': 0.26, 'recover_10deg_peak_Nm_per_wheel': 6.39, 'recover_10deg_peak_speed_m_s': 0.53, 'recover_15deg_peak_Nm_per_wheel': 9.59, 'recover_15deg_peak_speed_m_s': 0.81, 'recover_20deg_peak_Nm_per_wheel': 12.78, 'recover_20deg_peak_speed_m_s': 1.11, 'accel_1m_s2_Nm_per_wheel': 0.87, 'slope_10deg_hold_Nm_per_wheel': np.float64(1.29), 'slope_15deg_hold_Nm_per_wheel': np.float64(1.93), 'speed_1p5m_s_wheel_rpm': 143.2}
+
+Done. Figures in /home/user/balancing_robot_design/sim/../figures
+ANALYSIS EXIT 0

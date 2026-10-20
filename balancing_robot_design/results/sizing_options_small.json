@@ -1,0 +1,212 @@
+{
+ "RMD-L-7015-23T (gearless, CAN, 360 g)": {
+  "peak_Nm": 3.8,
+  "cont_Nm": 1.0,
+  "no_load_m_s": 5.48,
+  "mass_kg": 0.36,
+  "Kt": 0.28,
+  "peak_phase_A": 13.6,
+  "cont_A": 3.6,
+  "max_tilt_deg": 45.0,
+  "max_push_N": 190.0,
+  "step_1m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.19,
+   "peak_speed": 1.19
+  },
+  "step_1p5m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.21,
+   "peak_speed": 1.77
+  },
+  "slope_15deg_cont_Nm": 0.32,
+  "delay_margin_ms": 31.0,
+  "K_lqi_1kHz": [
+   0.0,
+   -3.304,
+   -14.773,
+   -2.178,
+   -1.86
+  ]
+ },
+ "RMD-L-9015-35T (gearless, CAN, 650 g)": {
+  "peak_Nm": 5.0,
+  "cont_Nm": 1.67,
+  "no_load_m_s": 3.4,
+  "mass_kg": 0.65,
+  "Kt": 0.45,
+  "peak_phase_A": 11.1,
+  "cont_A": 3.7,
+  "max_tilt_deg": 45.0,
+  "max_push_N": 120.0,
+  "step_1m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.23,
+   "peak_speed": 1.19
+  },
+  "step_1p5m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.26,
+   "peak_speed": 1.77
+  },
+  "slope_15deg_cont_Nm": 0.37,
+  "delay_margin_ms": 31.0,
+  "K_lqi_1kHz": [
+   -0.0,
+   -4.424,
+   -18.698,
+   -2.762,
+   -2.446
+  ]
+ },
+ "RMD-L-9025-35T (gearless, CAN, 880 g)": {
+  "peak_Nm": 4.58,
+  "cont_Nm": 2.42,
+  "no_load_m_s": 3.34,
+  "mass_kg": 0.88,
+  "Kt": 0.76,
+  "peak_phase_A": 6.0,
+  "cont_A": 3.2,
+  "max_tilt_deg": 45.0,
+  "max_push_N": 120.0,
+  "step_1m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.25,
+   "peak_speed": 1.19
+  },
+  "step_1p5m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.29,
+   "peak_speed": 1.77
+  },
+  "slope_15deg_cont_Nm": 0.41,
+  "delay_margin_ms": 36.0,
+  "K_lqi_1kHz": [
+   -0.0,
+   -4.152,
+   -17.535,
+   -2.604,
+   -2.248
+  ]
+ },
+ "Waveshare DDSM115 (gearless hub, RS485, 770 g)": {
+  "peak_Nm": 2.0,
+  "cont_Nm": 0.96,
+  "no_load_m_s": 1.36,
+  "mass_kg": 0.77,
+  "Kt": 0.75,
+  "peak_phase_A": 2.7,
+  "cont_A": 1.3,
+  "max_tilt_deg": 40.0,
+  "max_push_N": 40.0,
+  "step_1m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.23,
+   "peak_speed": 1.2
+  },
+  "step_1p5m_s": {
+   "ok": false,
+   "peak_Nm_per_wheel": 0.26,
+   "peak_speed": 1.37
+  },
+  "slope_15deg_cont_Nm": 0.39,
+  "delay_margin_ms": 52.0,
+  "K_lqi_1kHz": [
+   0.0,
+   -1.883,
+   -9.629,
+   -1.457,
+   -0.988
+  ]
+ },
+ "iPower GM110-8 + moteus c1 (gimbal direct)": {
+  "peak_Nm": 2.0,
+  "cont_Nm": 0.9,
+  "no_load_m_s": 0.88,
+  "mass_kg": 0.55,
+  "Kt": 0.8,
+  "peak_phase_A": 2.5,
+  "cont_A": 1.1,
+  "max_tilt_deg": 30.0,
+  "max_push_N": 30.0,
+  "step_1m_s": {
+   "ok": false,
+   "peak_Nm_per_wheel": 0.2,
+   "peak_speed": 0.93
+  },
+  "step_1p5m_s": {
+   "ok": false,
+   "peak_Nm_per_wheel": 0.19,
+   "peak_speed": 0.93
+  },
+  "slope_15deg_cont_Nm": 0.35,
+  "delay_margin_ms": 49.0,
+  "K_lqi_1kHz": [
+   0.0,
+   -1.839,
+   -9.4,
+   -1.407,
+   -0.987
+  ]
+ },
+ "mj5208 + moteus c1 (gimbal direct)": {
+  "peak_Nm": 1.7,
+  "cont_Nm": 0.4,
+  "no_load_m_s": 4.08,
+  "mass_kg": 0.21,
+  "Kt": 0.03,
+  "peak_phase_A": 56.7,
+  "cont_A": 13.3,
+  "max_tilt_deg": 45.0,
+  "max_push_N": 130.0,
+  "step_1m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.16,
+   "peak_speed": 1.2
+  },
+  "step_1p5m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.18,
+   "peak_speed": 1.78
+  },
+  "slope_15deg_cont_Nm": 0.3,
+  "delay_margin_ms": 44.0,
+  "K_lqi_1kHz": [
+   -0.0,
+   -1.518,
+   -8.041,
+   -1.175,
+   -0.838
+  ]
+ },
+ "CyberGear 7.75:1 (geared fallback, 320 g)": {
+  "peak_Nm": 12.0,
+  "cont_Nm": 4.0,
+  "no_load_m_s": 2.04,
+  "mass_kg": 0.32,
+  "Kt": 0.87,
+  "peak_phase_A": 13.8,
+  "cont_A": 4.6,
+  "max_tilt_deg": 45.0,
+  "max_push_N": 110.0,
+  "step_1m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.19,
+   "peak_speed": 1.18
+  },
+  "step_1p5m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.22,
+   "peak_speed": 1.75
+  },
+  "slope_15deg_cont_Nm": 0.32,
+  "delay_margin_ms": 13.0,
+  "K_lqi_1kHz": [
+   0.0,
+   -9.859,
+   -39.614,
+   -5.803,
+   -5.665
+  ]
+ }
+}

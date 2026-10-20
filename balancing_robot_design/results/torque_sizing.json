@@ -1,0 +1,44 @@
+{
+ "repo1_like_105mm_wheels": {
+  "recover_5deg_peak_Nm_per_wheel": 0.56,
+  "recover_5deg_peak_speed_m_s": 0.17,
+  "recover_10deg_peak_Nm_per_wheel": 1.13,
+  "recover_10deg_peak_speed_m_s": 0.35,
+  "recover_15deg_peak_Nm_per_wheel": 1.69,
+  "recover_15deg_peak_speed_m_s": 0.53,
+  "recover_20deg_peak_Nm_per_wheel": 2.25,
+  "recover_20deg_peak_speed_m_s": 0.72,
+  "accel_1m_s2_Nm_per_wheel": 0.16,
+  "slope_10deg_hold_Nm_per_wheel": 0.23,
+  "slope_15deg_hold_Nm_per_wheel": 0.35,
+  "speed_1p5m_s_wheel_rpm": 272.8
+ },
+ "planned_10kg_6p5in_hub": {
+  "recover_5deg_peak_Nm_per_wheel": 1.56,
+  "recover_5deg_peak_speed_m_s": 0.2,
+  "recover_10deg_peak_Nm_per_wheel": 3.12,
+  "recover_10deg_peak_speed_m_s": 0.41,
+  "recover_15deg_peak_Nm_per_wheel": 4.69,
+  "recover_15deg_peak_speed_m_s": 0.62,
+  "recover_20deg_peak_Nm_per_wheel": 6.25,
+  "recover_20deg_peak_speed_m_s": 0.85,
+  "accel_1m_s2_Nm_per_wheel": 0.46,
+  "slope_10deg_hold_Nm_per_wheel": 0.66,
+  "slope_15deg_hold_Nm_per_wheel": 0.98,
+  "speed_1p5m_s_wheel_rpm": 173.6
+ },
+ "heavy_15kg_8in_hub": {
+  "recover_5deg_peak_Nm_per_wheel": 3.2,
+  "recover_5deg_peak_speed_m_s": 0.26,
+  "recover_10deg_peak_Nm_per_wheel": 6.39,
+  "recover_10deg_peak_speed_m_s": 0.53,
+  "recover_15deg_peak_Nm_per_wheel": 9.59,
+  "recover_15deg_peak_speed_m_s": 0.81,
+  "recover_20deg_peak_Nm_per_wheel": 12.78,
+  "recover_20deg_peak_speed_m_s": 1.11,
+  "accel_1m_s2_Nm_per_wheel": 0.87,
+  "slope_10deg_hold_Nm_per_wheel": 1.29,
+  "slope_15deg_hold_Nm_per_wheel": 1.93,
+  "speed_1p5m_s_wheel_rpm": 143.2
+ }
+}

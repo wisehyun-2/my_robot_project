@@ -1,0 +1,22 @@
+{
+ "P-only speed loop, outer PD(theta)+wheel-speed fb, hall-sensor speed (8 Hz)": {
+  "100": 40,
+  "500": 40
+ },
+ "P-only speed loop, outer PD(theta)+wheel-speed fb, encoder speed (50 Hz)": {
+  "100": 40,
+  "500": 40
+ },
+ "PI speed loop (ODrive default), outer PD(theta) only  [repo-1 structure]": {
+  "100": null,
+  "500": null
+ },
+ "P-only speed loop, outer PD(theta) only (no wheel fb)": {
+  "100": null,
+  "500": null
+ },
+ "TORQUE mode (direct drive), same LQR law": {
+  "100": 30,
+  "500": 30
+ }
+}

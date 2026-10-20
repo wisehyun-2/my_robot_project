@@ -1,0 +1,83 @@
+{
+ "repo1_like_105mm_wheels": {
+  "name": "repo1_like_105mm_wheels",
+  "M_b": 4.0,
+  "m_w": 0.6,
+  "r": 0.0525,
+  "l": 0.18,
+  "I_b": 0.06,
+  "I_w_factor": 0.7,
+  "b_x": 0.3,
+  "d": 0.3,
+  "I_z": 0.08,
+  "tau_max": 3.0,
+  "Kt": 0.25,
+  "I_w": 0.0011576249999999998,
+  "M_tot": 5.2,
+  "open_loop_poles": [
+   "(-8.270810112271421+0j)",
+   "(-0.04966738525960057+0j)",
+   "0j",
+   "(8.229728531380003+0j)"
+  ],
+  "unstable_pole_rad_s": 8.229728531380003,
+  "unstable_time_constant_ms": 121.51069092826017,
+  "static_hold_torque_10deg_Nm": 1.2265118084970623,
+  "static_hold_torque_20deg_Nm": 2.4157566763378635,
+  "slope_hold_torque_10deg_total_Nm": 0.46505239405513615
+ },
+ "planned_10kg_6p5in_hub": {
+  "name": "planned_10kg_6p5in_hub",
+  "M_b": 7.0,
+  "m_w": 1.2,
+  "r": 0.0825,
+  "l": 0.25,
+  "I_b": 0.2,
+  "I_w_factor": 0.7,
+  "b_x": 0.5,
+  "d": 0.4,
+  "I_z": 0.25,
+  "tau_max": 8.0,
+  "Kt": 0.5,
+  "I_w": 0.00571725,
+  "M_tot": 9.4,
+  "open_loop_poles": [
+   "(-6.912483208482978+0j)",
+   "(-0.04512487430707601+0j)",
+   "0j",
+   "(6.87794049968583+0j)"
+  ],
+  "unstable_pole_rad_s": 6.87794049968583,
+  "unstable_time_constant_ms": 145.3923598271427,
+  "static_hold_torque_10deg_Nm": 2.9811050900970266,
+  "static_hold_torque_20deg_Nm": 5.871630810543418,
+  "slope_hold_torque_10deg_total_Nm": 1.3210554270687112
+ },
+ "heavy_15kg_8in_hub": {
+  "name": "heavy_15kg_8in_hub",
+  "M_b": 12.0,
+  "m_w": 1.6,
+  "r": 0.1,
+  "l": 0.35,
+  "I_b": 0.6,
+  "I_w_factor": 0.7,
+  "b_x": 0.8,
+  "d": 0.45,
+  "I_z": 0.6,
+  "tau_max": 15.0,
+  "Kt": 0.8,
+  "I_w": 0.011200000000000002,
+  "M_tot": 15.2,
+  "open_loop_poles": [
+   "(-6.261003987950887+0j)",
+   "(-0.045869190208223554+0j)",
+   "0j",
+   "(6.217169590015578+0j)"
+  ],
+  "unstable_pole_rad_s": 6.217169590015578,
+  "unstable_time_constant_ms": 160.84489662401091,
+  "static_hold_torque_10deg_Nm": 7.154652216232863,
+  "static_hold_torque_20deg_Nm": 14.091913945304201,
+  "slope_hold_torque_10deg_total_Nm": 2.589302706827132
+ }
+}

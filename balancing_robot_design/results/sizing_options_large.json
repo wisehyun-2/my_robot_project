@@ -1,0 +1,212 @@
+{
+ "RMD-L-9015-35T (gearless, CAN, 650 g)": {
+  "peak_Nm": 5.0,
+  "cont_Nm": 1.67,
+  "no_load_m_s": 4.32,
+  "mass_kg": 0.65,
+  "Kt": 0.45,
+  "peak_phase_A": 11.1,
+  "cont_A": 3.7,
+  "max_tilt_deg": 45.0,
+  "max_push_N": 200.0,
+  "step_1m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.48,
+   "peak_speed": 1.2
+  },
+  "step_1p5m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.54,
+   "peak_speed": 1.79
+  },
+  "slope_15deg_cont_Nm": 0.87,
+  "delay_margin_ms": 46.0,
+  "K_lqi_1kHz": [
+   -0.0,
+   -4.487,
+   -24.854,
+   -3.947,
+   -2.465
+  ]
+ },
+ "RMD-L-9025-35T (gearless, CAN, 880 g)": {
+  "peak_Nm": 4.58,
+  "cont_Nm": 2.42,
+  "no_load_m_s": 4.23,
+  "mass_kg": 0.88,
+  "Kt": 0.76,
+  "peak_phase_A": 6.0,
+  "cont_A": 3.2,
+  "max_tilt_deg": 45.0,
+  "max_push_N": 200.0,
+  "step_1m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.51,
+   "peak_speed": 1.21
+  },
+  "step_1p5m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.58,
+   "peak_speed": 1.8
+  },
+  "slope_15deg_cont_Nm": 0.92,
+  "delay_margin_ms": 51.0,
+  "K_lqi_1kHz": [
+   0.0,
+   -4.195,
+   -24.028,
+   -3.851,
+   -2.262
+  ]
+ },
+ "LK MF9025 V2 (gearless, CAN/RS485)": {
+  "peak_Nm": 4.5,
+  "cont_Nm": 2.42,
+  "no_load_m_s": 2.59,
+  "mass_kg": 0.9,
+  "Kt": 0.7,
+  "peak_phase_A": 6.4,
+  "cont_A": 3.5,
+  "max_tilt_deg": 45.0,
+  "max_push_N": 170.0,
+  "step_1m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.51,
+   "peak_speed": 1.21
+  },
+  "step_1p5m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.58,
+   "peak_speed": 1.8
+  },
+  "slope_15deg_cont_Nm": 0.92,
+  "delay_margin_ms": 52.0,
+  "K_lqi_1kHz": [
+   0.0,
+   -4.132,
+   -23.819,
+   -3.82,
+   -2.223
+  ]
+ },
+ "Hoverboard 6.5in hub + ODrive S1 (20 A pk)": {
+  "peak_Nm": 10.0,
+  "cont_Nm": 2.5,
+  "no_load_m_s": 5.18,
+  "mass_kg": 2.9,
+  "Kt": 0.52,
+  "peak_phase_A": 19.2,
+  "cont_A": 4.8,
+  "max_tilt_deg": 45.0,
+  "max_push_N": 200.0,
+  "step_1m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.86,
+   "peak_speed": 1.21
+  },
+  "step_1p5m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.98,
+   "peak_speed": 1.79
+  },
+  "slope_15deg_cont_Nm": 1.34,
+  "delay_margin_ms": 50.0,
+  "K_lqi_1kHz": [
+   0.0,
+   -9.436,
+   -43.954,
+   -7.325,
+   -4.938
+  ]
+ },
+ "Hoverboard 6.5in hub + ODrive S1 (12 A pk)": {
+  "peak_Nm": 6.0,
+  "cont_Nm": 2.5,
+  "no_load_m_s": 5.18,
+  "mass_kg": 2.9,
+  "Kt": 0.52,
+  "peak_phase_A": 11.5,
+  "cont_A": 4.8,
+  "max_tilt_deg": 45.0,
+  "max_push_N": 200.0,
+  "step_1m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.82,
+   "peak_speed": 1.22
+  },
+  "step_1p5m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.95,
+   "peak_speed": 1.81
+  },
+  "slope_15deg_cont_Nm": 1.34,
+  "delay_margin_ms": 62.0,
+  "K_lqi_1kHz": [
+   -0.0,
+   -5.888,
+   -31.678,
+   -5.361,
+   -2.971
+  ]
+ },
+ "CyberGear 7.75:1 (geared fallback)": {
+  "peak_Nm": 12.0,
+  "cont_Nm": 4.0,
+  "no_load_m_s": 2.59,
+  "mass_kg": 0.32,
+  "Kt": 0.87,
+  "peak_phase_A": 13.8,
+  "cont_A": 4.6,
+  "max_tilt_deg": 45.0,
+  "max_push_N": 200.0,
+  "step_1m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.44,
+   "peak_speed": 1.19
+  },
+  "step_1p5m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.49,
+   "peak_speed": 1.77
+  },
+  "slope_15deg_cont_Nm": 0.8,
+  "delay_margin_ms": 23.0,
+  "K_lqi_1kHz": [
+   -0.0,
+   -10.092,
+   -46.993,
+   -7.548,
+   -5.818
+  ]
+ },
+ "CubeMars AK70-10 (geared fallback)": {
+  "peak_Nm": 24.0,
+  "cont_Nm": 8.3,
+  "no_load_m_s": 4.1,
+  "mass_kg": 0.52,
+  "Kt": 1.1,
+  "peak_phase_A": 21.8,
+  "cont_A": 7.5,
+  "max_tilt_deg": 45.0,
+  "max_push_N": 200.0,
+  "step_1m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.49,
+   "peak_speed": 1.19
+  },
+  "step_1p5m_s": {
+   "ok": true,
+   "peak_Nm_per_wheel": 0.55,
+   "peak_speed": 1.76
+  },
+  "slope_15deg_cont_Nm": 0.84,
+  "delay_margin_ms": 15.0,
+  "K_lqi_1kHz": [
+   -0.0,
+   -19.794,
+   -85.922,
+   -13.971,
+   -11.441
+  ]
+ }
+}
