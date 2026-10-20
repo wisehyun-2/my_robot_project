@@ -406,5 +406,26 @@
   "params": {
    "native": 1
   }
+ },
+ "kollarcik_lqi_vref": {
+  "max_tilt_deg": 40.0,
+  "max_push_N_100ms": 115.0,
+  "vstep_rise_s": 0.562,
+  "vstep_overshoot_pct": 47.44900550073919,
+  "vstep_peak_pitch_deg": 15.445241549345699,
+  "vstep_ok": true,
+  "max_latency_ms": 40.0,
+  "leg_change_ok": true,
+  "leg_change_peak_pitch_deg": 0.09432985060337862,
+  "rest_torque_rms_Nm": 0.06388067867140713,
+  "rest_pitch_rms_deg": 0.026041203242669782,
+  "name": "Kollarcik (CTU 2021): 4-state dLQR + speed integrator, THEIR Q/R designed on this robot, fixed K, 1 kHz + speed reference also subtracted from the xdot state (error form)",
+  "Ts": 0.001,
+  "sign": 1.0,
+  "output": "torque",
+  "scale": null,
+  "params": {
+   "ref_in_state": 1
+  }
  }
 }
