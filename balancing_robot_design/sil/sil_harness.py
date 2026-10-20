@@ -91,7 +91,9 @@ def simulate(p, ctrl, T=4.0, x0=None, push=None, v_ref_fn=None, latency=0.002, n
             if noise:
                 th += rng.normal(0, np.deg2rad(0.2)); thd += rng.normal(0, np.deg2rad(0.5))
                 q = 2 * np.pi / 16384 * p.r; xd += rng.uniform(-q, q) / ctrl.Ts
-            cmd = ctrl.step(sign * th, sign * thd, sign * xd, 0.0, l_now, p.r, sign * v_ref, 0.0, t)
+            # sign flips the OUTPUT only: a linear controller is odd, so flipping inputs and outputs together is the
+            # identity; what differs between projects is the motor/IMU polarity, i.e. the sign of the output alone.
+            cmd = ctrl.step(th, thd, xd, 0.0, l_now, p.r, v_ref, 0.0, t)
             cmd = (sign * cmd[0], sign * cmd[1])
         fifo.append(cmd); cL, cR = fifo.pop(0)
         if ctrl.out_type == 0:
