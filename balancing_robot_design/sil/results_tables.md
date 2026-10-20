@@ -11,7 +11,7 @@
 | A3 zephyr_ascento: 4상태 LQR 1 kHz (코드 부호) | 40.0 | 85 | 0.55 / 75 / 20.0 | 30 | O / 0.1 | 0.052 / 0.033 | 1.78 |
 | A3 zephyr_ascento (v·x 부호 반전) | 균형 불가 (no output scale makes it balance on this robot) | | | | | | |
 | A4 Pow_WBR: 4상태 LQR 125 Hz | 40.0 | 125 | 1.73 / 17 / 9.4 | 50 | O / 0.1 | 0.022 / 0.054 | 1.78 |
-| A5 MuShibo: 4항 P + 소토크 PI ~1 kHz | 7.5 | 10 | 실패 | 5 | O / 5.9 | 0.150 / 0.067 | 0.562 |
+| A5 MuShibo: 4항 P + 소토크 PI ≈1 kHz | 7.5 | 10 | 실패 | 5 | O / 5.9 | 0.150 / 0.067 | 0.562 |
 | A6 WL1: 캐스케이드 PID 100/20 Hz | 균형 불가 (no output scale makes it balance on this robot) | | | | | | |
 | A7 Venus-1: 캐스케이드 PID 1 kHz | 균형 불가 (no output scale makes it balance on this robot) | | | | | | |
 | A8 SonicRobot: PID→속도모드 100 Hz | 20.0 | 5 | 실패 | 5 | O / 0.6 | 0.267 / 0.192 | 0.562 |
@@ -39,7 +39,7 @@
 | A3 zephyr_ascento: 4상태 LQR 1 kHz (코드 부호) | 37.5 | 80 | 0.32 / 90 / 28.2 | 50 | O / 0.7 | 0.057 / 0.072 | 1.78 |
 | A3 zephyr_ascento (v·x 부호 반전) | 균형 불가 (no output scale makes it balance on this robot) | | | | | | |
 | A4 Pow_WBR: 4상태 LQR 125 Hz | 40.0 | 160 | 1.16 / 29 / 10.3 | 50 | O / 0.2 | 0.043 / 0.062 | 3.16 |
-| A5 MuShibo: 4항 P + 소토크 PI ~1 kHz | 10.0 | 15 | 실패 | 0 | X / 12.2 | 0.259 / 0.079 | 1 |
+| A5 MuShibo: 4항 P + 소토크 PI ≈1 kHz | 10.0 | 15 | 실패 | 0 | X / 12.2 | 0.259 / 0.079 | 1 |
 | A6 WL1: 캐스케이드 PID 100/20 Hz | 균형 불가 (no output scale makes it balance on this robot) | | | | | | |
 | A7 Venus-1: 캐스케이드 PID 1 kHz | 균형 불가 (no output scale makes it balance on this robot) | | | | | | |
 | A8 SonicRobot: PID→속도모드 100 Hz | 0.0 | 5 | 실패 | 0 | X / 4.5 | 0.902 / 0.293 | 1.78 |

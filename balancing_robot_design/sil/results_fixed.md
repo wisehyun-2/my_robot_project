@@ -10,7 +10,7 @@
 | A2 LZU_ASCENTO: 4상태 LQR 1 kHz | 1.58 s / 0.28 m/s / 0.04 m / 0.47 Nm | 2.57 s / 1.30 m/s / 0.28 m / 0.70 Nm |
 | A3 zephyr_ascento: 4상태 LQR 1 kHz (코드 부호) | 0.76 s / 0.39 m/s / 0.00 m / 1.17 Nm | 2.27 s / 1.76 m/s / 0.00 m / 1.43 Nm |
 | A4 Pow_WBR: 4상태 LQR 125 Hz | 0.66 s / 0.33 m/s / 0.14 m / 0.53 Nm | 2.09 s / 1.41 m/s / 0.98 m / 0.83 Nm |
-| A5 MuShibo: 4항 P + 소토크 PI ~1 kHz | 실패 | 실패 |
+| A5 MuShibo: 4항 P + 소토크 PI ≈1 kHz | 실패 | 실패 |
 | A8 SonicRobot: PID→속도모드 100 Hz | 3.68 s / 0.88 m/s / 0.01 m / 1.97 Nm | 실패 |
 | A9 Ryung: 3중 PID→속도모드, 실제 배치(100 Hz, 30 ms) | 실패 | 실패 |
 | A9 Ryung: 같은 코드, MCU 가정(100 Hz, 2 ms) | 0.19 s / 0.49 m/s / 0.70 m / 3.99 Nm | 실패 |
@@ -34,7 +34,7 @@
 | A2 LZU_ASCENTO: 4상태 LQR 1 kHz | 1.41 s / 0.36 m/s / 0.05 m / 1.66 Nm | 2.26 s / 0.64 m/s / 0.16 m / 0.63 Nm |
 | A3 zephyr_ascento: 4상태 LQR 1 kHz (코드 부호) | 1.68 s / 0.51 m/s / 0.00 m / 1.27 Nm | 2.35 s / 1.01 m/s / 0.00 m / 1.45 Nm |
 | A4 Pow_WBR: 4상태 LQR 125 Hz | 0.79 s / 0.44 m/s / 0.16 m / 1.03 Nm | 1.31 s / 0.74 m/s / 0.38 m / 0.65 Nm |
-| A5 MuShibo: 4항 P + 소토크 PI ~1 kHz | 1.94 s / 1.31 m/s / 0.09 m / 5.00 Nm | 실패 |
+| A5 MuShibo: 4항 P + 소토크 PI ≈1 kHz | 1.94 s / 1.31 m/s / 0.09 m / 5.00 Nm | 실패 |
 | A8 SonicRobot: PID→속도모드 100 Hz | 실패 | 실패 |
 | A9 Ryung: 3중 PID→속도모드, 실제 배치(100 Hz, 30 ms) | 실패 | 실패 |
 | A9 Ryung: 같은 코드, MCU 가정(100 Hz, 2 ms) | 0.19 s / 0.50 m/s / 0.85 m / 4.02 Nm | 실패 |

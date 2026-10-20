@@ -22,7 +22,7 @@ LABEL = {
     "zephyr_lqr4": "A3 zephyr_ascento: 4상태 LQR 1 kHz (코드 부호)",
     "zephyr_lqr4_vflip": "A3 zephyr_ascento (v·x 부호 반전)",
     "pow_lqr4": "A4 Pow_WBR: 4상태 LQR 125 Hz",
-    "mushibo_lqr4": "A5 MuShibo: 4항 P + 소토크 PI ~1 kHz",
+    "mushibo_lqr4": "A5 MuShibo: 4항 P + 소토크 PI ≈1 kHz",
     "wl1_cascade": "A6 WL1: 캐스케이드 PID 100/20 Hz",
     "venus_cascade": "A7 Venus-1: 캐스케이드 PID 1 kHz",
     "sonic_pid": "A8 SonicRobot: PID→속도모드 100 Hz",
@@ -38,7 +38,7 @@ LABEL = {
     "wheelleg_lqr4_native": "B10 WheelLeg_LQR: 그들의 로봇(1+5 kg, COM 0.25 m) K 그대로",
 }
 LABEL_EN = {"upkie_wheel_balancer": "U1 upkie WheelBalancer 1 kHz", "upkie_mpc": "U3 upkie MPC 200 Hz", "upkie_pd": "U2 upkie PD 1 kHz", "mine_lqi": "mine: LQI 1 kHz", "fern_lqr3": "A1 fern LQR3 500 Hz", "lzu_lqr4": "A2 LZU LQR4 1 kHz",
-            "pow_lqr4": "A4 Pow_WBR LQR4 125 Hz", "mushibo_lqr4": "A5 MuShibo 4P ~1 kHz", "wl1_cascade": "A6 WL1 cascade PID",
+            "pow_lqr4": "A4 Pow_WBR LQR4 125 Hz", "mushibo_lqr4": "A5 MuShibo 4P ≈1 kHz", "wl1_cascade": "A6 WL1 cascade PID",
             "venus_cascade": "A7 Venus-1 cascade PID", "ryung_pid_on_mcu": "A9 Ryung PID (MCU)", "zephyr_lqr4_vflip": "A3 zephyr LQR4 (vflip)",
             "zephyr_lqr4": "A3 zephyr LQR4", "sonic_pid": "A8 SonicRobot PID", "ryung_pid": "A9 Ryung PID (PC)", "fern_lqr3_ff2": "A1 fern +FF2",
             "wheelleg_lqr4": "B10 WheelLeg_LQR cart-pole dLQR", "wheelleg_lqr4_native": "B10 WheelLeg_LQR native K"}
