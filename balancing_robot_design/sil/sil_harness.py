@@ -45,6 +45,17 @@ class Controller:
         self.Ts = Ts
         self.out_type = self.lib.ctrl_output_type()
         self.name = self.lib.ctrl_name().decode()
+        self.has_scale = hasattr(self.lib, "ctrl_set_scale")
+        if self.has_scale:
+            self.lib.ctrl_set_scale.argtypes = [ctypes.c_float]
+        if hasattr(self.lib, "ctrl_set_param"):
+            self.lib.ctrl_set_param.argtypes = [ctypes.c_char_p, ctypes.c_float]
+
+    def set_scale(self, s):
+        self.lib.ctrl_set_scale(ctypes.c_float(s))
+
+    def set_param(self, name, v):
+        self.lib.ctrl_set_param(name.encode(), ctypes.c_float(v))
 
     def init(self, p):
         pr = CtrlParams(p.M_b, p.m_w, p.r, p.l, p.I_b, p.I_w, p.tau_max)
@@ -176,6 +187,29 @@ if __name__ == "__main__":
         m = META.get(nm, {})
         ctrl = Controller(os.path.join(cdir, m.get("src", nm) + ".c"), Ts=m.get("Ts", 1e-3))
         vel_loop = m.get("vel_loop") if ctrl.out_type == 1 else None
+        for k, v in m.get("params", {}).items():
+            ctrl.set_param(k, v)
+        if m.get("scale_search"):
+            best = None
+            for s_ in np.logspace(m["scale_search"][0], m["scale_search"][1], m["scale_search"][2]):
+                ctrl.set_scale(float(s_))
+                sgn = pick_sign(p, ctrl, vel_loop)
+                if sgn is None:
+                    continue
+                # score: survive the largest push, then the largest tilt (cheap sweeps)
+                sc = 0.0
+                for F in (10, 20, 30, 40, 60, 80):
+                    if simulate(p, ctrl, push=(0.5, 0.1, float(F)), latency=m.get("latency", 0.002), sign=sgn, vel_loop=vel_loop)["ok"]:
+                        sc = F
+                    else:
+                        break
+                if best is None or sc > best[0]:
+                    best = (sc, float(s_), sgn)
+            if best is None:
+                results[nm] = dict(name=ctrl.name, Ts=ctrl.Ts, note="no output scale makes it balance on this robot")
+                print(f"[{nm}] {ctrl.name}: no scale balances"); continue
+            ctrl.set_scale(best[1]); m["autosign"] = True
+            print(f"[{nm}] best output scale {best[1]:.4g} (push score {best[0]} N)")
         sign = +1.0
         if ctrl.out_type == 1 or m.get("autosign"):
             sign = pick_sign(p, ctrl, vel_loop)
@@ -183,7 +217,8 @@ if __name__ == "__main__":
                 results[nm] = dict(name=ctrl.name, Ts=ctrl.Ts, note="does not balance with either sign on this robot")
                 print(f"[{nm}] {ctrl.name}: does NOT balance (either sign)"); continue
         res = benchmark(p, ctrl, sign=sign, vel_loop=vel_loop, latency=m.get("latency", 0.002))
-        res.update(name=ctrl.name, Ts=ctrl.Ts, sign=sign, output="torque" if ctrl.out_type == 0 else "wheel-velocity")
+        res.update(name=ctrl.name, Ts=ctrl.Ts, sign=sign, output="torque" if ctrl.out_type == 0 else "wheel-velocity",
+                   scale=(best[1] if m.get("scale_search") else None), params=m.get("params"))
         results[nm] = res
         print(f"[{nm}] {ctrl.name}\n    {json.dumps({k: v for k, v in res.items() if k != 'name'})}")
     if args.out:

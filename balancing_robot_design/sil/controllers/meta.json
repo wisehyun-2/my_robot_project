@@ -25,5 +25,118 @@
    "bw_meas": 8.0
   },
   "note": "same code, as if run on an MCU with CAN (2 ms latency), 100 Hz"
+ },
+ "mushibo_lqr4": {
+  "Ts": 0.001,
+  "latency": 0.002,
+  "scale_search": [
+   -2.5,
+   1.0,
+   15
+  ],
+  "note": "ESP32 ~1 kHz loop; volt->torque scale searched"
+ },
+ "wl1_cascade": {
+  "Ts": 0.01,
+  "latency": 0.005,
+  "scale_search": [
+   -4.0,
+   -1.0,
+   13
+  ],
+  "note": "10 ms attitude / 50 ms velocity; PWM->torque scale searched"
+ },
+ "fern_lqr3": {
+  "Ts": 0.002,
+  "latency": 0.002,
+  "params": {
+   "vel_kp": 0.15,
+   "vel_ki": 0.3,
+   "ff2": 0.0
+  },
+  "note": "500 Hz; gains from THEIR Q/R on this robot"
+ },
+ "fern_lqr3_ff2": {
+  "src": "fern_lqr3",
+  "Ts": 0.002,
+  "latency": 0.002,
+  "params": {
+   "vel_kp": 0.15,
+   "vel_ki": 0.3,
+   "ff2": 0.5
+  },
+  "note": "same + gravity feed-forward FF2=0.5"
+ },
+ "lzu_lqr4": {
+  "Ts": 0.001,
+  "latency": 0.002,
+  "scale_search": [
+   -1.0,
+   1.5,
+   11
+  ],
+  "note": "1 kHz; their per-wheel +-1.2 Nm law scaled to our motors"
+ },
+ "zephyr_lqr4": {
+  "Ts": 0.001,
+  "latency": 0.002,
+  "scale_search": [
+   -1.5,
+   1.5,
+   13
+  ],
+  "params": {
+   "vsign": 1.0
+  },
+  "note": "1 kHz; polynomial gains as coded"
+ },
+ "zephyr_lqr4_vflip": {
+  "src": "zephyr_lqr4",
+  "Ts": 0.001,
+  "latency": 0.002,
+  "scale_search": [
+   -1.5,
+   1.5,
+   13
+  ],
+  "params": {
+   "vsign": -1.0
+  },
+  "note": "velocity/position gain sign flipped (docs' stand table sign)"
+ },
+ "pow_lqr4": {
+  "Ts": 0.008,
+  "latency": 0.004,
+  "scale_search": [
+   -0.5,
+   2.0,
+   11
+  ],
+  "note": "125 Hz; K table vs height; +-0.75 Nm per wheel scaled"
+ },
+ "sonic_pid": {
+  "Ts": 0.01,
+  "latency": 0.005,
+  "scale_search": [
+   -2.5,
+   0.5,
+   13
+  ],
+  "vel_loop": {
+   "Kp": 0.05,
+   "Ki": 0.1,
+   "bw_meas": 50.0
+  },
+  "note": "100 Hz; ODrive velocity mode with encoders (50 Hz speed BW)"
+ },
+ "venus_cascade": {
+  "Ts": 0.001,
+  "latency": 0.002,
+  "scale_search": [
+   -5.0,
+   -2.0,
+   13
+  ],
+  "note": "1 kHz; current command +-16000 scaled"
  }
 }
