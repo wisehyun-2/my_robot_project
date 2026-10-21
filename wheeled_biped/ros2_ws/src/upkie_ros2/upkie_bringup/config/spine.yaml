@@ -8,6 +8,7 @@
     latency_ms: 0.0             # observation delay emulation [ms]
     noise: false                # sensor noise emulation (design report levels)
     seed: 0
+    pitch_offset: model         # model: IMU zero = model equilibrium pitch (base_pitch is offset-corrected); none: raw
     use_sim_contact: false      # replace the apparent-inertia contact observer by ground truth
                                 # (sim.launch.py forces true for embedded:=false balancer:=mpc)
     embedded_balancer: true     # overridden by the `embedded` launch argument

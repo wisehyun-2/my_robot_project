@@ -152,9 +152,11 @@ class HostLinkTests(unittest.TestCase):
     def test_gain_table_matches_direct_design(self):
         plant = Plant6(**diablo_lite_params())
         ctrl = LQI6(plant)
-        K_table = ctrl.gains(0.205)
-        K_direct = LQI6(plant, table_L0=None).design(0.205)
-        self.assertLess(np.max(np.abs(K_table - K_direct)) / np.max(np.abs(K_direct)), 0.02)
+        direct = LQI6(plant, table_L0=None)
+        for L0 in (0.105, 0.145, 0.205, 0.255, 0.275):      # grid mid-points (interpolation error)
+            K_table = ctrl.gains(L0)
+            K_direct = direct.design(L0)
+            self.assertLess(np.max(np.abs(K_table - K_direct)) / np.max(np.abs(K_direct)), 0.02)
 
 
 class McuSafetyTests(unittest.TestCase):
@@ -184,6 +186,57 @@ class PlanSmokeTests(unittest.TestCase):
             plan = cls()
             self.assertTrue(plan.run(2.0), f"{cls.__name__} fell while standing")
             self.assertLess(abs(plan.log["pitch"][-1]), math.radians(5))
+
+
+
+class ReviewPass2Tests(unittest.TestCase):
+    def test_arm_refused_before_measurement_and_when_tilted(self):
+        from wbr.plans.plan2_diablo_lqi6 import Plan2DiabloLQI6
+        plan = Plan2DiabloLQI6()
+        plan.reset(pitch=math.radians(10))
+        plan.mcu.reset(armed=False)
+        self.assertFalse(plan.mcu.arm())            # no measurement yet (review N1)
+        plan.step()                                 # one tick -> estimate valid, robot tilted 10 deg
+        self.assertFalse(plan.mcu.arm())
+        plan.reset(pitch=0.0)
+        plan.mcu.reset(armed=False)
+        plan.step()
+        self.assertTrue(plan.mcu.arm())             # upright and measured
+
+    def test_disconnect_off_only_after_a_connection_and_latched(self):
+        from wbr.plans.plan2_diablo_lqi6 import Plan2DiabloLQI6
+        plan = Plan2DiabloLQI6()
+        plan.mcu.p.disconnect_off_s = 1.0
+        plan.host.enabled = False                   # never connected: must not switch off at boot (review N2)
+        plan.mcu.reset()
+        plan.link.reset()
+        plan.run(2.0)
+        self.assertTrue(plan.mcu.armed)
+        plan.host.enabled = True
+        plan.run(0.5)                               # connects
+        plan.host.enabled = False
+        plan.run(2.0)                               # 0.5 s timeout + 1.0 s -> motors off, latched
+        self.assertTrue(plan.mcu.off_latched)
+        self.assertFalse(plan.mcu.armed)
+        n_events = len(plan.mcu.events)
+        plan.run(0.5)
+        self.assertEqual(len(plan.mcu.events), n_events)   # no event flood while latched
+
+    def test_settle_time_reports_unsettled_tail(self):
+        from wbr.bench.battery import settle_time
+        t = np.arange(0, 8.0, 1e-3)
+        L = {"t": t, "pitch": np.full_like(t, math.radians(1.5)), "vx": np.zeros_like(t)}
+        self.assertIsNone(settle_time(L, 0.0))      # never within 1 deg (review N4)
+        L["pitch"] = np.where(t < 2.0, math.radians(5), 0.0)
+        self.assertAlmostEqual(settle_time(L, 0.0), 2.0, delta=0.03)
+
+    def test_plan1_survives_4cm_crouch(self):
+        from wbr.plans.plan1_upkie import Plan1Upkie
+        plan = Plan1Upkie()
+        plan.run(1.0)
+        plan.set_height_offset(-0.04)
+        self.assertTrue(plan.run(4.0))              # alive while crouching (review N3: smoothed IMU zero)
+        self.assertLess(abs(plan.log["pitch"][-1]), math.radians(5))
 
 
 if __name__ == "__main__":

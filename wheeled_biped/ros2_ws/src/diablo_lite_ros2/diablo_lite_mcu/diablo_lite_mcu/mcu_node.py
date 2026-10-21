@@ -115,8 +115,12 @@ class McuNode(Node):
         mcu_hz = float(self._param("mcu_hz"))
         scene = str(self._param("scene")).strip() or "scene.xml"
         start_mode_name = str(self._param("start_mode")).lower()
-        if start_mode_name not in ("stand", "car"):
-            raise ValueError(f"start_mode must be 'stand' or 'car', got '{start_mode_name}'")
+        if start_mode_name == "car":
+            # DIABLO-lite has no auxiliary wheels: a robot in CAR mode lies on the floor without torque and the
+            # pitch FAULT latches before any stand-up command can arrive (review pass 2)
+            raise ValueError("start_mode 'car' is not supported on DIABLO-lite (no auxiliary wheels); use 'stand'")
+        if start_mode_name != "stand":
+            raise ValueError(f"start_mode must be 'stand', got '{start_mode_name}'")
         start_mode = RobotMode.STAND if start_mode_name == "stand" else RobotMode.CAR
         self._odom_frame = str(self._param("odom_frame"))
         self._base_frame = str(self._param("base_frame"))
@@ -195,7 +199,7 @@ class McuNode(Node):
         plan.log = _NullLogger()
         with self._lock:
             # command the MCU acts on before the host obtains control (disconnect program keeps
-            # `up` and the mode flags): the ROS-side state instead of host_link's up = 1.0 default
+            # `up` and the mode flags): the ROS-side state (initial_up parameter)
             plan.link.last_cmd = copy.deepcopy(self._host_cmd)
 
     def _make_snapshot(self, obs: dict) -> dict:

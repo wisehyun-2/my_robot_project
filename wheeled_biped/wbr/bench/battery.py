@@ -72,8 +72,13 @@ def settle_time(L, t_start: float, v_ref: float = 0.0) -> float | None:
     t_start (None if never settled).  The moving average keeps single noisy samples from resetting the clock."""
     n = max(1, int(round(0.02 / (L["t"][1] - L["t"][0]))))
     kernel = np.ones(n) / n
-    pitch = np.convolve(L["pitch"], kernel, mode="same")
-    vx = np.convolve(L["vx"], kernel, mode="same")
+
+    def smooth(x):   # edge-replicated moving average (zero padding would fake a settled tail)
+        padded = np.pad(x, (n // 2, n - 1 - n // 2), mode="edge")
+        return np.convolve(padded, kernel, mode="valid")
+
+    pitch = smooth(L["pitch"])
+    vx = smooth(L["vx"])
     bad = (np.abs(pitch) > math.radians(1)) | (np.abs(vx - v_ref) > 0.1)
     after = L["t"] >= t_start
     idx = np.where(bad & after)[0]

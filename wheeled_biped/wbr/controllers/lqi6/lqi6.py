@@ -1,7 +1,7 @@
 """LQI6 -- the controller of the design report (section 8, "MineLQI6"): 6-state LQR with a velocity
-integral designed online from the three-body plant linearisation (Bryson weights, R scaled with the
-torque limits), re-designed whenever the leg length changes by more than 1 cm (gain scheduling
-without polynomial fits).  State xs = [theta, theta_dot, v - v_ref, phi, phi_dot, int(v - v_ref)],
+integral designed from the three-body plant linearisation (Bryson weights, R scaled with the torque
+limits).  Gains are designed on a leg-length grid at start-up and interpolated at run time (table_L0);
+with table_L0=None the controller re-designs online whenever the leg length changes by > 1 cm.  State xs = [theta, theta_dot, v - v_ref, phi, phi_dot, int(v - v_ref)],
 outputs u = [T, Tp] = -K xs (total wheel torque, total hip torque).
 """
 from __future__ import annotations

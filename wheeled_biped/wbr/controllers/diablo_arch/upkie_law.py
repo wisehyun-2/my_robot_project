@@ -89,7 +89,7 @@ class UpkieLaw:
         if self.mpc is not None:
             if self.k % self.mpc_period == 0:
                 self.ground_velocity = self.mpc.step(v_ref, observation, self.mpc_period * self.dt)
-            kp_scale = kd_scale = 2.0
+            kp_scale = kd_scale = 2.0 + (2.0 if abs(yaw_ref) > 0.1 else 0.0)   # upkie follow_joystick turning gains
         else:
             out = self.balancer.step(observation, v_ref, yaw_ref)
             self.ground_velocity = out["ground_velocity"]

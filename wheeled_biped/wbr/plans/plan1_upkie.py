@@ -88,6 +88,7 @@ class Plan1Upkie:
         self.wheel_offset = self.sim.body_position("left_wheel_tire") - base_pos
         self.wheel_offset[1] = 0.0
         self.pitch_eq = self._equilibrium_pitch() if c.pitch_offset == "model" else 0.0   # IMU zero (see Plan1Config)
+        self.pitch_eq_target = self.pitch_eq
         self.log = Logger()
         self.k = 0
         self.observation: dict = {}
@@ -119,6 +120,9 @@ class Plan1Upkie:
         bo = self.base_orientation.update(obs["imu"]["orientation"], obs["imu"]["angular_velocity"])
         bo = dict(bo)
         bo["pitch_raw"] = bo["pitch"]
+        if hasattr(self, "pitch_eq_target"):   # follow the crouch at the leg filter's pace (1 s cutoff, review N3)
+            from wbr.common.filters import low_pass_filter
+            self.pitch_eq = low_pass_filter(self.pitch_eq, self.mapper.leg_cutoff_period, self.pitch_eq_target, self.dt)
         bo["pitch"] = bo["pitch"] - getattr(self, "pitch_eq", 0.0)
         fc = self.floor_contact.update(servo)
         if self.cfg.use_sim_contact:
@@ -233,8 +237,8 @@ class Plan1Upkie:
         neutral = {"left_hip": a, "left_knee": self._knee_sign * 2 * a,
                    "right_hip": -a, "right_knee": -self._knee_sign * 2 * a}
         self.mapper.set_neutral(neutral)
-        if self.cfg.pitch_offset == "model":   # the IMU zero moves with the leg masses
-            self.pitch_eq = self._equilibrium_pitch(neutral)
+        if self.cfg.pitch_offset == "model":   # the IMU zero moves with the leg masses: tracked as slowly as the legs
+            self.pitch_eq_target = self._equilibrium_pitch(neutral)
 
     @property
     def fallen(self) -> bool:

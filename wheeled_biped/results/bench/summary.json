@@ -33,6 +33,36 @@
     "hip_torque_peak": 0.4087903919187609,
     "traces": null
    },
+   "5": {
+    "ok": true,
+    "alive": true,
+    "deg": 5,
+    "settle_s": 0.8389999999999629,
+    "disp_m": 0.06459869183832344,
+    "wheel_torque_peak": 0.6742893818730653,
+    "hip_torque_peak": 0.3295512590884246,
+    "traces": null
+   },
+   "20": {
+    "ok": true,
+    "alive": true,
+    "deg": 20,
+    "settle_s": 5.722999999999547,
+    "disp_m": 0.022975488983226395,
+    "wheel_torque_peak": 1.7,
+    "hip_torque_peak": 0.32657870823222246,
+    "traces": null
+   },
+   "25": {
+    "ok": true,
+    "alive": true,
+    "deg": 25,
+    "settle_s": 7.385999999998625,
+    "disp_m": 0.10520789028739393,
+    "wheel_torque_peak": 1.7,
+    "hip_torque_peak": 0.4465119145227959,
+    "traces": null
+   },
    "15": {
     "ok": true,
     "alive": true,
@@ -7271,50 +7301,9 @@
       -0.020164717742623826
      ]
     }
-   },
-   "5": {
-    "ok": true,
-    "alive": true,
-    "deg": 5,
-    "settle_s": 0.8389999999999629,
-    "disp_m": 0.06459869183832344,
-    "wheel_torque_peak": 0.6742893818730653,
-    "hip_torque_peak": 0.3295512590884246,
-    "traces": null
-   },
-   "25": {
-    "ok": true,
-    "alive": true,
-    "deg": 25,
-    "settle_s": 7.385999999998625,
-    "disp_m": 0.10520789028739393,
-    "wheel_torque_peak": 1.7,
-    "hip_torque_peak": 0.4465119145227959,
-    "traces": null
-   },
-   "20": {
-    "ok": true,
-    "alive": true,
-    "deg": 20,
-    "settle_s": 5.722999999999547,
-    "disp_m": 0.022975488983226395,
-    "wheel_torque_peak": 1.7,
-    "hip_torque_peak": 0.32657870823222246,
-    "traces": null
    }
   },
   "push": {
-   "1.25": {
-    "ok": false,
-    "alive": false,
-    "frac": 1.25,
-    "force_N": 65.47218525000001,
-    "pitch_peak_deg": 57.44795053993591,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 2.3248536727399456,
-    "traces": null
-   },
    "1.5": {
     "ok": false,
     "alive": false,
@@ -7324,6 +7313,17 @@
     "settle_s": null,
     "disp_m": null,
     "v_peak": 2.874533318524949,
+    "traces": null
+   },
+   "1.25": {
+    "ok": false,
+    "alive": false,
+    "frac": 1.25,
+    "force_N": 65.47218525000001,
+    "pitch_peak_deg": 57.44795053993591,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 2.3248536727399456,
     "traces": null
    },
    "1.0": {
@@ -15550,25 +15550,15 @@
     "alive": true,
     "latency_ms": 10
    },
-   "80": {
-    "ok": false,
-    "alive": false,
-    "latency_ms": 80
-   },
-   "15": {
-    "ok": true,
-    "alive": true,
-    "latency_ms": 15
-   },
    "20": {
     "ok": true,
     "alive": true,
     "latency_ms": 20
    },
-   "40": {
-    "ok": true,
-    "alive": true,
-    "latency_ms": 40
+   "80": {
+    "ok": false,
+    "alive": false,
+    "latency_ms": 80
    },
    "30": {
     "ok": true,
@@ -15579,6 +15569,16 @@
     "ok": false,
     "alive": true,
     "latency_ms": 60
+   },
+   "15": {
+    "ok": true,
+    "alive": true,
+    "latency_ms": 15
+   },
+   "40": {
+    "ok": true,
+    "alive": true,
+    "latency_ms": 40
    }
   },
   "link_loss": {
@@ -15590,7 +15590,7 @@
    "pitch_rms_deg": 1.0799008517645174,
    "drift_m": 0.09583486834332326,
    "wheel_torque_rms": 0.10242899362772123,
-   "realtime_factor": 8.430432004358309,
+   "realtime_factor": 8.243939262709445,
    "hip_torque_rms": 0.1472889016219563
   },
   "yaw": {
@@ -21034,9 +21034,9 @@
    "runs": {
     "2cm": {
      "ok": false,
-     "pitch_peak_deg": 9.388583304412224,
-     "z_min": 0.5384089848563367,
-     "z_end": 0.5549949398507187
+     "pitch_peak_deg": 4.327564891693251,
+     "z_min": 0.5375852552278555,
+     "z_end": 0.5563044774585467
     }
    }
   },
@@ -21052,16 +21052,6 @@
   "plan": "plan1_pid",
   "gain_scale": 0.5,
   "tilt": {
-   "40": {
-    "ok": false,
-    "alive": false,
-    "deg": 40,
-    "settle_s": null,
-    "disp_m": null,
-    "wheel_torque_peak": 1.7,
-    "hip_torque_peak": 0.38540221691247994,
-    "traces": null
-   },
    "35": {
     "ok": false,
     "alive": false,
@@ -21082,6 +21072,16 @@
     "hip_torque_peak": 0.44044433493053375,
     "traces": null
    },
+   "40": {
+    "ok": false,
+    "alive": false,
+    "deg": 40,
+    "settle_s": null,
+    "disp_m": null,
+    "wheel_torque_peak": 1.7,
+    "hip_torque_peak": 0.38540221691247994,
+    "traces": null
+   },
    "25": {
     "ok": false,
     "alive": false,
@@ -21092,16 +21092,6 @@
     "hip_torque_peak": 0.5028531546546117,
     "traces": null
    },
-   "15": {
-    "ok": false,
-    "alive": false,
-    "deg": 15,
-    "settle_s": null,
-    "disp_m": null,
-    "wheel_torque_peak": 1.7,
-    "hip_torque_peak": 0.5678609448642885,
-    "traces": null
-   },
    "20": {
     "ok": false,
     "alive": false,
@@ -21110,6 +21100,16 @@
     "disp_m": null,
     "wheel_torque_peak": 1.7,
     "hip_torque_peak": 0.39138932481649347,
+    "traces": null
+   },
+   "15": {
+    "ok": false,
+    "alive": false,
+    "deg": 15,
+    "settle_s": null,
+    "disp_m": null,
+    "wheel_torque_peak": 1.7,
+    "hip_torque_peak": 0.5678609448642885,
     "traces": null
    },
    "10": {
@@ -25595,17 +25595,6 @@
     "v_peak": 1.4986463832533798,
     "traces": null
    },
-   "0.25": {
-    "ok": false,
-    "alive": false,
-    "frac": 0.25,
-    "force_N": 13.094437050000002,
-    "pitch_peak_deg": 57.71520960773235,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 2.926739126741371,
-    "traces": null
-   },
    "1.0": {
     "ok": false,
     "alive": false,
@@ -25617,15 +25606,15 @@
     "v_peak": 1.629704059791856,
     "traces": null
    },
-   "1.25": {
+   "0.25": {
     "ok": false,
     "alive": false,
-    "frac": 1.25,
-    "force_N": 65.47218525000001,
-    "pitch_peak_deg": 57.57658780780394,
+    "frac": 0.25,
+    "force_N": 13.094437050000002,
+    "pitch_peak_deg": 57.71520960773235,
     "settle_s": null,
     "disp_m": null,
-    "v_peak": 1.9850354760489648,
+    "v_peak": 2.926739126741371,
     "traces": null
    },
    "1.75": {
@@ -25650,6 +25639,17 @@
     "v_peak": 2.5491760471839653,
     "traces": null
    },
+   "1.25": {
+    "ok": false,
+    "alive": false,
+    "frac": 1.25,
+    "force_N": 65.47218525000001,
+    "pitch_peak_deg": 57.57658780780394,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 1.9850354760489648,
+    "traces": null
+   },
    "2.0": {
     "ok": false,
     "alive": false,
@@ -25659,17 +25659,6 @@
     "settle_s": null,
     "disp_m": null,
     "v_peak": 3.6203335274048607,
-    "traces": null
-   },
-   "2.5": {
-    "ok": false,
-    "alive": false,
-    "frac": 2.5,
-    "force_N": 130.94437050000002,
-    "pitch_peak_deg": 57.73414860044654,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 4.562703459730381,
     "traces": null
    },
    "3.0": {
@@ -25682,6 +25671,17 @@
     "disp_m": null,
     "v_peak": 5.355664385286924,
     "traces": null
+   },
+   "2.5": {
+    "ok": false,
+    "alive": false,
+    "frac": 2.5,
+    "force_N": 130.94437050000002,
+    "pitch_peak_deg": 57.73414860044654,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 4.562703459730381,
+    "traces": null
    }
   },
   "latency": {},
@@ -25690,7 +25690,7 @@
    "pitch_rms_deg": 16.538324834598917,
    "drift_m": 0.3956065008876718,
    "wheel_torque_rms": 0.22873968543603962,
-   "realtime_factor": 25.037619018520466,
+   "realtime_factor": 17.273737784393195,
    "hip_torque_rms": 0.14366259989614438
   },
   "max_tilt_deg": 0.0,
@@ -25715,16 +25715,6 @@
     "hip_torque_peak": 0.4077015914407016,
     "traces": null
    },
-   "30": {
-    "ok": false,
-    "alive": false,
-    "deg": 30,
-    "settle_s": null,
-    "disp_m": null,
-    "wheel_torque_peak": 1.7,
-    "hip_torque_peak": 0.5031711215610188,
-    "traces": null
-   },
    "40": {
     "ok": false,
     "alive": false,
@@ -25735,24 +25725,14 @@
     "hip_torque_peak": 0.38774052951840554,
     "traces": null
    },
-   "5": {
-    "ok": true,
-    "alive": true,
-    "deg": 5,
-    "settle_s": 0.5779999999999916,
-    "disp_m": 0.06541868942195224,
+   "30": {
+    "ok": false,
+    "alive": false,
+    "deg": 30,
+    "settle_s": null,
+    "disp_m": null,
     "wheel_torque_peak": 1.7,
-    "hip_torque_peak": 0.28665427683457717,
-    "traces": null
-   },
-   "15": {
-    "ok": true,
-    "alive": true,
-    "deg": 15,
-    "settle_s": 1.6319999999998758,
-    "disp_m": 0.02079928382424028,
-    "wheel_torque_peak": 1.7,
-    "hip_torque_peak": 0.4218508550923803,
+    "hip_torque_peak": 0.5031711215610188,
     "traces": null
    },
    "10": {
@@ -32984,6 +32964,16 @@
      ]
     }
    },
+   "5": {
+    "ok": true,
+    "alive": true,
+    "deg": 5,
+    "settle_s": 0.5779999999999916,
+    "disp_m": 0.06541868942195224,
+    "wheel_torque_peak": 1.7,
+    "hip_torque_peak": 0.28665427683457717,
+    "traces": null
+   },
    "20": {
     "ok": true,
     "alive": true,
@@ -33002,6 +32992,16 @@
     "disp_m": 0.12004691328089372,
     "wheel_torque_peak": 1.7,
     "hip_torque_peak": 2.805748266069021,
+    "traces": null
+   },
+   "15": {
+    "ok": true,
+    "alive": true,
+    "deg": 15,
+    "settle_s": 1.6319999999998758,
+    "disp_m": 0.02079928382424028,
+    "wheel_torque_peak": 1.7,
+    "hip_torque_peak": 0.4218508550923803,
     "traces": null
    }
   },
@@ -33039,15 +33039,15 @@
     "v_peak": 3.5618862611909785,
     "traces": null
    },
-   "2.5": {
+   "1.0": {
     "ok": false,
     "alive": false,
-    "frac": 2.5,
-    "force_N": 130.94437050000002,
-    "pitch_peak_deg": 57.6562404779931,
+    "frac": 1.0,
+    "force_N": 52.377748200000006,
+    "pitch_peak_deg": 57.34753289196851,
     "settle_s": null,
     "disp_m": null,
-    "v_peak": 4.97865163726189,
+    "v_peak": 3.176230370703859,
     "traces": null
    },
    "2.0": {
@@ -33061,15 +33061,15 @@
     "v_peak": 4.079988390900307,
     "traces": null
    },
-   "1.0": {
+   "2.5": {
     "ok": false,
     "alive": false,
-    "frac": 1.0,
-    "force_N": 52.377748200000006,
-    "pitch_peak_deg": 57.34753289196851,
+    "frac": 2.5,
+    "force_N": 130.94437050000002,
+    "pitch_peak_deg": 57.6562404779931,
     "settle_s": null,
     "disp_m": null,
-    "v_peak": 3.176230370703859,
+    "v_peak": 4.97865163726189,
     "traces": null
    },
    "3.0": {
@@ -33083,6 +33083,17 @@
     "v_peak": 5.696414723189647,
     "traces": null
    },
+   "0.25": {
+    "ok": true,
+    "alive": true,
+    "frac": 0.25,
+    "force_N": 13.094437050000002,
+    "pitch_peak_deg": 4.748944729433756,
+    "settle_s": null,
+    "disp_m": 0.20535476832850413,
+    "v_peak": 0.5080378817036066,
+    "traces": null
+   },
    "0.75": {
     "ok": false,
     "alive": true,
@@ -33092,17 +33103,6 @@
     "settle_s": null,
     "disp_m": null,
     "v_peak": 1.440442315991073,
-    "traces": null
-   },
-   "0.25": {
-    "ok": true,
-    "alive": true,
-    "frac": 0.25,
-    "force_N": 13.094437050000002,
-    "pitch_peak_deg": 4.748944729433756,
-    "settle_s": 7.995999999999503,
-    "disp_m": 0.20535476832850413,
-    "v_peak": 0.5080378817036066,
     "traces": null
    },
    "0.5": {
@@ -41242,7 +41242,7 @@
    "pitch_rms_deg": 0.38357023619550334,
    "drift_m": 0.04855840991672836,
    "wheel_torque_rms": 0.14820275001406383,
-   "realtime_factor": 7.3612017799520295,
+   "realtime_factor": 9.381286927954319,
    "hip_torque_rms": 0.1475096430375772
   },
   "max_tilt_deg": 25,
@@ -41267,6 +41267,16 @@
     "hip_torque_peak": 0.5051399409517212,
     "traces": null
    },
+   "25": {
+    "ok": false,
+    "alive": false,
+    "deg": 25,
+    "settle_s": null,
+    "disp_m": null,
+    "wheel_torque_peak": 1.7,
+    "hip_torque_peak": 2.479105797630625,
+    "traces": null
+   },
    "35": {
     "ok": false,
     "alive": false,
@@ -41287,16 +41297,6 @@
     "hip_torque_peak": 0.3875730479943733,
     "traces": null
    },
-   "25": {
-    "ok": false,
-    "alive": false,
-    "deg": 25,
-    "settle_s": null,
-    "disp_m": null,
-    "wheel_torque_peak": 1.7,
-    "hip_torque_peak": 2.479105797630625,
-    "traces": null
-   },
    "5": {
     "ok": true,
     "alive": true,
@@ -41305,6 +41305,16 @@
     "disp_m": 0.06415230325075104,
     "wheel_torque_peak": 1.7,
     "hip_torque_peak": 0.2569855470451121,
+    "traces": null
+   },
+   "15": {
+    "ok": true,
+    "alive": true,
+    "deg": 15,
+    "settle_s": 1.0899999999999355,
+    "disp_m": 0.023267910637408358,
+    "wheel_torque_peak": 1.7,
+    "hip_torque_peak": 0.6293216952579411,
     "traces": null
    },
    "10": {
@@ -48536,16 +48546,6 @@
      ]
     }
    },
-   "15": {
-    "ok": true,
-    "alive": true,
-    "deg": 15,
-    "settle_s": 1.0899999999999355,
-    "disp_m": 0.023267910637408358,
-    "wheel_torque_peak": 1.7,
-    "hip_torque_peak": 0.6293216952579411,
-    "traces": null
-   },
    "20": {
     "ok": true,
     "alive": true,
@@ -48558,17 +48558,6 @@
    }
   },
   "push": {
-   "1.25": {
-    "ok": false,
-    "alive": false,
-    "frac": 1.25,
-    "force_N": 65.47218525000001,
-    "pitch_peak_deg": 57.45934609378225,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 3.100218099685668,
-    "traces": null
-   },
    "1.5": {
     "ok": false,
     "alive": false,
@@ -48578,6 +48567,17 @@
     "settle_s": null,
     "disp_m": null,
     "v_peak": 2.9743968073835294,
+    "traces": null
+   },
+   "1.25": {
+    "ok": false,
+    "alive": false,
+    "frac": 1.25,
+    "force_N": 65.47218525000001,
+    "pitch_peak_deg": 57.45934609378225,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 3.100218099685668,
     "traces": null
    },
    "1.75": {
@@ -48622,17 +48622,6 @@
     "settle_s": null,
     "disp_m": null,
     "v_peak": 5.7151582372120835,
-    "traces": null
-   },
-   "0.75": {
-    "ok": false,
-    "alive": true,
-    "frac": 0.75,
-    "force_N": 39.28331115,
-    "pitch_peak_deg": 9.59256324593892,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 1.3966523127736052,
     "traces": null
    },
    "0.5": {
@@ -56771,9 +56760,20 @@
     "frac": 0.25,
     "force_N": 13.094437050000002,
     "pitch_peak_deg": 3.6613760389464267,
-    "settle_s": 7.993999999999501,
+    "settle_s": null,
     "disp_m": 0.18476428241847123,
     "v_peak": 0.4952327737172036,
+    "traces": null
+   },
+   "0.75": {
+    "ok": false,
+    "alive": true,
+    "frac": 0.75,
+    "force_N": 39.28331115,
+    "pitch_peak_deg": 9.59256324593892,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 1.3966523127736052,
     "traces": null
    },
    "1.0": {
@@ -56794,7 +56794,7 @@
    "pitch_rms_deg": 0.3752578678030431,
    "drift_m": 0.046423373619106,
    "wheel_torque_rms": 0.19476115075122444,
-   "realtime_factor": 6.656803502447545,
+   "realtime_factor": 8.401809245686064,
    "hip_torque_rms": 0.1462777783769095
   },
   "max_tilt_deg": 20,
@@ -56849,14 +56849,14 @@
     "hip_torque_peak": 0.38361396313427554,
     "traces": null
    },
-   "5": {
+   "20": {
     "ok": true,
     "alive": true,
-    "deg": 5,
-    "settle_s": 1.492999999999891,
-    "disp_m": 0.43619120393144784,
-    "wheel_torque_peak": 0.2982618680421347,
-    "hip_torque_peak": 0.4104570118633161,
+    "deg": 20,
+    "settle_s": 2.5410000000000164,
+    "disp_m": 1.2035978600884247,
+    "wheel_torque_peak": 1.4703853841800523,
+    "hip_torque_peak": 0.5111738958284879,
     "traces": null
    },
    "10": {
@@ -64098,29 +64098,18 @@
     "hip_torque_peak": 0.4719094503828055,
     "traces": null
    },
-   "20": {
+   "5": {
     "ok": true,
     "alive": true,
-    "deg": 20,
-    "settle_s": 2.5410000000000164,
-    "disp_m": 1.2035978600884247,
-    "wheel_torque_peak": 1.4703853841800523,
-    "hip_torque_peak": 0.5111738958284879,
+    "deg": 5,
+    "settle_s": 1.492999999999891,
+    "disp_m": 0.43619120393144784,
+    "wheel_torque_peak": 0.2982618680421347,
+    "hip_torque_peak": 0.4104570118633161,
     "traces": null
    }
   },
   "push": {
-   "2.0": {
-    "ok": false,
-    "alive": false,
-    "frac": 2.0,
-    "force_N": 104.75549640000001,
-    "pitch_peak_deg": 57.32153190951494,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 4.102361022991049,
-    "traces": null
-   },
    "1.25": {
     "ok": false,
     "alive": false,
@@ -64154,6 +64143,17 @@
     "v_peak": 3.0648212244582473,
     "traces": null
    },
+   "2.0": {
+    "ok": false,
+    "alive": false,
+    "frac": 2.0,
+    "force_N": 104.75549640000001,
+    "pitch_peak_deg": 57.32153190951494,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 4.102361022991049,
+    "traces": null
+   },
    "1.75": {
     "ok": false,
     "alive": false,
@@ -64185,17 +64185,6 @@
     "settle_s": null,
     "disp_m": null,
     "v_peak": 5.654392682126673,
-    "traces": null
-   },
-   "0.25": {
-    "ok": true,
-    "alive": true,
-    "frac": 0.25,
-    "force_N": 13.094437050000002,
-    "pitch_peak_deg": 5.503588595721865,
-    "settle_s": 1.586000000000031,
-    "disp_m": 0.5600984038917127,
-    "v_peak": 0.4745878735196044,
     "traces": null
    },
    "0.5": {
@@ -72328,6 +72317,17 @@
      ]
     }
    },
+   "0.25": {
+    "ok": true,
+    "alive": true,
+    "frac": 0.25,
+    "force_N": 13.094437050000002,
+    "pitch_peak_deg": 5.503588595721865,
+    "settle_s": 1.586000000000031,
+    "disp_m": 0.5600984038917127,
+    "v_peak": 0.4745878735196044,
+    "traces": null
+   },
    "0.75": {
     "ok": true,
     "alive": true,
@@ -72341,50 +72341,50 @@
    }
   },
   "latency": {
-   "20": {
+   "10": {
     "ok": true,
     "alive": true,
-    "latency_ms": 20
+    "latency_ms": 10
    },
    "0": {
     "ok": true,
     "alive": true,
     "latency_ms": 0
    },
-   "5": {
+   "20": {
     "ok": true,
     "alive": true,
-    "latency_ms": 5
-   },
-   "15": {
-    "ok": true,
-    "alive": true,
-    "latency_ms": 15
-   },
-   "10": {
-    "ok": true,
-    "alive": true,
-    "latency_ms": 10
+    "latency_ms": 20
    },
    "30": {
     "ok": true,
     "alive": true,
     "latency_ms": 30
    },
+   "15": {
+    "ok": true,
+    "alive": true,
+    "latency_ms": 15
+   },
+   "5": {
+    "ok": true,
+    "alive": true,
+    "latency_ms": 5
+   },
    "40": {
     "ok": true,
     "alive": true,
     "latency_ms": 40
    },
-   "60": {
-    "ok": true,
-    "alive": true,
-    "latency_ms": 60
-   },
    "80": {
     "ok": true,
     "alive": true,
     "latency_ms": 80
+   },
+   "60": {
+    "ok": true,
+    "alive": true,
+    "latency_ms": 60
    }
   },
   "stand": {
@@ -72392,7 +72392,7 @@
    "pitch_rms_deg": 0.31266050363202186,
    "drift_m": 0.07241796777875703,
    "wheel_torque_rms": 0.021791193744593096,
-   "realtime_factor": 6.247690307070445,
+   "realtime_factor": 7.429734217066536,
    "hip_torque_rms": 0.1348089448185968
   },
   "link_loss": {
@@ -72404,18 +72404,6 @@
    "yaw_rate_mean": 0.9279600050282456,
    "cmd": 1.0,
    "pitch_peak_deg": 2.0330628425452137
-  },
-  "height": {
-   "ok": false,
-   "max_crouch_cm": 0.0,
-   "runs": {
-    "2cm": {
-     "ok": false,
-     "pitch_peak_deg": 4.645263717431836,
-     "z_min": 0.5383214650556716,
-     "z_end": 0.5564155630498668
-    }
-   }
   },
   "velocity": {
    "ok": true,
@@ -77846,6 +77834,31 @@
     ]
    }
   },
+  "height": {
+   "ok": true,
+   "max_crouch_cm": 6.0,
+   "runs": {
+    "2cm": {
+     "ok": true,
+     "pitch_peak_deg": 2.8622148656771516,
+     "z_min": 0.5381342415638081,
+     "z_end": 0.5563521097022026
+    },
+    "4cm": {
+     "ok": true,
+     "pitch_peak_deg": 3.5195946151397055,
+     "z_min": 0.519325666684249,
+     "z_end": 0.556205830813666
+    },
+    "6cm": {
+     "ok": true,
+     "pitch_peak_deg": 4.02244243753766,
+     "z_min": 0.5006334799946344,
+     "z_end": 0.556055916788199
+    }
+   },
+   "pitch_peak_deg": 4.02244243753766
+  },
   "max_tilt_deg": 20,
   "max_tilt_alive_deg": 20,
   "max_push_frac_W": 0.75,
@@ -77878,34 +77891,14 @@
     "hip_torque_peak": 0.0,
     "traces": null
    },
-   "30": {
+   "25": {
     "ok": true,
     "alive": true,
-    "deg": 30,
-    "settle_s": 2.926000000000145,
-    "disp_m": 0.012989650669478593,
-    "wheel_torque_peak": 3.346143452994463,
-    "hip_torque_peak": 4.077056321171149,
-    "traces": null
-   },
-   "20": {
-    "ok": true,
-    "alive": true,
-    "deg": 20,
-    "settle_s": 2.264999999999924,
-    "disp_m": 0.010236307330874326,
-    "wheel_torque_peak": 2.2830692125380176,
-    "hip_torque_peak": 3.4470363128693435,
-    "traces": null
-   },
-   "5": {
-    "ok": true,
-    "alive": true,
-    "deg": 5,
-    "settle_s": 0.1340000000000001,
-    "disp_m": 0.003326699192162516,
-    "wheel_torque_peak": 0.7191202582574353,
-    "hip_torque_peak": 2.6794814188970753,
+    "deg": 25,
+    "settle_s": 2.6160000000000414,
+    "disp_m": 0.0118809214791359,
+    "wheel_torque_peak": 2.813356996396129,
+    "hip_torque_peak": 3.7475950395434414,
     "traces": null
    },
    "10": {
@@ -86741,6 +86734,36 @@
      ]
     }
    },
+   "5": {
+    "ok": true,
+    "alive": true,
+    "deg": 5,
+    "settle_s": 0.1340000000000001,
+    "disp_m": 0.003326699192162516,
+    "wheel_torque_peak": 0.7191202582574353,
+    "hip_torque_peak": 2.6794814188970753,
+    "traces": null
+   },
+   "30": {
+    "ok": true,
+    "alive": true,
+    "deg": 30,
+    "settle_s": 2.926000000000145,
+    "disp_m": 0.012989650669478593,
+    "wheel_torque_peak": 3.346143452994463,
+    "hip_torque_peak": 4.077056321171149,
+    "traces": null
+   },
+   "20": {
+    "ok": true,
+    "alive": true,
+    "deg": 20,
+    "settle_s": 2.264999999999924,
+    "disp_m": 0.010236307330874326,
+    "wheel_torque_peak": 2.2830692125380176,
+    "hip_torque_peak": 3.4470363128693435,
+    "traces": null
+   },
    "15": {
     "ok": true,
     "alive": true,
@@ -86750,30 +86773,9 @@
     "wheel_torque_peak": 1.757384587994392,
     "hip_torque_peak": 3.1719358469704892,
     "traces": null
-   },
-   "25": {
-    "ok": true,
-    "alive": true,
-    "deg": 25,
-    "settle_s": 2.6160000000000414,
-    "disp_m": 0.0118809214791359,
-    "wheel_torque_peak": 2.813356996396129,
-    "hip_torque_peak": 3.7475950395434414,
-    "traces": null
    }
   },
   "push": {
-   "3.0": {
-    "ok": false,
-    "alive": false,
-    "frac": 3.0,
-    "force_N": 176.57999999999998,
-    "pitch_peak_deg": 57.45092384156502,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 4.153242610386797,
-    "traces": null
-   },
    "1.0": {
     "ok": true,
     "alive": true,
@@ -86785,15 +86787,26 @@
     "v_peak": 1.2406310744118105,
     "traces": null
    },
-   "0.75": {
+   "0.25": {
     "ok": true,
     "alive": true,
-    "frac": 0.75,
-    "force_N": 44.144999999999996,
-    "pitch_peak_deg": 2.3769483254674397,
-    "settle_s": 3.234000000000373,
-    "disp_m": 0.024970838251426423,
-    "v_peak": 0.9279306128932373,
+    "frac": 0.25,
+    "force_N": 14.715,
+    "pitch_peak_deg": 1.593537638752365,
+    "settle_s": 0.6549999999998732,
+    "disp_m": 0.0245839967773896,
+    "v_peak": 0.3042149879070317,
+    "traces": null
+   },
+   "3.0": {
+    "ok": false,
+    "alive": false,
+    "frac": 3.0,
+    "force_N": 176.57999999999998,
+    "pitch_peak_deg": 57.45092384156502,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 4.153242610386797,
     "traces": null
    },
    "0.5": {
@@ -96730,15 +96743,15 @@
      ]
     }
    },
-   "0.25": {
+   "0.75": {
     "ok": true,
     "alive": true,
-    "frac": 0.25,
-    "force_N": 14.715,
-    "pitch_peak_deg": 1.593537638752365,
-    "settle_s": 0.6549999999998732,
-    "disp_m": 0.0245839967773896,
-    "v_peak": 0.3042149879070317,
+    "frac": 0.75,
+    "force_N": 44.144999999999996,
+    "pitch_peak_deg": 2.3769483254674397,
+    "settle_s": 3.234000000000373,
+    "disp_m": 0.024970838251426423,
+    "v_peak": 0.9279306128932373,
     "traces": null
    },
    "1.25": {
@@ -96750,28 +96763,6 @@
     "settle_s": 3.6880000000001214,
     "disp_m": 0.020173643136820834,
     "v_peak": 1.554119285671037,
-    "traces": null
-   },
-   "1.5": {
-    "ok": true,
-    "alive": true,
-    "frac": 1.5,
-    "force_N": 88.28999999999999,
-    "pitch_peak_deg": 4.403297990877348,
-    "settle_s": 3.8200000000000482,
-    "disp_m": 0.017804670076092013,
-    "v_peak": 1.868470405995622,
-    "traces": null
-   },
-   "2.5": {
-    "ok": true,
-    "alive": true,
-    "frac": 2.5,
-    "force_N": 147.15,
-    "pitch_peak_deg": 9.066122524129154,
-    "settle_s": 4.388999999999733,
-    "disp_m": 1.4205393431118638,
-    "v_peak": 3.305601810486779,
     "traces": null
    },
    "1.75": {
@@ -96795,6 +96786,28 @@
     "disp_m": 0.16477197932019108,
     "v_peak": 2.4998686158052355,
     "traces": null
+   },
+   "1.5": {
+    "ok": true,
+    "alive": true,
+    "frac": 1.5,
+    "force_N": 88.28999999999999,
+    "pitch_peak_deg": 4.403297990877348,
+    "settle_s": 3.8200000000000482,
+    "disp_m": 0.017804670076092013,
+    "v_peak": 1.868470405995622,
+    "traces": null
+   },
+   "2.5": {
+    "ok": true,
+    "alive": true,
+    "frac": 2.5,
+    "force_N": 147.15,
+    "pitch_peak_deg": 9.066122524129154,
+    "settle_s": 4.388999999999733,
+    "disp_m": 1.4205393431118638,
+    "v_peak": 3.305601810486779,
+    "traces": null
    }
   },
   "latency": {
@@ -96808,20 +96821,15 @@
     "alive": true,
     "latency_ms": 5
    },
-   "10": {
-    "ok": true,
-    "alive": true,
-    "latency_ms": 10
+   "60": {
+    "ok": false,
+    "alive": false,
+    "latency_ms": 60
    },
    "80": {
     "ok": false,
     "alive": false,
     "latency_ms": 80
-   },
-   "60": {
-    "ok": false,
-    "alive": false,
-    "latency_ms": 60
    },
    "15": {
     "ok": true,
@@ -96832,6 +96840,11 @@
     "ok": false,
     "alive": false,
     "latency_ms": 40
+   },
+   "10": {
+    "ok": true,
+    "alive": true,
+    "latency_ms": 10
    },
    "20": {
     "ok": true,
@@ -96849,7 +96862,7 @@
    "pitch_rms_deg": 0.20551542646698656,
    "drift_m": 0.008257785013942656,
    "wheel_torque_rms": 0.0728527090517496,
-   "realtime_factor": 4.296533571176126,
+   "realtime_factor": 5.612190875989501,
    "hip_torque_rms": 2.0593337657837574
   },
   "yaw": {
@@ -103562,6 +103575,36 @@
     "disp_m": null,
     "wheel_torque_peak": 0.0,
     "hip_torque_peak": 0.0,
+    "traces": null
+   },
+   "25": {
+    "ok": true,
+    "alive": true,
+    "deg": 25,
+    "settle_s": 5.4259999999997115,
+    "disp_m": 0.008154374496018225,
+    "wheel_torque_peak": 5.0,
+    "hip_torque_peak": 3.994036465419606,
+    "traces": null
+   },
+   "5": {
+    "ok": true,
+    "alive": true,
+    "deg": 5,
+    "settle_s": 0.7169999999999763,
+    "disp_m": 0.006489018644869053,
+    "wheel_torque_peak": 1.5156978709447129,
+    "hip_torque_peak": 2.396869520171333,
+    "traces": null
+   },
+   "15": {
+    "ok": true,
+    "alive": true,
+    "deg": 15,
+    "settle_s": 2.027999999999845,
+    "disp_m": 0.014615460676644739,
+    "wheel_torque_peak": 5.0,
+    "hip_torque_peak": 3.103066592993309,
     "traces": null
    },
    "10": {
@@ -112397,26 +112440,6 @@
      ]
     }
    },
-   "5": {
-    "ok": true,
-    "alive": true,
-    "deg": 5,
-    "settle_s": 0.7169999999999763,
-    "disp_m": 0.006489018644869053,
-    "wheel_torque_peak": 1.5156978709447129,
-    "hip_torque_peak": 2.396869520171333,
-    "traces": null
-   },
-   "15": {
-    "ok": true,
-    "alive": true,
-    "deg": 15,
-    "settle_s": 2.027999999999845,
-    "disp_m": 0.014615460676644739,
-    "wheel_torque_peak": 5.0,
-    "hip_torque_peak": 3.103066592993309,
-    "traces": null
-   },
    "20": {
     "ok": true,
     "alive": true,
@@ -112425,16 +112448,6 @@
     "disp_m": 0.014001247959191184,
     "wheel_torque_peak": 5.0,
     "hip_torque_peak": 3.5891982230984136,
-    "traces": null
-   },
-   "25": {
-    "ok": true,
-    "alive": true,
-    "deg": 25,
-    "settle_s": 5.4259999999997115,
-    "disp_m": 0.008154374496018225,
-    "wheel_torque_peak": 5.0,
-    "hip_torque_peak": 3.994036465419606,
     "traces": null
    },
    "30": {
@@ -112493,17 +112506,6 @@
     "v_peak": 2.454655180649443,
     "traces": null
    },
-   "2.0": {
-    "ok": false,
-    "alive": false,
-    "frac": 2.0,
-    "force_N": 117.72,
-    "pitch_peak_deg": 57.7407707925134,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 2.6228080078721296,
-    "traces": null
-   },
    "2.5": {
     "ok": false,
     "alive": false,
@@ -112513,6 +112515,17 @@
     "settle_s": null,
     "disp_m": null,
     "v_peak": 3.241188067001506,
+    "traces": null
+   },
+   "2.0": {
+    "ok": false,
+    "alive": false,
+    "frac": 2.0,
+    "force_N": 117.72,
+    "pitch_peak_deg": 57.7407707925134,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 2.6228080078721296,
     "traces": null
    },
    "3.0": {
@@ -112532,7 +112545,7 @@
     "frac": 0.25,
     "force_N": 14.715,
     "pitch_peak_deg": 6.5451750551208745,
-    "settle_s": 7.994999999999502,
+    "settle_s": null,
     "disp_m": 0.1604124736894884,
     "v_peak": 0.4962702038363525,
     "traces": null
@@ -122484,15 +122497,15 @@
    }
   },
   "latency": {
-   "0": {
-    "ok": true,
-    "alive": true,
-    "latency_ms": 0
-   },
    "5": {
     "ok": true,
     "alive": true,
     "latency_ms": 5
+   },
+   "0": {
+    "ok": true,
+    "alive": true,
+    "latency_ms": 0
    },
    "15": {
     "ok": true,
@@ -122509,25 +122522,25 @@
     "alive": true,
     "latency_ms": 20
    },
-   "30": {
-    "ok": true,
-    "alive": true,
-    "latency_ms": 30
-   },
    "80": {
     "ok": false,
     "alive": false,
     "latency_ms": 80
    },
-   "40": {
+   "30": {
     "ok": true,
     "alive": true,
-    "latency_ms": 40
+    "latency_ms": 30
    },
    "60": {
     "ok": true,
     "alive": true,
     "latency_ms": 60
+   },
+   "40": {
+    "ok": true,
+    "alive": true,
+    "latency_ms": 40
    }
   },
   "stand": {
@@ -122535,7 +122548,7 @@
    "pitch_rms_deg": 0.7070297143166417,
    "drift_m": 0.29242223135411693,
    "wheel_torque_rms": 0.09232059752551511,
-   "realtime_factor": 4.439863491992721,
+   "realtime_factor": 5.660494306409403,
    "hip_torque_rms": 2.1252999046745966
   },
   "yaw": {
@@ -129278,6 +129291,26 @@
     "disp_m": null,
     "wheel_torque_peak": 3.0271896676466077,
     "hip_torque_peak": 2.6350828960611645,
+    "traces": null
+   },
+   "5": {
+    "ok": false,
+    "alive": true,
+    "deg": 5,
+    "settle_s": null,
+    "disp_m": null,
+    "wheel_torque_peak": 0.9695429799117781,
+    "hip_torque_peak": 2.6109326300603946,
+    "traces": null
+   },
+   "15": {
+    "ok": false,
+    "alive": true,
+    "deg": 15,
+    "settle_s": null,
+    "disp_m": null,
+    "wheel_torque_peak": 2.259421104995911,
+    "hip_torque_peak": 2.4999245980419236,
     "traces": null
    },
    "10": {
@@ -138112,40 +138145,9 @@
       -0.7204318747483786
      ]
     }
-   },
-   "5": {
-    "ok": false,
-    "alive": true,
-    "deg": 5,
-    "settle_s": null,
-    "disp_m": null,
-    "wheel_torque_peak": 0.9695429799117781,
-    "hip_torque_peak": 2.6109326300603946,
-    "traces": null
-   },
-   "15": {
-    "ok": false,
-    "alive": true,
-    "deg": 15,
-    "settle_s": null,
-    "disp_m": null,
-    "wheel_torque_peak": 2.259421104995911,
-    "hip_torque_peak": 2.4999245980419236,
-    "traces": null
    }
   },
   "push": {
-   "1.25": {
-    "ok": false,
-    "alive": false,
-    "frac": 1.25,
-    "force_N": 73.575,
-    "pitch_peak_deg": 57.525449853287014,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 1.8400541731874867,
-    "traces": null
-   },
    "1.0": {
     "ok": false,
     "alive": false,
@@ -138155,6 +138157,17 @@
     "settle_s": null,
     "disp_m": null,
     "v_peak": 1.6668157308518647,
+    "traces": null
+   },
+   "1.25": {
+    "ok": false,
+    "alive": false,
+    "frac": 1.25,
+    "force_N": 73.575,
+    "pitch_peak_deg": 57.525449853287014,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 1.8400541731874867,
     "traces": null
    },
    "0.75": {
@@ -140347,28 +140360,6 @@
      ]
     }
    },
-   "0.25": {
-    "ok": false,
-    "alive": false,
-    "frac": 0.25,
-    "force_N": 14.715,
-    "pitch_peak_deg": 57.42958689646721,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 2.7037598749143616,
-    "traces": null
-   },
-   "2.5": {
-    "ok": false,
-    "alive": false,
-    "frac": 2.5,
-    "force_N": 147.15,
-    "pitch_peak_deg": 57.841465972220256,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 3.259932613846186,
-    "traces": null
-   },
    "1.5": {
     "ok": false,
     "alive": false,
@@ -140378,17 +140369,6 @@
     "settle_s": null,
     "disp_m": null,
     "v_peak": 2.0461226468524423,
-    "traces": null
-   },
-   "2.0": {
-    "ok": false,
-    "alive": false,
-    "frac": 2.0,
-    "force_N": 117.72,
-    "pitch_peak_deg": 57.89702470489551,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 2.6441902720611,
     "traces": null
    },
    "1.75": {
@@ -140402,6 +140382,17 @@
     "v_peak": 2.332080786601665,
     "traces": null
    },
+   "2.5": {
+    "ok": false,
+    "alive": false,
+    "frac": 2.5,
+    "force_N": 147.15,
+    "pitch_peak_deg": 57.841465972220256,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 3.259932613846186,
+    "traces": null
+   },
    "3.0": {
     "ok": false,
     "alive": false,
@@ -140412,6 +140403,28 @@
     "disp_m": null,
     "v_peak": 3.856767609996423,
     "traces": null
+   },
+   "2.0": {
+    "ok": false,
+    "alive": false,
+    "frac": 2.0,
+    "force_N": 117.72,
+    "pitch_peak_deg": 57.89702470489551,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 2.6441902720611,
+    "traces": null
+   },
+   "0.25": {
+    "ok": false,
+    "alive": false,
+    "frac": 0.25,
+    "force_N": 14.715,
+    "pitch_peak_deg": 57.42958689646721,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 2.7037598749143616,
+    "traces": null
    }
   },
   "latency": {},
@@ -140420,7 +140433,7 @@
    "pitch_rms_deg": 19.576053233248864,
    "drift_m": 1.1142365075988192,
    "wheel_torque_rms": 0.5054973326346477,
-   "realtime_factor": 4.4637961580728165,
+   "realtime_factor": 5.929244546376872,
    "hip_torque_rms": 1.9681361559106756
   },
   "max_tilt_deg": 0.0,
@@ -140463,6 +140476,26 @@
     "disp_m": 0.005307129599895086,
     "wheel_torque_peak": 2.305862810719228,
     "hip_torque_peak": 2.511226065320979,
+    "traces": null
+   },
+   "20": {
+    "ok": true,
+    "alive": true,
+    "deg": 20,
+    "settle_s": 2.377999999999962,
+    "disp_m": 0.015508435542778674,
+    "wheel_torque_peak": 5.0,
+    "hip_torque_peak": 4.093227269822133,
+    "traces": null
+   },
+   "15": {
+    "ok": true,
+    "alive": true,
+    "deg": 15,
+    "settle_s": 0.5299999999999969,
+    "disp_m": 0.005025231639950687,
+    "wheel_torque_peak": 5.0,
+    "hip_torque_peak": 3.654069001607046,
     "traces": null
    },
    "10": {
@@ -149298,24 +149331,14 @@
      ]
     }
    },
-   "15": {
+   "30": {
     "ok": true,
     "alive": true,
-    "deg": 15,
-    "settle_s": 0.5299999999999969,
-    "disp_m": 0.005025231639950687,
+    "deg": 30,
+    "settle_s": 6.464999999999136,
+    "disp_m": 0.05319722282377697,
     "wheel_torque_peak": 5.0,
-    "hip_torque_peak": 3.654069001607046,
-    "traces": null
-   },
-   "20": {
-    "ok": true,
-    "alive": true,
-    "deg": 20,
-    "settle_s": 2.377999999999962,
-    "disp_m": 0.015508435542778674,
-    "wheel_torque_peak": 5.0,
-    "hip_torque_peak": 4.093227269822133,
+    "hip_torque_peak": 4.99852660919379,
     "traces": null
    },
    "25": {
@@ -149326,16 +149349,6 @@
     "disp_m": 0.0322768791850799,
     "wheel_torque_peak": 5.0,
     "hip_torque_peak": 4.510207483308767,
-    "traces": null
-   },
-   "30": {
-    "ok": true,
-    "alive": true,
-    "deg": 30,
-    "settle_s": 6.464999999999136,
-    "disp_m": 0.05319722282377697,
-    "wheel_torque_peak": 5.0,
-    "hip_torque_peak": 4.99852660919379,
     "traces": null
    }
   },
@@ -149373,17 +149386,6 @@
     "v_peak": 2.6742322491343113,
     "traces": null
    },
-   "2.0": {
-    "ok": false,
-    "alive": false,
-    "frac": 2.0,
-    "force_N": 117.72,
-    "pitch_peak_deg": 57.59802798061362,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 2.711467126639675,
-    "traces": null
-   },
    "2.5": {
     "ok": false,
     "alive": false,
@@ -149395,6 +149397,17 @@
     "v_peak": 3.237140768495949,
     "traces": null
    },
+   "2.0": {
+    "ok": false,
+    "alive": false,
+    "frac": 2.0,
+    "force_N": 117.72,
+    "pitch_peak_deg": 57.59802798061362,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 2.711467126639675,
+    "traces": null
+   },
    "3.0": {
     "ok": false,
     "alive": false,
@@ -149404,6 +149417,28 @@
     "settle_s": null,
     "disp_m": null,
     "v_peak": 3.839494846704222,
+    "traces": null
+   },
+   "0.75": {
+    "ok": false,
+    "alive": true,
+    "frac": 0.75,
+    "force_N": 44.144999999999996,
+    "pitch_peak_deg": 12.047726387057693,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 1.194837690861354,
+    "traces": null
+   },
+   "0.25": {
+    "ok": true,
+    "alive": true,
+    "frac": 0.25,
+    "force_N": 14.715,
+    "pitch_peak_deg": 4.747791756157109,
+    "settle_s": null,
+    "disp_m": 0.10577081321879278,
+    "v_peak": 0.39801716627415296,
     "traces": null
    },
    "0.5": {
@@ -159340,28 +159375,6 @@
      ]
     }
    },
-   "0.25": {
-    "ok": true,
-    "alive": true,
-    "frac": 0.25,
-    "force_N": 14.715,
-    "pitch_peak_deg": 4.747791756157109,
-    "settle_s": 7.990999999999497,
-    "disp_m": 0.10577081321879278,
-    "v_peak": 0.39801716627415296,
-    "traces": null
-   },
-   "0.75": {
-    "ok": false,
-    "alive": true,
-    "frac": 0.75,
-    "force_N": 44.144999999999996,
-    "pitch_peak_deg": 12.047726387057693,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 1.194837690861354,
-    "traces": null
-   },
    "1.0": {
     "ok": false,
     "alive": true,
@@ -159380,7 +159393,7 @@
    "pitch_rms_deg": 0.5821141253539596,
    "drift_m": 0.21415663692384404,
    "wheel_torque_rms": 0.1359803385814499,
-   "realtime_factor": 4.731661558511767,
+   "realtime_factor": 5.468912287245303,
    "hip_torque_rms": 2.124325026533963
   },
   "max_tilt_deg": 30,
@@ -159415,16 +159428,6 @@
     "hip_torque_peak": 0.0,
     "traces": null
    },
-   "25": {
-    "ok": true,
-    "alive": true,
-    "deg": 25,
-    "settle_s": 3.2690000000002595,
-    "disp_m": 0.03827510238919315,
-    "wheel_torque_peak": 5.0,
-    "hip_torque_peak": 4.81883487329695,
-    "traces": null
-   },
    "5": {
     "ok": true,
     "alive": true,
@@ -159435,14 +159438,14 @@
     "hip_torque_peak": 2.6261224818208517,
     "traces": null
    },
-   "20": {
+   "15": {
     "ok": true,
     "alive": true,
-    "deg": 20,
-    "settle_s": 2.1519999999998864,
-    "disp_m": 0.02117341574357426,
+    "deg": 15,
+    "settle_s": 0.43400000000000033,
+    "disp_m": 0.009004886531360716,
     "wheel_torque_peak": 5.0,
-    "hip_torque_peak": 4.313155195762096,
+    "hip_torque_peak": 3.926069564925895,
     "traces": null
    },
    "10": {
@@ -168278,14 +168281,14 @@
      ]
     }
    },
-   "15": {
+   "25": {
     "ok": true,
     "alive": true,
-    "deg": 15,
-    "settle_s": 0.43400000000000033,
-    "disp_m": 0.009004886531360716,
+    "deg": 25,
+    "settle_s": 3.2690000000002595,
+    "disp_m": 0.03827510238919315,
     "wheel_torque_peak": 5.0,
-    "hip_torque_peak": 3.926069564925895,
+    "hip_torque_peak": 4.81883487329695,
     "traces": null
    },
    "30": {
@@ -168296,6 +168299,16 @@
     "disp_m": 0.059866209367460226,
     "wheel_torque_peak": 5.0,
     "hip_torque_peak": 5.24467498376869,
+    "traces": null
+   },
+   "20": {
+    "ok": true,
+    "alive": true,
+    "deg": 20,
+    "settle_s": 2.1519999999998864,
+    "disp_m": 0.02117341574357426,
+    "wheel_torque_peak": 5.0,
+    "hip_torque_peak": 4.313155195762096,
     "traces": null
    }
   },
@@ -168333,17 +168346,6 @@
     "v_peak": 2.73203058543582,
     "traces": null
    },
-   "2.0": {
-    "ok": false,
-    "alive": false,
-    "frac": 2.0,
-    "force_N": 117.72,
-    "pitch_peak_deg": 57.481693221810524,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 2.8650363519992483,
-    "traces": null
-   },
    "2.5": {
     "ok": false,
     "alive": false,
@@ -168353,6 +168355,17 @@
     "settle_s": null,
     "disp_m": null,
     "v_peak": 3.2351491506784575,
+    "traces": null
+   },
+   "2.0": {
+    "ok": false,
+    "alive": false,
+    "frac": 2.0,
+    "force_N": 117.72,
+    "pitch_peak_deg": 57.481693221810524,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 2.8650363519992483,
     "traces": null
    },
    "3.0": {
@@ -168372,9 +168385,20 @@
     "frac": 0.25,
     "force_N": 14.715,
     "pitch_peak_deg": 4.002834331674366,
-    "settle_s": 7.993999999999501,
+    "settle_s": null,
     "disp_m": 0.06658858888689735,
     "v_peak": 0.3624946705530623,
+    "traces": null
+   },
+   "0.75": {
+    "ok": false,
+    "alive": true,
+    "frac": 0.75,
+    "force_N": 44.144999999999996,
+    "pitch_peak_deg": 9.6487458387131,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 1.0923477799896515,
     "traces": null
    },
    "0.5": {
@@ -178311,17 +178335,6 @@
      ]
     }
    },
-   "0.75": {
-    "ok": false,
-    "alive": true,
-    "frac": 0.75,
-    "force_N": 44.144999999999996,
-    "pitch_peak_deg": 9.6487458387131,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 1.0923477799896515,
-    "traces": null
-   },
    "1.0": {
     "ok": false,
     "alive": true,
@@ -178340,7 +178353,7 @@
    "pitch_rms_deg": 0.6691430132684159,
    "drift_m": 0.16434432002091426,
    "wheel_torque_rms": 0.17930981287538933,
-   "realtime_factor": 4.417133797063534,
+   "realtime_factor": 5.444611019247555,
    "hip_torque_rms": 2.122454231384234
   },
   "max_tilt_deg": 30,
@@ -178373,16 +178386,6 @@
     "disp_m": null,
     "wheel_torque_peak": 0.0,
     "hip_torque_peak": 0.0,
-    "traces": null
-   },
-   "5": {
-    "ok": true,
-    "alive": true,
-    "deg": 5,
-    "settle_s": 0.25500000000000017,
-    "disp_m": 0.00561401881995984,
-    "wheel_torque_peak": 5.0,
-    "hip_torque_peak": 2.9815538571995095,
     "traces": null
    },
    "10": {
@@ -187218,16 +187221,6 @@
      ]
     }
    },
-   "15": {
-    "ok": true,
-    "alive": true,
-    "deg": 15,
-    "settle_s": 0.34000000000000025,
-    "disp_m": 0.010238665968272477,
-    "wheel_torque_peak": 5.0,
-    "hip_torque_peak": 4.055638037918747,
-    "traces": null
-   },
    "20": {
     "ok": true,
     "alive": true,
@@ -187238,14 +187231,24 @@
     "hip_torque_peak": 4.484817512724737,
     "traces": null
    },
-   "25": {
+   "15": {
     "ok": true,
     "alive": true,
-    "deg": 25,
-    "settle_s": 3.5770000000003623,
-    "disp_m": 0.0404378365415914,
+    "deg": 15,
+    "settle_s": 0.34000000000000025,
+    "disp_m": 0.010238665968272477,
     "wheel_torque_peak": 5.0,
-    "hip_torque_peak": 4.897549640612943,
+    "hip_torque_peak": 4.055638037918747,
+    "traces": null
+   },
+   "5": {
+    "ok": true,
+    "alive": true,
+    "deg": 5,
+    "settle_s": 0.25500000000000017,
+    "disp_m": 0.00561401881995984,
+    "wheel_torque_peak": 5.0,
+    "hip_torque_peak": 2.9815538571995095,
     "traces": null
    },
    "30": {
@@ -187256,6 +187259,16 @@
     "disp_m": 0.05164668491180674,
     "wheel_torque_peak": 5.0,
     "hip_torque_peak": 5.24467498376869,
+    "traces": null
+   },
+   "25": {
+    "ok": true,
+    "alive": true,
+    "deg": 25,
+    "settle_s": 3.5770000000003623,
+    "disp_m": 0.0404378365415914,
+    "wheel_torque_peak": 5.0,
+    "hip_torque_peak": 4.897549640612943,
     "traces": null
    }
   },
@@ -187269,6 +187282,28 @@
     "settle_s": null,
     "disp_m": null,
     "v_peak": 2.7526370902941433,
+    "traces": null
+   },
+   "2.0": {
+    "ok": false,
+    "alive": false,
+    "frac": 2.0,
+    "force_N": 117.72,
+    "pitch_peak_deg": 57.48819726889965,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 2.916760415240426,
+    "traces": null
+   },
+   "2.5": {
+    "ok": false,
+    "alive": false,
+    "frac": 2.5,
+    "force_N": 147.15,
+    "pitch_peak_deg": 57.64724401356792,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 3.2405940402959734,
     "traces": null
    },
    "1.75": {
@@ -187293,48 +187328,15 @@
     "v_peak": 3.866597633799981,
     "traces": null
    },
-   "2.5": {
-    "ok": false,
-    "alive": false,
-    "frac": 2.5,
-    "force_N": 147.15,
-    "pitch_peak_deg": 57.64724401356792,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 3.2405940402959734,
-    "traces": null
-   },
-   "2.0": {
-    "ok": false,
-    "alive": false,
-    "frac": 2.0,
-    "force_N": 117.72,
-    "pitch_peak_deg": 57.48819726889965,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 2.916760415240426,
-    "traces": null
-   },
    "0.25": {
     "ok": true,
     "alive": true,
     "frac": 0.25,
     "force_N": 14.715,
     "pitch_peak_deg": 2.8065688970685376,
-    "settle_s": 7.995999999999503,
+    "settle_s": null,
     "disp_m": 0.026574513198767784,
     "v_peak": 0.3350416146073427,
-    "traces": null
-   },
-   "0.75": {
-    "ok": false,
-    "alive": true,
-    "frac": 0.75,
-    "force_N": 44.144999999999996,
-    "pitch_peak_deg": 6.747806546489546,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 1.01143055554203,
     "traces": null
    },
    "0.5": {
@@ -197271,17 +197273,6 @@
      ]
     }
    },
-   "1.25": {
-    "ok": false,
-    "alive": true,
-    "frac": 1.25,
-    "force_N": 73.575,
-    "pitch_peak_deg": 16.681698592965166,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 1.7411896896822459,
-    "traces": null
-   },
    "1.0": {
     "ok": false,
     "alive": true,
@@ -197292,6 +197283,28 @@
     "disp_m": null,
     "v_peak": 1.3509888857760033,
     "traces": null
+   },
+   "0.75": {
+    "ok": false,
+    "alive": true,
+    "frac": 0.75,
+    "force_N": 44.144999999999996,
+    "pitch_peak_deg": 6.747806546489546,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 1.01143055554203,
+    "traces": null
+   },
+   "1.25": {
+    "ok": false,
+    "alive": true,
+    "frac": 1.25,
+    "force_N": 73.575,
+    "pitch_peak_deg": 16.681698592965166,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 1.7411896896822459,
+    "traces": null
    }
   },
   "latency": {},
@@ -197300,7 +197313,7 @@
    "pitch_rms_deg": 0.9110797637685947,
    "drift_m": 0.042814696718077,
    "wheel_torque_rms": 0.26542164881848246,
-   "realtime_factor": 4.421914299496865,
+   "realtime_factor": 5.424164217775392,
    "hip_torque_rms": 2.119065574560719
   },
   "max_tilt_deg": 30,
@@ -197333,16 +197346,6 @@
     "disp_m": null,
     "wheel_torque_peak": 0.0,
     "hip_torque_peak": 0.0,
-    "traces": null
-   },
-   "5": {
-    "ok": true,
-    "alive": true,
-    "deg": 5,
-    "settle_s": 1.1159999999999326,
-    "disp_m": 0.06857217243416523,
-    "wheel_torque_peak": 0.24988868624973282,
-    "hip_torque_peak": 2.2478409345238566,
     "traces": null
    },
    "10": {
@@ -206188,6 +206191,16 @@
     "hip_torque_peak": 2.2129201576344397,
     "traces": null
    },
+   "5": {
+    "ok": true,
+    "alive": true,
+    "deg": 5,
+    "settle_s": 1.1159999999999326,
+    "disp_m": 0.06857217243416523,
+    "wheel_torque_peak": 0.24988868624973282,
+    "hip_torque_peak": 2.2478409345238566,
+    "traces": null
+   },
    "20": {
     "ok": true,
     "alive": true,
@@ -206196,16 +206209,6 @@
     "disp_m": 0.4153347323601998,
     "wheel_torque_peak": 0.8914720828758347,
     "hip_torque_peak": 2.26626748308073,
-    "traces": null
-   },
-   "25": {
-    "ok": true,
-    "alive": true,
-    "deg": 25,
-    "settle_s": 2.0809999999998627,
-    "disp_m": 0.6536890196159417,
-    "wheel_torque_peak": 1.002934294615001,
-    "hip_torque_peak": 2.366194573346767,
     "traces": null
    },
    "30": {
@@ -206217,31 +206220,19 @@
     "wheel_torque_peak": 1.1143461139326791,
     "hip_torque_peak": 2.5199376826962183,
     "traces": null
+   },
+   "25": {
+    "ok": true,
+    "alive": true,
+    "deg": 25,
+    "settle_s": 2.0809999999998627,
+    "disp_m": 0.6536890196159417,
+    "wheel_torque_peak": 1.002934294615001,
+    "hip_torque_peak": 2.366194573346767,
+    "traces": null
    }
   },
   "push": {
-   "1.25": {
-    "ok": false,
-    "alive": false,
-    "frac": 1.25,
-    "force_N": 73.575,
-    "pitch_peak_deg": 57.41446698450909,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 1.804603133329639,
-    "traces": null
-   },
-   "1.5": {
-    "ok": false,
-    "alive": false,
-    "frac": 1.5,
-    "force_N": 88.28999999999999,
-    "pitch_peak_deg": 57.777902139568546,
-    "settle_s": null,
-    "disp_m": null,
-    "v_peak": 2.0401247815611394,
-    "traces": null
-   },
    "1.0": {
     "ok": false,
     "alive": false,
@@ -206253,6 +206244,17 @@
     "v_peak": 1.7343759216972594,
     "traces": null
    },
+   "1.25": {
+    "ok": false,
+    "alive": false,
+    "frac": 1.25,
+    "force_N": 73.575,
+    "pitch_peak_deg": 57.41446698450909,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 1.804603133329639,
+    "traces": null
+   },
    "0.75": {
     "ok": false,
     "alive": false,
@@ -206262,6 +206264,17 @@
     "settle_s": null,
     "disp_m": null,
     "v_peak": 2.724443306744937,
+    "traces": null
+   },
+   "1.5": {
+    "ok": false,
+    "alive": false,
+    "frac": 1.5,
+    "force_N": 88.28999999999999,
+    "pitch_peak_deg": 57.777902139568546,
+    "settle_s": null,
+    "disp_m": null,
+    "v_peak": 2.0401247815611394,
     "traces": null
    },
    "2.0": {
@@ -206306,17 +206319,6 @@
     "settle_s": null,
     "disp_m": null,
     "v_peak": 3.8548358056498717,
-    "traces": null
-   },
-   "0.25": {
-    "ok": true,
-    "alive": true,
-    "frac": 0.25,
-    "force_N": 14.715,
-    "pitch_peak_deg": 6.41260015563209,
-    "settle_s": 1.4029999999999698,
-    "disp_m": 0.2867288728977309,
-    "v_peak": 0.42803409464049175,
     "traces": null
    },
    "0.5": {
@@ -216252,6 +216254,17 @@
       0.001532104656351078
      ]
     }
+   },
+   "0.25": {
+    "ok": true,
+    "alive": true,
+    "frac": 0.25,
+    "force_N": 14.715,
+    "pitch_peak_deg": 6.41260015563209,
+    "settle_s": 1.4029999999999698,
+    "disp_m": 0.2867288728977309,
+    "v_peak": 0.42803409464049175,
+    "traces": null
    }
   },
   "latency": {
@@ -216259,11 +216272,6 @@
     "ok": true,
     "alive": true,
     "latency_ms": 0
-   },
-   "15": {
-    "ok": true,
-    "alive": true,
-    "latency_ms": 15
    },
    "5": {
     "ok": true,
@@ -216274,6 +216282,11 @@
     "ok": true,
     "alive": true,
     "latency_ms": 10
+   },
+   "15": {
+    "ok": true,
+    "alive": true,
+    "latency_ms": 15
    },
    "20": {
     "ok": true,
@@ -216290,15 +216303,15 @@
     "alive": true,
     "latency_ms": 40
    },
-   "80": {
-    "ok": true,
-    "alive": true,
-    "latency_ms": 80
-   },
    "60": {
     "ok": true,
     "alive": true,
     "latency_ms": 60
+   },
+   "80": {
+    "ok": true,
+    "alive": true,
+    "latency_ms": 80
    }
   },
   "stand": {
@@ -216306,14 +216319,14 @@
    "pitch_rms_deg": 0.21997198463941284,
    "drift_m": 0.005260700106772778,
    "wheel_torque_rms": 0.019582906446721206,
-   "realtime_factor": 4.1681382509426586,
+   "realtime_factor": 4.459243185872065,
    "hip_torque_rms": 2.176376491436947
   },
   "yaw": {
    "ok": true,
-   "yaw_rate_mean": 0.9312259726010856,
+   "yaw_rate_mean": 0.9318166358989999,
    "cmd": 1.0,
-   "pitch_peak_deg": 0.9217800711238995
+   "pitch_peak_deg": 0.8892021354326571
   },
   "velocity": {
    "ok": true,

@@ -76,6 +76,7 @@ class SpineNode(Node):
         self.declare_parameter("noise", False)
         self.declare_parameter("seed", 0)
         self.declare_parameter("use_sim_contact", False)
+        self.declare_parameter("pitch_offset", "model")   # "model": subtract the model's equilibrium pitch (IMU zero), "none": raw
         self.declare_parameter("embedded_balancer", True)
         self.declare_parameter("gain_scale", 1.0)
         self.declare_parameter("observation_hz", 200.0)
@@ -106,7 +107,8 @@ class SpineNode(Node):
         cfg = Plan1Config(balancer="pid", spine_hz=spine_hz, latency_ms=float(self._param("latency_ms")),
                           noise=bool(self._param("noise")), seed=int(self._param("seed")),
                           gain_scale=float(self._param("gain_scale")),
-                          use_sim_contact=bool(self._param("use_sim_contact")), scene=scene)
+                          use_sim_contact=bool(self._param("use_sim_contact")), scene=scene,
+                          pitch_offset=str(self._param("pitch_offset")))
         self.get_logger().info(f"loading MuJoCo scene {MODELS_DIR / 'upkie' / scene}")
         self._plan = Plan1Upkie(cfg)
         self._dt = self._plan.dt

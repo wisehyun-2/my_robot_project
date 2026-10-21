@@ -98,6 +98,10 @@ class DiabloMcu:
         self.fault = False
         self.armed = armed
         self.roll_int = 0.0
+        self.est_valid = False          # becomes True after the first estimate() (arm() needs a measurement)
+        self.off_latched = False        # motors switched off after a host-link loss (disconnect_off_s)
+        self.ever_connected = False
+        self._down_refused = False
         self.est = Estimate()
         self.L_ref = Ramp(self.p.leg_rate, value=self.p.L_stand if mode == RobotMode.STAND else self.p.L_min)
         self.L_target = self.L_ref.value
@@ -114,8 +118,9 @@ class DiabloMcu:
         self.events = []
 
     def arm(self, force: bool = False) -> bool:
-        """Enable balancing; refused unless the robot is upright (or force=True)."""
-        if force or abs(self.est.pitch) < self.p.arm_pitch:
+        """Enable balancing; refused before the first measurement, while the motors are latched off after a
+        link loss, or unless the robot is upright (force=True bypasses all three)."""
+        if force or (self.est_valid and not self.off_latched and abs(self.est.pitch) < self.p.arm_pitch):
             if not self.armed:
                 self.events.append((self.t, "armed"))
             self.armed = True
@@ -136,6 +141,7 @@ class DiabloMcu:
         e.pitch, e.pitch_rate = pitch, float(gyro[1])
         e.roll, e.roll_rate = roll, float(gyro[0])
         e.yaw_rate = float((R @ gyro)[2])          # world-frame yaw rate (review B11)
+        self.est_valid = True
         servo = obs["servo"]
         for side in ("left", "right"):
             qh, qc = servo[f"{side}_hip"]["position"], servo[f"{side}_crank"]["position"]
@@ -220,7 +226,14 @@ class DiabloMcu:
         if abs(e.pitch) > p.fall_pitch and not self.fault:
             self.fault = True
             self.events.append((self.t, "FAULT: pitch"))
-        if p.disconnect_off_s > 0 and not self.link.in_control and (self.t - self.link.last_rx_time) > p.disconnect_off_s:
+        if self.link.in_control:
+            self.ever_connected = True
+            if self.off_latched:            # the host is back: allow re-arming (arm() still needs an upright robot)
+                self.off_latched = False
+                self.events.append((self.t, "host link back: motors may be re-armed"))
+        elif (p.disconnect_off_s > 0 and self.ever_connected and not self.off_latched
+              and (self.t - self.link.last_rx_time) > p.disconnect_off_s):
+            self.off_latched = True
             self.disarm("motors off: host link lost for %.1f s" % p.disconnect_off_s)
         if self.fault or not self.armed:
             # safe state (report 4.5): every joint torque-free, no leg force / feed-forward either

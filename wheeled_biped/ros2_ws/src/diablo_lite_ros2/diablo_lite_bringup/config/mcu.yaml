@@ -9,7 +9,7 @@
     noise: false                # sensor noise emulation (design report levels)
     seed: 0
     host_timeout_ms: 500.0      # host link timeout (OSDK obtain_control timeout)
-    start_mode: stand           # stand | car
+    start_mode: stand           # stand only (CAR mode needs DIABLO's auxiliary wheels, see review pass 2)
     initial_up: 0.0             # height command before the first /diablo/MotionCmd (0 = nominal height)
     gain_scale: 1.0             # Plan 3: multiplier on the wheel balancer PI gains
     leg_gain_scale: 2.0         # Plan 3: leg position gain scale
