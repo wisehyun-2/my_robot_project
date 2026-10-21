@@ -1,0 +1,248 @@
+<mujoco model="upkie">
+  <compiler angle="radian" meshdir="../upkie_description" boundmass="0.001" boundinertia="1e-07"/>
+
+  <option timestep="0.0005" impratio="10" integrator="implicitfast" cone="elliptic" noslip_iterations="2"/>
+
+  <size nkey="1"/>
+
+  <asset>
+    <mesh name="handle" file="meshes/add-ons/handle.stl"/>
+    <mesh name="qdd100_stator" file="meshes/mjbots/qdd100_stator.stl"/>
+    <mesh name="qdd100_rotor" file="meshes/mjbots/qdd100_rotor.stl"/>
+    <mesh name="qdd100_horn" file="meshes/mjbots/qdd100_horn.stl"/>
+    <mesh name="knee_stator" file="meshes/knee_stator.stl"/>
+    <mesh name="ankle_stator" file="meshes/ankle_stator.stl"/>
+    <mesh name="mj5208_stator" file="meshes/mjbots/mj5208_stator.stl"/>
+    <mesh name="mj5208_rotor" file="meshes/mjbots/mj5208_rotor.stl"/>
+    <mesh name="wheel_hub" file="meshes/wheel_hub.stl"/>
+    <mesh name="wheel_tire" file="meshes/wheel_tire/wheel_tire.stl"/>
+  </asset>
+
+  <worldbody>
+    <body name="base">
+      <inertial pos="0 0 0" mass="0.001" diaginertia="1e-07 1e-07 1e-07"/>
+      <joint name="base_freejoint" type="free"/>
+      <geom size="0.0001 0.0001 0.0001" type="box" contype="0" conaffinity="0" group="2" density="0"/>
+      <site name="base"/>
+      <body name="torso" pos="0 0 -0.1">
+        <inertial pos="0 0 0" mass="1" diaginertia="0.00761667 0.00651042 0.00371042"/>
+        <geom size="0.0625 0.085 0.125" type="box" contype="0" conaffinity="0" group="2" rgba="0.93 0.64 0.52 0.8" density="0"/>
+        <geom size="0.0625 0.085 0.125" type="box" group="3" rgba="0.93 0.64 0.52 0.8"/>
+        <body name="imu" quat="0 0 1 0">
+          <inertial pos="0 0 0" mass="0.001" diaginertia="1e-07 1e-07 1e-07"/>
+          <geom size="0.0001 0.0001 0.0001" type="box" contype="0" conaffinity="0" group="2" density="0"/>
+          <site name="imu"/>
+        </body>
+        <body name="battery" pos="-0.04 0 0" quat="0.5 0.5 0.5 0.5">
+          <inertial pos="0 0 0" quat="0 0.707107 0 0.707107" mass="0.8" diaginertia="0.00149173 0.00132833 0.000566733"/>
+          <geom size="0.065 0.037 0.0275" type="box" contype="0" conaffinity="0" group="2" rgba="0.3 0.3 0.3 1" density="0"/>
+          <geom size="0.065 0.037 0.0275" type="box" group="3" rgba="0.3 0.3 0.3 1"/>
+        </body>
+        <body name="handle" pos="0 0 0.135" quat="0.707107 0 0 -0.707107">
+          <inertial pos="0 0 0.01" quat="0 0.707107 0 0.707107" mass="0.0525" diaginertia="8.44375e-05 7e-05 2.84375e-05"/>
+          <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.93 0.64 0.52 1" density="0" mesh="handle"/>
+          <geom size="0.06 0.035 0.02" pos="0 0 0.01" type="box" group="3" rgba="0.93 0.64 0.52 1"/>
+        </body>
+        <body name="left_hip_qdd100_stator" pos="0 0.085 -0.064" quat="0.707107 -0.707107 0 0">
+          <inertial pos="0 0 0.015" quat="0.5 0.5 -0.5 0.5" mass="0.47" diaginertia="0.0005875 0.000329 0.000329"/>
+          <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.1 0.1 0.1 1" density="0" mesh="qdd100_stator"/>
+          <geom size="0.05 0.015" pos="0 0 0.015" type="cylinder" group="3" rgba="0.1 0.1 0.1 1"/>
+          <body name="left_hip_qdd100_rotor" pos="0 0 0.0292">
+            <inertial pos="0 0 -0.0025" quat="0.5 0.5 -0.5 0.5" mass="0.015" diaginertia="3.9675e-06 2.015e-06 2.015e-06"/>
+            <joint name="left_hip" range="-1.26 1.26" actuatorfrcrange="-16 16" armature="0.005" damping="0.02" frictionloss="0.1" axis="0 0 -1"/>
+            <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.1 0.1 0.1 1" density="0" mesh="qdd100_rotor"/>
+            <geom size="0.023 0.0025" pos="0 0 -0.0025" type="cylinder" group="3" rgba="0.1 0.1 0.1 1"/>
+            <body name="left_hip_horn" quat="0.707107 0 0 0.707107">
+              <inertial pos="0 0 0.025" quat="0.5 0.5 0.5 0.5" mass="0.05267" diaginertia="4.37819e-05 4.37819e-05 1.64594e-05"/>
+              <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.1 0.1 0.1 1" density="0" mesh="qdd100_horn"/>
+              <geom size="0.025 0.045" pos="0 0 0.025" quat="0.707107 0 0.707107 0" type="cylinder" group="3" rgba="0.1 0.1 0.1 1"/>
+            </body>
+            <body name="left_femur" pos="0 0.07 0.025" quat="0.707107 0.707107 0 0">
+              <inertial pos="0 0 0" mass="0.056" diaginertia="5.17067e-06 5.17067e-06 4.032e-06"/>
+              <geom size="0.011 0.125" type="cylinder" contype="0" conaffinity="0" group="2" rgba="1 0.77 0.48 1" density="0"/>
+              <geom size="0.012 0.13" type="cylinder" group="3" rgba="1 0.77 0.48 1"/>
+              <body name="left_knee_stator" pos="0 0.042 -0.098" quat="0.707107 0 0 -0.707107">
+                <inertial pos="0.03 0 0" mass="0.09874" diaginertia="0.000123425 9.13345e-05 9.13345e-05"/>
+                <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.93 0.64 0.52 1" density="0" mesh="knee_stator"/>
+                <geom size="0.05 0.03" pos="0.03 0 0" quat="0.707107 0 0.707107 0" type="cylinder" group="3" rgba="0.93 0.64 0.52 1"/>
+                <body name="left_knee_qdd100_stator" quat="0.5 -0.5 -0.5 0.5">
+                  <inertial pos="0 0 0.015" quat="0.5 0.5 -0.5 0.5" mass="0.47" diaginertia="0.0005875 0.000329 0.000329"/>
+                  <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.1 0.1 0.1 1" density="0" mesh="qdd100_stator"/>
+                  <geom size="0.05 0.015" pos="0 0 0.015" type="cylinder" group="3" rgba="0.1 0.1 0.1 1"/>
+                  <body name="left_knee_qdd100_rotor" pos="0 0 0.0292">
+                    <inertial pos="0 0 -0.0025" quat="0.5 0.5 -0.5 0.5" mass="0.015" diaginertia="3.9675e-06 2.015e-06 2.015e-06"/>
+                    <joint name="left_knee" range="-2.51 2.51" actuatorfrcrange="-16 16" armature="0.005" damping="0.02" frictionloss="0.1" axis="0 0 -1"/>
+                    <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.1 0.1 0.1 1" density="0" mesh="qdd100_rotor"/>
+                    <geom size="0.023 0.0025" pos="0 0 -0.0025" type="cylinder" group="3" rgba="0.1 0.1 0.1 1"/>
+                    <body name="left_knee_horn" quat="0.707107 0 0 0.707107">
+                      <inertial pos="0 0 0.025" quat="0.5 0.5 0.5 0.5" mass="0.05267" diaginertia="4.37819e-05 4.37819e-05 1.64594e-05"/>
+                      <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.93 0.64 0.52 1" density="0" mesh="qdd100_horn"/>
+                      <geom size="0.025 0.045" pos="0 0 0.025" quat="0.707107 0 0.707107 0" type="cylinder" group="3" rgba="0.93 0.64 0.52 1"/>
+                    </body>
+                    <body name="left_tibia" pos="0 0.07 0.025" quat="0 0 0.707107 -0.707107">
+                      <inertial pos="0 0 0" mass="0.056" diaginertia="5.17067e-06 5.17067e-06 4.032e-06"/>
+                      <geom size="0.011 0.125" type="cylinder" contype="0" conaffinity="0" group="2" rgba="1 0.77 0.48 1" density="0"/>
+                      <geom size="0.012 0.13" type="cylinder" group="3" rgba="1 0.77 0.48 1"/>
+                      <body name="left_ankle_base" pos="0 0.034 -0.105" quat="0.707107 0.707107 0 0">
+                        <inertial pos="0 0.002 0.0275" quat="0 0.707107 0 0.707107" mass="0.07863" diaginertia="8.57591e-05 7.6009e-05 5.08474e-05"/>
+                        <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.65 0.76 0.91 1" density="0" mesh="ankle_stator"/>
+                        <geom size="0.046 0.034 0.028" pos="0 0.002 0.0275" type="box" group="3" rgba="0.65 0.76 0.91 1"/>
+                        <body name="left_ankle_plate" pos="0 0 -0.0015">
+                          <inertial pos="0 0 0" quat="0 0.707107 0 0.707107" mass="0.02" diaginertia="1.70267e-05 1.35267e-05 3.55333e-06"/>
+                          <geom size="0.04 0.0225 0.0015" type="box" contype="0" conaffinity="0" group="2" rgba="0.8 0.8 0.8 1" density="0"/>
+                          <geom size="0.045 0.023 0.002" type="box" group="3" rgba="0.8 0.8 0.8 1"/>
+                          <body name="left_ankle_mj5208_stator" pos="0 0 -0.0015" quat="0 1 0 0">
+                            <inertial pos="0 0 0.01" quat="0.5 0.5 -0.5 0.5" mass="0.1721" diaginertia="7.7445e-05 4.33692e-05 4.33692e-05"/>
+                            <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.22 0.22 0.25 1" density="0" mesh="mj5208_stator"/>
+                            <geom size="0.03 0.009" pos="0 0 0.01" type="cylinder" group="3" rgba="0.22 0.22 0.25 1"/>
+                            <body name="left_anchor" pos="0 0.0545 0.05" quat="0 0 0.707107 -0.707107">
+                              <inertial pos="0 0 0" mass="0.001" diaginertia="1e-07 1e-07 1e-07"/>
+                              <geom size="0.0001 0.0001 0.0001" type="box" contype="0" conaffinity="0" group="2" density="0"/>
+                            </body>
+                            <body name="left_ankle_mj5208_rotor">
+                              <inertial pos="0 0 0.015" quat="0.5 0.5 -0.5 0.5" mass="0.05" diaginertia="2.89e-05 1.55167e-05 1.55167e-05"/>
+                              <joint name="left_wheel" actuatorfrcrange="-1.7 1.7" armature="0.0003" damping="0.001" frictionloss="0.02" axis="0 0 -1"/>
+                              <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.5 0.55 0.6 1" density="0" mesh="mj5208_rotor"/>
+                              <geom size="0.034 0.008" pos="0 0 0.015" type="cylinder" group="3" rgba="0.5 0.55 0.6 1"/>
+                              <body name="left_wheel_hub" pos="0 0 0.0251">
+                                <inertial pos="0 0 0.0125" quat="0.5 0.5 -0.5 0.5" mass="0.0454" diaginertia="3.45267e-05 1.96279e-05 1.96279e-05"/>
+                                <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.93 0.64 0.52 1" density="0" mesh="wheel_hub"/>
+                                <geom size="0.039 0.0125" pos="0 0 0.0125" type="cylinder" group="3" rgba="0.93 0.64 0.52 1"/>
+                                <body name="left_wheel_tire" pos="0 0 0.0209">
+                                  <inertial pos="0 0 0" quat="0.5 0.5 -0.5 0.5" mass="0.08715" diaginertia="0.000108938 6.60888e-05 6.60888e-05"/>
+                                  <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.3 0.3 0.3 1" density="0" mesh="wheel_tire"/>
+                                  <geom name="left_tire" size="0.05 0.02" type="cylinder" group="3" priority="1" rgba="0.3 0.3 0.3 1"/>
+                                  <body name="left_contact" pos="0 0.047 0" quat="0.707107 0.707107 0 0">
+                                    <inertial pos="0 0 0" mass="0.001" diaginertia="1e-07 1e-07 1e-07"/>
+                                    <geom size="0.0001 0.0001 0.0001" type="box" contype="0" conaffinity="0" group="2" density="0"/>
+                                  </body>
+                                  <body name="left_wheel_center" quat="0 0 0.707107 -0.707107">
+                                    <inertial pos="0 0 0" mass="0.001" diaginertia="1e-07 1e-07 1e-07"/>
+                                    <geom size="0.0001 0.0001 0.0001" type="box" contype="0" conaffinity="0" group="2" density="0"/>
+                                  </body>
+                                </body>
+                              </body>
+                            </body>
+                          </body>
+                        </body>
+                      </body>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+        <body name="right_hip_qdd100_stator" pos="0 -0.085 -0.064" quat="0 0 0.707107 -0.707107">
+          <inertial pos="0 0 0.015" quat="0.5 0.5 -0.5 0.5" mass="0.47" diaginertia="0.0005875 0.000329 0.000329"/>
+          <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.1 0.1 0.1 1" density="0" mesh="qdd100_stator"/>
+          <geom size="0.05 0.015" pos="0 0 0.015" type="cylinder" group="3" rgba="0.1 0.1 0.1 1"/>
+          <body name="right_hip_qdd100_rotor" pos="0 0 0.0292">
+            <inertial pos="0 0 -0.0025" quat="0.5 0.5 -0.5 0.5" mass="0.015" diaginertia="3.9675e-06 2.015e-06 2.015e-06"/>
+            <joint name="right_hip" range="-1.26 1.26" actuatorfrcrange="-16 16" armature="0.005" damping="0.02" frictionloss="0.1" axis="0 0 -1"/>
+            <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.1 0.1 0.1 1" density="0" mesh="qdd100_rotor"/>
+            <geom size="0.023 0.0025" pos="0 0 -0.0025" type="cylinder" group="3" rgba="0.1 0.1 0.1 1"/>
+            <body name="right_hip_horn" quat="0.707107 0 0 0.707107">
+              <inertial pos="0 0 0.025" quat="0.5 0.5 0.5 0.5" mass="0.05267" diaginertia="4.37819e-05 4.37819e-05 1.64594e-05"/>
+              <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.1 0.1 0.1 1" density="0" mesh="qdd100_horn"/>
+              <geom size="0.025 0.045" pos="0 0 0.025" quat="0.707107 0 0.707107 0" type="cylinder" group="3" rgba="0.1 0.1 0.1 1"/>
+            </body>
+            <body name="right_femur" pos="0 0.07 0.025" quat="0.707107 0.707107 0 0">
+              <inertial pos="0 0 0" mass="0.056" diaginertia="5.17067e-06 5.17067e-06 4.032e-06"/>
+              <geom size="0.011 0.125" type="cylinder" contype="0" conaffinity="0" group="2" rgba="1 0.77 0.48 1" density="0"/>
+              <geom size="0.012 0.13" type="cylinder" group="3" rgba="1 0.77 0.48 1"/>
+              <body name="right_knee_stator" pos="0 0.042 -0.098" quat="0.707107 0 0 -0.707107">
+                <inertial pos="0.03 0 0" mass="0.09874" diaginertia="0.000123425 9.13345e-05 9.13345e-05"/>
+                <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.93 0.64 0.52 1" density="0" mesh="knee_stator"/>
+                <geom size="0.05 0.03" pos="0.03 0 0" quat="0.707107 0 0.707107 0" type="cylinder" group="3" rgba="0.93 0.64 0.52 1"/>
+                <body name="right_knee_qdd100_stator" quat="0.5 -0.5 -0.5 0.5">
+                  <inertial pos="0 0 0.015" quat="0.5 0.5 -0.5 0.5" mass="0.47" diaginertia="0.0005875 0.000329 0.000329"/>
+                  <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.1 0.1 0.1 1" density="0" mesh="qdd100_stator"/>
+                  <geom size="0.05 0.015" pos="0 0 0.015" type="cylinder" group="3" rgba="0.1 0.1 0.1 1"/>
+                  <body name="right_knee_qdd100_rotor" pos="0 0 0.0292">
+                    <inertial pos="0 0 -0.0025" quat="0.5 0.5 -0.5 0.5" mass="0.015" diaginertia="3.9675e-06 2.015e-06 2.015e-06"/>
+                    <joint name="right_knee" range="-2.51 2.51" actuatorfrcrange="-16 16" armature="0.005" damping="0.02" frictionloss="0.1" axis="0 0 -1"/>
+                    <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.1 0.1 0.1 1" density="0" mesh="qdd100_rotor"/>
+                    <geom size="0.023 0.0025" pos="0 0 -0.0025" type="cylinder" group="3" rgba="0.1 0.1 0.1 1"/>
+                    <body name="right_knee_horn" quat="0.707107 0 0 0.707107">
+                      <inertial pos="0 0 0.025" quat="0.5 0.5 0.5 0.5" mass="0.05267" diaginertia="4.37819e-05 4.37819e-05 1.64594e-05"/>
+                      <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.93 0.64 0.52 1" density="0" mesh="qdd100_horn"/>
+                      <geom size="0.025 0.045" pos="0 0 0.025" quat="0.707107 0 0.707107 0" type="cylinder" group="3" rgba="0.93 0.64 0.52 1"/>
+                    </body>
+                    <body name="right_tibia" pos="0 0.07 0.025" quat="0 0 0.707107 -0.707107">
+                      <inertial pos="0 0 0" mass="0.056" diaginertia="5.17067e-06 5.17067e-06 4.032e-06"/>
+                      <geom size="0.011 0.125" type="cylinder" contype="0" conaffinity="0" group="2" rgba="1 0.77 0.48 1" density="0"/>
+                      <geom size="0.012 0.13" type="cylinder" group="3" rgba="1 0.77 0.48 1"/>
+                      <body name="right_ankle_base" pos="0 0.034 -0.105" quat="0.707107 0.707107 0 0">
+                        <inertial pos="0 0.002 0.0275" quat="0 0.707107 0 0.707107" mass="0.07863" diaginertia="8.57591e-05 7.6009e-05 5.08474e-05"/>
+                        <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.65 0.76 0.91 1" density="0" mesh="ankle_stator"/>
+                        <geom size="0.046 0.034 0.028" pos="0 0.002 0.0275" type="box" group="3" rgba="0.65 0.76 0.91 1"/>
+                        <body name="right_ankle_plate" pos="0 0 -0.0015">
+                          <inertial pos="0 0 0" quat="0 0.707107 0 0.707107" mass="0.02" diaginertia="1.70267e-05 1.35267e-05 3.55333e-06"/>
+                          <geom size="0.04 0.0225 0.0015" type="box" contype="0" conaffinity="0" group="2" rgba="0.8 0.8 0.8 1" density="0"/>
+                          <geom size="0.045 0.023 0.002" type="box" group="3" rgba="0.8 0.8 0.8 1"/>
+                          <body name="right_ankle_mj5208_stator" pos="0 0 -0.0015" quat="0 1 0 0">
+                            <inertial pos="0 0 0.01" quat="0.5 0.5 -0.5 0.5" mass="0.1721" diaginertia="7.7445e-05 4.33692e-05 4.33692e-05"/>
+                            <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.22 0.22 0.25 1" density="0" mesh="mj5208_stator"/>
+                            <geom size="0.03 0.009" pos="0 0 0.01" type="cylinder" group="3" rgba="0.22 0.22 0.25 1"/>
+                            <body name="right_anchor" pos="0 0.0545 0.048" quat="0.707107 0.707107 0 0">
+                              <inertial pos="0 0 0" mass="0.001" diaginertia="1e-07 1e-07 1e-07"/>
+                              <geom size="0.0001 0.0001 0.0001" type="box" contype="0" conaffinity="0" group="2" density="0"/>
+                            </body>
+                            <body name="right_ankle_mj5208_rotor">
+                              <inertial pos="0 0 0.015" quat="0.5 0.5 -0.5 0.5" mass="0.05" diaginertia="2.89e-05 1.55167e-05 1.55167e-05"/>
+                              <joint name="right_wheel" actuatorfrcrange="-1.7 1.7" armature="0.0003" damping="0.001" frictionloss="0.02" axis="0 0 -1"/>
+                              <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.5 0.55 0.6 1" density="0" mesh="mj5208_rotor"/>
+                              <geom size="0.034 0.008" pos="0 0 0.015" type="cylinder" group="3" rgba="0.5 0.55 0.6 1"/>
+                              <body name="right_wheel_hub" pos="0 0 0.0251">
+                                <inertial pos="0 0 0.0125" quat="0.5 0.5 -0.5 0.5" mass="0.0454" diaginertia="3.45267e-05 1.96279e-05 1.96279e-05"/>
+                                <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.93 0.64 0.52 1" density="0" mesh="wheel_hub"/>
+                                <geom size="0.039 0.0125" pos="0 0 0.0125" type="cylinder" group="3" rgba="0.93 0.64 0.52 1"/>
+                                <body name="right_wheel_tire" pos="0 0 0.0209">
+                                  <inertial pos="0 0 0" quat="0.5 0.5 -0.5 0.5" mass="0.08715" diaginertia="0.000108938 6.60888e-05 6.60888e-05"/>
+                                  <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.3 0.3 0.3 1" density="0" mesh="wheel_tire"/>
+                                  <geom name="right_tire" size="0.05 0.02" type="cylinder" group="3" priority="1" rgba="0.3 0.3 0.3 1"/>
+                                  <body name="right_contact" pos="0 0.047 0" quat="0.707107 0.707107 0 0">
+                                    <inertial pos="0 0 0" mass="0.001" diaginertia="1e-07 1e-07 1e-07"/>
+                                    <geom size="0.0001 0.0001 0.0001" type="box" contype="0" conaffinity="0" group="2" density="0"/>
+                                  </body>
+                                  <body name="right_wheel_center" quat="0 0 0.707107 -0.707107">
+                                    <inertial pos="0 0 0" mass="0.001" diaginertia="1e-07 1e-07 1e-07"/>
+                                    <geom size="0.0001 0.0001 0.0001" type="box" contype="0" conaffinity="0" group="2" density="0"/>
+                                  </body>
+                                </body>
+                              </body>
+                            </body>
+                          </body>
+                        </body>
+                      </body>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <general name="left_hip" joint="left_hip" ctrlrange="-16 16" ctrllimited="true"/>
+    <general name="left_knee" joint="left_knee" ctrlrange="-16 16" ctrllimited="true"/>
+    <general name="left_wheel" joint="left_wheel" ctrlrange="-1.7 1.7" ctrllimited="true"/>
+    <general name="right_hip" joint="right_hip" ctrlrange="-16 16" ctrllimited="true"/>
+    <general name="right_knee" joint="right_knee" ctrlrange="-16 16" ctrllimited="true"/>
+    <general name="right_wheel" joint="right_wheel" ctrlrange="-1.7 1.7" ctrllimited="true"/>
+  </actuator>
+
+  <sensor>
+    <framequat objtype="site" objname="base" name="imu_quat"/>
+    <gyro site="base" name="imu_gyro"/>
+    <accelerometer site="base" name="imu_accel"/>
+  </sensor>
+
+  <keyframe>
+    <key name="stand" qpos="0 0 0.557 1 0 0 0 0 0 0 0 0 0"/>
+  </keyframe>
+</mujoco>

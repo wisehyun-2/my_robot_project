@@ -1,0 +1,41 @@
+{
+ "L1": 0.14,
+ "L2": 0.14,
+ "Lc": 0.09,
+ "Lr": 0.14,
+ "rod_attach": 0.09,
+ "theta1_nom": -0.7853981633974483,
+ "theta0_nom": 0.7853981633974483,
+ "wheel_radius": 0.065,
+ "wheel_width": 0.03,
+ "hip_y": 0.14,
+ "wheel_y": 0.19,
+ "m_torso": 2.0,
+ "m_motor": 0.45,
+ "m_thigh": 0.25,
+ "m_shank": 0.25,
+ "m_crank": 0.05,
+ "m_rod": 0.05,
+ "m_wheel": 0.5,
+ "torso_size": [
+  0.1,
+  0.11,
+  0.09
+ ],
+ "torso_z": 0.1,
+ "imu_z": 0.05,
+ "tau_hip": 12.0,
+ "tau_wheel": 5.0,
+ "hip_range": [
+  -1.2,
+  1.0
+ ],
+ "crank_range": [
+  -1.0,
+  1.2
+ ],
+ "armature_hip": 0.002,
+ "armature_wheel": 0.0004,
+ "friction_hip": 0.05,
+ "friction_wheel": 0.02
+}

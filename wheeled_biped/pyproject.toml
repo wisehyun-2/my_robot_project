@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wbr"
+version = "0.1.0"
+description = "Wheeled biped robot (6-motor) controllers, MuJoCo simulation and ROS2-independent core for plans 1-3"
+requires-python = ">=3.10"
+dependencies = [
+  "mujoco>=3.2", "numpy", "scipy", "sympy", "pyyaml", "matplotlib",
+  "imageio", "imageio-ffmpeg", "qpsolvers", "qpmpc", "osqp", "daqp",
+]
+
+[tool.setuptools.packages.find]
+include = ["wbr*"]

@@ -1,0 +1,47 @@
+{
+ "plan1_pid": {
+  "alive": true,
+  "pitch_rms_deg": 0.4239668173881068,
+  "pitch_max_deg": 2.1996265212568957,
+  "drift_m": 0.20778605314329116,
+  "y_drift_m": 1.242305279458852e-05,
+  "wheel_torque_rms": 0.1009896164545607,
+  "wall_s": 7.5
+ },
+ "plan1_mpc": {
+  "alive": true,
+  "pitch_rms_deg": 0.32905782705032804,
+  "pitch_max_deg": 1.1767402722287357,
+  "drift_m": 2.0554544334129345,
+  "y_drift_m": 0.0015089523032371368,
+  "wheel_torque_rms": 0.021008312434640092,
+  "wall_s": 9.4
+ },
+ "plan2_lqi6": {
+  "alive": true,
+  "pitch_rms_deg": 0.20987910122145523,
+  "pitch_max_deg": 0.952492992568634,
+  "drift_m": 0.020220129961528915,
+  "y_drift_m": 3.319666322257931e-05,
+  "wheel_torque_rms": 0.07570675091950888,
+  "wall_s": 13.9
+ },
+ "plan3_pid": {
+  "alive": true,
+  "pitch_rms_deg": 0.49457238289503264,
+  "pitch_max_deg": 4.600295509271667,
+  "drift_m": 0.015673317677355462,
+  "y_drift_m": 2.6931061300189516e-06,
+  "wheel_torque_rms": 0.09061090350095127,
+  "wall_s": 13.5
+ },
+ "plan3_mpc": {
+  "alive": true,
+  "pitch_rms_deg": 0.21195294010438737,
+  "pitch_max_deg": 0.913384049593572,
+  "drift_m": 0.31298668697295506,
+  "y_drift_m": 0.0016879810121328152,
+  "wheel_torque_rms": 0.019534699512476772,
+  "wall_s": 14.3
+ }
+}

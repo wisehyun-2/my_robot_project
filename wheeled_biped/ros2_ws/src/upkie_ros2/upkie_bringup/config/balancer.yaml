@@ -1,0 +1,12 @@
+# Parameters of upkie_balancer/balancer_node (Plan 1, embedded:=false).
+/**:
+  ros__parameters:
+    balancer: pid               # pid | mpc (overridden by the `balancer` launch argument)
+    observation_hz: 200.0       # must match spine_node observation_hz (or spine_hz with publish_every_cycle)
+    mpc_hz: 200.0               # MPC rate (decimated from observation_hz)
+    gain_scale: 1.0             # multiplier on the four PI gains of the wheel balancer
+    mpc_leg_length: 0.58        # wheeled inverted pendulum length of the MPC model [m]
+    left_wheeled: true          # +left wheel velocity rolls forward (spine_node logs the model's signs at start)
+    cmd_vel_timeout_ms: 500.0   # zero targets after this silence (0 = hold forever)
+    yaw_sign: -1.0              # /cmd_vel angular.z counter-clockwise positive (upkie's own convention is clockwise)
+    reset_jump_m: 0.1           # odometry jump that re-initialises the balancer after a spine reset

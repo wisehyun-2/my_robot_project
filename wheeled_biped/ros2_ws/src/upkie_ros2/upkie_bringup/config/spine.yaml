@@ -1,0 +1,24 @@
+# Parameters of upkie_spine/spine_node (Plan 1).
+# Numbers declared as float in the node must stay floats here (1000.0, not 1000).
+/**:
+  ros__parameters:
+    spine_hz: 1000.0            # control / simulation loop rate [Hz]
+    # scene: ""                 # MuJoCo scene; empty or absent = wbr.MODELS_DIR/upkie/scene.xml
+                                # (a bare file name is taken relative to wbr.MODELS_DIR/upkie)
+    latency_ms: 0.0             # observation delay emulation [ms]
+    noise: false                # sensor noise emulation (design report levels)
+    seed: 0
+    use_sim_contact: false      # replace the apparent-inertia contact observer by ground truth
+                                # (sim.launch.py forces true for embedded:=false balancer:=mpc)
+    embedded_balancer: true     # overridden by the `embedded` launch argument
+    gain_scale: 1.0             # multiplier on the embedded WheelBalancer PI gains
+    observation_hz: 200.0       # /upkie/observation rate (decimated from spine_hz)
+    publish_every_cycle: false  # also publish /upkie/observation at every spine cycle
+    imu_hz: 200.0               # /imu/data rate
+    joint_state_hz: 50.0        # /joint_states and odom->base TF rate
+    command_timeout_ms: 100.0   # external balancer watchdog: zero torque after this silence
+    cmd_vel_timeout_ms: 500.0   # embedded balancer: zero targets after this silence (0 = hold forever)
+    publish_tf: true
+    odom_frame: odom
+    base_frame: base
+    imu_frame: base             # the IMU sensors of the MuJoCo model sit on the base site

@@ -1,0 +1,25 @@
+# Parameters of diablo_lite_mcu/mcu_node (Plans 2 and 3).
+# Numbers declared as float in the node must stay floats here (1000.0, not 1000).
+/**:
+  ros__parameters:
+    balancer: lqi6              # lqi6 | upkie_pid | upkie_mpc (overridden by the `balancer` launch argument)
+    mcu_hz: 1000.0              # MCU / simulation loop rate [Hz]
+    scene: scene.xml            # file in wbr.MODELS_DIR/diablo_lite, or an absolute path
+    latency_ms: 0.0             # observation delay emulation [ms]
+    noise: false                # sensor noise emulation (design report levels)
+    seed: 0
+    host_timeout_ms: 500.0      # host link timeout (OSDK obtain_control timeout)
+    start_mode: stand           # stand | car
+    initial_up: 0.0             # height command before the first /diablo/MotionCmd (0 = nominal height)
+    gain_scale: 1.0             # Plan 3: multiplier on the wheel balancer PI gains
+    leg_gain_scale: 2.0         # Plan 3: leg position gain scale
+    mpc_leg_length: 0.30        # Plan 3 MPC: pendulum length [m]
+    use_sim_contact: false      # Plan 3: ground-truth wheel contact instead of the observer
+    imu_hz: 50.0                # /diablo/sensor/Imu and /diablo/sensor/ImuEuler
+    motors_hz: 50.0             # /diablo/sensor/Motors
+    status_hz: 10.0             # /diablo/sensor/Body_state
+    joint_state_hz: 50.0        # /joint_states and odom->base_link TF
+    publish_tf: true
+    odom_frame: odom
+    base_frame: base_link
+    sensor_frame_id: imu_link   # frame_id of the DIABLO sensor topics (DIABLO itself uses diablo_robot)

@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<robot name="diablo_lite">
+  <material name="grey"><color rgba="0.75 0.75 0.78 1"/></material>
+  <material name="blue"><color rgba="0.3 0.45 0.8 1"/></material>
+  <material name="dark"><color rgba="0.15 0.15 0.15 1"/></material>
+  <link name="base_link">
+    <inertial><origin xyz="0 0 0.0526"/><mass value="3.8"/>
+      <inertia ixx="4.560e-02" ixy="0" ixz="0" iyy="4.560e-02" iyz="0" izz="5.700e-02"/></inertial>
+    <visual><origin xyz="0 0 0.1"/><geometry><box size="0.2 0.22 0.18"/></geometry><material name="blue"/></visual>
+    <collision><origin xyz="0 0 0.1"/><geometry><box size="0.2 0.22 0.18"/></geometry></collision>
+  </link>
+  <link name="imu_link"/>
+  <joint name="imu_joint" type="fixed"><parent link="base_link"/><child link="imu_link"/><origin xyz="0 0 0.05"/></joint>
+  <link name="left_thigh"><inertial><origin xyz="0 0 -0.0700"/><mass value="0.25"/><inertia ixx="4.173e-04" ixy="0" ixz="0" iyy="4.173e-04" iyz="0" izz="1.800e-05"/></inertial><visual><origin xyz="0 0 -0.0700"/><geometry><cylinder radius="0.012" length="0.14"/></geometry><material name="grey"/></visual></link>
+  <joint name="left_hip" type="revolute"><parent link="base_link"/><child link="left_thigh"/>
+    <origin xyz="0 0.1400 0" rpy="0 -0.785398 0"/><axis xyz="0 1 0"/>
+    <limit lower="-1.2" upper="1.0" effort="12.0" velocity="30"/></joint>
+  <link name="left_shank"><inertial><origin xyz="0 0 -0.0700"/><mass value="0.25"/><inertia ixx="4.173e-04" ixy="0" ixz="0" iyy="4.173e-04" iyz="0" izz="1.800e-05"/></inertial><visual><origin xyz="0 0 -0.0700"/><geometry><cylinder radius="0.012" length="0.14"/></geometry><material name="grey"/></visual></link>
+  <joint name="left_knee" type="revolute"><parent link="left_thigh"/><child link="left_shank"/>
+    <origin xyz="0 0 -0.1400" rpy="0 1.570796 0"/><axis xyz="0 1 0"/>
+    <limit lower="-2.5" upper="2.5" effort="0" velocity="30"/></joint>
+  <link name="left_wheel">
+    <inertial><mass value="0.5"/><inertia ixx="5.656e-04" ixy="0" ixz="0" iyy="1.056e-03" iyz="0" izz="5.656e-04"/></inertial>
+    <visual><origin rpy="1.5707963 0 0"/><geometry><cylinder radius="0.065" length="0.03"/></geometry><material name="dark"/></visual>
+    <collision><origin rpy="1.5707963 0 0"/><geometry><cylinder radius="0.065" length="0.03"/></geometry></collision>
+  </link>
+  <joint name="left_wheel" type="continuous"><parent link="left_shank"/><child link="left_wheel"/>
+    <origin xyz="0 0.0500 -0.1400"/><axis xyz="0 1 0"/><limit effort="5.0" velocity="60"/></joint>
+  <link name="left_crank"><inertial><origin xyz="0 0 -0.0450"/><mass value="0.05"/><inertia ixx="3.476e-05" ixy="0" ixz="0" iyy="3.476e-05" iyz="0" izz="2.025e-06"/></inertial><visual><origin xyz="0 0 -0.0450"/><geometry><cylinder radius="0.009" length="0.09"/></geometry><material name="grey"/></visual></link>
+  <joint name="left_crank" type="revolute"><parent link="base_link"/><child link="left_crank"/>
+    <origin xyz="0 0.1200 0" rpy="0 0.785398 0"/><axis xyz="0 1 0"/>
+    <limit lower="-1.0" upper="1.2" effort="12.0" velocity="30"/></joint>
+  <link name="left_rod"><inertial><origin xyz="0 0 -0.0700"/><mass value="0.05"/><inertia ixx="8.228e-05" ixy="0" ixz="0" iyy="8.228e-05" iyz="0" izz="1.225e-06"/></inertial><visual><origin xyz="0 0 -0.0700"/><geometry><cylinder radius="0.007" length="0.14"/></geometry><material name="grey"/></visual></link>
+  <joint name="left_rod" type="revolute"><parent link="left_crank"/><child link="left_rod"/>
+    <origin xyz="0 0 -0.0900" rpy="0 -1.570796 0"/><axis xyz="0 1 0"/>
+    <limit lower="-2.5" upper="2.5" effort="0" velocity="30"/></joint>
+  <link name="right_thigh"><inertial><origin xyz="0 0 -0.0700"/><mass value="0.25"/><inertia ixx="4.173e-04" ixy="0" ixz="0" iyy="4.173e-04" iyz="0" izz="1.800e-05"/></inertial><visual><origin xyz="0 0 -0.0700"/><geometry><cylinder radius="0.012" length="0.14"/></geometry><material name="grey"/></visual></link>
+  <joint name="right_hip" type="revolute"><parent link="base_link"/><child link="right_thigh"/>
+    <origin xyz="0 -0.1400 0" rpy="0 -0.785398 0"/><axis xyz="0 1 0"/>
+    <limit lower="-1.2" upper="1.0" effort="12.0" velocity="30"/></joint>
+  <link name="right_shank"><inertial><origin xyz="0 0 -0.0700"/><mass value="0.25"/><inertia ixx="4.173e-04" ixy="0" ixz="0" iyy="4.173e-04" iyz="0" izz="1.800e-05"/></inertial><visual><origin xyz="0 0 -0.0700"/><geometry><cylinder radius="0.012" length="0.14"/></geometry><material name="grey"/></visual></link>
+  <joint name="right_knee" type="revolute"><parent link="right_thigh"/><child link="right_shank"/>
+    <origin xyz="0 0 -0.1400" rpy="0 1.570796 0"/><axis xyz="0 1 0"/>
+    <limit lower="-2.5" upper="2.5" effort="0" velocity="30"/></joint>
+  <link name="right_wheel">
+    <inertial><mass value="0.5"/><inertia ixx="5.656e-04" ixy="0" ixz="0" iyy="1.056e-03" iyz="0" izz="5.656e-04"/></inertial>
+    <visual><origin rpy="1.5707963 0 0"/><geometry><cylinder radius="0.065" length="0.03"/></geometry><material name="dark"/></visual>
+    <collision><origin rpy="1.5707963 0 0"/><geometry><cylinder radius="0.065" length="0.03"/></geometry></collision>
+  </link>
+  <joint name="right_wheel" type="continuous"><parent link="right_shank"/><child link="right_wheel"/>
+    <origin xyz="0 -0.0500 -0.1400"/><axis xyz="0 1 0"/><limit effort="5.0" velocity="60"/></joint>
+  <link name="right_crank"><inertial><origin xyz="0 0 -0.0450"/><mass value="0.05"/><inertia ixx="3.476e-05" ixy="0" ixz="0" iyy="3.476e-05" iyz="0" izz="2.025e-06"/></inertial><visual><origin xyz="0 0 -0.0450"/><geometry><cylinder radius="0.009" length="0.09"/></geometry><material name="grey"/></visual></link>
+  <joint name="right_crank" type="revolute"><parent link="base_link"/><child link="right_crank"/>
+    <origin xyz="0 -0.1200 0" rpy="0 0.785398 0"/><axis xyz="0 1 0"/>
+    <limit lower="-1.0" upper="1.2" effort="12.0" velocity="30"/></joint>
+  <link name="right_rod"><inertial><origin xyz="0 0 -0.0700"/><mass value="0.05"/><inertia ixx="8.228e-05" ixy="0" ixz="0" iyy="8.228e-05" iyz="0" izz="1.225e-06"/></inertial><visual><origin xyz="0 0 -0.0700"/><geometry><cylinder radius="0.007" length="0.14"/></geometry><material name="grey"/></visual></link>
+  <joint name="right_rod" type="revolute"><parent link="right_crank"/><child link="right_rod"/>
+    <origin xyz="0 0 -0.0900" rpy="0 -1.570796 0"/><axis xyz="0 1 0"/>
+    <limit lower="-2.5" upper="2.5" effort="0" velocity="30"/></joint>
+</robot>

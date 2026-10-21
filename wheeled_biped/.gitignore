@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+install/
+log/
+results/*_run.log
+results/viewer_plan*.log
+results/viewer_plan*.err
+results/figures/*_frame_t5s.png

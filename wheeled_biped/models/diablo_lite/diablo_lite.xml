@@ -1,0 +1,88 @@
+<mujoco model="diablo_lite">
+  <compiler angle="radian" autolimits="true"/>
+  <option timestep="0.0005" integrator="implicitfast" cone="elliptic" impratio="10" noslip_iterations="2"/>
+  <default>
+    <geom condim="3" friction="1.0 0.005 0.0001"/>
+    <default class="leg"><geom contype="0" conaffinity="0" rgba="0.75 0.75 0.78 1"/></default>
+    <default class="wheel"><geom contype="1" conaffinity="1" rgba="0.15 0.15 0.15 1" priority="1" friction="1.0 0.005 0.0001"/></default>
+    <default class="body"><geom contype="1" conaffinity="1"/></default>
+  </default>
+  <worldbody>
+    <body name="base" pos="0 0 0.2630">
+      <freejoint name="base_freejoint"/>
+      <site name="base" pos="0 0 0" size="0.005"/>
+      <site name="imu" pos="0 0 0.05" size="0.005"/>
+      <geom name="torso" type="box" pos="0 0 0.1" size="0.1 0.11 0.09" mass="2.0" class="body" rgba="0.3 0.45 0.8 1"/>
+      <geom name="left_motors" type="cylinder" zaxis="0 1 0" pos="0 0.1100 0" size="0.045 0.03" mass="0.9" class="leg" rgba="0.2 0.2 0.2 1"/>
+      <geom name="right_motors" type="cylinder" zaxis="0 1 0" pos="0 -0.1100 0" size="0.045 0.03" mass="0.9" class="leg" rgba="0.2 0.2 0.2 1"/>
+      
+      <body name="left_thigh" pos="0 0.1400 0" quat="0.923879533 0 -0.382683432 0">
+        <joint name="left_hip" axis="0 1 0" range="-1.2 1.0" armature="0.002" frictionloss="0.05" damping="0.01"/>
+        <geom name="left_thigh_geom" type="capsule" fromto="0 0 0 0 0 -0.1400" size="0.012" mass="0.25" class="leg"/>
+        <body name="left_shank" pos="0 0 -0.1400" quat="0.707106781 0 0.707106781 0">
+          <joint name="left_knee" axis="0 1 0" armature="0.0001" damping="0.005"/>
+          <geom name="left_shank_geom" type="capsule" fromto="0 0 0 0 0 -0.1400" size="0.012" mass="0.25" class="leg"/>
+          <site name="left_rod_attach" pos="0 -0.0200 -0.0900" size="0.004"/>
+          <body name="left_wheel" pos="0 0.0500 -0.1400">
+            <joint name="left_wheel" axis="0 1 0" armature="0.0004" frictionloss="0.02" damping="0.001"/>
+            <geom name="left_tire" type="cylinder" zaxis="0 1 0" size="0.065 0.015" mass="0.5" class="wheel"/>
+            <site name="left_axle" pos="0 0 0" size="0.004"/>
+          </body>
+        </body>
+      </body>
+      <body name="left_crank" pos="0 0.1200 0" quat="0.923879533 0 0.382683432 0">
+        <joint name="left_crank" axis="0 1 0" range="-1.0 1.2" armature="0.002" frictionloss="0.05" damping="0.01"/>
+        <geom name="left_crank_geom" type="capsule" fromto="0 0 0 0 0 -0.0900" size="0.009" mass="0.05" class="leg"/>
+        <body name="left_rod" pos="0 0 -0.0900" quat="0.707106781 0 -0.707106781 0">
+          <joint name="left_rod" axis="0 1 0" armature="0.0001" damping="0.005"/>
+          <geom name="left_rod_geom" type="capsule" fromto="0 0 0 0 0 -0.1400" size="0.007" mass="0.05" class="leg"/>
+          <site name="left_rod_tip" pos="0 0 -0.1400" size="0.004"/>
+        </body>
+      </body>
+      
+      <body name="right_thigh" pos="0 -0.1400 0" quat="0.923879533 0 -0.382683432 0">
+        <joint name="right_hip" axis="0 1 0" range="-1.2 1.0" armature="0.002" frictionloss="0.05" damping="0.01"/>
+        <geom name="right_thigh_geom" type="capsule" fromto="0 0 0 0 0 -0.1400" size="0.012" mass="0.25" class="leg"/>
+        <body name="right_shank" pos="0 0 -0.1400" quat="0.707106781 0 0.707106781 0">
+          <joint name="right_knee" axis="0 1 0" armature="0.0001" damping="0.005"/>
+          <geom name="right_shank_geom" type="capsule" fromto="0 0 0 0 0 -0.1400" size="0.012" mass="0.25" class="leg"/>
+          <site name="right_rod_attach" pos="0 0.0200 -0.0900" size="0.004"/>
+          <body name="right_wheel" pos="0 -0.0500 -0.1400">
+            <joint name="right_wheel" axis="0 1 0" armature="0.0004" frictionloss="0.02" damping="0.001"/>
+            <geom name="right_tire" type="cylinder" zaxis="0 1 0" size="0.065 0.015" mass="0.5" class="wheel"/>
+            <site name="right_axle" pos="0 0 0" size="0.004"/>
+          </body>
+        </body>
+      </body>
+      <body name="right_crank" pos="0 -0.1200 0" quat="0.923879533 0 0.382683432 0">
+        <joint name="right_crank" axis="0 1 0" range="-1.0 1.2" armature="0.002" frictionloss="0.05" damping="0.01"/>
+        <geom name="right_crank_geom" type="capsule" fromto="0 0 0 0 0 -0.0900" size="0.009" mass="0.05" class="leg"/>
+        <body name="right_rod" pos="0 0 -0.0900" quat="0.707106781 0 -0.707106781 0">
+          <joint name="right_rod" axis="0 1 0" armature="0.0001" damping="0.005"/>
+          <geom name="right_rod_geom" type="capsule" fromto="0 0 0 0 0 -0.1400" size="0.007" mass="0.05" class="leg"/>
+          <site name="right_rod_tip" pos="0 0 -0.1400" size="0.004"/>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  <equality>
+    <connect name="left_loop" site1="left_rod_tip" site2="left_rod_attach" solref="0.001 1" solimp="0.99 0.999 0.0001"/>
+    <connect name="right_loop" site1="right_rod_tip" site2="right_rod_attach" solref="0.001 1" solimp="0.99 0.999 0.0001"/>
+  </equality>
+  <actuator>
+    <motor name="left_hip" joint="left_hip" ctrlrange="-12.0 12.0"/>
+    <motor name="left_crank" joint="left_crank" ctrlrange="-12.0 12.0"/>
+    <motor name="left_wheel" joint="left_wheel" ctrlrange="-5.0 5.0"/>
+    <motor name="right_hip" joint="right_hip" ctrlrange="-12.0 12.0"/>
+    <motor name="right_crank" joint="right_crank" ctrlrange="-12.0 12.0"/>
+    <motor name="right_wheel" joint="right_wheel" ctrlrange="-5.0 5.0"/>
+  </actuator>
+  <sensor>
+    <framequat name="imu_quat" objtype="site" objname="imu"/>
+    <gyro name="imu_gyro" site="imu"/>
+    <accelerometer name="imu_accel" site="imu"/>
+  </sensor>
+  <keyframe>
+    <key name="stand" qpos="0 0 0.2630 1 0 0 0 0 0 0 0 0 0 0 0 0 0"/>
+  </keyframe>
+</mujoco>
