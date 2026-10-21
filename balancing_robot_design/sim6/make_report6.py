@@ -136,6 +136,6 @@ if __name__ == "__main__":
     open(os.path.join(HERE, "results6_tables.md"), "w").write(md); print(md)
     figdir = os.path.join(HERE, "..", "figures")
     sel = ["mine_lqi6", "jerry", "hnust", "qdu", "multivac", "zhouzzw", "at", "ljw", "upkie_wb", "upkie_mpc"]
-    for pk in ("rm", "small", "large"):
+    for pk in ("rm", "small", "large", "upkie"):
         if os.path.exists(os.path.join(HERE, f"results6_{pk}.json")):
             plot_responses(pk, sel, os.path.join(figdir, f"sil6_responses_{pk}.png")); print("plotted", pk)
