@@ -24,5 +24,6 @@ Re-run everything:
 pip install numpy scipy matplotlib control osqp sympy qpmpc proxsuite
 cd sim && python3 analysis_controllers.py && python3 mpc_compare.py && python3 gen_gains.py
 cd ../sil && python3 sil_harness.py --robot small --out results_small.json && python3 sil_harness.py --robot large --out results_large.json && python3 make_report.py
-cd ../sim6 && for p in rm liu sky small large; do python3 sil6_harness.py --plant $p --scale --out results6_$p.json; done && python3 make_report6.py
+cd ../sim6 && for p in rm liu sky small large upkie; do python3 sil6_harness.py --plant $p --scale --out results6_$p.json; done && python3 make_report6.py
+# upkie's MPC port loads upkie's own Python from a clone: git clone https://github.com/upkie/upkie && export UPKIE_ROOT=$PWD/upkie
 ```

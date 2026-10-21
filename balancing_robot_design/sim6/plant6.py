@@ -104,6 +104,11 @@ LIU_CLASS = dict(name="Liu_Webots_15kg", R=0.05, mw=6.0, mp=1.616, M=12.0, Iw=0.
 SKY_CLASS = dict(name="Sky_0.6kg_desktop", R=0.02, mw=0.251327, mp=0.0248, M=0.325, Iw=5.02655e-5, Im=0.000338542, l=0.0,
                  L0=0.07, L_ratio=0.5, Ip_fn=lambda L0: (9.66667e-07 + 7.9975e-06) * 2, tau_wheel_max=0.2, tau_hip_max=0.3,
                  b_x=0.02)
+# upkie (upkie/upkie): 6 motors (hip + knee qdd100, wheel mj5208 per leg), ~5.4 kg total, wheel radius 0.06 m, COM height
+# ~0.58 m (MPC default leg_length).  Mass split is an estimate (no URDF in the repo): wheels 0.8, legs 1.2, torso 3.4 kg;
+# serial leg at its nominal bent pose ~0.40 m axle->hip, torso COM 0.12 m above the hip; mj5208 1.7 Nm, qdd100 16 Nm.
+UPKIE_CLASS = dict(name="upkie_5.4kg", R=0.06, mw=0.8, mp=1.2, M=3.4, Iw=2 * 0.5 * 0.4 * 0.06**2, Im=0.06, l=0.12, L0=0.40,
+                   L_ratio=0.5, tau_wheel_max=1.7, tau_hip_max=16.0)
 # our target classes with five-bar legs (assumed)
 SMALL5 = dict(name="five_bar_5kg", R=0.065, mw=1.3, mp=0.6, M=3.0, Iw=2 * 0.7 * 0.65 * 0.065**2, Im=0.05, l=0.02, L0=0.16,
               L_ratio=0.5, tau_wheel_max=5.0, tau_hip_max=12.0)

@@ -307,7 +307,98 @@ class HNUST(PolyK):
         return np.vstack([T, Tp])                                # torque = -sum gain*state_error
 
 
+
+# ----------------------------------------------------------------------------- upkie (U1, U3) on the three-body plant
+# upkie's balance laws command a GROUND VELOCITY; torque comes from the servo loops.  The servo model is upkie's own
+# (upkie/cpp/interfaces/BulletInterface.cpp compute_joint_torque): tau = kp_scale*20 * (q* - q) + kd_scale*1.0 * (v* - v),
+# clipped at the joint's maximum torque.  Wheels run in velocity mode (kd 1.0 Nm/(rad/s) per wheel), hips/knees in
+# position mode (kp 20 Nm/rad, kd 1.0 per joint) holding the leg configuration in the torso frame (leg_gain_scale 1).
+# Mapping to the model: pitch = torso pitch phi (IMU on the torso), x = wheel odometry; the leg-vs-torso angle is
+# r = theta + phi, held by the two hip joints -> Tp = -2 (kp r + kd rd) (knee stiffness acts on leg length, not angle).
+class UpkieWheelBalancer(Base):
+    """U1: upkie/cpp/controllers/WheelBalancer.cpp (spine, 1 kHz) verbatim + upkie's servo model."""
+    name = "upkie WheelBalancer (spine 1 kHz, velocity PI on pitch+position -> wheel velocity loop kd 1.0), legs = position servos kp 20 / kd 1"
+    Ts = 1e-3
+    native_L0 = (0.3, 0.5)
+    pitch_damping = 1.8; pitch_stiffness = 20.0; position_damping = 0.7; position_stiffness = 1.6
+    max_ground_velocity = 2.0; max_integral = 10.0; max_target_dist = 1.0; fall_pitch = 1.0
+    kd_wheel = 1.0; kp_leg = 20.0; kd_leg = 1.0; bw_meas = 100.0
+    # model-frame mapping is known: torso forward lean = -phi (upkie pitch > 0 = forward), hip loop holds theta + phi
+    # -> sensor signs (-1, -1) and hip torque sign -1 are fixed; only the wheel polarity is searched
+    allowed_signs = [(-1, -1, 1, -1), (-1, -1, -1, -1)]
+
+    def init(self, plant):
+        self.plant = plant; self.x = 0.0; self.x_target = 0.0; self.integral = 0.0; self.w_f = 0.0
+
+    def ground_velocity(self, pitch, x, xd, v_ref):
+        if abs(pitch) > self.fall_pitch:
+            return 0.0
+        e_x = self.x_target - x; e_p = 0.0 - pitch
+        self.integral = float(np.clip(self.integral + (self.position_stiffness * e_x + self.pitch_stiffness * e_p) * self.Ts,
+                                      -self.max_integral, self.max_integral))
+        self.x_target = float(np.clip(self.x_target + v_ref * self.Ts, x - self.max_target_dist, x + self.max_target_dist))
+        gv = -v_ref - self.scale * ((self.position_damping * e_x + self.pitch_damping * e_p) + self.integral)
+        return float(np.clip(gv, -self.max_ground_velocity, self.max_ground_velocity))
+
+    # The servo loops live on the motor drivers (moteus, 40 kHz, local encoder): the harness calls servo() every 1 ms
+    # on the current state, AFTER the bus latency applied to the command (w_cmd, 0).  Closing them inside step()
+    # (i.e. behind the 2 ms latency) made the wheel loop limit-cycle at 60 Hz on the light upkie plant.
+    local_servo = True
+
+    def servo(self, X, cmd):
+        w_cmd = cmd[0]; R = self.plant.R
+        self.w_f += 1e-3 * 2 * np.pi * self.bw_meas * (X[3] / R - self.w_f)          # driver-side wheel speed (100 Hz filter)
+        tau_w = float(np.clip(self.kd_wheel * (w_cmd - self.w_f), -self.plant.tau_wheel_max, self.plant.tau_wheel_max))
+        r = X[0] + X[4]; rd = X[1] + X[5]
+        Tp = -2 * (self.kp_leg * r + self.kd_leg * rd)
+        return 2 * tau_w, Tp
+
+    def step(self, X, L0, v_ref, t):
+        self.x += X[3] * self.Ts
+        gv = self.ground_velocity(X[4], self.x, X[3], v_ref)
+        return gv / self.plant.R, 0.0
+
+
+class UpkieWheelBalancerSoft(UpkieWheelBalancer):
+    """U1 with a soft wheel velocity loop (kd 0.2) -- how much the law leans on the driver loop."""
+    name = "upkie WheelBalancer, soft wheel velocity loop kd 0.2"
+    kd_wheel = 0.2
+
+
+class UpkieMPC(UpkieWheelBalancer):
+    """U3: upkie/controllers/mpc_balancer.py (their Python class, qpmpc + ProxQP, 200 Hz) run in the loop through
+    sil/controllers/upkie_mpc.py; wheel/leg servo model as above.  Model length = COM height of the plant."""
+    name = "upkie MPCBalancer (qpmpc+ProxQP, N=50 x 20 ms, 200 Hz, their Python code) -> wheel velocity loop kd 1.0, legs = position servos"
+    Ts = 1e-3
+    inner_Ts = 5e-3
+
+    def init(self, plant):
+        import importlib.util, os
+        super().init(plant)
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sil", "controllers", "upkie_mpc.py")
+        spec = importlib.util.spec_from_file_location("upkie_mpc_port", path)
+        mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+        L = plant.L_ratio * plant.L0
+        com_h = plant.R + (plant.mp * L + plant.M * (plant.L0 + plant.l)) / (plant.mp + plant.M)
+        self.bal = mod._load_mpc_balancer()(leg_length=float(com_h)); self.bal.reset()
+        self.k = 0; self.gv = 0.0
+
+    def step(self, X, L0, v_ref, t):
+        self.x += X[3] * self.Ts
+        if self.k % int(round(self.inner_Ts / self.Ts)) == 0:
+            if abs(X[4]) > self.fall_pitch:
+                self.gv = 0.0
+            else:
+                obs = {"floor_contact": {"contact": True},
+                       "base_orientation": {"pitch": float(X[4]), "angular_velocity": [0.0, float(X[5]), 0.0]},
+                       "wheel_odometry": {"position": float(self.x), "velocity": float(X[3])}}
+                self.gv = float(self.bal.step(target_ground_velocity=float(v_ref), spine_observation=obs, dt=self.inner_Ts))
+        self.k += 1
+        return self.gv / self.plant.R, 0.0
+
+
 REGISTRY = {
     "mine_lqi6": MineLQI6, "sky": Skythinker, "jerry": Jerry, "at": ATWheelLeg, "qdu": QDU, "zhouzzw": Zhouzzw,
     "liu": Liu, "hnust": HNUST, "multivac": Multivac, "ljw": LJW, "ljw_fullK": LJWFullK,
+    "upkie_wb": UpkieWheelBalancer, "upkie_wb_soft": UpkieWheelBalancerSoft, "upkie_mpc": UpkieMPC,
 }

@@ -11,10 +11,10 @@ import numpy as np
 from multiprocessing import Pool
 
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
-from plant6 import Plant6, RM_CLASS, LIU_CLASS, SKY_CLASS, SMALL5, LARGE10   # noqa: E402
+from plant6 import Plant6, RM_CLASS, LIU_CLASS, SKY_CLASS, SMALL5, LARGE10, UPKIE_CLASS   # noqa: E402
 from controllers6 import REGISTRY                                           # noqa: E402
 
-PLANTS = {"rm": RM_CLASS, "liu": LIU_CLASS, "sky": SKY_CLASS, "small": SMALL5, "large": LARGE10}
+PLANTS = {"rm": RM_CLASS, "liu": LIU_CLASS, "sky": SKY_CLASS, "small": SMALL5, "large": LARGE10, "upkie": UPKIE_CLASS}
 DT = 1e-3
 # output scales tried when a law does not balance as published (robot mass / leg length differ from its native robot)
 SCALES = [1.0, 0.5, 2.0, 0.25, 4.0, 0.125, 8.0, 0.0625, 16.0, 32.0, 64.0, 128.0]
@@ -28,6 +28,7 @@ def simulate(plant, ctrl, signs=(1, 1, 1, 1), T=3.0, X0=None, push=None, v_ref_f
     X = np.zeros(6) if X0 is None else np.array(X0, float)
     fifo = [(0.0, 0.0)] * (dsteps + 1); cmd = (0.0, 0.0)
     Tmax = 2 * plant.tau_wheel_max; Tpmax = 2 * plant.tau_hip_max
+    local_servo = getattr(ctrl, "local_servo", False)
     ctrl.init(plant)
     th, xh, uh = [], [], []
     for k in range(n):
@@ -42,8 +43,12 @@ def simulate(plant, ctrl, signs=(1, 1, 1, 1), T=3.0, X0=None, push=None, v_ref_f
                 Xm[3] += rng.uniform(-1, 1) * 2 * np.pi / 16384 * plant.R / ctrl.Ts
             Xs = Xm.copy(); Xs[0] *= sth; Xs[1] *= sth; Xs[4] *= sph; Xs[5] *= sph
             Tc, Tpc = ctrl.step(Xs, L0, v_ref, t)
-            cmd = (sT * Tc, sTp * Tpc)
+            cmd = (Tc, Tpc) if local_servo else (sT * Tc, sTp * Tpc)
         fifo.append(cmd); Tc, Tpc = fifo.pop(0)
+        if local_servo:
+            # servo loops run on the motor drivers (moteus-style): the delayed command is closed on the current state
+            Xn = X.copy(); Xn[0] *= sth; Xn[1] *= sth; Xn[4] *= sph; Xn[5] *= sph
+            Tc, Tpc = ctrl.servo(Xn, (Tc, Tpc)); Tc *= sT; Tpc *= sTp
         Tc = float(np.clip(Tc, -Tmax, Tmax)); Tpc = float(np.clip(Tpc, -Tpmax, Tpmax))
         F = push[2] if (push and push[0] <= t < push[0] + push[1]) else 0.0
         f = lambda Y: plant.deriv(Y, Tc, Tpc, F, L0)
@@ -72,7 +77,10 @@ def sign_search(plant, ctrl, scale):
     and survives the largest push in a cheap sweep, or None"""
     best = None
     ctrl.set_scale(scale)
-    for signs in itertools.product((1, -1), repeat=4):
+    # a port whose model-frame conventions are known (e.g. upkie: pitch = -phi, hip loop on theta + phi) restricts the
+    # search to its physically meaningful combinations (wheel polarity only)
+    combos = getattr(ctrl, "allowed_signs", None) or itertools.product((1, -1), repeat=4)
+    for signs in combos:
         r = simulate(plant, ctrl, signs, T=2.5, X0=[np.deg2rad(2), 0, 0, 0, 0, 0])
         if not r["ok"]:
             continue
@@ -167,7 +175,7 @@ def run_one(args):
         sc, signs = r1; ctrl.set_scale(1.0)
         res = benchmark(plant, ctrl, signs); res.update(ok=True, scale=1.0, signs=list(signs), search_push_N=sc)
         out["asis"] = res
-    if do_scale and nm != "mine_lqi6":
+    if do_scale and nm != "mine_lqi6" and not nm.startswith("upkie_mpc"):
         best = sign_scale_search(plant, ctrl, SCALES)
         if best is None:
             out["best"] = dict(ok=False, note="does not balance for any sign/scale combination on this plant")
