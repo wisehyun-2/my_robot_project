@@ -159,6 +159,7 @@ class DiabloMcu:
         self.link.reset()
         self.telemetry: dict = {}
         self.events = []
+        self.last_bad_channel: Optional[str] = None
 
     def arm(self, force: bool = False) -> bool:
         """Enable balancing; refused before the first measurement, while the motors are latched off after a
@@ -182,7 +183,9 @@ class DiabloMcu:
         turned into 0.1 N m rms wheel torque chatter; over 5 ms the noise is 5x lower at 2.5 ms extra delay)."""
         n = int(round(self.p.vel_window_s / self.p.dt))
         if n <= 1:
-            return servo
+            # a COPY: the held sample (servo_valid) must never alias the caller's dict, or an entry point that updates
+            # one observation dict in place hands a NaN position straight to the VMC at 200 Hz (review r3 m1)
+            return {name: dict(s) for name, s in servo.items()}
         out = {}
         for name, s in servo.items():
             h = self._pos_hist.setdefault(name, [])
@@ -197,18 +200,26 @@ class DiabloMcu:
         return out
 
     @staticmethod
-    def _sample_valid(obs: dict) -> bool:
-        """Finite unit quaternion and gyro, finite joint positions / velocities."""
+    def _invalid_channel(obs: dict) -> Optional[str]:
+        """Name of the first invalid channel of the sample (non-finite, or a non-unit quaternion), None when the
+        sample is valid: finite unit quaternion and gyro, finite joint positions / velocities.  The FAULT event
+        names the channel for the real-robot diagnosis (review r3 n1)."""
         imu = obs["imu"]
         q = np.asarray(imu["orientation"], dtype=float)
         if not (np.all(np.isfinite(q)) and abs(float(np.linalg.norm(q)) - 1.0) < 0.1):
-            return False
+            return "imu.orientation"
         if not np.all(np.isfinite(np.asarray(imu["angular_velocity"], dtype=float))):
-            return False
-        for s in obs["servo"].values():
-            if not (math.isfinite(s["position"]) and math.isfinite(s["velocity"])):
-                return False
-        return True
+            return "imu.angular_velocity"
+        for name, s in obs["servo"].items():
+            if not math.isfinite(s["position"]):
+                return f"servo.{name}.position"
+            if not math.isfinite(s["velocity"]):
+                return f"servo.{name}.velocity"
+        return None
+
+    @classmethod
+    def _sample_valid(cls, obs: dict) -> bool:
+        return cls._invalid_channel(obs) is None
 
     def _hold_history(self) -> None:
         """A held sample still advances the position-difference window by one step (repeat the last position), so
@@ -235,13 +246,15 @@ class DiabloMcu:
             self.stale_samples = 0
             if t_obs is not None:
                 self.last_obs_time = float(t_obs)
-        if not self._sample_valid(obs):
+        bad = self._invalid_channel(obs)
+        if bad is not None:
             self._hold_history()
             self.bad_samples += 1
             self.est_hold = True
+            self.last_bad_channel = bad
             if self.bad_samples > self.p.max_bad_samples and not self.fault:
                 self.fault = True
-                self.events.append((self.t, f"FAULT: non-finite sensor data for {self.bad_samples} cycles"))
+                self.events.append((self.t, f"FAULT: non-finite sensor data for {self.bad_samples} cycles ({bad})"))
             return e
         if stale:
             self._hold_history()
@@ -333,7 +346,8 @@ class DiabloMcu:
         cmd = self.link.poll(self.t) if host_cmd is None else host_cmd
         rejected = int(getattr(self.link, "rejected", 0))
         if rejected > self._rejected_seen:            # review r2 M2: corrupt host packets are dropped by the link
-            self.events.append((self.t, f"host packet rejected (non-finite field), {rejected} so far"))
+            if self._rejected_seen == 0 or rejected // 50 > self._rejected_seen // 50:   # r3 n2: 1st, then every
+                self.events.append((self.t, f"host packet rejected (non-finite field), {rejected} so far"))   # 50th
             self._rejected_seen = rejected
         self.apply_command(cmd, dt)
         if hasattr(self.law, "set_reference_shaping"):   # host-shaped reference (stage-2 MPC) -> plain tracking;

@@ -17,9 +17,9 @@
 | Plan 1/2/3 조립과 벤치마크 | 완료(비교보고서 0~10절) | `results/bench` |
 | **Plan 4**: 직렬 다리 기구학(`serial_leg.py`), 3체 플랜트 라그랑지안 유도·선형화(`plant_serial.py`), 파라미터 표(`upkie_params.py`), MuJoCo 대조(`verify_plan4_plant.py`), 조립(`plans/plan4_upkie_lqi6.py`), 합격 판정 배터리(`bench/acceptance.py`) | 완료, Windows에서 검증. 모델은 `models/upkie_plan4`(112 mm 타원체 타이어) | `wbr/`, `docs/plan4_*.md`, `results/acceptance/` |
 | 2단계 호스트 MPC(`wbr/controllers/mpc_host/`) | 완료(검토 2라운드 반영판): 두 주기 모두 19~23 통과(19번 정지 최대 이탈 여유 ×0.99 — 넘김 1.0 s·제동 1.17배로 맞춤), 24번 기록 통과 | `docs/plan4_mpc_host.md` |
-| Plan 4 합격 판정(전체 매트릭스, 캐시 `r4_s1`·`r4_s2`) | 두 주기 모두 1~13 통과, **16·17 실패**(5 cm 이탈 기준, 8.8~11 cm) — 사용자 결정 항목(`docs/plan4_lqi6.md` 4절); 15번 기록 20/25 ms(강건 여유 12/15 ms) | `results/acceptance/` |
+| Plan 4 합격 판정(전체 매트릭스, 캐시 `r5_s1`·`r5_s2`, 코드 해시 345db37b94) | **두 주기 모두 합격**: 1단계 1~13·16·17 통과(16·17은 2026-10-23 사용자 위임 결정 — 드리프트 x(0) 기준·10 cm, 합격기준 6.3: 7.2~8.7 cm), 2단계 19~23 통과; 15번 기록 20/25 ms(강건 여유 12/15 ms) | `results/acceptance/` |
 | 독립 검토 | 1라운드(Opus 5.5 ×2) major 10건, 2라운드 major 5건 전부 반영(`docs/review_plan4_r1_response.md`, 1·2라운드 절); 3라운드(축소: 반영 추적·재현) `docs/review_plan4_r3.md`·`review_plan4_mpc_r3.md` | `docs/` |
-| 단위 테스트 | 78개 통과(`tests/test_core.py` 20 + `tests/test_plan4.py` 38 + `tests/test_plan4_safety.py` 20) | `tests/` |
+| 단위 테스트 | 83개 통과(`tests/test_core.py` 20 + `tests/test_plan4.py` 38 + `tests/test_plan4_safety.py` 25) | `tests/` |
 | ROS 2 Jazzy 패키지(메시지 3종, upkie 4패키지, diablo_lite 4패키지) | **작성만 됨, 빌드·실행 미검증**. Plan 4(lqi6 균형기) 옵션은 아직 없음 | `ros2_ws/src`, `ros2_ws/README.md` |
 
 ## 2. 우분투에서 할 일 (순서대로)
@@ -54,7 +54,8 @@
 9. **저마찰 바닥**: 20° 기울기(4번)는 μ0.5에서 세 질량 모두 전복한다(바퀴 접지 한계). 실기 저마찰 바닥에서 큰 기울기 시험은 피한다.
 10. **마찰 보상의 게이트는 필수**: 보상(3번 항목)을 켜면 피치 속도 게이트(`friction_comp_rate_gate` 0.1 rad/s)도 켜 둘 것 — 게이트 없이는 0.75 W 밀기 복귀의 바퀴 rms가 0.21 Nm(기준 0.2)로 실패했다.
 11. **호스트 패킷**: MCU 링크는 비유한 필드가 있는 MotionCtrl을 거부하고(이벤트), 계속되면 500 ms 타임아웃으로 단절 프로그램에 들어간다. 호스트 쪽에서도 송신 전 유한성 검사를 둘 것.
-12. **MPC 호스트의 명령 지연**: 호스트 → MCU 명령 경로 지연이 10~20 ms만 있어도 19번 정지 거리가 0.30~0.31 m로 늘어난다(2라운드 검토 m7). 실기 지연을 재서 `MpcConfig.model_extra_latency_ms`에 넣고(예측 모델의 관측 지연에 더해짐) 제동 계수(`decel_factor`)를 다시 맞춘다. 50 Hz 단일 표본 텔레메트리·텔레메트리 20 ms 지연·`v_ref` 부재는 영향이 작다.
+12. **기동 시 영점 보정(16·17 대응)**: 로봇을 세워 놓고(또는 거치대에서) 2~3 s 정지한 뒤 ① IMU 피치 바이어스 = 엔코더 다리각 θ + φ로 추정한 정적 기울기와 IMU 피치의 차, ② 탑재물·무게중심 오프셋 = 정적 엉덩이 토크 (Tp − Tp_ff)의 평균을 저장해 Tp_ff와 IMU 영점에 더한다. 시뮬 판정의 16·17은 보정 없이 10 cm 이탈 안에서 서는 것을 보장하는 상한 시험이다(합격기준 6.3).
+13. **MPC 호스트의 명령 지연**: 호스트 → MCU 명령 경로 지연이 10~20 ms만 있어도 19번 정지 거리가 0.30~0.31 m로 늘어난다(2라운드 검토 m7). 실기 지연을 재서 `MpcConfig.model_extra_latency_ms`에 넣고(예측 모델의 **기준 입력에 순수 지연**으로 들어간다, MCU 스텝 단위; 3라운드 검토 m1 — 전에는 관측 지연에 더해져 10 ms 이상이면 내부 루프 모델이 불안정 판정을 받아 MPC가 꺼졌다) 제동 계수(`decel_factor`)를 다시 맞춘다. 정지 넘김은 목표 0 뒤 1.0 s 이상 지났고 텔레메트리 속도 < 0.05 m/s일 때(최대 3 s)이므로 실기 텔레메트리에는 `est.v`가 꼭 실려야 한다(3라운드 m2). 50 Hz 단일 표본 텔레메트리·텔레메트리 20 ms 지연·`v_ref` 부재는 영향이 작다.
 
 ## 3. 우분투에서 Claude Code에 줄 첫 메시지(예시)
 

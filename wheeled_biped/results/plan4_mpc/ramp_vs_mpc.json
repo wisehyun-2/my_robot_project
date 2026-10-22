@@ -21,13 +21,13 @@
   "stop_disp": 0.2864159342063838,
   "settled": 1,
   "wheel_peak": 0.24472906503888664,
-  "wheel_rms10": 0.07118405894358322
+  "wheel_rms10": 0.07131200739467988
  },
  "mpc_stats": {
   "n_solves": 300,
-  "solve_p50_ms": 0.06220000796020031,
-  "solve_p99_ms": 0.3078130155336112,
-  "solve_max_ms": 0.39770000148564577,
+  "solve_p50_ms": 0.09730004239827394,
+  "solve_p99_ms": 0.38770303828641733,
+  "solve_max_ms": 0.5456999642774463,
   "qp_failures": 0,
   "solver_failures": 0,
   "violations": 0,

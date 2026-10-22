@@ -45,15 +45,18 @@ class SensorGuardTests(unittest.TestCase):
             self.assertLess(abs(math.degrees(plan.log["pitch_true"][-1])), 1.0)
 
     def test_persistent_nan_faults_with_event_and_zero_torque(self):
-        plan = make_plan(1000.0)
-        self.assertTrue(plan.run(1.0))
-        self._inject(plan, "gyro", 8)                      # > max_bad_samples (5)
-        self.assertTrue(plan.mcu.fault)
-        self.assertTrue(any("non-finite" in msg for _, msg in plan.mcu.events), plan.mcu.events)
-        self.assertTrue(all_torques_finite(plan))
-        plan.step(0.0, 0.0)
-        cmds = plan.mcu.tick(plan._obs_to_mcu(plan.observation))
-        self.assertTrue(all(c.feedforward_torque == 0.0 for c in cmds.values()))   # safe state: torque-free
+        for rate in (1000.0, 200.0):
+            plan = make_plan(rate)
+            self.assertTrue(plan.run(1.0))
+            self._inject(plan, "gyro", 8)                  # > max_bad_samples (5)
+            self.assertTrue(plan.mcu.fault, f"{rate} Hz")
+            msgs = [msg for _, msg in plan.mcu.events if "non-finite sensor" in msg]
+            self.assertTrue(msgs and "imu.angular_velocity" in msgs[0], plan.mcu.events)   # names the channel (r3 n1)
+            self.assertEqual(plan.mcu.last_bad_channel, "imu.angular_velocity")
+            self.assertTrue(all_torques_finite(plan))
+            plan.step(0.0, 0.0)
+            cmds = plan.mcu.tick(plan._obs_to_mcu(plan.observation))
+            self.assertTrue(all(c.feedforward_torque == 0.0 for c in cmds.values()))   # safe state: torque-free
 
     def test_stale_time_stamp_faults(self):
         plan = make_plan(1000.0)
@@ -106,43 +109,84 @@ class SensorGuardTests(unittest.TestCase):
             self.assertFalse(plan.mcu.fault)
             self.assertEqual(plan.mcu.bad_samples, 0)
 
+    def test_held_sample_does_not_alias_the_callers_dict(self):
+        """Review r3 m1: at 200 Hz the 5 ms window is one step and the held servo sample used to be the caller's
+        dict itself, so an entry point that updates ONE observation dict in place handed a NaN hip position straight
+        to the VMC (immediate FAULT, the round-2 M1 symptom).  The held sample must be a copy at both rates."""
+        for rate in (1000.0, 200.0):
+            plan = make_plan(rate)
+            self.assertTrue(plan.run(0.5))
+            obs = plan._obs_to_mcu(plan.observation)
+            plan.mcu.tick(obs)                                           # valid sample -> held as servo_valid
+            self.assertIsNot(plan.mcu.servo_valid, obs["servo"], f"{rate} Hz: servo_valid aliases the input")
+            self.assertIsNot(plan.mcu.servo_valid["left_hip"], obs["servo"]["left_hip"])
+            for joint in ("left_hip", "right_knee"):
+                obs["servo"][joint]["position"] = float("nan")           # in-place corruption of the SAME dict
+                obs["time"] += plan.mcu.p.dt
+                cmds = plan.mcu.tick(obs)
+                self.assertFalse(plan.mcu.fault, f"{rate} Hz {joint}: in-place NaN reached the VMC")
+                self.assertTrue(all(math.isfinite(c.feedforward_torque) for c in cmds.values()))
+                self.assertEqual(plan.mcu.last_bad_channel, f"servo.{joint}.position")
+                obs["servo"][joint]["position"] = plan.mcu.servo_valid[joint]["position"]   # repaired sample
+                obs["time"] += plan.mcu.p.dt
+                plan.mcu.tick(obs)
+                self.assertEqual(plan.mcu.bad_samples, 0)
+
+
+MOTION_FIELDS = ("forward", "left", "up", "roll", "pitch", "leg_split")
+
 
 class HostCommandGuardTests(unittest.TestCase):
-    """Review r2 M2: the MCU must not act on a MotionCtrl with a non-finite field."""
+    """Review r2 M2: the MCU must not act on a MotionCtrl with a non-finite field (both rates, all six fields; r3 n3)."""
 
     def _nan_packets(self, plan, field, n):
+        """n garbage packets, one right before each control step; the steps are logged like any other (the standing
+        checks below therefore see the state AFTER the injection)."""
         from wbr.controllers.diablo_arch.host_link import MotionCtrl
         for _ in range(n):
-            cmd = MotionCtrl(**{field: float("nan")})
-            plan.link.receive(cmd, plan.sim.time)
-            plan.observation = plan._observe() if False else plan.observation
-            cmds = plan.mcu.tick(plan._obs_to_mcu(plan.observation))
-            plan.sim.set_commands(plan._cmds_from_mcu(cmds))
-            plan.sim.step()
-            plan.observation = plan._observe()
+            plan.link.receive(MotionCtrl(**{field: float("nan")}), plan.sim.time)
+            plan.step(0.0, 0.0)
 
     def test_single_nan_packet_is_rejected_and_the_robot_stands(self):
-        for field in ("forward", "left", "up", "pitch"):
-            plan = make_plan(1000.0)
-            self.assertTrue(plan.run(0.5))
-            self._nan_packets(plan, field, 1)
-            self.assertEqual(plan.link.rejected, 1, field)
-            self.assertTrue(plan.run(1.0), f"fell after a NaN {field} packet")
-            self.assertFalse(plan.mcu.fault, field)
-            self.assertTrue(math.isfinite(plan.mcu.L_ref.value) and math.isfinite(plan.mcu.v_ref), field)
-            self.assertTrue(all_torques_finite(plan))
-            self.assertTrue(any("rejected" in msg for _, msg in plan.link.events), field)
+        for rate in (1000.0, 200.0):
+            for field in MOTION_FIELDS:
+                plan = make_plan(rate)
+                self.assertTrue(plan.run(0.5))
+                self._nan_packets(plan, field, 1)
+                self.assertEqual(plan.link.rejected, 1, f"{rate} Hz {field}")
+                self.assertTrue(plan.run(1.0), f"{rate} Hz: fell after a NaN {field} packet")
+                self.assertFalse(plan.mcu.fault, field)
+                for v in (plan.mcu.L_ref.value, plan.mcu.v_ref, plan.mcu.yaw_rate_ref, plan.mcu.roll_ref, plan.mcu.pitch_ref):
+                    self.assertTrue(math.isfinite(v), f"{rate} Hz {field}: non-finite reference")
+                self.assertTrue(all_torques_finite(plan))
+                self.assertTrue(any("rejected" in msg for _, msg in plan.link.events), field)
+                self.assertTrue(any("rejected" in msg for _, msg in plan.mcu.events), field)
+                self.assertLess(abs(math.degrees(plan.log["pitch_true"][-1])), 1.0)
 
     def test_sustained_nan_packets_fall_back_to_the_disconnect_program(self):
+        for rate in (1000.0, 200.0):
+            for field in ("forward", "pitch"):                    # the two fields that toppled the robot in round 2
+                plan = make_plan(rate)
+                self.assertTrue(plan.run(0.5))
+                plan.host.enabled = False                         # only our garbage packets reach the link
+                n = int(round(0.7 * rate))
+                self._nan_packets(plan, field, n)                 # 0.7 s of garbage, one packet per control step
+                self.assertGreaterEqual(plan.link.rejected, n)
+                self.assertFalse(plan.link.in_control)            # 0.5 s timeout -> disconnect program
+                self.assertFalse(plan.mcu.fault)
+                self.assertTrue(plan.run(0.5), f"{rate} Hz {field}: fell under sustained garbage")
+                self.assertLess(abs(math.degrees(plan.log["pitch_true"][-1])), 1.5)
+                self.assertTrue(all_torques_finite(plan))
+
+    def test_rejected_packet_events_are_bounded(self):
+        """Review r3 n2: one event for the first rejected packet, then one per 50 (the link's rule), not one per packet."""
         plan = make_plan(1000.0)
-        self.assertTrue(plan.run(0.5))
-        plan.host.enabled = False                                 # only our garbage packets reach the link
-        self._nan_packets(plan, "forward", 700)                   # 0.7 s of garbage at 1 kHz
-        self.assertGreater(plan.link.rejected, 600)
-        self.assertFalse(plan.link.in_control)                    # timeout -> disconnect program
-        self.assertFalse(plan.mcu.fault)
-        self.assertLess(abs(math.degrees(plan.log["pitch_true"][-1])), 1.5)
-        self.assertTrue(all_torques_finite(plan))
+        self.assertTrue(plan.run(0.2))
+        plan.host.enabled = False
+        self._nan_packets(plan, "forward", 120)
+        n_ev = sum(1 for _, msg in plan.mcu.events if "rejected" in msg)
+        self.assertGreaterEqual(n_ev, 1)
+        self.assertLessEqual(n_ev, 3)                             # 1st, 50th, 100th
 
     def test_law_faults_after_persistent_nonfinite_inputs(self):
         plan = make_plan(1000.0)
@@ -156,6 +200,26 @@ class HostCommandGuardTests(unittest.TestCase):
         from wbr.common.filters import Ramp
         r = Ramp(1.0, value=0.3)
         self.assertEqual(r.step(float("nan"), 0.01), 0.3)        # NaN target ignored
+        self.assertEqual(r.step(float("inf"), 0.01), 0.3)
+
+    def test_law_input_fault_reaches_the_mcu(self):
+        """The last line of defence: a non-finite balance-law input behind every sensor / command guard holds the
+        output for max_bad_samples steps and then raises the MCU FAULT (both rates)."""
+        for rate in (1000.0, 200.0):
+            plan = make_plan(rate)
+            self.assertTrue(plan.run(0.5))
+            good = plan.law.theta_eq
+            plan.law.theta_eq = lambda L0: float("nan")           # corrupts theta inside LQI6Law.compute
+            for _ in range(3):
+                plan.step(0.0, 0.0)
+            self.assertFalse(plan.mcu.fault, f"{rate} Hz: faulted before max_bad_samples")
+            self.assertEqual(plan.law.ctrl.nonfinite_steps, 3)
+            for _ in range(5):
+                plan.step(0.0, 0.0)
+            self.assertTrue(plan.mcu.fault, f"{rate} Hz: no FAULT after 8 non-finite law inputs")
+            self.assertTrue(any("balance-law" in msg for _, msg in plan.mcu.events), plan.mcu.events)
+            self.assertTrue(all_torques_finite(plan))
+            plan.law.theta_eq = good
 
 
 class ImuConventionTests(unittest.TestCase):
@@ -267,6 +331,12 @@ class AcceptanceDefinitionTests(unittest.TestCase):
         ramp = [(k * T, 0.5 * a_max * (k * T) ** 2 * 0 + min(0.5, 0.5 * k * T), True) for k in range(60)]   # a = 0.5 <= a_max
         self.assertEqual(packet_violations(ramp, a_max, j_max, T), 1)   # only the kink where the ramp stops (jerk 25 > 5)
         self.assertEqual(packet_violations([(0.0, 0.0, False), (0.02, 0.5, False)], a_max, j_max, T), 0)   # fallback packets
+        # velocity bound (r2 m9 / r3 n1): every packet of a host-shaped sequence, including its first one
+        fast = [(k * T, 1.2, True) for k in range(3)]
+        self.assertEqual(packet_violations(fast, a_max, j_max, T), 0)
+        self.assertEqual(packet_violations(fast, a_max, j_max, T, v_max=1.0), 3)
+        self.assertEqual(packet_violations([(0.0, 0.0, True), (T, 0.0, True), (2 * T, 1.2, False), (3 * T, 1.2, True),
+                                            (4 * T, 1.2, True)], a_max, j_max, T, v_max=1.0), 2)   # new sequence at 3T
 
     def test_stand_items_check_alive_and_stop_distance_is_the_excursion(self):
         from wbr.bench import acceptance as A
@@ -277,6 +347,59 @@ class AcceptanceDefinitionTests(unittest.TestCase):
         self.assertIn("packet_violations", [c.metric for c in A._item(21).checks])
         self.assertIn("passes_8_transient", [c.metric for c in A._item(23).checks])
         self.assertEqual(A._item(24).grade, "record")
+
+
+class MpcHostTests(unittest.TestCase):
+    def test_command_latency_is_a_pure_reference_delay(self):
+        """Review r3 m1: the real robot's host -> MCU command latency is a delay of the reference, not of the inner
+        loop's feedback (modelled that way, 10 ms made the inner loop 'unstable' and switched the MPC off)."""
+        from wbr.controllers.mpc_host import reference_mpc as RM
+        for rate in (1000.0, 200.0):
+            plan = Plan4UpkieLQI6(Plan4Config(rate_hz=rate, noise=False, latency_ms=10.0))
+            cfg0, cfg = RM.MpcConfig(), RM.MpcConfig(model_extra_latency_ms=20.0)
+            m0 = RM.prediction_model(plan, 0.02, cfg0.order)
+            m1 = RM.prediction_model(plan, 0.02, cfg.order, extra_latency_ms=20.0)
+            m2 = RM.prediction_model(plan, 0.02, cfg.order, extra_latency_ms=10.0)
+            self.assertTrue(m1["stable"] and m2["stable"], f"{rate} Hz: delayed prediction model reported unstable")
+            self.assertEqual(m1["full"].n, m0["full"].n + int(round(0.02 * rate)))
+            # 20 ms = one host period: the lifted full-order response is the undelayed one shifted by one period
+            U = np.zeros((40, 2))
+            U[2:, 0] = 0.5
+            Y0, _ = m0["full"].simulate(U)
+            Y1, _ = m1["full"].simulate(U)
+            self.assertLess(np.abs(Y1[1:, :2] - Y0[:-1, :2]).max(), 1e-9, f"{rate} Hz")
+            lim0, lim = RM.derive_limits(plan, cfg0), RM.derive_limits(plan, cfg)
+            self.assertAlmostEqual(lim["a_max"], lim0["a_max"], delta=0.01 * lim0["a_max"], msg=f"{rate} Hz: a_max moved")
+            q0, _, _ = RM.reference_qp(plan, cfg0, 0.02)
+            q1, _, _ = RM.reference_qp(plan, cfg, 0.02)
+            self.assertIsNot(q0, q1)                              # the QP cache distinguishes the two models
+
+    def test_handover_waits_until_the_robot_has_stopped(self):
+        """Review r3 m2: a stop from 0.8 m/s is not over 1.0 s after the target returned to zero.  The hand-over to the
+        inner loop (prediction dropped, braking direction no longer from the prediction) used to happen while the body
+        still rolled at 0.17-0.37 m/s and a few sent packets then exceeded a_max."""
+        from wbr.bench.acceptance_mpc import _capture_packets, packet_violations
+        plan = Plan4UpkieLQI6(Plan4Config(rate_hz=200.0, noise=True, latency_ms=10.0, host="mpc"))
+        plan.reset()
+        packets = _capture_packets(plan)
+        self.assertTrue(plan.run(0.5))
+        self.assertTrue(plan.run(2.5, v=0.8))
+        self.assertTrue(plan.run(3.5, v=0.0))
+        st = plan.host.stats()
+        self.assertTrue(plan.host.model_ok)
+        self.assertEqual(packet_violations(packets, st["a_max"], st["j_max"], plan.host.period, a_dec=st["a_dec_max"],
+                                           v_max=st["v_max"]), 0)
+        t_h = [t for t, msg in plan.host.events if "handover" in msg]
+        self.assertTrue(t_h, plan.host.events)
+        L, tr = plan.log, plan.host.trace
+        y_at_handover = float(np.interp(t_h[-1], tr["t"], np.nan_to_num(np.asarray(tr["v_avg"], float))))
+        v_at_handover = float(np.interp(t_h[-1], L["t"], L["vx"]))
+        self.assertLessEqual(abs(y_at_handover), plan.host.cfg.obs_hold_v + 1e-6, f"telemetry speed {y_at_handover:.3f} at hand-over")
+        # the torso still rocks a little relative to the wheels at that moment (base speed != wheel speed); before the
+        # fix the hand-over happened at 0.17-0.37 m/s
+        self.assertLess(abs(v_at_handover), 0.12, f"handed over at {t_h[-1]:.2f} s while rolling at {v_at_handover:.3f} m/s")
+        self.assertGreater(t_h[-1], 3.0 + plan.host.cfg.obs_hold_s + 0.5 * plan.host.period)   # later than the fixed 1.0 s
+        self.assertLess(abs(L["vx"][-1]), 0.05)
 
 
 class HostTests(unittest.TestCase):

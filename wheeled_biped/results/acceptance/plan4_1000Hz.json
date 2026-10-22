@@ -3,7 +3,7 @@
  "items": [
   {
    "id": 1,
-   "name": "\uc815\uc9c0 60 s",
+   "name": "정지 60 s",
    "grade": "settle",
    "passed": true,
    "n_runs": 45,
@@ -14,7 +14,7 @@
      "limit": 1,
      "op": ">=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "pitch_ma_max": {
      "margin": 0.5468179914647382,
@@ -22,7 +22,7 @@
      "limit": 1.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s0"
+     "case": "m×1.15 μ1.00 s0"
     },
     "pitch_rms": {
      "margin": 0.5750077495117296,
@@ -30,15 +30,15 @@
      "limit": 0.5,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s0"
+     "case": "m×1.15 μ1.00 s0"
     },
     "drift_max": {
-     "margin": 0.5030599819083821,
-     "value": 0.025152999095419105,
+     "margin": 0.3750652648013744,
+     "value": 0.01875326324006872,
      "limit": 0.05,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.75 s1"
+     "case": "m×0.85 μ0.50 s0"
     },
     "wheel_rms10": {
      "margin": 0.1893788905881256,
@@ -46,7 +46,7 @@
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s2"
+     "case": "m×0.85 μ1.00 s2"
     },
     "wheel_sat_duty": {
      "margin": 0.0,
@@ -54,7 +54,7 @@
      "limit": 0.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "wheel_peak": {
      "margin": 0.10730540843543014,
@@ -62,7 +62,7 @@
      "limit": 1.36,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.50 s0"
+     "case": "m×1.00 μ0.50 s0"
     },
     "leg_peak": {
      "margin": 0.14701602603991484,
@@ -70,7 +70,7 @@
      "limit": 12.8,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s4"
+     "case": "m×1.15 μ1.00 s4"
     },
     "leg_rms": {
      "margin": 0.4073433840928196,
@@ -78,7 +78,7 @@
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s2"
+     "case": "m×1.15 μ0.75 s2"
     },
     "wheel_speed_peak": {
      "margin": 0.013354058500158998,
@@ -86,7 +86,7 @@
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s2"
+     "case": "m×0.85 μ1.00 s2"
     },
     "leg_speed_peak": {
      "margin": 0.020967853434616095,
@@ -94,7 +94,7 @@
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.50 s1"
+     "case": "m×1.00 μ0.50 s1"
     }
    },
    "failures": [],
@@ -103,8 +103,9 @@
     "alive": true,
     "pitch_ma_max": 2.063091158108213,
     "pitch_rms": 1.0711854703169252,
-    "drift_max": 0.33439956476689814,
+    "drift_max": 0.1742272747677544,
     "drift_max_from_t0": 0.19158824265038518,
+    "drift_max_from_t2": 0.33439956476689814,
     "drift_end": 0.0348266653941406,
     "pitch_mean": 1.0404725177350378,
     "pitch_ma_max_incl_transient": 5.260521679574541,
@@ -116,12 +117,12 @@
     "leg_rms": 0.14573756356183593,
     "wheel_speed_peak": 4.750300875256078,
     "leg_speed_peak": 0.05424997481517348,
-    "wall_s": 7.65511155128479
+    "wall_s": 7.669764757156372
    }
   },
   {
    "id": 2,
-   "name": "\ucd08\uae30 \uae30\uc6b8\uae30 10\u00b0",
+   "name": "초기 기울기 10°",
    "grade": "settle",
    "passed": true,
    "n_runs": 45,
@@ -132,7 +133,7 @@
      "limit": 1,
      "op": ">=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "settle_s": {
      "margin": 0.6934999999999514,
@@ -140,7 +141,7 @@
      "limit": 2.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s4"
+     "case": "m×0.85 μ1.00 s4"
     },
     "disp": {
      "margin": 0.44819733448383686,
@@ -148,7 +149,7 @@
      "limit": 0.3,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s3"
+     "case": "m×1.15 μ1.00 s3"
     },
     "wheel_peak": {
      "margin": 0.9725123419244092,
@@ -156,7 +157,7 @@
      "limit": 1.36,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s3"
+     "case": "m×0.85 μ0.50 s3"
     },
     "wheel_rms10": {
      "margin": 0.4048733345785481,
@@ -164,7 +165,7 @@
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s3"
+     "case": "m×1.15 μ0.50 s3"
     },
     "wheel_sat_duty": {
      "margin": 0.0,
@@ -172,7 +173,7 @@
      "limit": 0.05,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "leg_peak": {
      "margin": 0.15243741787107906,
@@ -180,7 +181,7 @@
      "limit": 12.8,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s0"
+     "case": "m×1.15 μ0.75 s0"
     },
     "leg_rms": {
      "margin": 0.40972787698429214,
@@ -188,7 +189,7 @@
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s2"
+     "case": "m×1.15 μ1.00 s2"
     },
     "wheel_speed_peak": {
      "margin": 0.18700012612394015,
@@ -196,7 +197,7 @@
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s0"
+     "case": "m×0.85 μ1.00 s0"
     },
     "leg_speed_peak": {
      "margin": 0.08936179705658683,
@@ -204,7 +205,7 @@
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s0"
+     "case": "m×0.85 μ1.00 s0"
     }
    },
    "failures": [],
@@ -224,12 +225,12 @@
     "leg_rms": 0.14599073753821545,
     "wheel_speed_peak": 10.0784186372808,
     "leg_speed_peak": 0.14905753808003908,
-    "wall_s": 1.485459804534912
+    "wall_s": 1.4633450508117676
    }
   },
   {
    "id": 3,
-   "name": "\ucd08\uae30 \uae30\uc6b8\uae30 15\u00b0",
+   "name": "초기 기울기 15°",
    "grade": "settle",
    "passed": true,
    "n_runs": 45,
@@ -240,7 +241,7 @@
      "limit": 1,
      "op": ">=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "settle_s": {
      "margin": 0.5743333333332886,
@@ -248,7 +249,7 @@
      "limit": 3.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "disp": {
      "margin": 0.3942542175645555,
@@ -256,7 +257,7 @@
      "limit": 0.5,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s2"
+     "case": "m×0.85 μ0.50 s2"
     },
     "wheel_sat_s": {
      "margin": 0.02666666666666667,
@@ -264,7 +265,7 @@
      "limit": 0.3,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "wheel_rms10": {
      "margin": 0.625208892858899,
@@ -272,7 +273,7 @@
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "wheel_sat_duty": {
      "margin": 0.02,
@@ -280,7 +281,7 @@
      "limit": 0.05,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "leg_peak": {
      "margin": 0.212176206840804,
@@ -288,7 +289,7 @@
      "limit": 12.8,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "leg_rms": {
      "margin": 0.41421043536872176,
@@ -296,7 +297,7 @@
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s4"
+     "case": "m×1.15 μ1.00 s4"
     },
     "wheel_speed_peak": {
      "margin": 0.41467920809925707,
@@ -304,7 +305,7 @@
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s1"
+     "case": "m×0.85 μ0.50 s1"
     },
     "leg_speed_peak": {
      "margin": 0.13286721668951615,
@@ -312,7 +313,7 @@
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s0"
+     "case": "m×0.85 μ1.00 s0"
     }
    },
    "failures": [],
@@ -332,12 +333,12 @@
     "leg_rms": 0.1481408992612976,
     "wheel_speed_peak": 16.952472017635962,
     "leg_speed_peak": 0.49008245331639516,
-    "wall_s": 1.163221836090088
+    "wall_s": 1.351365327835083
    }
   },
   {
    "id": 4,
-   "name": "\ucd08\uae30 \uae30\uc6b8\uae30 20\u00b0",
+   "name": "초기 기울기 20°",
    "grade": "survive",
    "passed": true,
    "n_runs": 5,
@@ -348,7 +349,7 @@
      "limit": 1,
      "op": ">=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.75 s0"
+     "case": "m×1.00 μ0.75 s0"
     }
    },
    "failures": [],
@@ -368,12 +369,12 @@
     "leg_rms": 0.1504738662231446,
     "wheel_speed_peak": 24.35590192135451,
     "leg_speed_peak": 0.5173765202220679,
-    "wall_s": 1.276339054107666
+    "wall_s": 1.186340570449829
    }
   },
   {
    "id": 5,
-   "name": "\ubc00\uae30 0.5 W",
+   "name": "밀기 0.5 W",
    "grade": "settle",
    "passed": true,
    "n_runs": 45,
@@ -384,7 +385,7 @@
      "limit": 1,
      "op": ">=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "settle_s": {
      "margin": 0.6330000000000452,
@@ -392,7 +393,7 @@
      "limit": 3.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.75 s1"
+     "case": "m×0.85 μ0.75 s1"
     },
     "pitch_peak": {
      "margin": 0.4340387859745415,
@@ -400,7 +401,7 @@
      "limit": 8.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s2"
+     "case": "m×1.15 μ1.00 s2"
     },
     "disp": {
      "margin": 0.29572992783442026,
@@ -408,7 +409,7 @@
      "limit": 0.5,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s1"
+     "case": "m×0.85 μ0.50 s1"
     },
     "wheel_peak": {
      "margin": 0.34684571606800296,
@@ -416,7 +417,7 @@
      "limit": 1.36,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s4"
+     "case": "m×0.85 μ0.50 s4"
     },
     "wheel_rms10": {
      "margin": 0.40175482267060286,
@@ -424,7 +425,7 @@
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s3"
+     "case": "m×1.15 μ0.75 s3"
     },
     "wheel_sat_duty": {
      "margin": 0.0,
@@ -432,7 +433,7 @@
      "limit": 0.05,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "leg_peak": {
      "margin": 0.25262311167364354,
@@ -440,7 +441,7 @@
      "limit": 12.8,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s2"
+     "case": "m×1.15 μ0.75 s2"
     },
     "leg_rms": {
      "margin": 0.4194352825662246,
@@ -448,7 +449,7 @@
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s2"
+     "case": "m×1.15 μ0.75 s2"
     },
     "wheel_speed_peak": {
      "margin": 0.22781157239670508,
@@ -456,7 +457,7 @@
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.50 s1"
+     "case": "m×1.00 μ0.50 s1"
     },
     "leg_speed_peak": {
      "margin": 0.15350505262207018,
@@ -464,7 +465,7 @@
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s1"
+     "case": "m×1.15 μ0.50 s1"
     }
    },
    "failures": [],
@@ -486,12 +487,12 @@
     "leg_rms": 0.14754196500189107,
     "wheel_speed_peak": 34.01113756041669,
     "leg_speed_peak": 0.16333090529994182,
-    "wall_s": 1.5157456398010254
+    "wall_s": 1.206606388092041
    }
   },
   {
    "id": 6,
-   "name": "\ubc00\uae30 0.75 W",
+   "name": "밀기 0.75 W",
    "grade": "settle",
    "passed": true,
    "n_runs": 45,
@@ -502,7 +503,7 @@
      "limit": 1,
      "op": ">=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "settle_s": {
      "margin": 0.5762500000000678,
@@ -510,7 +511,7 @@
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s2"
+     "case": "m×1.15 μ0.75 s2"
     },
     "pitch_peak": {
      "margin": 0.43101101965878447,
@@ -518,7 +519,7 @@
      "limit": 12.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s3"
+     "case": "m×1.15 μ0.75 s3"
     },
     "wheel_rms10": {
      "margin": 0.6076196594055261,
@@ -526,7 +527,7 @@
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s3"
+     "case": "m×0.85 μ1.00 s3"
     },
     "wheel_sat_duty": {
      "margin": 0.0,
@@ -534,7 +535,7 @@
      "limit": 0.05,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "leg_peak": {
      "margin": 0.3649377054949816,
@@ -542,7 +543,7 @@
      "limit": 12.8,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s1"
+     "case": "m×1.15 μ0.50 s1"
     },
     "leg_rms": {
      "margin": 0.4233413229441735,
@@ -550,7 +551,7 @@
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s2"
+     "case": "m×1.15 μ0.75 s2"
     },
     "wheel_speed_peak": {
      "margin": 0.3503783697687866,
@@ -558,7 +559,7 @@
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s3"
+     "case": "m×0.85 μ1.00 s3"
     },
     "leg_speed_peak": {
      "margin": 0.23314879928285068,
@@ -566,7 +567,7 @@
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s2"
+     "case": "m×0.85 μ1.00 s2"
     }
    },
    "failures": [],
@@ -588,12 +589,12 @@
     "leg_rms": 0.36968848246310954,
     "wheel_speed_peak": 39.964350314096826,
     "leg_speed_peak": 0.8574904215831303,
-    "wall_s": 0.27841973304748535
+    "wall_s": 0.32670164108276367
    }
   },
   {
    "id": 7,
-   "name": "\ubc00\uae30 1.0 W",
+   "name": "밀기 1.0 W",
    "grade": "survive",
    "passed": true,
    "n_runs": 5,
@@ -604,7 +605,7 @@
      "limit": 1,
      "op": ">=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.75 s0"
+     "case": "m×1.00 μ0.75 s0"
     }
    },
    "failures": [],
@@ -626,12 +627,12 @@
     "leg_rms": 1.0806173180758958,
     "wheel_speed_peak": 39.96834840668271,
     "leg_speed_peak": 1.1055086084961325,
-    "wall_s": 0.254974365234375
+    "wall_s": 0.22633767127990723
    }
   },
   {
    "id": 8,
-   "name": "\uc18d\ub3c4 \uc2a4\ud15d 0.5 m/s",
+   "name": "속도 스텝 0.5 m/s",
    "grade": "settle",
    "passed": true,
    "n_runs": 45,
@@ -642,7 +643,7 @@
      "limit": 1.5,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s1"
+     "case": "m×0.85 μ1.00 s1"
     },
     "overshoot_pct": {
      "margin": 0.5313488643995901,
@@ -650,7 +651,7 @@
      "limit": 20.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s0"
+     "case": "m×0.85 μ1.00 s0"
     },
     "ss_err": {
      "margin": 0.7736545662292871,
@@ -658,7 +659,7 @@
      "limit": 0.05,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s3"
+     "case": "m×0.85 μ0.50 s3"
     },
     "pitch_peak": {
      "margin": 0.42846702930103264,
@@ -666,7 +667,7 @@
      "limit": 5.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s0"
+     "case": "m×1.15 μ0.75 s0"
     },
     "stop_disp": {
      "margin": 0.4707835401637359,
@@ -674,7 +675,7 @@
      "limit": 0.5,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s1"
+     "case": "m×0.85 μ1.00 s1"
     },
     "settled": {
      "margin": 0.0,
@@ -682,7 +683,7 @@
      "limit": 1,
      "op": ">=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "wheel_peak": {
      "margin": 0.2424749349950716,
@@ -690,7 +691,7 @@
      "limit": 1.36,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s0"
+     "case": "m×1.15 μ0.50 s0"
     },
     "wheel_rms10": {
      "margin": 0.4298267047215261,
@@ -698,7 +699,7 @@
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s2"
+     "case": "m×1.15 μ1.00 s2"
     },
     "wheel_sat_duty": {
      "margin": 0.0,
@@ -706,7 +707,7 @@
      "limit": 0.05,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "leg_peak": {
      "margin": 0.14882326093186352,
@@ -714,7 +715,7 @@
      "limit": 12.8,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s3"
+     "case": "m×1.15 μ1.00 s3"
     },
     "leg_rms": {
      "margin": 0.4101951219139369,
@@ -722,7 +723,7 @@
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s4"
+     "case": "m×1.15 μ1.00 s4"
     },
     "wheel_speed_peak": {
      "margin": 0.1483261050080371,
@@ -730,7 +731,7 @@
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s4"
+     "case": "m×0.85 μ1.00 s4"
     },
     "leg_speed_peak": {
      "margin": 0.05166641223425978,
@@ -738,7 +739,7 @@
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s2"
+     "case": "m×0.85 μ1.00 s2"
     }
    },
    "failures": [],
@@ -761,12 +762,12 @@
     "leg_rms": 0.16300633330613326,
     "wheel_speed_peak": 23.471930718499646,
     "leg_speed_peak": 0.8489726816068015,
-    "wall_s": 0.982215166091919
+    "wall_s": 0.9995622634887695
    }
   },
   {
    "id": 9,
-   "name": "\uc694 1 rad/s",
+   "name": "요 1 rad/s",
    "grade": "settle",
    "passed": true,
    "n_runs": 45,
@@ -777,7 +778,7 @@
      "limit": 10.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s0"
+     "case": "m×1.15 μ1.00 s0"
     },
     "pitch_peak": {
      "margin": 0.16989808103735646,
@@ -785,7 +786,7 @@
      "limit": 2.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s2"
+     "case": "m×0.85 μ0.50 s2"
     },
     "alive": {
      "margin": 0.0,
@@ -793,7 +794,7 @@
      "limit": 1,
      "op": ">=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "wheel_peak": {
      "margin": 0.24040344887488135,
@@ -801,7 +802,7 @@
      "limit": 1.36,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.50 s2"
+     "case": "m×1.00 μ0.50 s2"
     },
     "wheel_rms10": {
      "margin": 0.5329180851428205,
@@ -809,7 +810,7 @@
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s1"
+     "case": "m×1.15 μ1.00 s1"
     },
     "wheel_sat_duty": {
      "margin": 0.0,
@@ -817,7 +818,7 @@
      "limit": 0.05,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "leg_peak": {
      "margin": 0.19640368462705574,
@@ -825,7 +826,7 @@
      "limit": 12.8,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s0"
+     "case": "m×1.15 μ1.00 s0"
     },
     "leg_rms": {
      "margin": 0.49185992957140406,
@@ -833,7 +834,7 @@
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s2"
+     "case": "m×1.15 μ1.00 s2"
     },
     "wheel_speed_peak": {
      "margin": 0.04021685821950345,
@@ -841,7 +842,7 @@
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.75 s1"
+     "case": "m×1.00 μ0.75 s1"
     },
     "leg_speed_peak": {
      "margin": 0.03403693874476639,
@@ -849,7 +850,7 @@
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.75 s3"
+     "case": "m×0.85 μ0.75 s3"
     }
    },
    "failures": [],
@@ -867,12 +868,12 @@
     "leg_rms": 1.510036692143673,
     "wheel_speed_peak": 7.495629145717351,
     "leg_speed_peak": 0.31052501336071414,
-    "wall_s": 0.3766665458679199
+    "wall_s": 0.4243309497833252
    }
   },
   {
    "id": 10,
-   "name": "4 cm \uc6c5\ud06c\ub9bc \ud6c4 \ubcf5\uadc0",
+   "name": "4 cm 웅크림 후 복귀",
    "grade": "settle",
    "passed": true,
    "n_runs": 45,
@@ -883,7 +884,7 @@
      "limit": 1,
      "op": ">=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "pitch_peak": {
      "margin": 0.231834888030461,
@@ -891,7 +892,7 @@
      "limit": 3.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.75 s4"
+     "case": "m×0.85 μ0.75 s4"
     },
     "settled": {
      "margin": 0.0,
@@ -899,7 +900,7 @@
      "limit": 1,
      "op": ">=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "wheel_peak": {
      "margin": 0.11582655719159062,
@@ -907,7 +908,7 @@
      "limit": 1.36,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s4"
+     "case": "m×1.15 μ1.00 s4"
     },
     "wheel_rms10": {
      "margin": 0.21194963791415422,
@@ -915,7 +916,7 @@
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s0"
+     "case": "m×1.15 μ1.00 s0"
     },
     "wheel_sat_duty": {
      "margin": 0.0,
@@ -923,7 +924,7 @@
      "limit": 0.05,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "leg_peak": {
      "margin": 0.2726647432286978,
@@ -931,7 +932,7 @@
      "limit": 12.8,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s4"
+     "case": "m×1.15 μ0.50 s4"
     },
     "leg_rms": {
      "margin": 0.49367180236326796,
@@ -939,7 +940,7 @@
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s2"
+     "case": "m×1.15 μ0.50 s2"
     },
     "wheel_speed_peak": {
      "margin": 0.044249997537429274,
@@ -947,7 +948,7 @@
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s2"
+     "case": "m×0.85 μ1.00 s2"
     },
     "leg_speed_peak": {
      "margin": 0.1692040891444429,
@@ -955,7 +956,7 @@
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s2"
+     "case": "m×0.85 μ1.00 s2"
     }
    },
    "failures": [],
@@ -973,12 +974,12 @@
     "leg_rms": 0.92259075000738,
     "wheel_speed_peak": 8.608339914741089,
     "leg_speed_peak": 0.9261551986896478,
-    "wall_s": 0.9486567974090576
+    "wall_s": 0.8285140991210938
    }
   },
   {
    "id": 11,
-   "name": "\ub9c1\ud06c \ub04a\uae40(0.5 m/s \uc8fc\ud589 \uc911)",
+   "name": "링크 끊김(0.5 m/s 주행 중)",
    "grade": "settle",
    "passed": true,
    "n_runs": 45,
@@ -989,7 +990,7 @@
      "limit": 1,
      "op": ">=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "stop_time": {
      "margin": 0.7859999999995644,
@@ -997,7 +998,7 @@
      "limit": 3.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s2"
+     "case": "m×0.85 μ1.00 s2"
     },
     "motors_on": {
      "margin": 0.0,
@@ -1005,7 +1006,7 @@
      "limit": 1,
      "op": ">=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "settled": {
      "margin": 0.0,
@@ -1013,7 +1014,7 @@
      "limit": 1,
      "op": ">=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "wheel_peak": {
      "margin": 0.23242447413517076,
@@ -1021,7 +1022,7 @@
      "limit": 1.36,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s4"
+     "case": "m×1.15 μ1.00 s4"
     },
     "wheel_rms10": {
      "margin": 0.3394399990033537,
@@ -1029,7 +1030,7 @@
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s4"
+     "case": "m×1.15 μ1.00 s4"
     },
     "wheel_sat_duty": {
      "margin": 0.0,
@@ -1037,7 +1038,7 @@
      "limit": 0.05,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "leg_peak": {
      "margin": 0.15023437697278522,
@@ -1045,7 +1046,7 @@
      "limit": 12.8,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s0"
+     "case": "m×1.15 μ0.50 s0"
     },
     "leg_rms": {
      "margin": 0.41167267855405015,
@@ -1053,7 +1054,7 @@
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s3"
+     "case": "m×1.15 μ0.75 s3"
     },
     "wheel_speed_peak": {
      "margin": 0.14149655554865018,
@@ -1061,7 +1062,7 @@
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.75 s2"
+     "case": "m×0.85 μ0.75 s2"
     },
     "leg_speed_peak": {
      "margin": 0.05151236684377232,
@@ -1069,7 +1070,7 @@
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.50 s4"
+     "case": "m×1.00 μ0.50 s4"
     }
    },
    "failures": [],
@@ -1078,7 +1079,7 @@
   },
   {
    "id": 12,
-   "name": "\uacbd\uc0ac 5\u00b0 \uc815\uc9c0",
+   "name": "경사 5° 정지",
    "grade": "settle",
    "passed": true,
    "n_runs": 45,
@@ -1089,7 +1090,7 @@
      "limit": 1,
      "op": ">=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "disp_max": {
      "margin": 0.5470494024142828,
@@ -1097,7 +1098,7 @@
      "limit": 0.1,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s1"
+     "case": "m×1.15 μ0.50 s1"
     },
     "pitch_dev_ma_max": {
      "margin": 0.4371953625178016,
@@ -1105,7 +1106,7 @@
      "limit": 1.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s2"
+     "case": "m×1.15 μ0.50 s2"
     },
     "pitch_dev_rms": {
      "margin": 0.2869766685951493,
@@ -1113,7 +1114,7 @@
      "limit": 0.5,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s0"
+     "case": "m×1.15 μ0.75 s0"
     },
     "wheel_rms10": {
      "margin": 0.7819346706513434,
@@ -1121,7 +1122,7 @@
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s2"
+     "case": "m×1.15 μ0.75 s2"
     },
     "wheel_sat_duty": {
      "margin": 0.0,
@@ -1129,7 +1130,7 @@
      "limit": 0.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "wheel_peak": {
      "margin": 0.2058044095220082,
@@ -1137,7 +1138,7 @@
      "limit": 1.36,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s1"
+     "case": "m×1.15 μ0.75 s1"
     },
     "leg_peak": {
      "margin": 0.1521038378190838,
@@ -1145,7 +1146,7 @@
      "limit": 12.8,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s1"
+     "case": "m×0.85 μ0.50 s1"
     },
     "leg_rms": {
      "margin": 0.38733650331497893,
@@ -1153,7 +1154,7 @@
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s2"
+     "case": "m×1.15 μ0.50 s2"
     },
     "wheel_speed_peak": {
      "margin": 0.041011022494632544,
@@ -1161,7 +1162,7 @@
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s2"
+     "case": "m×1.15 μ1.00 s2"
     },
     "leg_speed_peak": {
      "margin": 0.054939634073517596,
@@ -1169,7 +1170,7 @@
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s3"
+     "case": "m×0.85 μ0.50 s3"
     }
    },
    "failures": [],
@@ -1178,7 +1179,7 @@
   },
   {
    "id": 13,
-   "name": "\uacbd\uc0ac 5\u00b0 \uc8fc\ud589 0.5 m/s(\uc624\ub974\uae30\u00b7\ub0b4\ub9ac\uae30)",
+   "name": "경사 5° 주행 0.5 m/s(오르기·내리기)",
    "grade": "settle",
    "passed": true,
    "n_runs": 45,
@@ -1189,7 +1190,7 @@
      "limit": 1.5,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s0"
+     "case": "m×1.15 μ0.50 s0"
     },
     "overshoot_pct": {
      "margin": 0.5503789807610326,
@@ -1197,7 +1198,7 @@
      "limit": 20.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s1"
+     "case": "m×0.85 μ1.00 s1"
     },
     "ss_err": {
      "margin": 0.8296145699502877,
@@ -1205,7 +1206,7 @@
      "limit": 0.05,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "pitch_peak": {
      "margin": 0.47692551234721803,
@@ -1213,7 +1214,7 @@
      "limit": 5.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s1"
+     "case": "m×1.15 μ0.75 s1"
     },
     "stop_disp": {
      "margin": 0.46749761488419916,
@@ -1221,7 +1222,7 @@
      "limit": 0.5,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s1"
+     "case": "m×0.85 μ0.50 s1"
     },
     "settled": {
      "margin": 0.0,
@@ -1229,7 +1230,7 @@
      "limit": 1,
      "op": ">=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "wheel_peak": {
      "margin": 0.35387545123817127,
@@ -1237,7 +1238,7 @@
      "limit": 1.36,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s4"
+     "case": "m×1.15 μ1.00 s4"
     },
     "wheel_rms10": {
      "margin": 0.8784778933674997,
@@ -1245,7 +1246,7 @@
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s2"
+     "case": "m×1.15 μ0.75 s2"
     },
     "wheel_sat_duty": {
      "margin": 0.0,
@@ -1253,7 +1254,7 @@
      "limit": 0.05,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "leg_peak": {
      "margin": 0.14179652151622751,
@@ -1261,7 +1262,7 @@
      "limit": 12.8,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s1"
+     "case": "m×1.15 μ1.00 s1"
     },
     "leg_rms": {
      "margin": 0.38895781469223384,
@@ -1269,7 +1270,7 @@
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s3"
+     "case": "m×1.15 μ1.00 s3"
     },
     "wheel_speed_peak": {
      "margin": 0.14719909790213911,
@@ -1277,7 +1278,7 @@
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s4"
+     "case": "m×1.15 μ1.00 s4"
     },
     "leg_speed_peak": {
      "margin": 0.05229932943487326,
@@ -1285,7 +1286,7 @@
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s3"
+     "case": "m×0.85 μ0.50 s3"
     }
    },
    "failures": [],
@@ -1294,7 +1295,7 @@
   },
   {
    "id": 15,
-   "name": "\uc9c0\uc5f0 \uc2a4\uc715(3\u00b0 \uae30\uc6b8\uae30, \ubb34\ub178\uc774\uc988; \uac15\uac74 \uc5ec\uc720\ub3c4 \ud568\uaed8 \uae30\ub85d)",
+   "name": "지연 스윕(3° 기울기, 무노이즈; 강건 여유도 함께 기록)",
    "grade": "record",
    "passed": false,
    "n_runs": 1,
@@ -1305,7 +1306,7 @@
      "limit": 25.0,
      "op": ">=",
      "passed": false,
-     "case": "m\u00d71.00 \u03bc0.75 s0"
+     "case": "m×1.00 μ0.75 s0"
     },
     "max_latency_robust_ms": {
      "margin": 0.0,
@@ -1313,12 +1314,12 @@
      "limit": 0.0,
      "op": ">=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.75 s0"
+     "case": "m×1.00 μ0.75 s0"
     }
    },
    "failures": [
     {
-     "case": "m\u00d71.00 \u03bc0.75 seed 0",
+     "case": "m×1.00 μ0.75 seed 0",
      "metric": "max_latency_ms",
      "value": 20,
      "limit": 25.0,
@@ -1330,9 +1331,9 @@
   },
   {
    "id": 16,
-   "name": "IMU \ud53c\uce58 \ubc14\uc774\uc5b4\uc2a4 +1\u00b0",
+   "name": "IMU 피치 바이어스 +1°",
    "grade": "settle",
-   "passed": false,
+   "passed": true,
    "n_runs": 45,
    "worst": {
     "alive": {
@@ -1341,7 +1342,7 @@
      "limit": 1,
      "op": ">=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "pitch_ma_max": {
      "margin": 0.5687991520109718,
@@ -1349,7 +1350,7 @@
      "limit": 1.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s3"
+     "case": "m×1.15 μ0.75 s3"
     },
     "pitch_rms": {
      "margin": 0.5861840076387065,
@@ -1357,15 +1358,15 @@
      "limit": 0.5,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s4"
+     "case": "m×1.15 μ1.00 s4"
     },
     "drift_max": {
-     "margin": 1.75378565131551,
-     "value": 0.0876892825657755,
-     "limit": 0.05,
+     "margin": 0.722319560862573,
+     "value": 0.0722319560862573,
+     "limit": 0.1,
      "op": "<=",
-     "passed": false,
-     "case": "m\u00d70.85 \u03bc1.00 s3"
+     "passed": true,
+     "case": "m×1.15 μ0.50 s3"
     },
     "wheel_rms10": {
      "margin": 0.18946869086406096,
@@ -1373,7 +1374,7 @@
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc1.00 s2"
+     "case": "m×1.00 μ1.00 s2"
     },
     "wheel_sat_duty": {
      "margin": 0.0,
@@ -1381,7 +1382,7 @@
      "limit": 0.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "wheel_peak": {
      "margin": 0.11597780049003838,
@@ -1389,7 +1390,7 @@
      "limit": 1.36,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s3"
+     "case": "m×1.15 μ1.00 s3"
     },
     "leg_peak": {
      "margin": 0.1454403284925808,
@@ -1397,7 +1398,7 @@
      "limit": 12.8,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s2"
+     "case": "m×1.15 μ1.00 s2"
     },
     "leg_rms": {
      "margin": 0.4078569923745897,
@@ -1405,7 +1406,7 @@
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s2"
+     "case": "m×1.15 μ0.50 s2"
     },
     "wheel_speed_peak": {
      "margin": 0.017553080714342698,
@@ -1413,7 +1414,7 @@
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s1"
+     "case": "m×0.85 μ1.00 s1"
     },
     "leg_speed_peak": {
      "margin": 0.02102544198072058,
@@ -1421,334 +1422,18 @@
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.50 s3"
+     "case": "m×1.00 μ0.50 s3"
     }
    },
-   "failures": [
-    {
-     "case": "m\u00d70.85 \u03bc0.50 seed 0",
-     "metric": "drift_max",
-     "value": 0.08718464964128522,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc0.50 seed 1",
-     "metric": "drift_max",
-     "value": 0.0869042543813414,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc0.50 seed 2",
-     "metric": "drift_max",
-     "value": 0.08747068773955263,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc0.50 seed 3",
-     "metric": "drift_max",
-     "value": 0.08768318884077608,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc0.50 seed 4",
-     "metric": "drift_max",
-     "value": 0.0865650336579682,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc0.75 seed 0",
-     "metric": "drift_max",
-     "value": 0.08757146594730136,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc0.75 seed 1",
-     "metric": "drift_max",
-     "value": 0.08640904043384001,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc0.75 seed 2",
-     "metric": "drift_max",
-     "value": 0.08743891880488326,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc0.75 seed 3",
-     "metric": "drift_max",
-     "value": 0.08755229684704444,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc0.75 seed 4",
-     "metric": "drift_max",
-     "value": 0.08652029929613243,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc1.00 seed 0",
-     "metric": "drift_max",
-     "value": 0.08698195568896776,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc1.00 seed 1",
-     "metric": "drift_max",
-     "value": 0.08683047643367627,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc1.00 seed 2",
-     "metric": "drift_max",
-     "value": 0.08709127311645376,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc1.00 seed 3",
-     "metric": "drift_max",
-     "value": 0.0876892825657755,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc1.00 seed 4",
-     "metric": "drift_max",
-     "value": 0.08675732005461184,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc0.50 seed 0",
-     "metric": "drift_max",
-     "value": 0.08601357084825685,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc0.50 seed 1",
-     "metric": "drift_max",
-     "value": 0.08553454581446691,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc0.50 seed 2",
-     "metric": "drift_max",
-     "value": 0.08594529536308043,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc0.50 seed 3",
-     "metric": "drift_max",
-     "value": 0.08675281948017415,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc0.50 seed 4",
-     "metric": "drift_max",
-     "value": 0.08542213713097883,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc0.75 seed 0",
-     "metric": "drift_max",
-     "value": 0.08597743960016553,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc0.75 seed 1",
-     "metric": "drift_max",
-     "value": 0.08554245716922165,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc0.75 seed 2",
-     "metric": "drift_max",
-     "value": 0.08661564122330026,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc0.75 seed 3",
-     "metric": "drift_max",
-     "value": 0.0864159507987545,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc0.75 seed 4",
-     "metric": "drift_max",
-     "value": 0.08526048984333916,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc1.00 seed 0",
-     "metric": "drift_max",
-     "value": 0.0862145728650464,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc1.00 seed 1",
-     "metric": "drift_max",
-     "value": 0.08531429944208968,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc1.00 seed 2",
-     "metric": "drift_max",
-     "value": 0.08618525862110972,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc1.00 seed 3",
-     "metric": "drift_max",
-     "value": 0.08692426844811817,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc1.00 seed 4",
-     "metric": "drift_max",
-     "value": 0.08526791268425467,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc0.50 seed 0",
-     "metric": "drift_max",
-     "value": 0.08440099360283372,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc0.50 seed 1",
-     "metric": "drift_max",
-     "value": 0.08420824113382659,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc0.50 seed 2",
-     "metric": "drift_max",
-     "value": 0.08513429366134484,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc0.50 seed 3",
-     "metric": "drift_max",
-     "value": 0.08535880612339133,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc0.50 seed 4",
-     "metric": "drift_max",
-     "value": 0.0841822281541246,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc0.75 seed 0",
-     "metric": "drift_max",
-     "value": 0.08443289267263435,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc0.75 seed 1",
-     "metric": "drift_max",
-     "value": 0.08435096732396849,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc0.75 seed 2",
-     "metric": "drift_max",
-     "value": 0.08506838806392396,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc0.75 seed 3",
-     "metric": "drift_max",
-     "value": 0.08532505991386759,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc0.75 seed 4",
-     "metric": "drift_max",
-     "value": 0.0841180411756685,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc1.00 seed 0",
-     "metric": "drift_max",
-     "value": 0.08476280848715541,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc1.00 seed 1",
-     "metric": "drift_max",
-     "value": 0.08408806033337969,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc1.00 seed 2",
-     "metric": "drift_max",
-     "value": 0.08483447044158746,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc1.00 seed 3",
-     "metric": "drift_max",
-     "value": 0.08516714516010764,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc1.00 seed 4",
-     "metric": "drift_max",
-     "value": 0.08388761325250288,
-     "limit": 0.05,
-     "op": "<="
-    }
-   ],
+   "failures": [],
    "errors": [],
    "reference": null
   },
   {
    "id": 17,
-   "name": "\ubb34\uac8c\uc911\uc2ec \uc804\ubc29 \uc624\ud504\uc14b(0.3 kg, +10 cm)",
+   "name": "무게중심 전방 오프셋(0.3 kg, +10 cm)",
    "grade": "settle",
-   "passed": false,
+   "passed": true,
    "n_runs": 45,
    "worst": {
     "alive": {
@@ -1757,7 +1442,7 @@
      "limit": 1,
      "op": ">=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "pitch_ma_max": {
      "margin": 0.7076933911765863,
@@ -1765,7 +1450,7 @@
      "limit": 1.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.50 s0"
+     "case": "m×1.00 μ0.50 s0"
     },
     "pitch_rms": {
      "margin": 0.8384327989756207,
@@ -1773,15 +1458,15 @@
      "limit": 0.5,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.50 s1"
+     "case": "m×1.00 μ0.50 s1"
     },
     "drift_max": {
-     "margin": 2.139021962319841,
-     "value": 0.10695109811599207,
-     "limit": 0.05,
+     "margin": 0.8625389571161098,
+     "value": 0.08625389571161099,
+     "limit": 0.1,
      "op": "<=",
-     "passed": false,
-     "case": "m\u00d70.85 \u03bc0.75 s1"
+     "passed": true,
+     "case": "m×0.85 μ0.75 s2"
     },
     "wheel_rms10": {
      "margin": 0.1892729830273234,
@@ -1789,7 +1474,7 @@
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s2"
+     "case": "m×1.15 μ0.75 s2"
     },
     "wheel_sat_duty": {
      "margin": 0.0,
@@ -1797,7 +1482,7 @@
      "limit": 0.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m×0.85 μ0.50 s0"
     },
     "wheel_peak": {
      "margin": 0.11484149892185044,
@@ -1805,7 +1490,7 @@
      "limit": 1.36,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.50 s3"
+     "case": "m×1.00 μ0.50 s3"
     },
     "leg_peak": {
      "margin": 0.14967800549097762,
@@ -1813,7 +1498,7 @@
      "limit": 12.8,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s1"
+     "case": "m×1.15 μ0.50 s1"
     },
     "leg_rms": {
      "margin": 0.4160827487851783,
@@ -1821,7 +1506,7 @@
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s2"
+     "case": "m×1.15 μ1.00 s2"
     },
     "wheel_speed_peak": {
      "margin": 0.020519373787203154,
@@ -1829,7 +1514,7 @@
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s1"
+     "case": "m×0.85 μ1.00 s1"
     },
     "leg_speed_peak": {
      "margin": 0.020881892818466436,
@@ -1837,332 +1522,16 @@
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.50 s0"
+     "case": "m×1.00 μ0.50 s0"
     }
    },
-   "failures": [
-    {
-     "case": "m\u00d70.85 \u03bc0.50 seed 0",
-     "metric": "drift_max",
-     "value": 0.10566379825907021,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc0.50 seed 1",
-     "metric": "drift_max",
-     "value": 0.10635596637008073,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc0.50 seed 2",
-     "metric": "drift_max",
-     "value": 0.10523100841483467,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc0.50 seed 3",
-     "metric": "drift_max",
-     "value": 0.10442817002896582,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc0.50 seed 4",
-     "metric": "drift_max",
-     "value": 0.10561931367908206,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc0.75 seed 0",
-     "metric": "drift_max",
-     "value": 0.10531607029534074,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc0.75 seed 1",
-     "metric": "drift_max",
-     "value": 0.10695109811599207,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc0.75 seed 2",
-     "metric": "drift_max",
-     "value": 0.10572943825459076,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc0.75 seed 3",
-     "metric": "drift_max",
-     "value": 0.10452184923351987,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc0.75 seed 4",
-     "metric": "drift_max",
-     "value": 0.105499664448203,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc1.00 seed 0",
-     "metric": "drift_max",
-     "value": 0.10578722784054156,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc1.00 seed 1",
-     "metric": "drift_max",
-     "value": 0.10676275951502849,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc1.00 seed 2",
-     "metric": "drift_max",
-     "value": 0.10557762939717963,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc1.00 seed 3",
-     "metric": "drift_max",
-     "value": 0.10475918308192834,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d70.85 \u03bc1.00 seed 4",
-     "metric": "drift_max",
-     "value": 0.1062328462840731,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc0.50 seed 0",
-     "metric": "drift_max",
-     "value": 0.09282430836834543,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc0.50 seed 1",
-     "metric": "drift_max",
-     "value": 0.09368500256166468,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc0.50 seed 2",
-     "metric": "drift_max",
-     "value": 0.09293044232106946,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc0.50 seed 3",
-     "metric": "drift_max",
-     "value": 0.09215636124681478,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc0.50 seed 4",
-     "metric": "drift_max",
-     "value": 0.092800131734109,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc0.75 seed 0",
-     "metric": "drift_max",
-     "value": 0.09242465975065049,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc0.75 seed 1",
-     "metric": "drift_max",
-     "value": 0.0930748823213064,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc0.75 seed 2",
-     "metric": "drift_max",
-     "value": 0.0931621193142895,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc0.75 seed 3",
-     "metric": "drift_max",
-     "value": 0.09181055919840739,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc0.75 seed 4",
-     "metric": "drift_max",
-     "value": 0.09270657263660587,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc1.00 seed 0",
-     "metric": "drift_max",
-     "value": 0.09239201829904437,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc1.00 seed 1",
-     "metric": "drift_max",
-     "value": 0.09390899892192392,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc1.00 seed 2",
-     "metric": "drift_max",
-     "value": 0.09322010551519659,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc1.00 seed 3",
-     "metric": "drift_max",
-     "value": 0.09216220121060346,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.00 \u03bc1.00 seed 4",
-     "metric": "drift_max",
-     "value": 0.09303401831738616,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc0.50 seed 0",
-     "metric": "drift_max",
-     "value": 0.08237715087075806,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc0.50 seed 1",
-     "metric": "drift_max",
-     "value": 0.08366578363224754,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc0.50 seed 2",
-     "metric": "drift_max",
-     "value": 0.08289103427503602,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc0.50 seed 3",
-     "metric": "drift_max",
-     "value": 0.08203658761710209,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc0.50 seed 4",
-     "metric": "drift_max",
-     "value": 0.0824743648852582,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc0.75 seed 0",
-     "metric": "drift_max",
-     "value": 0.08274133596611834,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc0.75 seed 1",
-     "metric": "drift_max",
-     "value": 0.0831498085814549,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc0.75 seed 2",
-     "metric": "drift_max",
-     "value": 0.08327266557411721,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc0.75 seed 3",
-     "metric": "drift_max",
-     "value": 0.08246458704482085,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc0.75 seed 4",
-     "metric": "drift_max",
-     "value": 0.0831460142748583,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc1.00 seed 0",
-     "metric": "drift_max",
-     "value": 0.0830105832509882,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc1.00 seed 1",
-     "metric": "drift_max",
-     "value": 0.08361479264347638,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc1.00 seed 2",
-     "metric": "drift_max",
-     "value": 0.08273246663637493,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc1.00 seed 3",
-     "metric": "drift_max",
-     "value": 0.08201933868620682,
-     "limit": 0.05,
-     "op": "<="
-    },
-    {
-     "case": "m\u00d71.15 \u03bc1.00 seed 4",
-     "metric": "drift_max",
-     "value": 0.08221435286408743,
-     "limit": 0.05,
-     "op": "<="
-    }
-   ],
+   "failures": [],
    "errors": [],
    "reference": null
   },
   {
    "id": 24,
-   "name": "\uc8fc\ud589 \uc911 \ubc00\uae30(0.3 m/s \uc21c\ud56d, 0.75 W; \uae30\ub85d, \uac80\ud1a0 r1)",
+   "name": "주행 중 밀기(0.3 m/s 순항, 0.75 W; 기록, 검토 r1)",
    "grade": "record",
    "passed": true,
    "n_runs": 1,
@@ -2173,7 +1542,7 @@
      "limit": 1,
      "op": ">=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.75 s0"
+     "case": "m×1.00 μ0.75 s0"
     },
     "settled": {
      "margin": 0.0,
@@ -2181,7 +1550,7 @@
      "limit": 1,
      "op": ">=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.75 s0"
+     "case": "m×1.00 μ0.75 s0"
     },
     "settle_s": {
      "margin": 0.4742499999999591,
@@ -2189,7 +1558,7 @@
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.75 s0"
+     "case": "m×1.00 μ0.75 s0"
     },
     "v_back": {
      "margin": 0.03132135918278316,
@@ -2197,7 +1566,7 @@
      "limit": 0.1,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.75 s0"
+     "case": "m×1.00 μ0.75 s0"
     }
    },
    "failures": [],
@@ -2205,6 +1574,6 @@
    "reference": null
   }
  ],
- "passed": false,
- "code_hash": "1cbc282b92"
+ "passed": true,
+ "code_hash": "345db37b94"
 }

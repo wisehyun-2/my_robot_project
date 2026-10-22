@@ -99,10 +99,15 @@ STAND_CHECKS = [
     Check("alive", ">=", 1, "", "생존(2 s 이후 전복 포함)"),
     Check("pitch_ma_max", "<=", 1.0, "deg", "20 ms 이동평균 |피치|"),
     Check("pitch_rms", "<=", 0.5, "deg"),
-    Check("drift_max", "<=", 0.05, "m", "max |x − x0|"),
+    Check("drift_max", "<=", 0.05, "m", "max |x(t) − x(0)|, t ≥ 2 s"),
     Check("wheel_rms10", "<=", WHEEL_RMS_LIMIT, "Nm"),
     Check("wheel_sat_duty", "<=", 0.0, "", "포화 없음"),
 ]
+# items 16 / 17 (standing under a CONSTANT disturbance: IMU bias, payload moment): the drift limit of item 12 (slope
+# stand, the same class of disturbance and the same order of holding torque, 0.25-0.29 Nm) -- user-delegated decision
+# of 2026-10-23 (docs/합격기준.md 6.3); every other stand check is unchanged
+STAND_CHECKS_DISTURBED = [c if c.metric != "drift_max" else Check("drift_max", "<=", 0.10, "m", "max |x(t) − x(0)|, t ≥ 2 s (일정 외란: 12번과 같은 10 cm)")
+                          for c in STAND_CHECKS]
 
 ITEMS: List[Item] = [
     Item(1, "정지 60 s", "settle", "stand", dict(T=60.0), STAND_CHECKS, duration_s=60),
@@ -137,8 +142,8 @@ ITEMS: List[Item] = [
          [Check("max_latency_ms", ">=", 25.0, "ms", "3° 기울기 정착(기준)"),
           Check("max_latency_robust_ms", ">=", 0.0, "ms", "노이즈·2 mm 낙하·0.5 W 밀기 20 s, 마지막 5 s 피치 rms < 0.5°(기록, 검토 r1 M1)")],
          torque_margin=False),
-    Item(16, "IMU 피치 바이어스 +1°", "settle", "stand", dict(T=60.0, pitch_bias_deg=1.0), STAND_CHECKS, duration_s=60),
-    Item(17, "무게중심 전방 오프셋(0.3 kg, +10 cm)", "settle", "stand", dict(T=60.0, payload=(0.3, 0.10, None)), STAND_CHECKS, duration_s=60),
+    Item(16, "IMU 피치 바이어스 +1°", "settle", "stand", dict(T=60.0, pitch_bias_deg=1.0), STAND_CHECKS_DISTURBED, duration_s=60),
+    Item(17, "무게중심 전방 오프셋(0.3 kg, +10 cm)", "settle", "stand", dict(T=60.0, payload=(0.3, 0.10, None)), STAND_CHECKS_DISTURBED, duration_s=60),
     # review r1 (stage 2 M1): the criteria's disturbance items all run with the target exactly 0 (the host idle); this
     # record-only item pushes the robot while it cruises so that the stage-2 host (telemetry correction) and the
     # stage-1 ramp host can be compared.  Not part of the user's criteria: it never flips the verdict.
@@ -274,9 +279,11 @@ def scenario_stand(plan, T: float = 60.0, **_) -> dict:
     ma = moving_average(pitch, plan.dt, 0.02)
     x_sel = L["x"][sel]
     out = dict(alive=alive, pitch_ma_max=float(math.degrees(np.abs(ma).max())), pitch_rms=float(math.degrees(np.sqrt(np.mean(pitch ** 2)))),
-               # drift: largest excursion from the position at the end of the reset transient (same 2 s exclusion as the
-               # pitch metrics; the excursion from t = 0 is kept as drift_max_from_t0 for information)
-               drift_max=float(np.abs(x_sel - x_sel[0]).max()), drift_max_from_t0=float(np.abs(L["x"] - L["x"][0]).max()),
+               # drift (criteria section 3): max |x(t) - x(0)| searched over t >= 2 s (the reset transient is excluded from
+               # the SEARCH, not from the reference point -- the 2 s reference point measured 1-2 cm too much on items
+               # 16 / 17, review r2 m3).  The old definition is kept as drift_max_from_t2 for comparison.
+               drift_max=float(np.abs(x_sel - L["x"][0]).max()), drift_max_from_t0=float(np.abs(L["x"] - L["x"][0]).max()),
+               drift_max_from_t2=float(np.abs(x_sel - x_sel[0]).max()),
                drift_end=float(L["x"][-1] - L["x"][0]),
                pitch_mean=float(math.degrees(pitch.mean())),
                pitch_ma_max_incl_transient=float(math.degrees(np.abs(moving_average(L["pitch_true"], plan.dt, 0.02)).max())))
@@ -588,7 +595,8 @@ def code_hash() -> str:
     root = Path(__file__).resolve().parents[1]
     h = hashlib.sha1()
     import mujoco
-    h.update(f"mujoco {mujoco.__version__} numpy {np.__version__}".encode())      # r2 n14: library versions
+    import scipy
+    h.update(f"mujoco {mujoco.__version__} numpy {np.__version__} scipy {scipy.__version__}".encode())   # r2 n14 / r3 n8
     skip = ("viewer", "video.py", "plots.py", "run_bench.py", "battery.py", "compare_hosts.py", "regression.py")
     for p in sorted(root.rglob("*.py")):
         rel = p.relative_to(root).as_posix()
@@ -657,7 +665,7 @@ def regression_row(summary: dict, stage1: dict) -> dict:
                                                case=", ".join(metric_worse) or "-")}
     failures = [dict(case=f"항목 {w['id']}", metric="margin_worse_10pct", value=w["stage2"], limit=1.1 * w["stage1"], op="<=") for w in worse]
     failures += [dict(case=f"항목 {i}", metric="regression_flips", value=1, limit=0, op="<=") for i in flips]
-    return dict(id=20, name="회귀 없음(1~17: 1단계 통과 유지, 가장 빠듯한 지표 여유율 악화 ≤ 10 %)", grade="settle",
+    return dict(id=20, name="회귀 없음(1~17: 1단계 통과 유지, 가장 빠듯한 지표 여유율 악화 < 10 %)", grade="settle",
                 passed=not flips and not worse, n_runs=compared, worst=worst, failures=failures, errors=[], reference=None)
 
 

@@ -58,7 +58,8 @@ def compare(s1: dict, s2: dict, ids=None) -> tuple:
             x, y = a["worst"][metric], b["worst"][metric]
             if x["margin"] is None or y["margin"] is None:
                 continue
-            worse = y["margin"] > 1.1 * x["margin"] + 1e-12 and y["margin"] > 0.05      # ignore metrics far from their limit
+            # same rule as acceptance.regression_row (r3 n2): ignore metrics whose STAGE-1 margin is below 0.05 (far from the limit)
+            worse = y["margin"] > 1.1 * x["margin"] + 1e-12 and x["margin"] >= 0.05
             metric_rows.append(dict(id=iid, metric=metric, v1=x["value"], v2=y["value"], m1=x["margin"], m2=y["margin"],
                                     limit=x["limit"], op=x["op"], worse=bool(worse)))
     return rows, metric_rows
@@ -72,7 +73,7 @@ def main(argv=None):
     args = ap.parse_args(argv)
     lines = ["# 2단계 회귀 비교(기준 20): 1단계 램프 호스트 vs MPC 호스트", "",
              f"1단계: `{args.stage1}`, 2단계: `{args.stage2}`. 여유율 = 측정/기준(≤) 또는 기준/측정(≥), 작을수록 여유. "
-             "회귀 = 1단계 통과→2단계 실패, 또는 가장 빠듯한 지표의 여유율이 1.1배 넘게 나빠짐.", ""]
+             "회귀 = 1단계 통과→2단계 실패, 또는 가장 빠듯한 지표의 여유율이 1.1배 이상(≥ 10 %) 나빠짐.", ""]
     for rate in ("1000", "200"):
         s1 = _load(Path(args.stage1) / f"plan4_{rate}Hz.json")
         s2 = _load(Path(args.stage2) / f"plan4_mpc_{rate}Hz.json")
@@ -86,7 +87,7 @@ def main(argv=None):
             lines.append(f"| {r['id']} | {r['name']} | {'통과' if r['pass1'] else '실패'} | {'통과' if r['pass2'] else '실패'} | "
                          f"{r['metric1']} ({_fmt(r['margin1'], 2)}) | {r['metric2']} ({_fmt(r['margin2'], 2)}) | {'**예**' if r['regress'] else '아니오'} |")
         worse = [m for m in mrows if m["worse"]]
-        lines += ["", f"### {rate} Hz — 지표별로 10 % 넘게 나빠진 것(여유율 0.05 미만 지표 제외)", ""]
+        lines += ["", f"### {rate} Hz — 지표별로 10 % 이상 나빠진 것(1단계 여유율이 0.05 미만인 지표는 제외 — 판정 코드의 기록과 같은 규칙)", ""]
         if worse:
             lines += ["| # | 지표 | 1단계 값 | 2단계 값 | 기준 | 여유율 1→2 |", "|---|---|---|---|---|---|"]
             for m in worse:

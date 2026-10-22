@@ -37,6 +37,8 @@ def packet_violations(packets: List[tuple], a_max: float, j_max: float, period: 
         if not (s0 and s1) or abs((t1 - t0) - period) > 1e-6:
             prev_a = None
             continue
+        if v_max is not None and prev_a is None and abs(r0) > v_max * (1 + tol) + 1e-9:   # r3 n1: the first packet of a
+            n += 1                                                                            # sequence has no pair of its own
         a = (r1 - r0) / period
         # braking = the reference acceleration opposes the ROBOT's motion (body speed recorded with the packet, or
         # v_of_t(t), or the reference itself when neither is available): the larger a_dec applies there

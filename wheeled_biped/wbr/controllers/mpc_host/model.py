@@ -16,12 +16,15 @@ Construction (docs/plan4_mpc_host.md, section 2):
    push response) and Tf (external wheel torque, e.g. joint dry friction: the process-noise direction of the host's
    observer); outputs v (wheel ground speed), v_base (torso origin, = the judged ``vx``), pitch (body, IMU sign),
    theta (virtual-leg angle deviation), T (total wheel torque), Tp (total hip torque deviation).
-4. ``lift``: the host holds r over its period (m MCU steps): A_h = A^m, B_h = sum A^i B.
-5. ``reduce``: square-root balanced truncation with singular-perturbation DC matching (steady-state gains kept
+4. ``with_input_delay``: the real robot's host -> MCU command-path latency is a PURE DELAY of the reference input
+   (delay chain on r, the inner loop's poles unchanged; review r3 stage 2 m1).  0 in the simulator.
+5. ``lift``: the host holds r over its period (m MCU steps): A_h = A^m, B_h = sum A^i B.
+6. ``reduce``: square-root balanced truncation with singular-perturbation DC matching (steady-state gains kept
    exactly), on the (r, Tf) channels (the MPC never sees F).
 
-No integrator is added by the host: the only integrator in the prediction is the LQI6's own (part of the plant of
-the MPC).
+No integrator is added by the host, and the manoeuvre-regime prediction has none at all (the LQI6's own integrators
+are frozen while the host reference accelerates); only the rest-regime comparison model (``regime="rest"``) carries
+the LQI6's integrators, as part of its plant.
 """
 from __future__ import annotations
 
@@ -249,6 +252,36 @@ def lift(model: LTIModel, m: int) -> LTIModel:
     info = dict(model.info)
     info["lift"] = int(m)
     return LTIModel(Am, S, model.C.copy(), model.D.copy(), model.Ts * m, model.inputs, model.outputs, info)
+
+
+def with_input_delay(model: LTIModel, input_name: str, d: int) -> LTIModel:
+    """Pure delay of d steps on one input (review r3 stage 2 m1: the host -> MCU command path of the real robot): the
+    value applied at step k acts at step k + d, through a delay chain u_{k-1} .. u_{k-d} appended to the state.  The
+    poles of the model are unchanged (the chain adds d poles at 0) -- unlike adding the latency to the inner loop's
+    observation delay, which changes (and for >= 10 ms destabilises) the modelled balance loop.  d <= 0 returns the
+    model itself."""
+    d = int(d)
+    if d <= 0:
+        return model
+    j = model.iu(input_name)
+    n, nu = model.n, model.B.shape[1]
+    A = np.zeros((n + d, n + d))
+    B = np.zeros((n + d, nu))
+    A[:n, :n] = model.A
+    A[:n, n + d - 1] = model.B[:, j]                 # the oldest value of the chain (u_{k-d}) acts now
+    B[:n, :] = model.B
+    B[:n, j] = 0.0
+    B[n, j] = 1.0                                     # u_k enters the chain
+    for i in range(1, d):
+        A[n + i, n + i - 1] = 1.0
+    C = np.zeros((model.C.shape[0], n + d))
+    C[:, :n] = model.C
+    C[:, n + d - 1] = model.D[:, j]
+    D = model.D.copy()
+    D[:, j] = 0.0
+    info = dict(model.info)
+    info["input_delay_steps"] = dict(info.get("input_delay_steps", {}), **{input_name: d})
+    return LTIModel(A, B, C, D, model.Ts, model.inputs, model.outputs, info)
 
 
 def _psd_sqrt_factor(W: np.ndarray) -> np.ndarray:
