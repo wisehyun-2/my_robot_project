@@ -1,0 +1,3 @@
+1000 Hz: items regressed: []; metrics worse >10 %: [(8, 'stop_disp'), (8, 'wheel_peak'), (11, 'wheel_speed_peak'), (13, 'pitch_peak')]
+200 Hz: items regressed: []; metrics worse >10 %: [(8, 'stop_disp'), (8, 'wheel_peak'), (11, 'wheel_peak'), (11, 'wheel_speed_peak'), (13, 'pitch_peak')]
+wrote C:\Users\User\Desktop\myrobot\my_robot_project\wheeled_biped\results\plan4_mpc\regression.md

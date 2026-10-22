@@ -41,6 +41,7 @@ class McuParams:
     kd_leg: float = 10.0                # N s/m
     kp_yaw: float = 2.5                 # N m per rad/s of yaw rate error
     ki_yaw: float = 4.0                 # N m per rad
+    yaw_int_limit: float = 0.5          # rad, clamp of the yaw-rate error integral (ki_yaw * limit = max steady torque)
     kp_roll: float = 0.5                # m of leg-length difference per rad of roll error
     ki_roll: float = 0.3                # m per rad s
     kd_roll: float = 0.03
@@ -58,6 +59,20 @@ class McuParams:
     tau_hip_max: float = 12.0
     tau_wheel_max: float = 5.0
     leg_rate: float = 0.25              # m/s leg length ramp
+    leg_joint: str = "crank"            # name suffix of the second leg joint ("crank" five-bar, "knee" serial leg)
+    F_ff_N: Optional[float] = None      # static leg force feed-forward per leg; None: 0.5 (mass_total - mass_wheels) g
+    friction_comp_Nm: float = 0.0       # hip stiction compensation: +fc * tanh((Tp - Tp_ff) / width) in the direction the
+                                        # balance law wants the virtual leg to move (not the sign of the total torque, which
+                                        # includes the static holding torque)
+    friction_comp_wheel_Nm: float = 0.0  # wheel stiction compensation: +fcw * tanh(T / width)
+    friction_comp_width: float = 0.02   # N m
+    vel_window_s: float = 0.0           # > 0: joint velocities from quantised-position differences over this window
+                                        # instead of the driver's 1-step differentiated velocity (noise 1/N, delay N/2 steps)
+    friction_comp_static_tau: float = 0.0  # > 0 (s): the compensation acts on (Tp - Tp_ff) and T minus their own low-pass
+                                        # with this time constant.  A static holding-torque change (payload, mass error,
+                                        # slope) is then not taken for an intended motion; comparing with the fixed Tp_ff
+                                        # added a constant +-2 fc (0.16 N m) to the hip torque in those cases (Plan 4).
+                                        # 0 keeps the comparison with Tp_ff / 0 (Plans 2-3)
 
 
 @dataclass
@@ -86,6 +101,8 @@ class DiabloMcu:
         self.leg = leg or FiveBarLeg(LegGeometry())
         self.law = law
         self.link = link or HostLink()
+        self.left_joints = ("left_hip", f"left_{self.p.leg_joint}", "left_wheel")
+        self.right_joints = ("right_hip", f"right_{self.p.leg_joint}", "right_wheel")
         self.reset(RobotMode.STAND)
 
     # ---------------------------------------------------------------- state
@@ -111,7 +128,10 @@ class DiabloMcu:
         self.roll_ref = 0.0
         self.pitch_ref = 0.0
         self.position = 0.0
+        self.fc_hip_lp = 0.0            # low-pass of (Tp - Tp_ff) and T for friction_comp_static_tau
+        self.fc_wheel_lp = 0.0
         self.last_obs: dict = {}
+        self._pos_hist: Dict[str, list] = {}
         self.law.reset()
         self.link.reset()
         self.telemetry: dict = {}
@@ -133,6 +153,26 @@ class DiabloMcu:
         self.armed = False
 
     # ------------------------------------------------------------- estimator
+    def _filtered_servo(self, servo: Dict[str, dict]) -> Dict[str, dict]:
+        """Replace the driver velocities by position differences over vel_window_s (Plan 4 jitter fix: the 14-bit
+        encoder differentiated over one 1 kHz step has +-0.38 rad/s quantisation noise which the LQI6 theta_dot gain
+        turned into 0.1 N m rms wheel torque chatter; over 5 ms the noise is 5x lower at 2.5 ms extra delay)."""
+        n = int(round(self.p.vel_window_s / self.p.dt))
+        if n <= 1:
+            return servo
+        out = {}
+        for name, s in servo.items():
+            h = self._pos_hist.setdefault(name, [])
+            h.append(s["position"])
+            if len(h) > n + 1:
+                del h[0]
+            if len(h) >= 2:
+                vel = (h[-1] - h[0]) / ((len(h) - 1) * self.p.dt)
+            else:
+                vel = s["velocity"]
+            out[name] = {"position": s["position"], "velocity": vel, "torque": s["torque"]}
+        return out
+
     def estimate(self, obs: dict) -> Estimate:
         e = self.est
         R = quat_to_matrix(obs["imu"]["orientation"])
@@ -142,17 +182,17 @@ class DiabloMcu:
         e.roll, e.roll_rate = roll, float(gyro[0])
         e.yaw_rate = float((R @ gyro)[2])          # world-frame yaw rate (review B11)
         self.est_valid = True
-        servo = obs["servo"]
+        servo = self._filtered_servo(obs["servo"])
         for side in ("left", "right"):
-            qh, qc = servo[f"{side}_hip"]["position"], servo[f"{side}_crank"]["position"]
-            qdh, qdc = servo[f"{side}_hip"]["velocity"], servo[f"{side}_crank"]["velocity"]
+            qh, qc = servo[f"{side}_hip"]["position"], servo[f"{side}_{self.p.leg_joint}"]["position"]
+            qdh, qdc = servo[f"{side}_hip"]["velocity"], servo[f"{side}_{self.p.leg_joint}"]["velocity"]
             _, L0, th_b = self.leg.forward(qh, qc)
             L0_dot, th_b_dot = self.leg.virtual_rates(qh, qc, qdh, qdc)
             e.theta_v_body[side] = th_b
             e.theta_v[side] = th_b + pitch
             e.theta_v_dot[side] = th_b_dot + e.pitch_rate
             e.L0[side], e.L0_dot[side] = L0, L0_dot
-            shank_rate_world = qdc + e.pitch_rate          # shank orientation = crank orientation
+            shank_rate_world = self.leg.shank_rate(qdh, qdc) + e.pitch_rate   # wheel carrier rate (leg specific)
             e.v_wheel[side] = self.p.wheel_radius * (servo[f"{side}_wheel"]["velocity"] + shank_rate_world)
         e.v = 0.5 * (e.v_wheel["left"] + e.v_wheel["right"])
         e.theta_v_mean = 0.5 * (e.theta_v["left"] + e.theta_v["right"])
@@ -204,6 +244,8 @@ class DiabloMcu:
         e = self.estimate(obs)
         cmd = self.link.poll(self.t) if host_cmd is None else host_cmd
         self.apply_command(cmd, dt)
+        if hasattr(self.law, "set_reference_shaping"):   # host-shaped reference (stage-2 MPC) -> plain tracking;
+            self.law.set_reference_shaping(not getattr(cmd, "host_shaped", False))   # timeout / fallback -> own shaping
 
         # mode state machine ---------------------------------------------------------------
         if self.mode == RobotMode.TRANSITION_UP:
@@ -246,12 +288,12 @@ class DiabloMcu:
             self.law.compute(e, dict(v_ref=0.0, yaw_rate_ref=0.0, pitch_ref=0.0, L_ref=self.L_ref.value,
                                      L_ref_side={"left": self.L_ref.value, "right": self.L_ref.value}, balance=False,
                                      tau_yaw=0.0), self)
-            return {j: torque_command(0.0, 0.0) for j in LEFT_JOINTS + RIGHT_JOINTS}
+            return {j: torque_command(0.0, 0.0) for j in self.left_joints + self.right_joints}
 
         # yaw (differential wheel torque / velocity) and roll (leg-length difference) terms --
         if balance:
             yaw_err = self.yaw_rate_ref - e.yaw_rate
-            self.yaw_int = clamp_abs(self.yaw_int + yaw_err * dt, 0.5)
+            self.yaw_int = clamp_abs(self.yaw_int + yaw_err * dt, p.yaw_int_limit)
             tau_yaw = p.kp_yaw * yaw_err + p.ki_yaw * self.yaw_int
         else:
             tau_yaw = 0.0
@@ -276,7 +318,20 @@ class DiabloMcu:
             return dict(law_out["servo"])
 
         T, Tp = (law_out["T"], law_out["Tp"]) if balance else (0.0, 0.0)
-        F_ff = 0.5 * (p.mass_total - p.mass_wheels) * 9.81
+        Tp_ff = law_out.get("Tp_ff", 0.0) if balance else 0.0
+        if balance and p.friction_comp_Nm > 0.0:        # break the hip stiction in the intended direction (Plan 4)
+            dev = Tp - Tp_ff
+            if p.friction_comp_static_tau > 0.0:
+                self.fc_hip_lp += (dev - self.fc_hip_lp) * dt / p.friction_comp_static_tau
+                dev -= self.fc_hip_lp
+            Tp += p.friction_comp_Nm * 2.0 * math.tanh(dev / p.friction_comp_width)
+        if balance and p.friction_comp_wheel_Nm > 0.0:
+            dev = T
+            if p.friction_comp_static_tau > 0.0:
+                self.fc_wheel_lp += (dev - self.fc_wheel_lp) * dt / p.friction_comp_static_tau
+                dev -= self.fc_wheel_lp
+            T += p.friction_comp_wheel_Nm * 2.0 * math.tanh(dev / p.friction_comp_width)
+        F_ff = p.F_ff_N if p.F_ff_N is not None else 0.5 * (p.mass_total - p.mass_wheels) * 9.81
         # anti-split: keep both legs at the same angle (DIABLO leg_split = 0)
         d_theta = e.theta_v_body["left"] - e.theta_v_body["right"]
         d_theta_dot = e.theta_v_dot["left"] - e.theta_v_dot["right"]
@@ -286,9 +341,9 @@ class DiabloMcu:
             F = p.kp_leg * (L_ref_side[side] - e.L0[side]) - p.kd_leg * e.L0_dot[side] + F_ff / max(math.cos(e.theta_v[side]), 0.5)
             Tp_side = 0.5 * Tp + sign * 0.5 * tau_split
             tau_hip, tau_crank = self.leg.vmc_torques(F, Tp_side, obs["servo"][f"{side}_hip"]["position"],
-                                                      obs["servo"][f"{side}_crank"]["position"])
+                                                      obs["servo"][f"{side}_{p.leg_joint}"]["position"])
             tau_wheel = 0.5 * T + sign * 0.5 * tau_yaw
-            for name, tau, lim in ((f"{side}_hip", tau_hip, p.tau_hip_max), (f"{side}_crank", tau_crank, p.tau_hip_max),
+            for name, tau, lim in ((f"{side}_hip", tau_hip, p.tau_hip_max), (f"{side}_{p.leg_joint}", tau_crank, p.tau_hip_max),
                                    (f"{side}_wheel", tau_wheel, p.tau_wheel_max)):
                 if not math.isfinite(tau):          # never send NaN to the motors (review B13)
                     tau = 0.0

@@ -1,0 +1,7 @@
+1000 Hz A: step rms v 0.0425 pitch 0.287 deg T 0.060 | push rms v 0.0329 pitch 0.207 | reduced step rms v 0.0427 (5 s)
+1000 Hz B: step rms v 0.0328 pitch 0.276 deg T 0.197 | push rms v 0.0274 pitch 0.231 | reduced step rms v 0.0363 (7 s)
+1000 Hz C: step rms v 0.0095 pitch 0.099 deg T 0.169 | push rms v 0.0082 pitch 0.083 | reduced step rms v 0.0121 (10 s)
+200 Hz A: step rms v 0.0448 pitch 0.298 deg T 0.062 | push rms v 0.0349 pitch 0.215 | reduced step rms v 0.0449 (11 s)
+200 Hz B: step rms v 0.0383 pitch 0.262 deg T 0.078 | push rms v 0.0334 pitch 0.236 | reduced step rms v 0.0385 (12 s)
+200 Hz C: step rms v 0.0078 pitch 0.074 deg T 0.047 | push rms v 0.0062 pitch 0.080 | reduced step rms v 0.0088 (13 s)
+wrote C:\Users\User\Desktop\myrobot\my_robot_project\wheeled_biped\models\upkie_plan4\plan4_closed_loop.json and C:\Users\User\Desktop\myrobot\my_robot_project\wheeled_biped\results\plan4_mpc\model_fit.png (14 s)

@@ -15,6 +15,9 @@
 - 로봇 질량 목표 약 6 kg, 바퀴 반경 0.065 m, 고관절 모터 12 Nm·바퀴 5 Nm 가정(설계보고서 RMD-L 계열).
 - 시뮬레이터는 MuJoCo(Isaac Sim은 선택 사항). Windows에서는 ROS 2가 없어 ROS 2 패키지는 작성만 했고 **우분투 24.04 + ROS 2 Jazzy에서 빌드·실행 검증이 다음 단계**다.
 - Opus 5.5(xhigh) 독립 검토(`wheeled_biped/docs/review_opus.md`)의 major 7건을 모두 반영했다(비교보고서 10절).
+- **2026-10-22 최종 확정: Plan 4 = upkie 하드웨어(직렬 무릎 다리, 112 mm 타이어) + LQI6(직렬 다리용으로 플랜트 재유도) + DIABLO식 호스트/MCU 분리, 2단계로 호스트 MPC 기준 생성기.** 근거·결과는 비교보고서 11절, `docs/plan4_model.md`, `docs/plan4_lqi6.md`, `docs/plan4_mpc_host.md`. 합격 기준은 사용자가 정한 `docs/합격기준.md`이며 기준 수치·모터 한계·노이즈는 사용자 결정 없이 바꾸지 않는다.
+- Plan 4 모델은 `models/upkie_plan4`(타이어 0.056 m). upkie_description의 0.05 m 타이어로는 발목 모터 하우징이 7° 기울기에서 바닥에 닿는다(실기도 112 mm 타이어 필수).
+- 라이다·카메라·SLAM·로봇팔 2개는 실기 균형이 안정된 뒤 추가(팔 질량 피드포워드, 롤 보상, Jetson 호스트 필요).
 
 ## 작업 규칙
 - `wbr` 코어는 ROS에 의존하지 않게 유지한다(ROS 2 노드는 얇은 래퍼). 제어기·모델을 바꾸면 `python -m unittest discover -s tests`와 `python -m wbr.bench.run_bench`를 다시 돌려 `results/`와 보고서 표를 갱신한다.

@@ -52,7 +52,12 @@ def patch_urdf(text: str, meshdir: str) -> str:
     return re.sub(r"(<robot[^>]*>)", r"\1\n  " + ext, text, count=1)
 
 
-def build(out_dir: Path = OUT_DIR, verbose: bool = True) -> Path:
+def build(out_dir: Path = OUT_DIR, verbose: bool = True, tire_radius: float = TIRE_RADIUS, tire_shape: str = "cylinder") -> Path:
+    """tire_radius: collision cylinder radius.  upkie_description models a 100 mm tire (0.05); the BOM of the real
+    robot lists 112 mm RC tires (0.056) and upkie's spine configuration uses 0.06.  Plan 4 builds a second model
+    directory (models/upkie_plan4) with the BOM value -- see docs/plan4_model.md.
+    tire_shape: "cylinder" (upkie_description: a 40 mm wide flat cylinder, i.e. two contact points at the rims that scrub
+    against each other when turning in place) or "ellipsoid" (rounded RC tire profile, one contact point; Plan 4)."""
     out_dir.mkdir(parents=True, exist_ok=True)
     patched = out_dir / "upkie_patched.urdf"
     patched.write_text(patch_urdf(URDF_SRC.read_text(encoding="utf-8"), "../upkie_description"), encoding="utf-8")
@@ -92,6 +97,12 @@ def build(out_dir: Path = OUT_DIR, verbose: bool = True) -> Path:
         for g in tire.geoms:
             if g.type == mujoco.mjtGeom.mjGEOM_CYLINDER and g.contype != 0:
                 g.name = f"{side}_tire"
+                half_width = float(g.size[1])
+                if tire_shape == "ellipsoid":
+                    g.type = mujoco.mjtGeom.mjGEOM_ELLIPSOID
+                    g.size = [tire_radius, tire_radius, half_width]
+                else:
+                    g.size = [tire_radius, half_width, 0.0]
                 g.friction = [1.0, 0.005, 0.0001]
                 g.condim = 3
                 g.priority = 1
@@ -121,7 +132,7 @@ def build(out_dir: Path = OUT_DIR, verbose: bool = True) -> Path:
     # standing height: tire bottom at z = 0 with straight legs
     tire_bid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "left_wheel_tire")
     z_tire = float(data.xpos[tire_bid][2])
-    base_z = -z_tire + TIRE_RADIUS
+    base_z = -z_tire + tire_radius
     key = spec.add_key(name="stand")
     qpos0 = np.array(data.qpos)
     qpos0[2] = base_z
@@ -137,4 +148,10 @@ def build(out_dir: Path = OUT_DIR, verbose: bool = True) -> Path:
 
 
 if __name__ == "__main__":
-    build()
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out", default=None, help="output directory (default models/upkie)")
+    ap.add_argument("--tire-radius", type=float, default=TIRE_RADIUS)
+    ap.add_argument("--tire-shape", default="cylinder", choices=("cylinder", "ellipsoid"))
+    args = ap.parse_args()
+    build(Path(args.out) if args.out else OUT_DIR, tire_radius=args.tire_radius, tire_shape=args.tire_shape)

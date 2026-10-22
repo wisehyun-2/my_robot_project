@@ -1,0 +1,54 @@
+{
+ "1000": {
+  "8": {
+   "wheel_peak": 0.42584761935068366,
+   "constraint_violations": 0,
+   "qp_failures": 0,
+   "alive": true
+  },
+  "9": {
+   "wheel_peak": 0.44273670126878517,
+   "constraint_violations": 0,
+   "qp_failures": 0,
+   "alive": true
+  },
+  "13": {
+   "wheel_peak": 0.5272795383758954,
+   "constraint_violations": 0,
+   "qp_failures": 0,
+   "alive": 1
+  },
+  "19": {
+   "wheel_peak": 0.42584761935068366,
+   "constraint_violations": 0,
+   "qp_failures": 0,
+   "alive": true
+  }
+ },
+ "200": {
+  "8": {
+   "wheel_peak": 0.22906217523734368,
+   "constraint_violations": 0,
+   "qp_failures": 0,
+   "alive": true
+  },
+  "9": {
+   "wheel_peak": 0.2651477537756928,
+   "constraint_violations": 0,
+   "qp_failures": 0,
+   "alive": true
+  },
+  "13": {
+   "wheel_peak": 0.33565985027372885,
+   "constraint_violations": 0,
+   "qp_failures": 0,
+   "alive": 1
+  },
+  "19": {
+   "wheel_peak": 0.22906217523734368,
+   "constraint_violations": 0,
+   "qp_failures": 0,
+   "alive": true
+  }
+ }
+}

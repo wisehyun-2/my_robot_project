@@ -72,6 +72,11 @@ class FiveBarLeg:
         theta_v_dot = float(du(theta_v) @ pd) / max(L0, 1e-3)
         return L0_dot, theta_v_dot
 
+    def shank_rate(self, qd_hip: float, qd_crank: float) -> float:
+        """Angular rate of the shank (wheel carrier) in the hip frame: the parallelogram keeps the shank
+        parallel to the crank."""
+        return qd_crank
+
     def inverse(self, L0: float, theta_v: float):
         """Joint angles (q_hip, q_crank) placing the axle at length L0 and angle theta_v (knee forward)."""
         L1, L2 = self.g.L1, self.g.L2

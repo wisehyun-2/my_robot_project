@@ -12,7 +12,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
 import mujoco
 import numpy as np
@@ -31,12 +31,21 @@ class SimConfig:
     control_dt: float = 1e-3
     timestep: Optional[float] = None
     stand_keyframe: str = "stand"
+    spec_edit: Optional[Callable] = None     # f(mujoco.MjSpec) applied before compiling (add bodies, ...)
+    model_edit: Optional[Callable] = None    # f(mujoco.MjModel) applied after compiling (masses, friction, ...)
 
 
 class MujocoSim:
     def __init__(self, cfg: SimConfig, servo_model: ServoModel):
         self.cfg = cfg
-        self.model = mujoco.MjModel.from_xml_path(str(cfg.xml_path))
+        if cfg.spec_edit is not None:
+            spec = mujoco.MjSpec.from_file(str(cfg.xml_path))
+            cfg.spec_edit(spec)
+            self.model = spec.compile()
+        else:
+            self.model = mujoco.MjModel.from_xml_path(str(cfg.xml_path))
+        if cfg.model_edit is not None:
+            cfg.model_edit(self.model)
         if cfg.timestep is not None:
             self.model.opt.timestep = cfg.timestep
         self.data = mujoco.MjData(self.model)
@@ -71,6 +80,7 @@ class MujocoSim:
         self._push_until = -1.0
         self._push_force = np.zeros(3)
         self._push_body = self.base_bid
+        self._push_point = None
         self.last_torques = {n: 0.0 for n in self.joint_names}
         self.commands: Dict[str, ServoCommand] = {n: ServoCommand() for n in self.joint_names}
         self.reset()
@@ -102,6 +112,7 @@ class MujocoSim:
             d.qvel[self.free_dadr + 3:self.free_dadr + 6] = base_angvel
         d.ctrl[:] = 0.0
         d.xfrc_applied[:] = 0.0
+        d.qfrc_applied[:] = 0.0
         self._push_until = -1.0
         self.commands = {n: ServoCommand() for n in self.joint_names}
         mujoco.mj_forward(m, d)
@@ -120,11 +131,13 @@ class MujocoSim:
     def set_commands(self, commands: Dict[str, ServoCommand]) -> None:
         self.commands.update(commands)
 
-    def push(self, force_xyz, duration: float, body: Optional[str] = None) -> None:
-        """Apply a constant world-frame force on the base (or a named body) for `duration` seconds."""
+    def push(self, force_xyz, duration: float, body: Optional[str] = None, point=None) -> None:
+        """Apply a constant world-frame force for `duration` seconds on the base (or a named body) at its
+        COM, or -- with `point` (world xyz) -- at that point of the body (e.g. the robot's total COM)."""
         self._push_force = np.asarray(force_xyz, dtype=float)
         self._push_until = self.data.time + duration
         self._push_body = self.base_bid if body is None else mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, body)
+        self._push_point = None if point is None else np.asarray(point, dtype=float)
 
     def step(self) -> None:
         """Advance one control period, evaluating the servo PD at every physics substep."""
@@ -136,9 +149,14 @@ class MujocoSim:
                 d.ctrl[self.act_id[n]] = tau
                 self.last_torques[n] = tau
             if d.time < self._push_until:
-                d.xfrc_applied[self._push_body, :3] = self._push_force
+                if self._push_point is None:
+                    d.xfrc_applied[self._push_body, :3] = self._push_force
+                else:
+                    d.qfrc_applied[:] = 0.0
+                    mujoco.mj_applyFT(m, d, self._push_force, np.zeros(3), self._push_point, self._push_body, d.qfrc_applied)
             else:
                 d.xfrc_applied[self._push_body, :3] = 0.0
+                d.qfrc_applied[:] = 0.0
             mujoco.mj_step(m, d)
 
     # ------------------------------------------------------------ observation

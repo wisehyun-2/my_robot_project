@@ -29,6 +29,11 @@ def make_plan(name: str, latency_ms: float = DEFAULT_LATENCY_MS, noise: bool = T
         from wbr.plans.plan3_diablo_upkie import Plan3Config, Plan3DiabloUpkie
         bal = "mpc" if "mpc" in name else "pid"
         return Plan3DiabloUpkie(Plan3Config(balancer=bal, latency_ms=latency_ms, noise=noise, seed=seed, gain_scale=gain_scale))
+    if name.startswith("plan4"):      # plan4_lqi6 (1 kHz MCU) / plan4_lqi6_200hz (upkie agent rate)
+        from wbr.plans.plan4_upkie_lqi6 import Plan4Config, Plan4UpkieLQI6
+        rate = 200.0 if "200" in name else 1000.0
+        return Plan4UpkieLQI6(Plan4Config(rate_hz=rate, latency_ms=latency_ms, noise=noise, seed=seed,
+                                          host="mpc" if "mpc" in name else "ramp"))
     raise ValueError(name)
 
 

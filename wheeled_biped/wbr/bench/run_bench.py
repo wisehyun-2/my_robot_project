@@ -1,6 +1,9 @@
 """Run the test battery on every plan variant and write results/bench/*.json + summary.md.
 
-    python -m wbr.bench.run_bench [--plans plan1_pid plan2_lqi6 ...] [--jobs N] [--quick]
+    python -m wbr.bench.run_bench [--plans plan1_pid plan2_lqi6 ...] [--jobs N] [--quick] [--no-merge]
+
+Results of the listed plans are merged into the existing results/bench/raw_results.json (other plans
+keep their rows) unless --no-merge is given.
 """
 from __future__ import annotations
 
@@ -12,7 +15,7 @@ from multiprocessing import Pool, cpu_count
 from wbr import RESULTS_DIR
 from wbr.bench.battery import LATENCIES, PUSHES, TILTS, run_task
 
-BASELINE = ["plan1_pid", "plan1_mpc", "plan2_lqi6", "plan3_pid", "plan3_mpc"]
+BASELINE = ["plan1_pid", "plan1_mpc", "plan2_lqi6", "plan3_pid", "plan3_mpc", "plan4_lqi6", "plan4_lqi6_200hz"]
 GAIN_VARIANTS = {"plan1_pid": [0.5, 1.5, 2.0], "plan3_pid": [0.5, 1.5, 2.0, 3.0]}
 
 
@@ -101,6 +104,7 @@ def main():
     ap.add_argument("--plans", nargs="*", default=BASELINE)
     ap.add_argument("--jobs", type=int, default=max(1, cpu_count() - 2))
     ap.add_argument("--quick", action="store_true")
+    ap.add_argument("--no-merge", action="store_true", help="do not keep the rows of plans not run this time")
     args = ap.parse_args()
     out_dir = RESULTS_DIR / "bench"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -116,6 +120,15 @@ def main():
             if (i + 1) % 20 == 0:
                 print(f"  {i + 1}/{len(tasks)} done ({time.time() - t0:.0f} s)")
     print(f"finished in {time.time() - t0:.0f} s")
+    raw_path = out_dir / "raw_results.json"
+    if not args.no_merge and raw_path.exists():
+        old = json.loads(raw_path.read_text(encoding="utf-8"))
+        for k, v in old.items():
+            name, scenario, arg, gain = k.split("|")
+            if name in args.plans:
+                continue
+            arg_v = None if arg == "None" else (float(arg) if "." in arg else int(arg))
+            results[(name, scenario, arg_v, float(gain))] = v
     summary = aggregate(results)
     serial = {"|".join(str(x) for x in k): v for k, v in results.items()}
     (out_dir / "raw_results.json").write_text(json.dumps(serial, indent=1), encoding="utf-8")

@@ -1,0 +1,114 @@
+[
+ [
+  {},
+  1000.0,
+  {
+   "n_solves": 750,
+   "solve_p50_ms": 0.06375001976266503,
+   "solve_p99_ms": 0.203510036226362,
+   "solve_max_ms": 0.34689996391534805,
+   "solve_mean_ms": 0.07771533417205016,
+   "qp_failures": 0,
+   "solver_failures": 0,
+   "constraint_violations": 0,
+   "n_var": 75,
+   "n_ineq": 300,
+   "alive": 1
+  }
+ ],
+ [
+  {
+   "horizon_s": 1.0
+  },
+  1000.0,
+  {
+   "n_solves": 750,
+   "solve_p50_ms": 0.06399996345862746,
+   "solve_p99_ms": 0.14527300139889118,
+   "solve_max_ms": 0.21460000425577164,
+   "solve_mean_ms": 0.06213933369144797,
+   "qp_failures": 0,
+   "solver_failures": 0,
+   "constraint_violations": 0,
+   "n_var": 50,
+   "n_ineq": 200,
+   "alive": 1
+  }
+ ],
+ [
+  {
+   "horizon_s": 2.0
+  },
+  1000.0,
+  {
+   "n_solves": 750,
+   "solve_p50_ms": 0.1306000631302595,
+   "solve_p99_ms": 0.5121419986244291,
+   "solve_max_ms": 0.724000041373074,
+   "solve_mean_ms": 0.13573893439024687,
+   "qp_failures": 0,
+   "solver_failures": 0,
+   "constraint_violations": 0,
+   "n_var": 100,
+   "n_ineq": 400,
+   "alive": 1
+  }
+ ],
+ [
+  {
+   "_host_hz": 100.0
+  },
+  1000.0,
+  {
+   "n_solves": 1500,
+   "solve_p50_ms": 0.1785500207915902,
+   "solve_p99_ms": 1.1513480194844286,
+   "solve_max_ms": 2.0730000687763095,
+   "solve_mean_ms": 0.24555320129729807,
+   "qp_failures": 0,
+   "solver_failures": 0,
+   "constraint_violations": 0,
+   "n_var": 150,
+   "n_ineq": 600,
+   "alive": 1
+  }
+ ],
+ [
+  {
+   "_solver": "osqp"
+  },
+  1000.0,
+  {
+   "n_solves": 750,
+   "solve_p50_ms": 1.9580500083975494,
+   "solve_p99_ms": 12.03684801002964,
+   "solve_max_ms": 20.58669994585216,
+   "solve_mean_ms": 2.573653736306975,
+   "qp_failures": 0,
+   "solver_failures": 0,
+   "constraint_violations": 0,
+   "n_var": 75,
+   "n_ineq": 300,
+   "alive": 1
+  }
+ ],
+ [
+  {
+   "use_observer": false
+  },
+  1000.0,
+  {
+   "n_solves": 750,
+   "solve_p50_ms": 0.08860003435984254,
+   "solve_p99_ms": 0.27276598149910564,
+   "solve_max_ms": 0.38950005546212196,
+   "solve_mean_ms": 0.08865160138035814,
+   "qp_failures": 0,
+   "solver_failures": 0,
+   "constraint_violations": 0,
+   "n_var": 75,
+   "n_ineq": 300,
+   "alive": 1
+  }
+ ]
+]

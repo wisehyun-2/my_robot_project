@@ -1,6 +1,6 @@
 """Live MuJoCo viewer running one of the plans in real time.
 
-    python -m wbr.viewer.live --plan 1 [--balancer pid|mpc] [--speed 1.0] [--noise] [--latency-ms 0]
+    python -m wbr.viewer.live --plan 1|2|3|4 [--balancer pid|mpc] [--speed 1.0] [--noise] [--latency-ms 0] [--rate 1000|200]
 
 Keys (viewer window must have focus):
   Up/Down     forward velocity command +-0.1 m/s        Left/Right  yaw rate +-0.2 rad/s
@@ -29,13 +29,18 @@ def make_plan(args):
     if args.plan == 3:
         from wbr.plans.plan3_diablo_upkie import Plan3Config, Plan3DiabloUpkie
         return Plan3DiabloUpkie(Plan3Config(noise=args.noise, latency_ms=args.latency_ms))
+    if args.plan == 4:
+        from wbr.plans.plan4_upkie_lqi6 import Plan4Config, Plan4UpkieLQI6
+        return Plan4UpkieLQI6(Plan4Config(rate_hz=args.rate, noise=args.noise, latency_ms=args.latency_ms,
+                                          host="mpc" if args.balancer == "mpc" else "ramp"))
     raise ValueError(args.plan)
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--plan", type=int, default=1, choices=(1, 2, 3))
+    ap.add_argument("--plan", type=int, default=1, choices=(1, 2, 3, 4))
     ap.add_argument("--balancer", default="pid", choices=("pid", "mpc"))
+    ap.add_argument("--rate", type=float, default=1000.0, help="plan 4: MCU rate (1000 or 200 Hz)")
     ap.add_argument("--speed", type=float, default=1.0, help="real-time factor")
     ap.add_argument("--noise", action="store_true")
     ap.add_argument("--latency-ms", type=float, default=0.0)

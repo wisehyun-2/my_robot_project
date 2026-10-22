@@ -50,6 +50,8 @@ class MotionCtrl:
     roll: float = 0.0         # rad (angle mode) or rad/s
     pitch: float = 0.0        # rad (angle mode) or rad/s
     leg_split: float = 0.0
+    host_shaped: bool = False  # True: the host already shaped the velocity reference (stage-2 MPC): the MCU tracks it
+                              # plainly; False (and the disconnect program): the MCU applies its own stage-1 shaping
     mode: MovementCtrlMode = field(default_factory=MovementCtrlMode)
 
 

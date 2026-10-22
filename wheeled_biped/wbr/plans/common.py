@@ -21,11 +21,15 @@ class SensorNoise:
     encoder_bits: int = 14
     joint_velocity_std: float = math.radians(0.5)
     seed: int = 0
+    pitch_bias: float = 0.0            # constant IMU pitch offset (rad), applied even with enabled=False
 
     def __post_init__(self):
         self.rng = np.random.default_rng(self.seed)
 
     def apply(self, obs: dict, dt: float) -> dict:
+        if self.pitch_bias != 0.0:
+            R = quat_to_matrix(obs["imu"]["orientation"]) @ rot_y(self.pitch_bias)
+            obs["imu"]["orientation"] = matrix_to_quat(R)
         if not self.enabled:
             return obs
         q = obs["imu"]["orientation"]

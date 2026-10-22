@@ -12,8 +12,11 @@ import numpy as np
 from wbr import RESULTS_DIR
 
 LABELS = {"plan1_pid": "Plan 1: upkie PI", "plan1_mpc": "Plan 1: upkie MPC", "plan2_lqi6": "Plan 2: DIABLO + LQI6",
-          "plan3_pid": "Plan 3: DIABLO + upkie PI", "plan3_mpc": "Plan 3: DIABLO + upkie MPC"}
-COLORS = {"plan1_pid": "tab:blue", "plan1_mpc": "tab:cyan", "plan2_lqi6": "tab:red", "plan3_pid": "tab:green", "plan3_mpc": "tab:olive"}
+          "plan3_pid": "Plan 3: DIABLO + upkie PI", "plan3_mpc": "Plan 3: DIABLO + upkie MPC",
+          "plan4_lqi6": "Plan 4: upkie HW + LQI6 (1 kHz)", "plan4_lqi6_200hz": "Plan 4: upkie HW + LQI6 (200 Hz)",
+          "plan4_lqi6_mpc": "Plan 4: upkie HW + LQI6 + MPC host"}
+COLORS = {"plan1_pid": "tab:blue", "plan1_mpc": "tab:cyan", "plan2_lqi6": "tab:red", "plan3_pid": "tab:green", "plan3_mpc": "tab:olive",
+          "plan4_lqi6": "tab:purple", "plan4_lqi6_200hz": "tab:pink", "plan4_lqi6_mpc": "tab:brown"}
 
 
 def main():
@@ -53,7 +56,7 @@ def main():
     fig.savefig(fig_dir / "time_responses.png", dpi=130)
 
     # 2. robustness bars
-    fig, axes = plt.subplots(1, 4, figsize=(15, 4))
+    fig, axes = plt.subplots(1, 4, figsize=(15, 5))
     keys = list(base.keys())
     names = [LABELS.get(k, k).replace(": ", "\n") for k in keys]
     cols = [COLORS.get(k, "gray") for k in keys]
@@ -63,6 +66,7 @@ def main():
     axes[3].bar(names, [base[k].get("stand", {}).get("wheel_torque_rms", 0) for k in keys], color=cols); axes[3].set_title("rest wheel torque RMS [Nm]")
     for a in axes:
         a.tick_params(axis="x", labelsize=7)
+        plt.setp(a.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")   # 7+ variants: avoid overlap
         a.grid(axis="y", alpha=0.3)
     fig.tight_layout()
     fig.savefig(fig_dir / "robustness.png", dpi=130)
