@@ -5,19 +5,24 @@
 Every publish period (1 / publish_hz, 20 ms) the host solves one small QP (qpmpc condensing, qpsolvers + DAQP with a
 warm start, OSQP as backup) and sends the FIRST element of the optimal velocity-reference trajectory as
 ``MotionCtrl.forward``; ``left`` (yaw rate) and ``up`` (height, clipped to the leg-length range) are passed through,
-``pitch`` is never sent.  The MPC has no integrator: the inner LQI6 keeps its own velocity integral.
+``pitch`` is never sent (``roll`` / ``leg_split`` are zeroed too).  The MPC has no integrator.
 
-Prediction model (``wbr.controllers.mpc_host.model``): the stage-1 LQI6 closed loop built from the plant
-linearisation and the MCU's own gain table (integrator, ZOH at the MCU period, observation latency, optional rate
-low-pass), lifted to the host period and reduced by balanced truncation (5 states) to the r -> (v_base, pitch) axes.
+Inner loop in MPC mode (``MotionCtrl.host_shaped = True``): the MCU's LQI6 tracks the host reference plainly and
+freezes ALL its integrators while the reference accelerates (``LQI6.freeze_int_on_accel_plain``); on a link timeout or
+when the QP fails the host sends the raw target with ``host_shaped = False`` and the MCU applies its own stage-1
+shaping (fallback, section 6 of docs/plan4_mpc_host.md).
+
+Prediction model (``wbr.controllers.mpc_host.model``): the integrator-free LQI6 state-feedback loop of that manoeuvre
+regime, built from the plant linearisation and the MCU's own gain table (ZOH at the MCU period, observation latency),
+lifted to the host period and reduced by balanced truncation (4-5 states) to the r -> (v_base, pitch) axes.
 
 Prediction state: the reference-induced closed-loop state, propagated with the references the host publishes (exact
 for the linear closed loop by superposition).  While a manoeuvre is in progress (target != 0 or less than obs_hold_s
-after it returned to 0) a steady-state Kalman correction of the slowest closed-loop mode (the LQI6 integrator mode)
-uses the period-averaged telemetry speed (``plan.mcu.est.v``): the joint dry friction of the robot makes the inner
-integrator wind up and pay back more than the linear model says.  At stand-still the reference stays exactly 0, so
-disturbances (pushes, tilts) are left to the inner loop as in stage 1 (criterion 20).  Telemetry is also used to
-resynchronise after start-up or a host outage.
+after it returned to 0) a weak steady-state Kalman correction of the slowest closed-loop mode uses the period-averaged
+telemetry speed (``plan.mcu.est.v``), gated by the innovation (|y - y_hat| > innovation_gate is a disturbance, not a
+model error).  At stand-still the reference stays exactly 0 (target deadband), so disturbances are left to the inner
+loop as in stage 1 (criterion 20).  Telemetry (``est.v_ref``) is also used to resynchronise after an outage or a
+fallback.
 
 Desired response: a critically damped second-order reference model of the target (omega 3.5 rad/s speeding up,
 10 rad/s slowing down); the MPC makes the predicted v_base follow it.
@@ -26,7 +31,8 @@ QP (decision variable u_k = Delta a_k, the reference-acceleration increment per 
     xi_k = [x_k (reduced closed loop), s_k (horizon displacement), r_{k-1}, a_{k-1}],  a_k = a_{k-1} + u_k,
     r_k = r_{k-1} + T a_k
     min  sum_k w_v (v_k - v_d,k)^2 + w_p (p_k - p_ss)^2 + w_r (r_k - v_d,k)^2 + w_a a_k^2 + w_u u_k^2  + terminal
-    s.t. |r_k| <= v_max,  |a_k| <= a_max,  |u_k| <= j_max T
+    s.t. |r_k| <= v_max,  -a_neg,k <= a_k <= a_pos,k (a_max, or a_dec = decel_factor a_max when braking the robot),
+         |u_k| <= j_max T
 a_max / j_max are derived from the wheel-torque margin (1.36 Nm per wheel), the pitch limit and the leg-lean limit
 through the closed-loop model (``derive_limits``, docs/plan4_mpc_host.md section 3).
 
@@ -64,13 +70,13 @@ class MpcConfig:
     a_max: Optional[float] = None    # m/s^2, None = derive_limits()
     j_max: Optional[float] = None    # m/s^3, None = derive_limits()
     a_dec_max: Optional[float] = None  # m/s^2 allowed while slowing down; None = decel_factor x a_max (capped at a_mcu)
-    decel_factor: float = 1.3        # braking is allowed 1.3 x a_max.  Measured on the 0.5 m/s step (noise, 10 ms, both
-                                     # rates; stop = largest excursion after the stop command, pitch = brake peak):
-                                     #   factor 1.0: stop 0.32-0.35 m (criterion 0.3 FAILS), pitch <= 1.53 deg
-                                     #   factor 1.3: stop 0.28-0.30 m,                       pitch <= 1.91 deg (m x1.15)
-                                     #   factor 1.5: stop 0.27-0.29 m,                       pitch 2.09-2.17 deg (FAILS)
-                                     # i.e. criterion 19 (0.3 m AND 2 deg) sits at the physical edge for +15 % mass: the
-                                     # inner loop lags the reference by ~0.26 s (0.13 m at 0.5 m/s) whatever the host does
+    decel_factor: float = 1.17       # braking is allowed 1.17 x a_max.  Grid obs_hold_s x decel_factor on the item-19 corner
+                                     # cases (noise, 10 ms, both rates; stop = largest excursion, pitch = brake peak), r2 M1:
+                                     #   hold 0.5 s, 1.30: stop 0.299 / 0.302 m, pitch 1.91 / 2.03 deg  (200 Hz fails)
+                                     #   hold 1.0 s, 1.15: stop 0.298 / 0.299 m, pitch 1.86 / 1.96 deg  (min margin 1.003)
+                                     #   hold 1.0 s, 1.20: stop 0.293 / 0.294 m, pitch 1.91 / 2.01 deg  (min margin 0.997)
+                                     # the stop (m x0.85) and the brake pitch (m x1.15) pull in opposite directions; the
+                                     # margin is a few per cent either way (docs/plan4_mpc_host.md 3.4)
     # cost weights (v in m/s, pitch in rad, a in m/s^2, u in m/s^2 per period)
     w_v: float = 1.0 / 0.05 ** 2
     w_p: float = 1.0 / math.radians(1.0) ** 2
@@ -134,8 +140,12 @@ class MpcConfig:
     friction_v_s: float = 0.05
     handover: bool = True                    # when the correction stops at stand-still, hand the residual (inner
                                              # integrator pay-back) to the LQI6: prediction state -> 0, r -> 0
-    obs_hold_s: float = 0.5                  # keep correcting this long after the target returned to zero (longer
-                                             # cancels the inner integrator's pay-back and stretches the stop: 2 s -> +9 cm)
+    obs_hold_s: float = 1.0                  # keep correcting (and the prediction state) this long after the target
+                                             # returned to zero; r2 M1: 0.5 s handed over while the robot still rolled at
+                                             # 0.3 m/s (prediction state zeroed, braking direction then from the reference
+                                             # sign) and lengthened the stop by ~5 %; 1.0 s covers the whole stop
+    model_extra_latency_ms: float = 0.0      # r2 m7: extra loop latency (host -> MCU command path on the real robot) added
+                                             # to the observation latency of the prediction model; 0 in the simulator
     # bookkeeping
     resync_gap_s: float = 0.25               # host outage longer than this -> resynchronise from telemetry
     violation_tol: float = 1e-3              # relative tolerance of the constraint-violation counter
@@ -158,14 +168,16 @@ def _plan_key(plan, L0: float) -> tuple:
 
 
 def prediction_model(plan, period: float, order: int, L0: Optional[float] = None,
-                     wheel_damping: Optional[float] = None, tol_v: float = 0.01, tol_pitch_deg: float = 0.1) -> dict:
+                     wheel_damping: Optional[float] = None, tol_v: float = 0.01, tol_pitch_deg: float = 0.1,
+                     extra_latency_ms: float = 0.0) -> dict:
     """Reduced host-rate model (cached).  Returns dict(red=LTIModel (r -> v_base, pitch, v, theta, T), full=lifted
     full-order LTIModel, m=MCU steps per host period, dc=steady-state gains)."""
     L0 = float(plan.params.L0 if L0 is None else L0)
-    key = _plan_key(plan, L0) + (round(period, 9), int(order), wheel_damping, tol_v, tol_pitch_deg)
+    key = _plan_key(plan, L0) + (round(period, 9), int(order), wheel_damping, tol_v, tol_pitch_deg, extra_latency_ms)
     if key in _MODEL_CACHE:
         return _MODEL_CACHE[key]
-    full_mcu = M.plan_closed_loop(plan, L0=L0, wheel_damping=wheel_damping)
+    full_mcu = M.plan_closed_loop(plan, L0=L0, latency_ms=float(plan.cfg.latency_ms) + float(extra_latency_ms),
+                                  wheel_damping=wheel_damping)
     rho = float(np.abs(np.linalg.eigvals(full_mcu.A)).max())
     if not rho < 1.0 - 1e-9:
         # the inner loop itself is unstable (e.g. latency >= 20 ms): no meaningful prediction model
@@ -293,10 +305,11 @@ def derive_limits(plan, cfg: MpcConfig, L0: Optional[float] = None) -> dict:
     key = _plan_key(plan, L0) + (cfg.wheel_peak_limit, cfg.wheel_torque_reserve, cfg.mass_factor, cfg.pitch_limit_deg,
                                  cfg.pitch_limit_general_deg, cfg.pitch_reserve_deg, cfg.lean_limit_deg, cfg.lean_fraction,
                                  cfg.mcu_ramp_fraction, cfg.jerk_rise_s, plan.law.ctrl.v_ramp_rate, cfg.wheel_damping_eq,
-                                 cfg.v_max, cfg.step_v, cfg.pitch_model_factor)
+                                 cfg.v_max, cfg.step_v, cfg.pitch_model_factor, cfg.model_extra_latency_ms)
     if key in _LIMIT_CACHE:
         return _LIMIT_CACHE[key]
-    full_mcu = M.plan_closed_loop(plan, L0=L0, wheel_damping=cfg.wheel_damping_eq)
+    full_mcu = M.plan_closed_loop(plan, L0=L0, latency_ms=float(plan.cfg.latency_ms) + float(cfg.model_extra_latency_ms),
+                                  wheel_damping=cfg.wheel_damping_eq)
     m = max(1, int(round(0.005 / full_mcu.Ts)))
     full = M.lift(full_mcu, m).select(["r"], ["T", "pitch", "theta", "v_base"])
     dt = full.Ts
@@ -584,7 +597,7 @@ class ReferenceQP:
                 self._sparse[key] = sps.csc_matrix(P)
             P, G = self._sparse[key], self._sparse["G"]
             kwargs = dict(eps_abs=1e-6, eps_rel=1e-6, polish=False, max_iter=20000, verbose=False,
-                          time_limit=0.5 * self.period)      # r1 m8: the backup must fit the host period, else fall back
+                          time_limit=0.5 * self.T)           # r1 m8 / r2 m1: the backup must fit the host period
         problem = qpsolvers.Problem(P, q, G, h, lb=self.lb, ub=self.ub)
         t0 = time.perf_counter()
         sol = qpsolvers.solve_problem(problem, solver=solver, initvals=warm, **kwargs)
@@ -609,7 +622,7 @@ class ReferenceQP:
 
 def reference_qp(plan, cfg: MpcConfig, period: float) -> Tuple[Optional["ReferenceQP"], dict, dict]:
     mdl = prediction_model(plan, period, cfg.order, wheel_damping=cfg.wheel_damping_eq, tol_v=cfg.order_tol_v,
-                           tol_pitch_deg=cfg.order_tol_pitch_deg)
+                           tol_pitch_deg=cfg.order_tol_pitch_deg, extra_latency_ms=cfg.model_extra_latency_ms)
     if not mdl.get("stable", True):
         return None, mdl, {}
     lim = derive_limits(plan, cfg)
@@ -1021,11 +1034,12 @@ class MpcHost:
         if not self.model_ok:
             return dict(n_solves=0, solve_p50_ms=None, solve_p99_ms=None, solve_max_ms=None, qp_failures=int(self.qp_failures),
                         solver_failures=0, violations=0, fallback_used=True, n_var=None, n_ineq=None, horizon_steps=None,
-                        a_max=None, j_max=None, a_dec_max=None, order=None, model_ok=False)
+                        a_max=None, j_max=None, a_dec_max=None, v_max=None, order=None, model_ok=False)
         return dict(n_solves=int(st.size), solve_p50_ms=float(np.percentile(st, 50)) if st.size else None,
                     solve_p99_ms=float(np.percentile(st, 99)) if st.size else None,
                     solve_max_ms=float(st.max()) if st.size else None, qp_failures=int(self.qp_failures),
                     solver_failures=int(self.solver_failures),
                     violations=int(self.violations), fallback_used=bool(self.fallback_used),
                     n_var=int(self.qp.n_var), n_ineq=int(self.qp.n_ineq), horizon_steps=int(self.qp.N),
-                    a_max=float(self.qp.a_max), j_max=float(self.qp.j_max), a_dec_max=float(self.qp.a_dec), order=int(self.red.n))
+                    a_max=float(self.qp.a_max), j_max=float(self.qp.j_max), a_dec_max=float(self.qp.a_dec), v_max=float(self.qp.v_max),
+                    order=int(self.red.n))

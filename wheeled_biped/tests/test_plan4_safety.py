@@ -68,6 +68,21 @@ class SensorGuardTests(unittest.TestCase):
         self.assertTrue(plan.mcu.fault)
         self.assertTrue(any("stale" in msg for _, msg in plan.mcu.events), plan.mcu.events)
 
+    def test_hip_and_knee_nan_are_held_without_fault(self):
+        """Review r2 M1: a NaN hip / knee position must not reach the VMC (it used the raw observation and produced a
+        NaN torque -> immediate FAULT -> fall)."""
+        for rate in (1000.0, 200.0):
+            for joint in ("left_hip", "right_knee"):
+                plan = make_plan(rate)
+                self.assertTrue(plan.run(0.5))
+                self._inject(plan, "enc", 1, joint=joint)
+                self.assertTrue(plan.run(1.0), f"{rate} Hz {joint}: fell after one NaN position")
+                self.assertFalse(plan.mcu.fault, f"{rate} Hz {joint}: a single NaN position must be held")
+                self.assertTrue(all_torques_finite(plan))
+                self._inject(plan, "enc", 8, joint=joint)
+                self.assertTrue(plan.mcu.fault)                  # persistent -> FAULT
+                self.assertTrue(all_torques_finite(plan))
+
     def test_held_samples_keep_the_velocity_time_base(self):
         """Stale / invalid samples advance the 5 ms position window: after 9 held ticks the next valid sample's
         velocity is dp / (n dt), not dp / dt (the 10x start-up spike that broke the 10 deg tilt wheel peak)."""
@@ -90,6 +105,57 @@ class SensorGuardTests(unittest.TestCase):
             self.assertTrue(plan.run(0.5))
             self.assertFalse(plan.mcu.fault)
             self.assertEqual(plan.mcu.bad_samples, 0)
+
+
+class HostCommandGuardTests(unittest.TestCase):
+    """Review r2 M2: the MCU must not act on a MotionCtrl with a non-finite field."""
+
+    def _nan_packets(self, plan, field, n):
+        from wbr.controllers.diablo_arch.host_link import MotionCtrl
+        for _ in range(n):
+            cmd = MotionCtrl(**{field: float("nan")})
+            plan.link.receive(cmd, plan.sim.time)
+            plan.observation = plan._observe() if False else plan.observation
+            cmds = plan.mcu.tick(plan._obs_to_mcu(plan.observation))
+            plan.sim.set_commands(plan._cmds_from_mcu(cmds))
+            plan.sim.step()
+            plan.observation = plan._observe()
+
+    def test_single_nan_packet_is_rejected_and_the_robot_stands(self):
+        for field in ("forward", "left", "up", "pitch"):
+            plan = make_plan(1000.0)
+            self.assertTrue(plan.run(0.5))
+            self._nan_packets(plan, field, 1)
+            self.assertEqual(plan.link.rejected, 1, field)
+            self.assertTrue(plan.run(1.0), f"fell after a NaN {field} packet")
+            self.assertFalse(plan.mcu.fault, field)
+            self.assertTrue(math.isfinite(plan.mcu.L_ref.value) and math.isfinite(plan.mcu.v_ref), field)
+            self.assertTrue(all_torques_finite(plan))
+            self.assertTrue(any("rejected" in msg for _, msg in plan.link.events), field)
+
+    def test_sustained_nan_packets_fall_back_to_the_disconnect_program(self):
+        plan = make_plan(1000.0)
+        self.assertTrue(plan.run(0.5))
+        plan.host.enabled = False                                 # only our garbage packets reach the link
+        self._nan_packets(plan, "forward", 700)                   # 0.7 s of garbage at 1 kHz
+        self.assertGreater(plan.link.rejected, 600)
+        self.assertFalse(plan.link.in_control)                    # timeout -> disconnect program
+        self.assertFalse(plan.mcu.fault)
+        self.assertLess(abs(math.degrees(plan.log["pitch_true"][-1])), 1.5)
+        self.assertTrue(all_torques_finite(plan))
+
+    def test_law_faults_after_persistent_nonfinite_inputs(self):
+        plan = make_plan(1000.0)
+        ctrl = plan.law.ctrl
+        ctrl.reset()
+        for _ in range(3):
+            ctrl.step(float("nan"), 0.0, 0.0, 0.0, 0.0, plan.params.L0, 0.0)
+        self.assertEqual(ctrl.nonfinite_steps, 3)
+        ctrl.step(0.0, 0.0, 0.0, 0.0, 0.0, plan.params.L0, 0.0)
+        self.assertEqual(ctrl.nonfinite_steps, 0)
+        from wbr.common.filters import Ramp
+        r = Ramp(1.0, value=0.3)
+        self.assertEqual(r.step(float("nan"), 0.01), 0.3)        # NaN target ignored
 
 
 class ImuConventionTests(unittest.TestCase):
@@ -173,8 +239,9 @@ class PredictionModelTests(unittest.TestCase):
             r = 0.8 * k * ctrl.Ts
             ctrl.step(0.0, 0.0, r - 0.05, 0.0, 0.0, plan.params.L0, r)
         self.assertAlmostEqual(ctrl.z, z0, places=12)
-        # constant reference afterwards: the integrator resumes
-        for _ in range(300):
+        # constant reference afterwards: the integrator resumes once the low-passed acceleration (tau 0.1 s) has
+        # decayed below the threshold and the 0.1 s hold-off (r2 m4) has elapsed
+        for _ in range(800):
             ctrl.step(0.0, 0.0, r - 0.05, 0.0, 0.0, plan.params.L0, r)
         self.assertLess(ctrl.z, z0 - 1e-3)
         ctrl.reset()

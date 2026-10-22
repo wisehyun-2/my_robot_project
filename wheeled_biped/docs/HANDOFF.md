@@ -16,10 +16,10 @@
 | 로봇 모델: upkie(URDF→MJCF, 타이어 0.05), **upkie_plan4(타이어 0.056 = BOM 112 mm)**, DIABLO-lite 6 kg | 완료 | `models/`, `wbr/models/` |
 | Plan 1/2/3 조립과 벤치마크 | 완료(비교보고서 0~10절) | `results/bench` |
 | **Plan 4**: 직렬 다리 기구학(`serial_leg.py`), 3체 플랜트 라그랑지안 유도·선형화(`plant_serial.py`), 파라미터 표(`upkie_params.py`), MuJoCo 대조(`verify_plan4_plant.py`), 조립(`plans/plan4_upkie_lqi6.py`), 합격 판정 배터리(`bench/acceptance.py`) | 완료, Windows에서 검증. 모델은 `models/upkie_plan4`(112 mm 타원체 타이어) | `wbr/`, `docs/plan4_*.md`, `results/acceptance/` |
-| 2단계 호스트 MPC(`wbr/controllers/mpc_host/`) | 완료(검토 1라운드 반영판): 1 kHz 19~23 통과, 200 Hz 20~23 통과·19번 4/45회 0.03~0.04 % 초과(물리적 한계, 사용자 결정) | `docs/plan4_mpc_host.md` |
-| Plan 4 합격 판정(전체 매트릭스, 캐시 `r3_s1`·`r3_s2`) | 두 주기 모두 1~13 통과, **16·17 실패**(5 cm 이탈 기준, 8.8~11 cm) — 사용자 결정 항목(`docs/plan4_lqi6.md` 4절); 15번 기록 20/25 ms(강건 여유 12/15 ms) | `results/acceptance/` |
-| 독립 검토 | 1라운드(Opus 5.5 ×2) major 10건 전부 반영(`docs/review_plan4_r1_response.md`); 2라운드 `docs/review_plan4_r2.md`·`review_plan4_mpc_r2.md` | `docs/` |
-| 단위 테스트 | 74개 통과(`tests/test_core.py` 20 + `tests/test_plan4.py` 38 + `tests/test_plan4_safety.py` 16) | `tests/` |
+| 2단계 호스트 MPC(`wbr/controllers/mpc_host/`) | 완료(검토 2라운드 반영판): 두 주기 모두 19~23 통과(19번 정지 최대 이탈 여유 ×0.99 — 넘김 1.0 s·제동 1.17배로 맞춤), 24번 기록 통과 | `docs/plan4_mpc_host.md` |
+| Plan 4 합격 판정(전체 매트릭스, 캐시 `r4_s1`·`r4_s2`) | 두 주기 모두 1~13 통과, **16·17 실패**(5 cm 이탈 기준, 8.8~11 cm) — 사용자 결정 항목(`docs/plan4_lqi6.md` 4절); 15번 기록 20/25 ms(강건 여유 12/15 ms) | `results/acceptance/` |
+| 독립 검토 | 1라운드(Opus 5.5 ×2) major 10건, 2라운드 major 5건 전부 반영(`docs/review_plan4_r1_response.md`, 1·2라운드 절); 3라운드(축소: 반영 추적·재현) `docs/review_plan4_r3.md`·`review_plan4_mpc_r3.md` | `docs/` |
+| 단위 테스트 | 78개 통과(`tests/test_core.py` 20 + `tests/test_plan4.py` 38 + `tests/test_plan4_safety.py` 20) | `tests/` |
 | ROS 2 Jazzy 패키지(메시지 3종, upkie 4패키지, diablo_lite 4패키지) | **작성만 됨, 빌드·실행 미검증**. Plan 4(lqi6 균형기) 옵션은 아직 없음 | `ros2_ws/src`, `ros2_ws/README.md` |
 
 ## 2. 우분투에서 할 일 (순서대로)
@@ -48,7 +48,13 @@
 3. **마찰 보상은 0에서 시작**: 시뮬 값 0.08/0.016 Nm는 모델의 건마찰(0.1/0.02 Nm)의 80 %다. 실기 관절 마찰을 재고(`friction_comp_Nm`, `friction_comp_wheel_Nm`) 0부터 올린다. 피치 속도 게이트(`friction_comp_rate_gate` 0.1 rad/s)는 유지.
 4. **지연 예산**: 설계 지연 10 ms. 강건 여유(노이즈·2 mm 낙하·0.5 W 밀기)는 1 kHz 12 ms, 200 Hz 15 ms이고 그 위에서는 ±3° 13 Hz 한계 사이클 → 전복이다. 실기 루프 지연(IMU 필터 + CAN + 제어 주기)을 재서 10 ms 안인지 확인한다. 넘으면 10 ms 예측기(`predict_ms`, 밀기 피치 2배 비용) 또는 게인 재설계.
 5. **MPC 호스트 텔레메트리**: 호스트는 `est.v`(지상 속도)와 `est.v_ref`(MCU 자체 기준)를 쓴다. 실기 50 Hz 텔레메트리 형식을 정한 뒤 관측기 잡음(`obs_sigma_v`)과 예측 모델의 지연(`plan.cfg.latency_ms` 대신 측정 지연)을 다시 맞춘다.
-6. **타이어 접촉**: Plan 4 모델은 타원체 타이어 + condim 4(비틀림 마찰 0.005). 제자리 회전 바퀴 전류를 재서 9번 요 항목의 유지 토크(시뮬 0.07~0.11 Nm rms)와 비교한다.
+6. **타이어 접촉**: Plan 4 모델은 타원체 타이어 + condim 4(비틀림 마찰 0.005). 제자리 회전 바퀴 전류를 재서 9번 요 항목의 유지 토크(시뮬 0.08~0.11 Nm rms)와 비교한다.
+7. **관측 시각과 서보별 신선도**: MCU의 정지 감시는 관측 dict의 `time`만 본다. 실기 진입점에서 `time`은 필수(없으면 감시가 꺼진다 → 진입점에서 FAULT 처리)이고, 시각은 진행하는데 특정 서보만 마지막 값을 되돌려 주는 드라이버(응답 누락)는 검출하지 못하므로 moteus 응답 카운터나 서보별 표본 나이 감시를 진입점에 둘 것(2라운드 검토 m7).
+8. **바퀴 관성**: 시뮬의 바퀴 로터 아마추어 J_w는 MuJoCo 의미론(관절 속도)이다. 실기에서는 바퀴+로터 관성을 통째로 재서 I_w에 넣고 J_w = 0(`docs/plan4_model.md` 2절).
+9. **저마찰 바닥**: 20° 기울기(4번)는 μ0.5에서 세 질량 모두 전복한다(바퀴 접지 한계). 실기 저마찰 바닥에서 큰 기울기 시험은 피한다.
+10. **마찰 보상의 게이트는 필수**: 보상(3번 항목)을 켜면 피치 속도 게이트(`friction_comp_rate_gate` 0.1 rad/s)도 켜 둘 것 — 게이트 없이는 0.75 W 밀기 복귀의 바퀴 rms가 0.21 Nm(기준 0.2)로 실패했다.
+11. **호스트 패킷**: MCU 링크는 비유한 필드가 있는 MotionCtrl을 거부하고(이벤트), 계속되면 500 ms 타임아웃으로 단절 프로그램에 들어간다. 호스트 쪽에서도 송신 전 유한성 검사를 둘 것.
+12. **MPC 호스트의 명령 지연**: 호스트 → MCU 명령 경로 지연이 10~20 ms만 있어도 19번 정지 거리가 0.30~0.31 m로 늘어난다(2라운드 검토 m7). 실기 지연을 재서 `MpcConfig.model_extra_latency_ms`에 넣고(예측 모델의 관측 지연에 더해짐) 제동 계수(`decel_factor`)를 다시 맞춘다. 50 Hz 단일 표본 텔레메트리·텔레메트리 20 ms 지연·`v_ref` 부재는 영향이 작다.
 
 ## 3. 우분투에서 Claude Code에 줄 첫 메시지(예시)
 

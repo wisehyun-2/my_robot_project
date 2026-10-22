@@ -1,2 +1,0 @@
-ramp rise_s 1.385 overshoot_pct 9.484 ss_err 0.020 pitch_peak 1.880 stop_disp 0.095 settled 1 wheel_peak 0.192 wheel_rms10 0.069
-mpc rise_s 1.010 overshoot_pct 3.829 ss_err 0.002 pitch_peak 2.319 stop_disp 0.104 settled 1 wheel_peak 0.229 wheel_rms10 0.073

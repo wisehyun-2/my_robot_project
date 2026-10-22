@@ -1,8 +1,10 @@
 """Fallback reference shaper of the MPC host: the stage-1 shaping (2 m/s^2 ramp + 0.3 s first-order pre-filter that
 acts only while speeding up; braking follows the ramp), executed by the host at its publish rate.
 
-The MCU in MPC mode runs a plain inner loop (4 m/s^2 ramp, no pre-filter, integrator not frozen), so this shaper is
-what limits the reference when the QP fails or is unavailable.
+Since review round 1 the host does NOT send this shaped reference: on a QP failure it hands the raw target to the
+MCU with ``host_shaped = False`` and the MCU runs the same stage-1 shaping itself (``LQI6`` shaped mode).  The host
+keeps this shaper only to propagate its internal reference state while in fallback (resume decision), and as the
+reference generator when the prediction model is unavailable (unstable inner loop).
 """
 from __future__ import annotations
 

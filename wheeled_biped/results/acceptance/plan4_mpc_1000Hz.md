@@ -1,6 +1,6 @@
 # Plan 4 합격 판정 — 1000 Hz, 호스트 mpc, 매트릭스 full, 시드 5개
 
-**종합: 불합격**  (노이즈 ON, 지연 10 ms, 판정 피치 = 시뮬 실제 피치; 종합 판정은 필수 항목만, 기록 항목은 자체 통과/실패만 표시)
+**종합: 불합격**  (노이즈 ON, 지연 10 ms, 판정 피치 = 시뮬 실제 피치; 종합 판정은 필수 항목만, 기록 항목은 자체 통과/실패만 표시; 코드 해시 1cbc282b92)
 
 | # | 항목 | 등급 | 판정 | 실행 수 | 가장 빠듯한 지표 (측정 / 기준, 여유율) | 최악 조합 |
 |---|---|---|---|---|---|---|
@@ -11,21 +11,21 @@
 | 5 | 밀기 0.5 W | 필수-정착 | 통과 | 45 | settle_s: 1.899 <= 3.000 (×0.63) | m×0.85 μ0.75 s1 |
 | 6 | 밀기 0.75 W | 필수-정착 | 통과 | 45 | wheel_rms10: 0.122 <= 0.200 (×0.61) | m×0.85 μ1.00 s3 |
 | 7 | 밀기 1.0 W | 필수-생존 | 통과 | 5 | alive: O >= 1 (×0.00) | m×1.00 μ0.75 s0 |
-| 8 | 속도 스텝 0.5 m/s | 필수-정착 | 통과 | 45 | rise_s: 1.087 <= 1.500 (×0.72) | m×0.85 μ0.50 s4 |
+| 8 | 속도 스텝 0.5 m/s | 필수-정착 | 통과 | 45 | rise_s: 1.103 <= 1.500 (×0.74) | m×0.85 μ1.00 s1 |
 | 9 | 요 1 rad/s | 필수-정착 | 통과 | 45 | wheel_rms10: 0.107 <= 0.200 (×0.53) | m×1.15 μ1.00 s1 |
 | 10 | 4 cm 웅크림 후 복귀 | 필수-정착 | 통과 | 45 | leg_rms: 1.975 <= 4.000 (×0.49) | m×1.15 μ0.50 s2 |
-| 11 | 링크 끊김(0.5 m/s 주행 중) | 필수-정착 | 통과 | 45 | stop_time: 2.321 <= 3.000 (×0.77) | m×0.85 μ0.75 s1 |
+| 11 | 링크 끊김(0.5 m/s 주행 중) | 필수-정착 | 통과 | 45 | stop_time: 2.326 <= 3.000 (×0.78) | m×0.85 μ1.00 s3 |
 | 12 | 경사 5° 정지 | 필수-정착 | 통과 | 45 | wheel_rms10: 0.156 <= 0.200 (×0.78) | m×1.15 μ0.75 s2 |
-| 13 | 경사 5° 주행 0.5 m/s(오르기·내리기) | 필수-정착 | 통과 | 45 | wheel_rms10: 0.172 <= 0.200 (×0.86) | m×1.15 μ1.00 s0 |
+| 13 | 경사 5° 주행 0.5 m/s(오르기·내리기) | 필수-정착 | 통과 | 45 | rise_s: 1.417 <= 1.500 (×0.94) | m×1.15 μ0.50 s1 |
 | 15 | 지연 스윕(3° 기울기, 무노이즈; 강건 여유도 함께 기록) | 기록 | **실패** | 1 | max_latency_ms: 20 >= 25.000 (×1.25) | m×1.00 μ0.75 s0 |
 | 16 | IMU 피치 바이어스 +1° | 필수-정착 | **실패** | 45 | drift_max: 0.088 <= 0.050 (×1.75) | m×0.85 μ1.00 s3 |
 | 17 | 무게중심 전방 오프셋(0.3 kg, +10 cm) | 필수-정착 | **실패** | 45 | drift_max: 0.107 <= 0.050 (×2.14) | m×0.85 μ0.75 s1 |
-| 19 | MPC 속도 스텝 0.5 m/s | 필수-정착 | 통과 | 45 | stop_disp: 0.298 <= 0.300 (×0.99) | m×0.85 μ0.75 s1 |
+| 19 | MPC 속도 스텝 0.5 m/s | 필수-정착 | 통과 | 45 | stop_disp: 0.296 <= 0.300 (×0.99) | m×0.85 μ0.75 s0 |
 | 20 | 회귀 없음(1~17: 1단계 통과 유지, 가장 빠듯한 지표 여유율 악화 ≤ 10 %) | 필수-정착 | 통과 | 15 | regression_flips: 0 <= 0 (×0.00) | - |
 | 21 | MPC 제약 준수(8·9·13·19) | 필수-정착 | 통과 | 45 | wheel_peak: 0.440 <= 1.360 (×0.32) | m×1.15 μ0.50 s0 |
-| 22 | MPC 풀이 시간 | 기록 | 통과 | 1 | solve_p99_ms: 0.324 <= 5.000 (×0.06) | m×1.00 μ0.75 s0 |
+| 22 | MPC 풀이 시간 | 기록 | 통과 | 1 | solve_p99_ms: 0.306 <= 5.000 (×0.06) | m×1.00 μ0.75 s0 |
 | 23 | MPC 폴백(솔버 강제 실패) | 필수-생존 | 통과 | 5 | alive: 1 >= 1 (×0.00) | m×1.00 μ0.75 s0 |
-| 24 | 주행 중 밀기(0.3 m/s 순항, 0.75 W; 기록, 검토 r1) | 기록 | 통과 | 1 | settle_s: 1.905 <= 4.000 (×0.48) | m×1.00 μ0.75 s0 |
+| 24 | 주행 중 밀기(0.3 m/s 순항, 0.75 W; 기록, 검토 r1) | 기록 | 통과 | 1 | settle_s: 1.911 <= 4.000 (×0.48) | m×1.00 μ0.75 s0 |
 
 ## 실패 목록
 
@@ -132,18 +132,18 @@
 - **5 밀기 0.5 W**: settled 1, settle_s 1.899, pitch_peak 3.472, disp 0.148, wheel_peak 0.472, wheel_rms10 0.080, wheel_sat_duty 0.000, leg_peak 3.234, leg_rms 1.678, wheel_speed_peak 20.230, leg_speed_peak 3.537
 - **6 밀기 0.75 W**: settled 1, settle_s 2.305, pitch_peak 5.172, wheel_rms10 0.122, wheel_sat_duty 0.000, leg_peak 4.671, leg_rms 1.693, wheel_speed_peak 31.114, leg_speed_peak 5.372
 - **7 밀기 1.0 W**: alive O
-- **8 속도 스텝 0.5 m/s**: rise_s 1.087, overshoot_pct 3.841, ss_err 0.008, pitch_peak 1.893, stop_disp 0.298, settled 1, wheel_peak 0.288, wheel_rms10 0.079, wheel_sat_duty 0.000, leg_peak 1.908, leg_rms 1.635, wheel_speed_peak 11.266, leg_speed_peak 0.854
+- **8 속도 스텝 0.5 m/s**: rise_s 1.103, overshoot_pct 2.702, ss_err 0.003, pitch_peak 1.901, stop_disp 0.296, settled 1, wheel_peak 0.288, wheel_rms10 0.080, wheel_sat_duty 0.000, leg_peak 1.903, leg_rms 1.632, wheel_speed_peak 10.911, leg_speed_peak 0.868
 - **9 요 1 rad/s**: yaw_err_pct 0.494, pitch_peak 0.340, alive O, wheel_peak 0.327, wheel_rms10 0.107, wheel_sat_duty 0.000, leg_peak 2.514, leg_rms 1.967, wheel_speed_peak 3.571, leg_speed_peak 0.784
 - **10 4 cm 웅크림 후 복귀**: alive O, pitch_peak 0.696, settled 1, wheel_peak 0.158, wheel_rms10 0.042, wheel_sat_duty 0.000, leg_peak 3.490, leg_rms 1.975, wheel_speed_peak 3.929, leg_speed_peak 3.898
-- **11 링크 끊김(0.5 m/s 주행 중)**: alive O, stop_time 2.321, motors_on 1, settled 1, wheel_peak 0.327, wheel_rms10 0.068, wheel_sat_duty 0.000, leg_peak 1.911, leg_rms 1.649, wheel_speed_peak 12.438, leg_speed_peak 1.201
+- **11 링크 끊김(0.5 m/s 주행 중)**: alive O, stop_time 2.326, motors_on 1, settled 1, wheel_peak 0.314, wheel_rms10 0.068, wheel_sat_duty 0.000, leg_peak 1.914, leg_rms 1.648, wheel_speed_peak 12.446, leg_speed_peak 1.194
 - **12 경사 5° 정지**: alive O, disp_max 0.055, pitch_dev_ma_max 0.437, pitch_dev_rms 0.143, wheel_rms10 0.156, wheel_sat_duty 0.000, wheel_peak 0.280, leg_peak 1.947, leg_rms 1.549, wheel_speed_peak 3.642, leg_speed_peak 1.266
-- **13 경사 5° 주행 0.5 m/s(오르기·내리기)**: rise_s 1.283, overshoot_pct 6.675, ss_err 0.015, pitch_peak 2.452, stop_disp 0.298, settled 1, wheel_peak 0.440, wheel_rms10 0.172, wheel_sat_duty 0.000, leg_peak 1.790, leg_rms 1.557, wheel_speed_peak 11.185, leg_speed_peak 0.868
+- **13 경사 5° 주행 0.5 m/s(오르기·내리기)**: rise_s 1.417, overshoot_pct 7.071, ss_err 0.023, pitch_peak 2.452, stop_disp 0.297, settled 1, wheel_peak 0.440, wheel_rms10 0.173, wheel_sat_duty 0.000, leg_peak 1.798, leg_rms 1.554, wheel_speed_peak 11.161, leg_speed_peak 0.918
 - **15 지연 스윕(3° 기울기, 무노이즈; 강건 여유도 함께 기록)**: max_latency_ms 20 ✗, max_latency_robust_ms 12
 - **16 IMU 피치 바이어스 +1°**: alive O, pitch_ma_max 0.569, pitch_rms 0.293, drift_max 0.088 ✗, wheel_rms10 0.038, wheel_sat_duty 0.000, wheel_peak 0.158, leg_peak 1.862, leg_rms 1.631, wheel_speed_peak 1.559, leg_speed_peak 0.484
 - **17 무게중심 전방 오프셋(0.3 kg, +10 cm)**: alive O, pitch_ma_max 0.708, pitch_rms 0.419, drift_max 0.107 ✗, wheel_rms10 0.038, wheel_sat_duty 0.000, wheel_peak 0.156, leg_peak 1.916, leg_rms 1.664, wheel_speed_peak 1.822, leg_speed_peak 0.481
-- **19 MPC 속도 스텝 0.5 m/s**: pitch_peak 1.893, overshoot_pct 3.841, rise_s 1.087, stop_disp 0.298, settled 1, wheel_peak 0.288, wheel_rms10 0.079, wheel_sat_duty 0.000, leg_peak 1.908, leg_rms 1.635, wheel_speed_peak 11.266, leg_speed_peak 0.854
-- **20 회귀 없음(1~17: 1단계 통과 유지, 가장 빠듯한 지표 여유율 악화 ≤ 10 %)**: regression_flips 0, margin_worse_10pct 0
+- **19 MPC 속도 스텝 0.5 m/s**: pitch_peak 1.901, overshoot_pct 2.702, rise_s 1.103, stop_disp 0.296, settled 1, wheel_peak 0.288, wheel_rms10 0.080, wheel_sat_duty 0.000, leg_peak 1.903, leg_rms 1.632, wheel_speed_peak 10.911, leg_speed_peak 0.868
+- **20 회귀 없음(1~17: 1단계 통과 유지, 가장 빠듯한 지표 여유율 악화 ≤ 10 %)**: regression_flips 0, margin_worse_10pct 0, metric_worse_10pct_record 2
 - **21 MPC 제약 준수(8·9·13·19)**: constraint_violations 0, packet_violations 0, wheel_peak 0.440, alive 1
-- **22 MPC 풀이 시간**: solve_p99_ms 0.324, qp_failures 0
+- **22 MPC 풀이 시간**: solve_p99_ms 0.306, qp_failures 0
 - **23 MPC 폴백(솔버 강제 실패)**: alive 1, fallback_used 1, passes_1_8_11 1, passes_8_transient 1, mpc_resumed 1
-- **24 주행 중 밀기(0.3 m/s 순항, 0.75 W; 기록, 검토 r1)**: alive O, settled 1, settle_s 1.905, v_back 0.009
+- **24 주행 중 밀기(0.3 m/s 순항, 0.75 W; 기록, 검토 r1)**: alive O, settled 1, settle_s 1.911, v_back 0.004

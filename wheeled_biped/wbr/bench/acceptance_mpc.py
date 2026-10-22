@@ -24,7 +24,7 @@ from wbr.bench import acceptance as A
 
 
 def packet_violations(packets: List[tuple], a_max: float, j_max: float, period: float, tol: float = 1e-3,
-                      a_dec: float | None = None, v_of_t=None) -> int:
+                      a_dec: float | None = None, v_of_t=None, v_max: float | None = None) -> int:
     """Review r1 m4: count the acceleration / jerk violations of the reference the host actually SENT (MotionCtrl
     packets (t, forward, host_shaped)), independently of the QP's self-check.  Only consecutive host-shaped packets
     one period apart are compared (a fallback packet carries the raw target, a resync restarts the sequence)."""
@@ -45,6 +45,8 @@ def packet_violations(packets: List[tuple], a_max: float, j_max: float, period: 
         braking = (a * v_dir < 0.0) and abs(v_dir) > 0.02
         bound = a_dec if (a_dec is not None and braking) else a_max
         if abs(a) > bound * (1 + tol) + 1e-9:
+            n += 1
+        if v_max is not None and abs(r1) > v_max * (1 + tol) + 1e-9:       # r2 m9: velocity bound of the sent reference
             n += 1
         if prev_a is not None and abs(a - prev_a) > j_max * period * (1 + tol) + 1e-9:
             n += 1
@@ -85,7 +87,7 @@ def _host_stats(hosts: List, packets: List[tuple] | None = None, period: float |
     times = times[np.isfinite(times)]
     st0 = hosts[0].stats() if hosts else {}
     pv = (packet_violations(packets, st0.get("a_max"), st0.get("j_max"), period, a_dec=st0.get("a_dec_max"),
-                            v_of_t=_v_of_t(plan) if plan is not None else None)
+                            v_of_t=_v_of_t(plan) if plan is not None else None, v_max=st0.get("v_max"))
           if packets is not None else None)
     return dict(n_solves=int(times.size), packet_violations=pv, n_packets=None if packets is None else len(packets),
                 solve_p50_ms=float(np.percentile(times, 50)) if times.size else None,

@@ -429,7 +429,8 @@ def scenario_link_loss(plan, V: float = 0.5, **_) -> dict:
             stop_time = float(L["t"][i] - t_drop)
             break
     out = dict(alive=alive, stop_time=stop_time, v_end=float(L["vx"][-1]), released=int(not plan.link.in_control),
-               motors_on=int(plan.mcu.armed and not plan.mcu.off_latched), settled=int(alive and settle_time_true(L, t_drop) is not None))
+               motors_on=int(plan.mcu.armed and not plan.mcu.off_latched and not plan.mcu.fault),
+               settled=int(alive and settle_time_true(L, t_drop) is not None))
     out.update(torque_metrics(plan, t_from=t_drop))
     plan.host.enabled = True
     return out
@@ -508,8 +509,7 @@ def scenario_drive_push(plan, V: float = 0.3, frac: float = 0.75, T: float = 6.0
     sgn = 1.0 if V >= 0 else -1.0
     out = dict(alive=alive, settled=int(st is not None), settle_s=st,
                v_back=float(max(0.0, -(sgn * L["vx"][after]).min())) if after.any() else None,
-               pitch_peak=float(math.degrees(np.abs(L["pitch_true"][after]).max())) if after.any() else None,
-               disp=float(np.abs(L["x"][after] - L["x"][after][0]).max()) if after.any() else None)
+               pitch_peak=float(math.degrees(np.abs(L["pitch_true"][after]).max())) if after.any() else None)
     out.update(torque_metrics(plan, t_from=t_push))
     return out
 
@@ -587,6 +587,8 @@ def code_hash() -> str:
     alone must invalidate the cache).  Viewer / video / plotting modules are excluded."""
     root = Path(__file__).resolve().parents[1]
     h = hashlib.sha1()
+    import mujoco
+    h.update(f"mujoco {mujoco.__version__} numpy {np.__version__}".encode())      # r2 n14: library versions
     skip = ("viewer", "video.py", "plots.py", "run_bench.py", "battery.py", "compare_hosts.py", "regression.py")
     for p in sorted(root.rglob("*.py")):
         rel = p.relative_to(root).as_posix()
@@ -626,6 +628,7 @@ def regression_row(summary: dict, stage1: dict) -> dict:
         ms = [w["margin"] for w in it["worst"].values() if w["margin"] is not None and math.isfinite(w["margin"])]
         return max(ms) if ms else None
 
+    metric_worse = []                                 # r2 M2: every metric (record), not only the tightest one
     for it in summary["items"]:
         ref = s1.get(it["id"])
         if ref is None or it["id"] >= 19 or it["grade"] not in ("settle", "survive"):
@@ -634,12 +637,24 @@ def regression_row(summary: dict, stage1: dict) -> dict:
         if ref["passed"] and not it["passed"]:
             flips.append(it["id"])
         m1, m2 = tightest(ref), tightest(it)
-        if m1 is not None and m2 is not None and m1 > 0 and m2 > 1.10 * m1:
+        if m1 is not None and m2 is not None and m1 > 0 and m2 >= 1.10 * m1:
             worse.append(dict(id=it["id"], stage1=m1, stage2=m2))
+        for metric, w2 in it["worst"].items():
+            w1 = ref["worst"].get(metric)
+            if not w1:
+                continue
+            a, b = w1["margin"], w2["margin"]
+            if a is None or b is None or not (math.isfinite(a) and math.isfinite(b)) or a < 0.05:
+                continue
+            if b >= 1.10 * a:
+                metric_worse.append(f"{it['id']}:{metric} ×{a:.2f}→×{b:.2f}")
     worst = {"regression_flips": dict(margin=float("inf") if flips else 0.0, value=len(flips), limit=0, op="<=", passed=not flips,
                                      case=("항목 " + ", ".join(map(str, flips))) if flips else "-"),
              "margin_worse_10pct": dict(margin=float("inf") if worse else 0.0, value=len(worse), limit=0, op="<=", passed=not worse,
-                                        case=", ".join(f"{w['id']}: ×{w['stage1']:.2f}→×{w['stage2']:.2f}" for w in worse) or "-")}
+                                        case=", ".join(f"{w['id']}: ×{w['stage1']:.2f}→×{w['stage2']:.2f}" for w in worse) or "-"),
+             # record only (interpretation of criterion 20 is a user decision, 합격기준 6.2): per-metric worsenings
+             "metric_worse_10pct_record": dict(margin=0.0, value=len(metric_worse), limit=None, op="기록", passed=True,
+                                               case=", ".join(metric_worse) or "-")}
     failures = [dict(case=f"항목 {w['id']}", metric="margin_worse_10pct", value=w["stage2"], limit=1.1 * w["stage1"], op="<=") for w in worse]
     failures += [dict(case=f"항목 {i}", metric="regression_flips", value=1, limit=0, op="<=") for i in flips]
     return dict(id=20, name="회귀 없음(1~17: 1단계 통과 유지, 가장 빠듯한 지표 여유율 악화 ≤ 10 %)", grade="settle",
@@ -647,8 +662,8 @@ def regression_row(summary: dict, stage1: dict) -> dict:
 
 
 def summarize(items: List[Item], runs: Dict[Task, dict], rate: float, reference: Dict[int, dict] | None,
-              stage1: dict | None = None) -> dict:
-    summary = {"rate_hz": rate, "items": [], "passed": True}
+              stage1: dict | None = None, code_hash_value: str | None = None) -> dict:
+    summary = {"rate_hz": rate, "items": [], "passed": True, "code_hash": code_hash_value}
     for it in items:
         tasks = [t for t in runs if t.item_id == it.id and t.rate == rate and not t.reference]
         if not tasks:
@@ -688,7 +703,7 @@ GRADE_KO = {"settle": "필수-정착", "survive": "필수-생존", "record": "�
 def summary_markdown(summary: dict, matrix_name: str, seeds: int, host: str) -> str:
     lines = [f"# Plan 4 합격 판정 — {summary['rate_hz']:.0f} Hz, 호스트 {host}, 매트릭스 {matrix_name}, 시드 {seeds}개",
              "", f"**종합: {'합격' if summary['passed'] else '불합격'}**  (노이즈 ON, 지연 {LATENCY_MS:.0f} ms, 판정 피치 = 시뮬 실제 피치; "
-                 "종합 판정은 필수 항목만, 기록 항목은 자체 통과/실패만 표시)", "",
+                 f"종합 판정은 필수 항목만, 기록 항목은 자체 통과/실패만 표시; 코드 해시 {summary.get('code_hash')})", "",
              "| # | 항목 | 등급 | 판정 | 실행 수 | 가장 빠듯한 지표 (측정 / 기준, 여유율) | 최악 조합 |", "|---|---|---|---|---|---|---|"]
     for it in summary["items"]:
         w = it["worst"]
@@ -795,7 +810,7 @@ def main(argv=None):
     for rate in rates:
         s1_path = out_dir / f"plan4_{rate:.0f}Hz.json"
         stage1 = json.loads(s1_path.read_text(encoding="utf-8")) if (args.host == "mpc" and s1_path.exists()) else None
-        summary = summarize(items, runs, rate, reference, stage1)
+        summary = summarize(items, runs, rate, reference, stage1, chash)
         all_pass &= summary["passed"]
         md = summary_markdown(summary, args.matrix, len(seeds), args.host)
         (out_dir / f"{tag}_{rate:.0f}Hz.md").write_text(md, encoding="utf-8")

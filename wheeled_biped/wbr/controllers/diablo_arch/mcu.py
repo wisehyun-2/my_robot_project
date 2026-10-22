@@ -153,6 +153,8 @@ class DiabloMcu:
         self.stale_samples = 0
         self.last_obs_time: Optional[float] = None
         self.est_hold = False
+        self.servo_valid: Dict[str, dict] = {}       # last valid (filtered) servo sample: the VMC never reads raw NaNs
+        self._rejected_seen = int(getattr(self.link, "rejected", 0))
         self.law.reset()
         self.link.reset()
         self.telemetry: dict = {}
@@ -251,12 +253,14 @@ class DiabloMcu:
         self.bad_samples = 0
         self.est_hold = False
         gyro_raw = np.asarray(obs["imu"]["angular_velocity"], dtype=float)
+        quat = np.asarray(obs["imu"]["orientation"], dtype=float)
+        quat = quat / np.linalg.norm(quat)           # unit quaternion before use (review r2 n2)
         if self.imu is not None:        # real-robot convention (ARS frame + IMU mounting) -> base frame (review r1 M3)
-            bo = self.imu.update(obs["imu"]["orientation"], gyro_raw)
+            bo = self.imu.update(quat, gyro_raw)
             R = bo["rotation_base_to_world"]
             gyro = np.asarray(bo["angular_velocity"], dtype=float)
         else:
-            R = quat_to_matrix(obs["imu"]["orientation"])
+            R = quat_to_matrix(quat)
             gyro = gyro_raw
         roll, pitch, _ = roll_pitch_yaw(R)
         e.pitch, e.pitch_rate = pitch, float(gyro[1])
@@ -264,6 +268,7 @@ class DiabloMcu:
         e.yaw_rate = float((R @ gyro)[2])          # world-frame yaw rate (review B11)
         self.est_valid = True
         servo = self._filtered_servo(obs["servo"])
+        self.servo_valid = servo
         for side in ("left", "right"):
             qh, qc = servo[f"{side}_hip"]["position"], servo[f"{side}_{self.p.leg_joint}"]["position"]
             qdh, qdc = servo[f"{side}_hip"]["velocity"], servo[f"{side}_{self.p.leg_joint}"]["velocity"]
@@ -286,6 +291,8 @@ class DiabloMcu:
     # ------------------------------------------------------------- commands
     def apply_command(self, cmd: MotionCtrl, dt: float) -> None:
         p = self.p
+        if not all(math.isfinite(float(x)) for x in (cmd.forward, cmd.left, cmd.up, cmd.roll, cmd.pitch, cmd.leg_split)):
+            return                                    # never let a non-finite reference into the ramps / integrators
         if cmd.mode_mark:
             if cmd.mode.stand_mode and self.mode == RobotMode.CAR:
                 self._set_mode(RobotMode.TRANSITION_UP)
@@ -324,6 +331,10 @@ class DiabloMcu:
         self.last_obs = obs
         e = self.estimate(obs)
         cmd = self.link.poll(self.t) if host_cmd is None else host_cmd
+        rejected = int(getattr(self.link, "rejected", 0))
+        if rejected > self._rejected_seen:            # review r2 M2: corrupt host packets are dropped by the link
+            self.events.append((self.t, f"host packet rejected (non-finite field), {rejected} so far"))
+            self._rejected_seen = rejected
         self.apply_command(cmd, dt)
         if hasattr(self.law, "set_reference_shaping"):   # host-shaped reference (stage-2 MPC) -> plain tracking;
             self.law.set_reference_shaping(not getattr(cmd, "host_shaped", False))   # timeout / fallback -> own shaping
@@ -399,6 +410,9 @@ class DiabloMcu:
         law_out = self.law.compute(e, refs, self)
         ctrl = getattr(self.law, "ctrl", None)       # telemetry: the reference the balancer is actually tracking
         e.v_ref = float(getattr(ctrl, "v_filt", v_ref)) if ctrl is not None else float(v_ref)
+        if getattr(ctrl, "nonfinite_steps", 0) > p.max_bad_samples and not self.fault:
+            self.fault = True                         # the balance law has been holding its output on bad inputs
+            self.events.append((self.t, "FAULT: non-finite balance-law input"))
         if "servo" in law_out:                       # the law produced full servo commands (Plan 3)
             self.telemetry.update({k: v for k, v in law_out.items() if k != "servo"})
             return dict(law_out["servo"])
@@ -429,8 +443,9 @@ class DiabloMcu:
         for side, sign in (("left", -1.0), ("right", +1.0)):
             F = p.kp_leg * (L_ref_side[side] - e.L0[side]) - p.kd_leg * e.L0_dot[side] + F_ff / max(math.cos(e.theta_v[side]), 0.5)
             Tp_side = 0.5 * Tp + sign * 0.5 * tau_split
-            tau_hip, tau_crank = self.leg.vmc_torques(F, Tp_side, obs["servo"][f"{side}_hip"]["position"],
-                                                      obs["servo"][f"{side}_{p.leg_joint}"]["position"])
+            sv = self.servo_valid if self.servo_valid else obs["servo"]        # held sample on invalid data (r2 M1)
+            tau_hip, tau_crank = self.leg.vmc_torques(F, Tp_side, sv[f"{side}_hip"]["position"],
+                                                      sv[f"{side}_{p.leg_joint}"]["position"])
             tau_wheel = 0.5 * T + sign * 0.5 * tau_yaw
             for name, tau, lim in ((f"{side}_hip", tau_hip, p.tau_hip_max), (f"{side}_{p.leg_joint}", tau_crank, p.tau_hip_max),
                                    (f"{side}_wheel", tau_wheel, p.tau_wheel_max)):

@@ -5,10 +5,13 @@ Construction (docs/plan4_mpc_host.md, section 2):
 1. plant  ``plan.plant.linearize(L0)`` -> A (6x6, [theta, theta_dot, x, x_dot, phi, phi_dot]), B (6x2, [T, Tp]).
    The wheel position x does not enter the controller, so the 5-state plant s = [theta, theta_dot, v, phi, phi_dot]
    is discretised with a zero-order hold at the MCU period Ts (the same c2d as ``LQI6.design``).
-2. controller exactly as ``LQI6.step`` executes it (MPC mode: no pre-filter, integrator not frozen):
-       z_k = z_{k-1} + Ts (v_m - r_k),   u_k = -K [theta_m, theta_dot_m, v_m - r_k, phi_m, phi_dot_m, z_k]
+2. controller exactly as ``LQI6.step`` executes it in MPC mode while the reference moves (no pre-filter, every
+   integrator frozen, ``lqi6_options`` -> use_int = False):
+       u_k = -K_5 [theta_m, theta_dot_m, v_m - r_k, phi_m, phi_dot_m]
    where the measured state m_k = s_{k-d} is the plant state delayed by the observation latency d (steps), kept in a
-   delay chain.  K = ``ctrl.gains(L0)`` (the MCU's own gain table).
+   delay chain.  K_5 = the first five columns of ``ctrl.gains(L0)`` (the MCU's own gain table, ``select_gains``).
+   The integrator variants (use_int / att_gM / use_pos) remain available for the stand-still regime
+   (``regime="rest"``), used only to compare the model with push responses.
 3. inputs  r (the velocity reference seen by the LQI6), F (horizontal force at the total COM, used to validate the
    push response) and Tf (external wheel torque, e.g. joint dry friction: the process-noise direction of the host's
    observer); outputs v (wheel ground speed), v_base (torso origin, = the judged ``vx``), pitch (body, IMU sign),

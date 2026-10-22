@@ -38,6 +38,8 @@ class Ramp:
         self.value = value
 
     def step(self, target: float, dt: float) -> float:
+        if not math.isfinite(target):                 # a NaN target would poison the ramp for good (review r2 M2)
+            return self.value
         target = clamp_abs(target, self.max_abs)
         self.value = abs_bounded_derivative_filter(self.value, target, dt, self.max_rate)
         return self.value

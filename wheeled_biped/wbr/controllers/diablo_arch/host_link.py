@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import copy
+import math
 from dataclasses import dataclass, field
 from enum import IntEnum
 
@@ -63,7 +64,11 @@ class HostLinkParams:
 
 
 class HostLink:
-    """MCU-side view of the serial link: stores the latest command and tracks control authority."""
+    """MCU-side view of the serial link: stores the latest command and tracks control authority.  A packet with a
+    non-finite field is rejected (review r2 M2): it neither updates the command nor counts as a heartbeat, so a host
+    that keeps sending garbage runs into the normal timeout and the MCU's disconnect program."""
+
+    rejected: int = 0
 
     def __init__(self, params: HostLinkParams | None = None):
         self.p = params or HostLinkParams()
@@ -82,8 +87,17 @@ class HostLink:
         self.last_rx_time = t
         self.events.append((t, "control obtained"))
 
+    @staticmethod
+    def valid(cmd: MotionCtrl) -> bool:
+        return all(math.isfinite(float(x)) for x in (cmd.forward, cmd.left, cmd.up, cmd.roll, cmd.pitch, cmd.leg_split))
+
     def receive(self, cmd: MotionCtrl, t: float) -> None:
         """Called whenever the host sends a MotionCtrl (teleop at 25-50 Hz or the 180 ms heartbeat)."""
+        if not self.valid(cmd):
+            self.rejected += 1
+            if self.rejected == 1 or self.rejected % 50 == 0:
+                self.events.append((t, f"rejected MotionCtrl with a non-finite field ({self.rejected} so far)"))
+            return
         if not self.in_control:
             self.obtain_control(t)
         self.last_cmd = copy.deepcopy(cmd)   # one serial packet: later edits of the host object must not leak

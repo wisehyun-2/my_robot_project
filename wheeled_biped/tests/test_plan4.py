@@ -286,10 +286,8 @@ class SerialPlantTests(unittest.TestCase):
         self.assertAlmostEqual(plant.Tp_eq(L_STAND), -0.314, delta=0.002)          # docs/plan4_model.md
 
     def test_static_hip_torque_between_grid_points(self):
-        """KNOWN CORE BUG (plant_serial.py, not fixed here): Tp_eq() evaluates the potential gradient at the
-        interpolated theta_eq table value (error ~3e-5 rad between grid points) and then asserts
-        |dV/dtheta - dV/dphi| < 1e-6, so it raises AssertionError('equilibrium inconsistency') for every L0
-        off the 5 mm grid (e.g. Plan4Config(L_stand=0.3125)).  Remove the decorator once it is fixed."""
+        """Tp_eq() off the 5 mm theta_eq grid (e.g. L_stand = 0.3125): the static hip torque is evaluated at the
+        exact bisection equilibrium, so the equilibrium consistency check must hold between grid points."""
         p, plant = plan4_params(), plan4_plant()
         self.assertAlmostEqual(plant.Tp_eq(0.3125), p.m_b * p.g * p.b_x, places=9)
 

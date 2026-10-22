@@ -1,6 +1,6 @@
 # Plan 4 합격 판정 — 200 Hz, 호스트 ramp, 매트릭스 full, 시드 5개
 
-**종합: 불합격**  (노이즈 ON, 지연 10 ms, 판정 피치 = 시뮬 실제 피치; 종합 판정은 필수 항목만, 기록 항목은 자체 통과/실패만 표시)
+**종합: 불합격**  (노이즈 ON, 지연 10 ms, 판정 피치 = 시뮬 실제 피치; 종합 판정은 필수 항목만, 기록 항목은 자체 통과/실패만 표시; 코드 해시 1cbc282b92)
 
 | # | 항목 | 등급 | 판정 | 실행 수 | 가장 빠듯한 지표 (측정 / 기준, 여유율) | 최악 조합 |
 |---|---|---|---|---|---|---|
@@ -133,15 +133,15 @@
   - 참고(plan1_pid, upkie 기본 PI, 1 kHz, 공칭): alive X, settled 0, force_N 39.283, pitch_peak 62.021, disp 1.926, disp_end 1.926, v_peak 3.177, wheel_peak 1.037, wheel_rms10 0.382, wheel_sat_duty 0.000, wheel_sat_s 0.000, leg_peak 1.749, leg_rms 0.370, wheel_speed_peak 39.964, leg_speed_peak 0.857
 - **7 밀기 1.0 W**: alive O
   - 참고(plan1_pid, upkie 기본 PI, 1 kHz, 공칭): alive X, settled 0, force_N 52.378, pitch_peak 61.382, disp 0.736, disp_end 0.736, v_peak 2.241, wheel_peak 1.700, wheel_rms10 0.958, wheel_sat_duty 0.199, wheel_sat_s 0.092, leg_peak 2.219, leg_rms 1.081, wheel_speed_peak 39.968, leg_speed_peak 1.106
-- **8 속도 스텝 0.5 m/s**: rise_s 1.245, overshoot_pct 12.589, ss_err 0.039, pitch_peak 2.201, stop_disp 0.236, settled 1, wheel_peak 0.306, wheel_rms10 0.089, wheel_sat_duty 0.000, leg_peak 1.909, leg_rms 1.639, wheel_speed_peak 12.851, leg_speed_peak 0.764
+- **8 속도 스텝 0.5 m/s**: rise_s 1.245, overshoot_pct 12.589, ss_err 0.039, pitch_peak 2.201, stop_disp 0.236, settled 1, wheel_peak 0.306, wheel_rms10 0.089, wheel_sat_duty 0.000, leg_peak 1.912, leg_rms 1.639, wheel_speed_peak 12.851, leg_speed_peak 0.764
   - 참고(plan1_pid, upkie 기본 PI, 1 kHz, 공칭): alive O, rise_s 0.591, overshoot_pct 41.707, ss_err 0.184, pitch_peak 11.656, stop_disp 0.186, stop_end 0.081, stop_back 0.105, settled 0, wheel_peak 1.700, wheel_rms10 0.171, wheel_sat_duty 0.003, wheel_sat_s 0.016, leg_peak 1.944, leg_rms 0.163, wheel_speed_peak 23.472, leg_speed_peak 0.849
 - **9 요 1 rad/s**: yaw_err_pct 0.434, pitch_peak 0.385, alive O, wheel_peak 0.301, wheel_rms10 0.109, wheel_sat_duty 0.000, leg_peak 2.470, leg_rms 1.966, wheel_speed_peak 3.656, leg_speed_peak 0.585
   - 참고(plan1_pid, upkie 기본 PI, 1 kHz, 공칭): alive O, yaw_rate_mean 0.927, yaw_err_pct 7.347, pitch_peak 3.581, wheel_peak 1.700, wheel_rms10 0.215, wheel_sat_duty 0.000, wheel_sat_s 0.001, leg_peak 2.210, leg_rms 1.510, wheel_speed_peak 7.496, leg_speed_peak 0.311
 - **10 4 cm 웅크림 후 복귀**: alive O, pitch_peak 0.798, settled 1, wheel_peak 0.156, wheel_rms10 0.048, wheel_sat_duty 0.000, leg_peak 3.499, leg_rms 1.977, wheel_speed_peak 4.090, leg_speed_peak 3.722
   - 참고(plan1_pid, upkie 기본 PI, 1 kHz, 공칭): alive O, pitch_peak 6.211, L0_min 0.307, settled 0, wheel_peak 0.421, wheel_rms10 0.111, wheel_sat_duty 0.000, wheel_sat_s 0.000, leg_peak 1.888, leg_rms 0.923, wheel_speed_peak 8.608, leg_speed_peak 0.926
-- **11 링크 끊김(0.5 m/s 주행 중)**: alive O, stop_time 2.390, motors_on 1, settled 1, wheel_peak 0.315, wheel_rms10 0.071, wheel_sat_duty 0.000, leg_peak 1.919, leg_rms 1.645, wheel_speed_peak 12.515, leg_speed_peak 0.758
+- **11 링크 끊김(0.5 m/s 주행 중)**: alive O, stop_time 2.390, motors_on 1, settled 1, wheel_peak 0.315, wheel_rms10 0.071, wheel_sat_duty 0.000, leg_peak 1.918, leg_rms 1.645, wheel_speed_peak 12.515, leg_speed_peak 0.758
 - **12 경사 5° 정지**: alive O, disp_max 0.062, pitch_dev_ma_max 0.446, pitch_dev_rms 0.174, wheel_rms10 0.159, wheel_sat_duty 0.000, wheel_peak 0.295, leg_peak 1.832, leg_rms 1.561, wheel_speed_peak 2.986, leg_speed_peak 0.928
-- **13 경사 5° 주행 0.5 m/s(오르기·내리기)**: rise_s 1.405, overshoot_pct 12.448, ss_err 0.043, pitch_peak 2.527, stop_disp 0.233, settled 1, wheel_peak 0.485, wheel_rms10 0.178, wheel_sat_duty 0.000, leg_peak 1.862, leg_rms 1.562, wheel_speed_peak 12.778, leg_speed_peak 0.759
+- **13 경사 5° 주행 0.5 m/s(오르기·내리기)**: rise_s 1.405, overshoot_pct 12.448, ss_err 0.043, pitch_peak 2.527, stop_disp 0.233, settled 1, wheel_peak 0.485, wheel_rms10 0.178, wheel_sat_duty 0.000, leg_peak 1.862, leg_rms 1.561, wheel_speed_peak 12.778, leg_speed_peak 0.759
 - **15 지연 스윕(3° 기울기, 무노이즈; 강건 여유도 함께 기록)**: max_latency_ms 25, max_latency_robust_ms 15
 - **16 IMU 피치 바이어스 +1°**: alive O, pitch_ma_max 0.703, pitch_rms 0.308, drift_max 0.091 ✗, wheel_rms10 0.045, wheel_sat_duty 0.000, wheel_peak 0.141, leg_peak 1.910, leg_rms 1.637, wheel_speed_peak 1.728, leg_speed_peak 0.283
 - **17 무게중심 전방 오프셋(0.3 kg, +10 cm)**: alive O, pitch_ma_max 0.792, pitch_rms 0.431, drift_max 0.110 ✗, wheel_rms10 0.045, wheel_sat_duty 0.000, wheel_peak 0.135, leg_peak 1.947, leg_rms 1.671, wheel_speed_peak 2.015, leg_speed_peak 0.241

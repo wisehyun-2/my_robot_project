@@ -30,7 +30,7 @@ class LQI6:
                  freeze_int_on_ramp=False, v_ref_tau_brake=0.0, q_att=None, q_pos=None, att_gM=None,
                  att_limit=0.2, pos_limit=0.5, pred_steps=0, freeze_tol=1e-3, quiet_boost_att=1.0,
                  quiet_boost_pos=1.0, plain_ramp_rate=4.0, att_accel_tau=0.1, att_accel_thresh=0.1,
-                 freeze_int_on_accel_plain=True):
+                 freeze_int_on_accel_plain=True, freeze_hold_s=0.1):
         """table_L0 = (min, max, step): gains are designed once on this leg-length grid and interpolated
         at run time (no Riccati solve inside the 1 kHz loop, as a Teensy-class MCU would do it);
         None keeps the online re-design of the report.
@@ -98,6 +98,10 @@ class LQI6:
         # overshoot when the host hands over mid-manoeuvre (review r1 stage 2 M2 / M3).  The MPC prediction model
         # is the integrator-free loop accordingly (mpc_host.model.lqi6_options).
         self.freeze_int_on_accel_plain = freeze_int_on_accel_plain
+        # r2 m4: the low-passed reference acceleration passes through zero when the manoeuvre changes sign (speed up ->
+        # brake); without a hold-off the integrators ran for 20-40 ms on a 0.2 m/s error there
+        self._freeze_hold_steps = int(round(freeze_hold_s / Ts))
+        self._freeze_countdown = 0
         self._last_out = (0.0, 0.0)
         self.int_limit = int_limit
         self.reschedule_dL = reschedule_dL
@@ -116,12 +120,14 @@ class LQI6:
             return
         self.shaping_on = on
         self.v_ramp_rate, self.v_ref_tau, self.freeze_int_on_ramp = self._shaped if on else self._plain
-        self.v_filt = self.v_filt1 = self.v_ramp      # continuity of the reference seen by the loop
+        self.v_ramp = self.v_filt1 = self.v_filt      # bumpless: the reference the loop sees does not jump (r2 m6)
 
     def reset(self) -> None:
         self.shaping_on = True                 # review r1 n7: a reset restores the MCU's own shaping
         self.v_ramp_rate, self.v_ref_tau, self.freeze_int_on_ramp = self._shaped
         self._last_out = (0.0, 0.0)
+        self.nonfinite_steps = 0
+        self._freeze_countdown = 0
         self.z = 0.0
         self.z_att = 0.0
         self.z_pos = 0.0
@@ -216,7 +222,9 @@ class LQI6:
     def step(self, theta, theta_dot, v, phi, phi_dot, L0, v_ref):
         """Returns (T, Tp): total wheel torque and total hip torque."""
         if not all(math.isfinite(float(x)) for x in (theta, theta_dot, v, phi, phi_dot, L0, v_ref)):
-            return self._last_out          # never integrate a non-finite sample (review r1 M2): hold the last output
+            self.nonfinite_steps += 1      # never integrate a non-finite sample (review r1 M2): hold the last output;
+            return self._last_out          # the MCU raises FAULT when this persists (review r2 M2)
+        self.nonfinite_steps = 0
         K = self.gains(L0)
         dv = float(np.clip(v_ref - self.v_ramp, -self.v_ramp_rate * self.Ts, self.v_ramp_rate * self.Ts))
         self.v_ramp += dv
@@ -237,9 +245,15 @@ class LQI6:
         z_prev, za_prev, zp_prev = self.z, self.z_att, self.z_pos
         ramping = abs(dv) > 1e-9 or abs(self.v_filt - self.v_ramp) > self.freeze_tol
         self._a_ref_lp += (dv / self.Ts - self._a_ref_lp) * self.Ts / self.att_accel_tau
-        att_ramping = abs(self._a_ref_lp) > self.att_accel_thresh or abs(self.v_filt - self.v_ramp) > self.freeze_tol
+        accelerating = abs(self._a_ref_lp) > self.att_accel_thresh
+        if accelerating:
+            self._freeze_countdown = self._freeze_hold_steps
+        elif self._freeze_countdown > 0:
+            self._freeze_countdown -= 1
+            accelerating = True                      # hold-off across the sign change of the reference acceleration
+        att_ramping = accelerating or abs(self.v_filt - self.v_ramp) > self.freeze_tol
         frozen = (self.freeze_int_on_ramp and ramping) or \
-                 (self.freeze_int_on_accel_plain and not self.shaping_on and abs(self._a_ref_lp) > self.att_accel_thresh)
+                 (self.freeze_int_on_accel_plain and not self.shaping_on and accelerating)
         if not frozen:
             self.z = float(np.clip(self.z + ev * self.Ts, -self.int_limit, self.int_limit))
         Pm = Gm = gM = None
