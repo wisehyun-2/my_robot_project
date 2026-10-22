@@ -52,7 +52,8 @@ def patch_urdf(text: str, meshdir: str) -> str:
     return re.sub(r"(<robot[^>]*>)", r"\1\n  " + ext, text, count=1)
 
 
-def build(out_dir: Path = OUT_DIR, verbose: bool = True, tire_radius: float = TIRE_RADIUS, tire_shape: str = "cylinder") -> Path:
+def build(out_dir: Path = OUT_DIR, verbose: bool = True, tire_radius: float = TIRE_RADIUS, tire_shape: str = "cylinder",
+          tire_condim: int = 3) -> Path:
     """tire_radius: collision cylinder radius.  upkie_description models a 100 mm tire (0.05); the BOM of the real
     robot lists 112 mm RC tires (0.056) and upkie's spine configuration uses 0.06.  Plan 4 builds a second model
     directory (models/upkie_plan4) with the BOM value -- see docs/plan4_model.md.
@@ -104,7 +105,10 @@ def build(out_dir: Path = OUT_DIR, verbose: bool = True, tire_radius: float = TI
                 else:
                     g.size = [tire_radius, half_width, 0.0]
                 g.friction = [1.0, 0.005, 0.0001]
-                g.condim = 3
+                # condim 4 adds torsional friction (coefficient friction[1] = 0.005) about the contact normal: the
+                # resistance of a real contact patch when yawing in place (review r1 m11; Plan 4 uses 4, the single
+                # contact point of the ellipsoid with condim 3 is the optimistic limit)
+                g.condim = int(tire_condim)
                 g.priority = 1
 
     # actuators
@@ -153,5 +157,7 @@ if __name__ == "__main__":
     ap.add_argument("--out", default=None, help="output directory (default models/upkie)")
     ap.add_argument("--tire-radius", type=float, default=TIRE_RADIUS)
     ap.add_argument("--tire-shape", default="cylinder", choices=("cylinder", "ellipsoid"))
+    ap.add_argument("--tire-condim", type=int, default=3, choices=(3, 4, 6))
     args = ap.parse_args()
-    build(Path(args.out) if args.out else OUT_DIR, tire_radius=args.tire_radius, tire_shape=args.tire_shape)
+    build(Path(args.out) if args.out else OUT_DIR, tire_radius=args.tire_radius, tire_shape=args.tire_shape,
+          tire_condim=args.tire_condim)

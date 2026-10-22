@@ -40,7 +40,9 @@ MATRIX_REDUCED = [(1.0, 0.75), (0.85, 0.5), (1.15, 1.0)]
 
 
 # ----------------------------------------------------------------------------- criteria table
-FLAG_METRICS = {"alive", "settled", "motors_on", "fallback_used"}     # 0 / 1 pass flags (no margin ratio)
+FLAG_METRICS = {"alive", "settled", "motors_on", "fallback_used", "passes_1_8_11", "passes_8_transient", "mpc_resumed",
+                "model_ok"}     # 0 / 1 pass flags (no margin ratio)
+SETTLE_HOLD_S = 1.0          # a recovery counts as settled only if the last violation is >= 1 s before the log ends (r1 m4)
 
 
 @dataclass
@@ -94,6 +96,7 @@ TORQUE_CHECKS = [
 ]
 
 STAND_CHECKS = [
+    Check("alive", ">=", 1, "", "생존(2 s 이후 전복 포함)"),
     Check("pitch_ma_max", "<=", 1.0, "deg", "20 ms 이동평균 |피치|"),
     Check("pitch_rms", "<=", 0.5, "deg"),
     Check("drift_max", "<=", 0.05, "m", "max |x − x0|"),
@@ -124,14 +127,24 @@ ITEMS: List[Item] = [
     Item(11, "링크 끊김(0.5 m/s 주행 중)", "settle", "link_loss", dict(V=0.5), [Check("alive", ">=", 1), Check("stop_time", "<=", 3.0, "s", "|v| < 0.1"),
                                                                            Check("motors_on", ">=", 1), Check("settled", ">=", 1)]),
     Item(12, "경사 5° 정지", "settle", "slope_stand", dict(T=60.0, slope=5.0),
-         [Check("disp_max", "<=", 0.10, "m"), Check("pitch_dev_ma_max", "<=", 1.0, "deg", "평형 오프셋 제거 후"), Check("pitch_dev_rms", "<=", 0.5, "deg"),
-          Check("wheel_rms10", "<=", WHEEL_RMS_LIMIT, "Nm")], duration_s=60),
+         [Check("alive", ">=", 1), Check("disp_max", "<=", 0.10, "m"), Check("pitch_dev_ma_max", "<=", 1.0, "deg", "평형 오프셋 제거 후"),
+          Check("pitch_dev_rms", "<=", 0.5, "deg"), Check("wheel_rms10", "<=", WHEEL_RMS_LIMIT, "Nm"),
+          Check("wheel_sat_duty", "<=", 0.0, "", "포화 없음")], duration_s=60),
     Item(13, "경사 5° 주행 0.5 m/s(오르기·내리기)", "settle", "slope_drive", dict(V=0.5, slope=5.0),
          [Check("rise_s", "<=", 1.5, "s"), Check("overshoot_pct", "<=", 20.0, "%"), Check("ss_err", "<=", 0.05, "m/s"),
           Check("pitch_peak", "<=", 5.0, "deg"), Check("stop_disp", "<=", 0.5, "m"), Check("settled", ">=", 1)]),
-    Item(15, "지연 스윕(3° 기울기, 무노이즈)", "record", "latency_sweep", dict(), [Check("max_latency_ms", ">=", 25.0, "ms")], torque_margin=False),
+    Item(15, "지연 스윕(3° 기울기, 무노이즈; 강건 여유도 함께 기록)", "record", "latency_sweep", dict(),
+         [Check("max_latency_ms", ">=", 25.0, "ms", "3° 기울기 정착(기준)"),
+          Check("max_latency_robust_ms", ">=", 0.0, "ms", "노이즈·2 mm 낙하·0.5 W 밀기 20 s, 마지막 5 s 피치 rms < 0.5°(기록, 검토 r1 M1)")],
+         torque_margin=False),
     Item(16, "IMU 피치 바이어스 +1°", "settle", "stand", dict(T=60.0, pitch_bias_deg=1.0), STAND_CHECKS, duration_s=60),
     Item(17, "무게중심 전방 오프셋(0.3 kg, +10 cm)", "settle", "stand", dict(T=60.0, payload=(0.3, 0.10, None)), STAND_CHECKS, duration_s=60),
+    # review r1 (stage 2 M1): the criteria's disturbance items all run with the target exactly 0 (the host idle); this
+    # record-only item pushes the robot while it cruises so that the stage-2 host (telemetry correction) and the
+    # stage-1 ramp host can be compared.  Not part of the user's criteria: it never flips the verdict.
+    Item(24, "주행 중 밀기(0.3 m/s 순항, 0.75 W; 기록, 검토 r1)", "record", "drive_push", dict(V=0.3, frac=0.75),
+         [Check("alive", ">=", 1), Check("settled", ">=", 1), Check("settle_s", "<=", 4.0, "s", "6번과 같은 4 s(참고)"),
+          Check("v_back", "<=", 0.1, "m/s", "후진 속도(참고)")], torque_margin=False),
 ]
 
 STAGE2_ITEMS: List[Item] = [
@@ -139,12 +152,15 @@ STAGE2_ITEMS: List[Item] = [
          [Check("pitch_peak", "<=", 2.0, "deg"), Check("overshoot_pct", "<=", 10.0, "%"), Check("rise_s", "<=", 1.5, "s"),
           Check("stop_disp", "<=", 0.3, "m"), Check("settled", ">=", 1)]),
     Item(21, "MPC 제약 준수(8·9·13·19)", "settle", "mpc_constraints", dict(),
-         [Check("constraint_violations", "<=", 0, "", "가속도·속도 제약 위반"), Check("wheel_peak", "<=", WHEEL_PEAK_LIMIT, "Nm"),
-          Check("alive", ">=", 1)], torque_margin=False),
+         [Check("constraint_violations", "<=", 0, "", "가속도·속도 제약 위반(QP 해 자체 검사)"),
+          Check("packet_violations", "<=", 0, "", "송신 패킷의 가속도·저크 위반(독립 계수, 검토 r1 m4)"),
+          Check("wheel_peak", "<=", WHEEL_PEAK_LIMIT, "Nm"), Check("alive", ">=", 1)], torque_margin=False),
     Item(22, "MPC 풀이 시간", "record", "mpc_timing", dict(), [Check("solve_p99_ms", "<=", 5.0, "ms"), Check("qp_failures", "<=", 0, "")],
          torque_margin=False),
     Item(23, "MPC 폴백(솔버 강제 실패)", "survive", "mpc_fallback", dict(),
-         [Check("alive", ">=", 1), Check("fallback_used", ">=", 1), Check("passes_1_8_11", ">=", 1, "", "1·8·11 통과")],
+         [Check("alive", ">=", 1), Check("fallback_used", ">=", 1), Check("passes_1_8_11", ">=", 1, "", "1·8·11 통과"),
+          Check("passes_8_transient", ">=", 1, "", "기동 중 0.1 s QP 실패(0.8·1.2·3.04 s) 뒤에도 8번 통과(검토 r1 M2)"),
+          Check("mpc_resumed", ">=", 1, "", "일시 실패 뒤 MPC 복귀")],
          torque_margin=False),
 ]
 
@@ -167,7 +183,7 @@ def moving_rms_max(x: np.ndarray, dt: float, win: float = 10.0) -> float:
 
 def settle_time_true(L, t_start: float, v_ref: float = 0.0, dt: Optional[float] = None):
     """Last time the 20 ms moving-average TRUE pitch exceeds 1 deg or |v - v_ref| exceeds 0.1 m/s after t_start
-    (None = never settled)."""
+    (None = never settled, or the last violation is less than SETTLE_HOLD_S before the end of the log: r1 m4)."""
     t = L["t"]
     dt = dt or float(t[1] - t[0])
     pitch = moving_average(L["pitch_true"], dt, 0.02)
@@ -176,7 +192,7 @@ def settle_time_true(L, t_start: float, v_ref: float = 0.0, dt: Optional[float] 
     idx = np.where(bad & (t >= t_start))[0]
     if not len(idx):
         return 0.0
-    if idx[-1] >= len(t) - 2:
+    if idx[-1] >= len(t) - 2 or (t[-1] - t[idx[-1]]) < SETTLE_HOLD_S:
         return None
     return float(t[idx[-1]] - t_start)
 
@@ -189,10 +205,11 @@ def torque_metrics(plan, t_from: float = 0.0) -> dict:
     wspeed = np.stack([L["qd_lw"][sel], L["qd_rw"][sel]])
     lspeed = np.stack([L["qd_lh"][sel], L["qd_lk"][sel], L["qd_rh"][sel], L["qd_rk"][sel]])
     sat = np.abs(wheels) >= 0.999 * WHEEL_TAU_MAX
+    # per motor (r1 m6): the worst wheel's saturation duty, the worst leg joint's rms
     return dict(wheel_peak=float(np.abs(wheels).max()),
                 wheel_rms10=float(max(moving_rms_max(w, plan.dt) for w in wheels)),
-                wheel_sat_duty=float(sat.mean()), wheel_sat_s=float(sat.any(axis=0).sum() * plan.dt),
-                leg_peak=float(np.abs(legs).max()), leg_rms=float(np.sqrt(np.mean(legs ** 2))),
+                wheel_sat_duty=float(sat.mean(axis=1).max()), wheel_sat_s=float(sat.any(axis=0).sum() * plan.dt),
+                leg_peak=float(np.abs(legs).max()), leg_rms=float(np.sqrt(np.mean(legs ** 2, axis=1)).max()),
                 wheel_speed_peak=float(np.abs(wspeed).max()), leg_speed_peak=float(np.abs(lspeed).max()))
 
 
@@ -272,7 +289,8 @@ def scenario_tilt(plan, deg: float, T: float = 8.0, **_) -> dict:
     alive = plan.run(T)
     L = plan.log
     st = settle_time_true(L, L["t"][0]) if alive else None
-    out = dict(alive=alive, settled=int(st is not None), settle_s=st, disp=float(abs(L["x"][-1] - L["x"][0])),
+    out = dict(alive=alive, settled=int(st is not None), settle_s=st, disp=float(np.abs(L["x"] - L["x"][0]).max()),
+               disp_end=float(abs(L["x"][-1] - L["x"][0])),
                pitch_peak=float(math.degrees(np.abs(L["pitch_true"]).max())))
     out.update(torque_metrics(plan))
     return out
@@ -289,23 +307,33 @@ def scenario_push(plan, frac: float, T: float = 8.0, **_) -> dict:
     st = settle_time_true(L, 1.0) if alive else None
     out = dict(alive=alive, settled=int(st is not None), settle_s=st, force_N=frac * W,
                pitch_peak=float(math.degrees(np.abs(L["pitch_true"][after]).max())),
-               disp=float(abs(L["x"][-1] - L["x"][after][0])), v_peak=float(np.abs(L["vx"][after]).max()))
+               disp=float(np.abs(L["x"][after] - L["x"][after][0]).max()), disp_end=float(abs(L["x"][-1] - L["x"][after][0])),
+               v_peak=float(np.abs(L["vx"][after]).max()))
     out.update(torque_metrics(plan, t_from=1.0))
     return out
 
 
-def _velocity_profile(plan, V: float) -> dict:
-    """0.5 s stand, 2.5 s at V, 3 s at 0 (same timing as the benchmark battery)."""
+def _velocity_profile(plan, V: float, hook=None) -> dict:
+    """0.5 s stand, 2.5 s at V, 3 s at 0 (same timing as the benchmark battery).  hook(t) is called before every
+    step (acceptance_mpc: transient QP failure injection)."""
     plan.reset()
     plan.run(0.5)
     alive = True
     for _ in range(int(round(2.5 / plan.dt))):
+        if hook is not None:
+            hook(plan.sim.time)
         plan.step(V, 0.0)
         if plan.fallen:
             alive = False
             break
     if alive:
-        alive = plan.run(3.0)
+        for _ in range(int(round(3.0 / plan.dt))):
+            if hook is not None:
+                hook(plan.sim.time)
+            plan.step(0.0, 0.0)
+            if plan.fallen:
+                alive = False
+                break
     L = plan.log
     t, v = L["t"], L["vx"]
     seg = (t >= 0.5) & (t < 3.0)
@@ -317,7 +345,12 @@ def _velocity_profile(plan, V: float) -> dict:
     out = dict(alive=alive, rise_s=rise, overshoot_pct=float(((sgn * v[seg]).max() - abs(V)) / abs(V) * 100) if len(v[seg]) else None,
                ss_err=float(abs(np.mean(v[ss]) - V)) if ss.any() else None,
                pitch_peak=float(math.degrees(np.abs(L["pitch_true"][t >= 0.5]).max())),
-               stop_disp=float(abs(L["x"][-1] - L["x"][t >= 3.0][0])) if (t >= 3.0).any() else None,
+               # stopping distance = largest excursion after the stop command (r1 M3; the end point hid a 0.2 m
+               # roll-back), stop_back = how far the robot came back from that point (record)
+               stop_disp=float(np.abs(L["x"][t >= 3.0] - L["x"][t >= 3.0][0]).max()) if (t >= 3.0).any() else None,
+               stop_end=float(abs(L["x"][-1] - L["x"][t >= 3.0][0])) if (t >= 3.0).any() else None,
+               stop_back=float(np.abs(L["x"][t >= 3.0] - L["x"][t >= 3.0][0]).max() - abs(L["x"][-1] - L["x"][t >= 3.0][0]))
+               if (t >= 3.0).any() else None,
                settled=int(alive and settle_time_true(L, 3.0) is not None))
     out.update(torque_metrics(plan, t_from=0.5))
     return out
@@ -380,7 +413,7 @@ def scenario_height(plan, dh: float = -0.04, **_) -> dict:
 def scenario_link_loss(plan, V: float = 0.5, **_) -> dict:
     plan.reset()
     plan.run(1.0)
-    for _ in range(int(round(1.0 / plan.dt))):
+    for _ in range(int(round(3.0 / plan.dt))):       # cruise at V before the link drops (r1 m5: 1 s reached only 0.38 m/s)
         plan.step(V, 0.0)
     plan.host.enabled = False
     t_drop = plan.sim.time
@@ -419,22 +452,69 @@ def scenario_slope_stand(plan, T: float = 60.0, **_) -> dict:
 
 
 def scenario_latency_sweep(rate: float, host: str = "ramp") -> dict:
-    """3 deg tilt, no noise, latency 0..80 ms: largest latency with a settled recovery (battery definition)."""
+    """Item 15 (record).  Criterion: 3 deg tilt, no noise, nominal friction, latency 0..80 ms -> the largest latency
+    with a settled recovery, stopping at the first failure (monotonic reading, r1 n6).  Also recorded (r1 M1): the
+    ROBUST margin -- noise on, 2 mm drop start, 0.5 W push at 1 s, 20 s -- the largest latency with no fall, a settled
+    recovery and a quiet tail (last 5 s true-pitch rms < 0.5 deg), which catches the large-amplitude limit cycle the
+    3 deg test cannot see."""
     from wbr.plans.plan4_upkie_lqi6 import Plan4Config, Plan4UpkieLQI6
-    results = {}
-    best = None
+    results, best = {}, None
     for ms in (0, 5, 10, 15, 20, 25, 30, 40, 60, 80):
-        plan = Plan4UpkieLQI6(Plan4Config(rate_hz=rate, noise=False, latency_ms=float(ms), host=host))
+        plan = Plan4UpkieLQI6(Plan4Config(rate_hz=rate, noise=False, latency_ms=float(ms), host=host, friction=NOMINAL[1]))
         plan.reset(pitch=math.radians(3))
         alive = plan.run(6.0)
         st = settle_time_true(plan.log, 0.0) if alive else None
         results[ms] = dict(alive=alive, settled=st is not None, settle_s=st)
         if st is not None:
             best = ms
-    return dict(max_latency_ms=best, runs=results, alive=True)
+        else:
+            break
+    robust, robust_runs = None, {}
+    for ms in (0, 5, 8, 10, 12, 15, 20, 25, 30, 40):
+        plan = Plan4UpkieLQI6(Plan4Config(rate_hz=rate, noise=True, latency_ms=float(ms), host=host, friction=NOMINAL[1],
+                                          drop_height=0.002))
+        plan.reset()
+        alive = plan.run(1.0)
+        if alive:
+            plan.push(0.5 * plan.sim.total_mass() * G, 0.1)
+            alive = plan.run(19.0)
+        L = plan.log
+        st = settle_time_true(L, 1.0) if alive else None
+        n5 = int(5.0 / plan.dt)
+        tail_rms = float(math.degrees(np.sqrt(np.mean(L["pitch_true"][-n5:] ** 2)))) if alive else None
+        ok = bool(alive and st is not None and tail_rms < 0.5)
+        robust_runs[ms] = dict(alive=alive, settled=st is not None, settle_s=st, tail_pitch_rms_deg=tail_rms, ok=ok)
+        if ok:
+            robust = ms
+        else:
+            break
+    return dict(max_latency_ms=best, max_latency_robust_ms=robust, runs=results, robust_runs=robust_runs, alive=True)
 
 
-SCENARIOS: Dict[str, Callable] = {"stand": scenario_stand, "tilt": scenario_tilt, "push": scenario_push, "velocity": scenario_velocity,
+def scenario_drive_push(plan, V: float = 0.3, frac: float = 0.75, T: float = 6.0, **_) -> dict:
+    """Item 24 (record, review r1 stage 2 M1): push while cruising at V with the host still commanding V.  Settle time
+    relative to V after the push, largest backward speed, excursion."""
+    plan.reset()
+    alive = plan.run(0.5)
+    if alive:
+        alive = plan.run(2.5, v=V)
+    t_push = plan.sim.time
+    if alive:
+        plan.push(frac * plan.sim.total_mass() * G, 0.1)
+        alive = plan.run(T, v=V)
+    L = plan.log
+    after = L["t"] >= t_push
+    st = settle_time_true(L, t_push, v_ref=V) if alive else None
+    sgn = 1.0 if V >= 0 else -1.0
+    out = dict(alive=alive, settled=int(st is not None), settle_s=st,
+               v_back=float(max(0.0, -(sgn * L["vx"][after]).min())) if after.any() else None,
+               pitch_peak=float(math.degrees(np.abs(L["pitch_true"][after]).max())) if after.any() else None,
+               disp=float(np.abs(L["x"][after] - L["x"][after][0]).max()) if after.any() else None)
+    out.update(torque_metrics(plan, t_from=t_push))
+    return out
+
+
+SCENARIOS: Dict[str, Callable] = {"drive_push": scenario_drive_push, "stand": scenario_stand, "tilt": scenario_tilt, "push": scenario_push, "velocity": scenario_velocity,
                                   "yaw": scenario_yaw, "height": scenario_height, "link_loss": scenario_link_loss,
                                   "slope_stand": scenario_slope_stand, "slope_drive": scenario_slope_drive}
 
@@ -503,17 +583,19 @@ def evaluate(it: Item, res: dict) -> dict:
 
 # ----------------------------------------------------------------------------- cache
 def code_hash() -> str:
+    """Hash of every source file of the wbr package and of the Plan 4 model directory (r1 m8: a model-XML change
+    alone must invalidate the cache).  Viewer / video / plotting modules are excluded."""
     root = Path(__file__).resolve().parents[1]
-    files = ["controllers/diablo_arch/mcu.py", "controllers/diablo_arch/host_link.py", "controllers/lqi6/lqi6.py", "controllers/lqi6/law.py",
-             "controllers/lqi6/plant_serial.py", "controllers/lqi6/serial_leg.py", "plans/plan4_upkie_lqi6.py", "plans/common.py",
-             "sim/mujoco_sim.py", "bench/acceptance.py", "bench/acceptance_mpc.py", "controllers/mpc_host/reference_mpc.py",
-             "controllers/mpc_host/model.py", "controllers/mpc_host/fallback.py"]
     h = hashlib.sha1()
-    for f in files:
-        p = root / f
-        if p.exists():
-            h.update(p.read_bytes())
-    h.update((root.parent / "models" / "upkie_plan4" / "plan4_params.json").read_bytes())
+    skip = ("viewer", "video.py", "plots.py", "run_bench.py", "battery.py", "compare_hosts.py", "regression.py")
+    for p in sorted(root.rglob("*.py")):
+        rel = p.relative_to(root).as_posix()
+        if any(s in rel for s in skip) or "__pycache__" in rel:
+            continue
+        h.update(rel.encode()); h.update(p.read_bytes())
+    for p in sorted((root.parent / "models" / "upkie_plan4").glob("*")):
+        if p.is_file() and p.suffix in (".xml", ".json"):
+            h.update(p.name.encode()); h.update(p.read_bytes())
     return h.hexdigest()[:10]
 
 
@@ -534,7 +616,38 @@ def fmt(v, nd=2):
     return str(v)
 
 
-def summarize(items: List[Item], runs: Dict[Task, dict], rate: float, reference: Dict[int, dict] | None) -> dict:
+def regression_row(summary: dict, stage1: dict) -> dict:
+    """Item 20 of the criteria (r1 m7, computed automatically): every stage-1 item 1-17 must still pass with the MPC
+    host, and the margin of the item's tightest metric must not be more than 10 % worse than in plan4_<rate>Hz.json."""
+    s1 = {it["id"]: it for it in stage1.get("items", [])}
+    flips, worse, compared = [], [], 0
+
+    def tightest(it):
+        ms = [w["margin"] for w in it["worst"].values() if w["margin"] is not None and math.isfinite(w["margin"])]
+        return max(ms) if ms else None
+
+    for it in summary["items"]:
+        ref = s1.get(it["id"])
+        if ref is None or it["id"] >= 19 or it["grade"] not in ("settle", "survive"):
+            continue
+        compared += 1
+        if ref["passed"] and not it["passed"]:
+            flips.append(it["id"])
+        m1, m2 = tightest(ref), tightest(it)
+        if m1 is not None and m2 is not None and m1 > 0 and m2 > 1.10 * m1:
+            worse.append(dict(id=it["id"], stage1=m1, stage2=m2))
+    worst = {"regression_flips": dict(margin=float("inf") if flips else 0.0, value=len(flips), limit=0, op="<=", passed=not flips,
+                                     case=("항목 " + ", ".join(map(str, flips))) if flips else "-"),
+             "margin_worse_10pct": dict(margin=float("inf") if worse else 0.0, value=len(worse), limit=0, op="<=", passed=not worse,
+                                        case=", ".join(f"{w['id']}: ×{w['stage1']:.2f}→×{w['stage2']:.2f}" for w in worse) or "-")}
+    failures = [dict(case=f"항목 {w['id']}", metric="margin_worse_10pct", value=w["stage2"], limit=1.1 * w["stage1"], op="<=") for w in worse]
+    failures += [dict(case=f"항목 {i}", metric="regression_flips", value=1, limit=0, op="<=") for i in flips]
+    return dict(id=20, name="회귀 없음(1~17: 1단계 통과 유지, 가장 빠듯한 지표 여유율 악화 ≤ 10 %)", grade="settle",
+                passed=not flips and not worse, n_runs=compared, worst=worst, failures=failures, errors=[], reference=None)
+
+
+def summarize(items: List[Item], runs: Dict[Task, dict], rate: float, reference: Dict[int, dict] | None,
+              stage1: dict | None = None) -> dict:
     summary = {"rate_hz": rate, "items": [], "passed": True}
     for it in items:
         tasks = [t for t in runs if t.item_id == it.id and t.rate == rate and not t.reference]
@@ -559,6 +672,12 @@ def summarize(items: List[Item], runs: Dict[Task, dict], rate: float, reference:
         # docs/합격기준.md 5: only the required grades (필수-정착 / 필수-생존) decide the verdict; "record" items (15)
         # keep their own pass / fail in the tables but do not flip the overall result
         if it.grade in ("settle", "survive") and not item_pass:
+            summary["passed"] = False
+    if stage1 is not None:                           # stage 2: item 20 from the stage-1 summary of the same rate
+        row = regression_row(summary, stage1)
+        summary["items"].append(row)
+        summary["items"].sort(key=lambda it: it["id"])
+        if not row["passed"]:
             summary["passed"] = False
     return summary
 
@@ -610,7 +729,10 @@ def build_tasks(items: List[Item], rates, matrix, seeds, host: str) -> List[Task
                 for ms, mu in matrix:
                     for s in seeds:
                         tasks.append(Task(it.id, rate, ms, mu, s, host))
-            else:
+            elif it.grade == "survive":            # r1 m1: must-survive items on every noise seed (nominal combination)
+                for s in seeds:
+                    tasks.append(Task(it.id, rate, NOMINAL[0], NOMINAL[1], s, host))
+            else:                                   # record items: deterministic sweeps / timing, one run
                 tasks.append(Task(it.id, rate, NOMINAL[0], NOMINAL[1], 0, host))
     return tasks
 
@@ -671,7 +793,9 @@ def main(argv=None):
     tag = "plan4_mpc" if args.host == "mpc" else "plan4"
     all_pass = True
     for rate in rates:
-        summary = summarize(items, runs, rate, reference)
+        s1_path = out_dir / f"plan4_{rate:.0f}Hz.json"
+        stage1 = json.loads(s1_path.read_text(encoding="utf-8")) if (args.host == "mpc" and s1_path.exists()) else None
+        summary = summarize(items, runs, rate, reference, stage1)
         all_pass &= summary["passed"]
         md = summary_markdown(summary, args.matrix, len(seeds), args.host)
         (out_dir / f"{tag}_{rate:.0f}Hz.md").write_text(md, encoding="utf-8")

@@ -8,37 +8,45 @@
    "passed": true,
    "n_runs": 45,
    "worst": {
+    "alive": {
+     "margin": 0.0,
+     "value": true,
+     "limit": 1,
+     "op": ">=",
+     "passed": true,
+     "case": "m\u00d70.85 \u03bc0.50 s0"
+    },
     "pitch_ma_max": {
-     "margin": 0.6873915453201654,
-     "value": 0.6873915453201654,
+     "margin": 0.685712514117715,
+     "value": 0.685712514117715,
      "limit": 1.0,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc0.75 s4"
+    },
+    "pitch_rms": {
+     "margin": 0.5974876275168381,
+     "value": 0.2987438137584191,
+     "limit": 0.5,
      "op": "<=",
      "passed": true,
      "case": "m\u00d71.15 \u03bc0.50 s4"
     },
-    "pitch_rms": {
-     "margin": 0.6027394034651138,
-     "value": 0.3013697017325569,
-     "limit": 0.5,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s1"
-    },
     "drift_max": {
-     "margin": 0.4770911474953882,
-     "value": 0.023854557374769412,
+     "margin": 0.5012363136847353,
+     "value": 0.025061815684236766,
      "limit": 0.05,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s2"
+     "case": "m\u00d71.15 \u03bc0.75 s2"
     },
     "wheel_rms10": {
-     "margin": 0.22374714336700133,
-     "value": 0.04474942867340027,
+     "margin": 0.22372724681217246,
+     "value": 0.04474544936243449,
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s2"
+     "case": "m\u00d71.15 \u03bc0.75 s2"
     },
     "wheel_sat_duty": {
      "margin": 0.0,
@@ -49,44 +57,44 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "wheel_peak": {
-     "margin": 0.09837351265263095,
-     "value": 0.1337879772075781,
+     "margin": 0.10113733425704681,
+     "value": 0.13754677458958367,
      "limit": 1.36,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.50 s2"
+     "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "leg_peak": {
-     "margin": 0.15178949539609876,
-     "value": 1.9429055410700644,
+     "margin": 0.14856073275774664,
+     "value": 1.901577379299157,
      "limit": 12.8,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s0"
+     "case": "m\u00d71.15 \u03bc1.00 s3"
     },
     "leg_rms": {
-     "margin": 0.2913207836322406,
-     "value": 1.1652831345289625,
+     "margin": 0.40926000797401957,
+     "value": 1.6370400318960783,
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s3"
+     "case": "m\u00d71.15 \u03bc0.50 s2"
     },
     "wheel_speed_peak": {
-     "margin": 0.018027627818954138,
-     "value": 1.6008533503231277,
+     "margin": 0.016546876297014037,
+     "value": 1.4693626151748467,
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.50 s4"
+     "case": "m\u00d70.85 \u03bc1.00 s1"
     },
     "leg_speed_peak": {
-     "margin": 0.015325814460774781,
-     "value": 0.353106765176251,
+     "margin": 0.012144734631718316,
+     "value": 0.27981468591479003,
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.75 s4"
+     "case": "m\u00d70.85 \u03bc0.50 s3"
     }
    },
    "failures": [],
@@ -109,36 +117,36 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "settle_s": {
-     "margin": 0.7199999999999482,
-     "value": 1.4399999999998965,
+     "margin": 0.6999999999999504,
+     "value": 1.3999999999999009,
      "limit": 2.0,
      "op": "<=",
      "passed": true,
      "case": "m\u00d70.85 \u03bc0.50 s2"
     },
     "disp": {
-     "margin": 0.28991290374469214,
-     "value": 0.08697387112340764,
+     "margin": 0.4514177720008652,
+     "value": 0.13542533160025955,
      "limit": 0.3,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.75 s0"
+     "case": "m\u00d71.15 \u03bc0.75 s2"
     },
     "wheel_peak": {
-     "margin": 0.91980817863676,
-     "value": 1.2509391229459936,
+     "margin": 0.9468155903814608,
+     "value": 1.2876692029187868,
      "limit": 1.36,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.50 s0"
+     "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "wheel_rms10": {
-     "margin": 0.41747320801183385,
-     "value": 0.08349464160236678,
+     "margin": 0.41780254165569175,
+     "value": 0.08356050833113836,
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s3"
+     "case": "m\u00d71.15 \u03bc0.75 s3"
     },
     "wheel_sat_duty": {
      "margin": 0.0,
@@ -149,36 +157,36 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "leg_peak": {
-     "margin": 0.160375189138329,
-     "value": 2.052802420970611,
+     "margin": 0.15402598139535473,
+     "value": 1.9715325618605406,
      "limit": 12.8,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s3"
+     "case": "m\u00d71.15 \u03bc0.75 s3"
     },
     "leg_rms": {
-     "margin": 0.29232125586248225,
-     "value": 1.169285023449929,
+     "margin": 0.4086125907288628,
+     "value": 1.6344503629154512,
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s1"
+     "case": "m\u00d71.15 \u03bc0.50 s4"
     },
     "wheel_speed_peak": {
-     "margin": 0.17536376566829895,
-     "value": 15.572302391344948,
+     "margin": 0.17577539913307824,
+     "value": 15.60885544301735,
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s2"
+     "case": "m\u00d70.85 \u03bc1.00 s2"
     },
     "leg_speed_peak": {
-     "margin": 0.05417306476770706,
-     "value": 1.2481474122479708,
+     "margin": 0.05382466222086626,
+     "value": 1.2401202175687587,
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.75 s2"
+     "case": "m\u00d70.85 \u03bc0.50 s3"
     }
    },
    "failures": [],
@@ -206,15 +214,15 @@
      "limit": 3.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s2"
+     "case": "m\u00d70.85 \u03bc0.75 s2"
     },
     "disp": {
-     "margin": 0.2587025650757676,
-     "value": 0.1293512825378838,
+     "margin": 0.3829945784938417,
+     "value": 0.19149728924692086,
      "limit": 0.5,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.50 s0"
+     "case": "m\u00d70.85 \u03bc0.50 s2"
     },
     "wheel_sat_s": {
      "margin": 0.03333333333333333,
@@ -225,8 +233,8 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "wheel_rms10": {
-     "margin": 0.5873122257377211,
-     "value": 0.11746244514754424,
+     "margin": 0.5884924996140428,
+     "value": 0.11769849992280856,
      "limit": 0.2,
      "op": "<=",
      "passed": true,
@@ -241,32 +249,32 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "leg_peak": {
-     "margin": 0.17069610111808062,
-     "value": 2.184910094311432,
+     "margin": 0.16519974510683869,
+     "value": 2.1145567373675354,
      "limit": 12.8,
      "op": "<=",
      "passed": true,
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "leg_rms": {
-     "margin": 0.29552800919138883,
-     "value": 1.1821120367655553,
+     "margin": 0.41252989020811187,
+     "value": 1.6501195608324475,
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s1"
+     "case": "m\u00d71.15 \u03bc0.50 s4"
     },
     "wheel_speed_peak": {
-     "margin": 0.2731010320194931,
-     "value": 24.25137164333099,
+     "margin": 0.33158887227730083,
+     "value": 29.44509185822432,
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
      "case": "m\u00d70.85 \u03bc0.50 s3"
     },
     "leg_speed_peak": {
-     "margin": 0.08371599323605068,
-     "value": 1.928816484158608,
+     "margin": 0.08741239216069005,
+     "value": 2.013981515382299,
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
@@ -282,7 +290,7 @@
    "name": "\ucd08\uae30 \uae30\uc6b8\uae30 20\u00b0",
    "grade": "survive",
    "passed": true,
-   "n_runs": 1,
+   "n_runs": 5,
    "worst": {
     "alive": {
      "margin": 0.0,
@@ -313,44 +321,44 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "settle_s": {
-     "margin": 0.6483333333333836,
-     "value": 1.9450000000001508,
+     "margin": 0.6466666666667163,
+     "value": 1.9400000000001492,
      "limit": 3.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s1"
+     "case": "m\u00d70.85 \u03bc0.50 s3"
     },
     "pitch_peak": {
-     "margin": 0.4812223260964646,
-     "value": 3.8497786087717167,
+     "margin": 0.5100546907090954,
+     "value": 4.080437525672763,
      "limit": 8.0,
      "op": "<=",
      "passed": true,
      "case": "m\u00d71.15 \u03bc0.50 s0"
     },
     "disp": {
-     "margin": 0.02427378771722696,
-     "value": 0.01213689385861348,
+     "margin": 0.30249423736382375,
+     "value": 0.15124711868191187,
      "limit": 0.5,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s4"
+     "case": "m\u00d70.85 \u03bc0.50 s1"
     },
     "wheel_peak": {
-     "margin": 0.2722499659608618,
-     "value": 0.37025995370677206,
+     "margin": 0.2829536095614547,
+     "value": 0.3848169090035784,
      "limit": 1.36,
      "op": "<=",
      "passed": true,
      "case": "m\u00d71.15 \u03bc0.75 s1"
     },
     "wheel_rms10": {
-     "margin": 0.3996358759563441,
-     "value": 0.07992717519126882,
+     "margin": 0.4015088348899335,
+     "value": 0.0803017669779867,
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s2"
+     "case": "m\u00d71.15 \u03bc0.50 s2"
     },
     "wheel_sat_duty": {
      "margin": 0.0,
@@ -361,36 +369,36 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "leg_peak": {
-     "margin": 0.2241072248904074,
-     "value": 2.868572478597215,
+     "margin": 0.22169875340568362,
+     "value": 2.8377440435927506,
      "limit": 12.8,
      "op": "<=",
      "passed": true,
      "case": "m\u00d71.15 \u03bc1.00 s1"
     },
     "leg_rms": {
-     "margin": 0.3005445952596013,
-     "value": 1.2021783810384052,
+     "margin": 0.41744216004122126,
+     "value": 1.669768640164885,
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s1"
+     "case": "m\u00d71.15 \u03bc1.00 s4"
     },
     "wheel_speed_peak": {
-     "margin": 0.2122422388714253,
-     "value": 18.847110811782567,
+     "margin": 0.2101480752934625,
+     "value": 18.66114908605947,
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
      "case": "m\u00d70.85 \u03bc0.75 s2"
     },
     "leg_speed_peak": {
-     "margin": 0.1346168709815449,
-     "value": 3.1015727074147947,
+     "margin": 0.13084989284338933,
+     "value": 3.0147815311116903,
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s2"
+     "case": "m\u00d71.15 \u03bc0.50 s2"
     }
    },
    "failures": [],
@@ -413,28 +421,28 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "settle_s": {
-     "margin": 0.5700000000000657,
-     "value": 2.2800000000002627,
+     "margin": 0.5462500000000577,
+     "value": 2.185000000000231,
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s1"
+     "case": "m\u00d71.15 \u03bc0.50 s2"
     },
     "pitch_peak": {
-     "margin": 0.48070477638682513,
-     "value": 5.768457316641902,
+     "margin": 0.5043127964294619,
+     "value": 6.0517535571535435,
      "limit": 12.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s0"
+     "case": "m\u00d71.15 \u03bc1.00 s0"
     },
     "wheel_rms10": {
-     "margin": 0.5601641845733896,
-     "value": 0.11203283691467793,
+     "margin": 0.5612410977846389,
+     "value": 0.11224821955692779,
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s2"
+     "case": "m\u00d71.15 \u03bc0.50 s2"
     },
     "wheel_sat_duty": {
      "margin": 0.0,
@@ -445,32 +453,32 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "leg_peak": {
-     "margin": 0.3082127222770543,
-     "value": 3.945122845146295,
+     "margin": 0.3040856502530043,
+     "value": 3.8922963232384555,
      "limit": 12.8,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s1"
-    },
-    "leg_rms": {
-     "margin": 0.305815391936167,
-     "value": 1.223261567744668,
-     "limit": 4.0,
      "op": "<=",
      "passed": true,
      "case": "m\u00d71.15 \u03bc0.50 s1"
     },
+    "leg_rms": {
+     "margin": 0.4206679492705255,
+     "value": 1.682671797082102,
+     "limit": 4.0,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc0.50 s4"
+    },
     "wheel_speed_peak": {
-     "margin": 0.31519107525304907,
-     "value": 27.988967482470763,
+     "margin": 0.3122765614767482,
+     "value": 27.730158659135242,
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
      "case": "m\u00d70.85 \u03bc0.50 s2"
     },
     "leg_speed_peak": {
-     "margin": 0.1940576637444038,
-     "value": 4.471088572671064,
+     "margin": 0.18923935814794635,
+     "value": 4.360074811728684,
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
@@ -486,7 +494,7 @@
    "name": "\ubc00\uae30 1.0 W",
    "grade": "survive",
    "passed": true,
-   "n_runs": 1,
+   "n_runs": 5,
    "worst": {
     "alive": {
      "margin": 0.0,
@@ -509,44 +517,44 @@
    "n_runs": 45,
    "worst": {
     "rise_s": {
-     "margin": 0.6599999999999276,
-     "value": 0.9899999999998914,
+     "margin": 0.7166666666665881,
+     "value": 1.074999999999882,
      "limit": 1.5,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m\u00d70.85 \u03bc0.50 s4"
     },
     "overshoot_pct": {
-     "margin": 0.15214392923119435,
-     "value": 3.042878584623887,
+     "margin": 0.2384122157577362,
+     "value": 4.768244315154724,
      "limit": 20.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s1"
+     "case": "m\u00d70.85 \u03bc1.00 s1"
     },
     "ss_err": {
-     "margin": 0.25528399957320147,
-     "value": 0.012764199978660073,
+     "margin": 0.15253540958484413,
+     "value": 0.007626770479242206,
      "limit": 0.05,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s4"
+     "case": "m\u00d70.85 \u03bc0.75 s0"
     },
     "pitch_peak": {
-     "margin": 0.25835871135546934,
-     "value": 1.2917935567773466,
+     "margin": 0.4001056134208324,
+     "value": 2.000528067104162,
      "limit": 5.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s3"
+     "case": "m\u00d71.15 \u03bc0.75 s3"
     },
     "stop_disp": {
-     "margin": 0.15077921372674252,
-     "value": 0.07538960686337126,
+     "margin": 0.600222716864169,
+     "value": 0.3001113584320845,
      "limit": 0.5,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s3"
+     "case": "m\u00d70.85 \u03bc1.00 s4"
     },
     "settled": {
      "margin": 0.0,
@@ -557,20 +565,20 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "wheel_peak": {
-     "margin": 0.2466671066505983,
-     "value": 0.3354672650448137,
+     "margin": 0.20961395814245273,
+     "value": 0.28507498307373574,
      "limit": 1.36,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s1"
+     "case": "m\u00d71.15 \u03bc0.50 s2"
     },
     "wheel_rms10": {
-     "margin": 0.4700754098500702,
-     "value": 0.09401508197001404,
+     "margin": 0.4126873825359162,
+     "value": 0.08253747650718324,
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s3"
+     "case": "m\u00d71.15 \u03bc1.00 s3"
     },
     "wheel_sat_duty": {
      "margin": 0.0,
@@ -581,36 +589,36 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "leg_peak": {
-     "margin": 0.15457197156415053,
-     "value": 1.9785212360211268,
+     "margin": 0.15003099175064502,
+     "value": 1.9203966944082564,
      "limit": 12.8,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s4"
-    },
-    "leg_rms": {
-     "margin": 0.29194437974322013,
-     "value": 1.1677775189728805,
-     "limit": 4.0,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s3"
-    },
-    "wheel_speed_peak": {
-     "margin": 0.13777294532074708,
-     "value": 12.234237544482342,
-     "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
      "case": "m\u00d71.15 \u03bc0.50 s1"
     },
+    "leg_rms": {
+     "margin": 0.40825667931550164,
+     "value": 1.6330267172620065,
+     "limit": 4.0,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc0.75 s1"
+    },
+    "wheel_speed_peak": {
+     "margin": 0.12629015355362766,
+     "value": 11.214565635562137,
+     "limit": 88.80000000000001,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d70.85 \u03bc0.75 s1"
+    },
     "leg_speed_peak": {
-     "margin": 0.03094959023183086,
-     "value": 0.7130785589413831,
+     "margin": 0.026541496520046087,
+     "value": 0.611516079821862,
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s1"
+     "case": "m\u00d71.15 \u03bc0.50 s3"
     }
    },
    "failures": [],
@@ -625,20 +633,20 @@
    "n_runs": 45,
    "worst": {
     "yaw_err_pct": {
-     "margin": 0.28637166096036504,
-     "value": 2.8637166096036504,
+     "margin": 0.04340985971032718,
+     "value": 0.4340985971032718,
      "limit": 10.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s0"
+     "case": "m\u00d70.85 \u03bc0.50 s1"
     },
     "pitch_peak": {
-     "margin": 0.19045360175404577,
-     "value": 0.38090720350809154,
+     "margin": 0.19226431570875446,
+     "value": 0.3845286314175089,
      "limit": 2.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s3"
+     "case": "m\u00d70.85 \u03bc0.75 s1"
     },
     "alive": {
      "margin": 0.0,
@@ -649,20 +657,20 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "wheel_peak": {
-     "margin": 0.23174046549090999,
-     "value": 0.3151670330676376,
+     "margin": 0.221014054374696,
+     "value": 0.3005791139495866,
      "limit": 1.36,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.75 s3"
+     "case": "m\u00d70.85 \u03bc0.50 s4"
     },
     "wheel_rms10": {
-     "margin": 0.3669371842247454,
-     "value": 0.07338743684494908,
+     "margin": 0.5439161068868977,
+     "value": 0.10878322137737956,
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s2"
+     "case": "m\u00d71.15 \u03bc1.00 s1"
     },
     "wheel_sat_duty": {
      "margin": 0.0,
@@ -673,36 +681,36 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "leg_peak": {
-     "margin": 0.19218961743321888,
-     "value": 2.460027103145202,
+     "margin": 0.19295791064537549,
+     "value": 2.469861256260806,
      "limit": 12.8,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s1"
+     "case": "m\u00d71.15 \u03bc1.00 s1"
     },
     "leg_rms": {
-     "margin": 0.2959354987795221,
-     "value": 1.1837419951180883,
+     "margin": 0.4914544393655794,
+     "value": 1.9658177574623177,
      "limit": 4.0,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s2"
-    },
-    "wheel_speed_peak": {
-     "margin": 0.04327836566256574,
-     "value": 3.8431188708358377,
-     "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
      "case": "m\u00d71.15 \u03bc1.00 s0"
     },
+    "wheel_speed_peak": {
+     "margin": 0.04117311036252295,
+     "value": 3.6561722001920383,
+     "limit": 88.80000000000001,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d70.85 \u03bc0.50 s3"
+    },
     "leg_speed_peak": {
-     "margin": 0.025171064631010927,
-     "value": 0.5799413290984918,
+     "margin": 0.025406831216567956,
+     "value": 0.5853733912297258,
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s4"
+     "case": "m\u00d70.85 \u03bc0.50 s4"
     }
    },
    "failures": [],
@@ -725,12 +733,12 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "pitch_peak": {
-     "margin": 0.2976064004822801,
-     "value": 0.8928192014468403,
+     "margin": 0.26593323093530774,
+     "value": 0.7977996928059232,
      "limit": 3.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m\u00d70.85 \u03bc0.75 s0"
     },
     "settled": {
      "margin": 0.0,
@@ -741,16 +749,16 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "wheel_peak": {
-     "margin": 0.11224904770268096,
-     "value": 0.15265870487564612,
+     "margin": 0.11460834263487535,
+     "value": 0.1558673459834305,
      "limit": 1.36,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.75 s4"
+     "case": "m\u00d71.15 \u03bc0.50 s4"
     },
     "wheel_rms10": {
-     "margin": 0.2418550877883153,
-     "value": 0.048371017557663064,
+     "margin": 0.2391845427815903,
+     "value": 0.04783690855631806,
      "limit": 0.2,
      "op": "<=",
      "passed": true,
@@ -765,36 +773,36 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "leg_peak": {
-     "margin": 0.2799021291832299,
-     "value": 3.5827472535453424,
+     "margin": 0.2733760438092536,
+     "value": 3.4992133607584464,
      "limit": 12.8,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s1"
+     "case": "m\u00d71.15 \u03bc0.50 s1"
     },
     "leg_rms": {
-     "margin": 0.35235824137456595,
-     "value": 1.4094329654982638,
+     "margin": 0.4942377490634099,
+     "value": 1.9769509962536396,
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s4"
+     "case": "m\u00d71.15 \u03bc1.00 s4"
     },
     "wheel_speed_peak": {
-     "margin": 0.045874140894942114,
-     "value": 4.07362371147086,
+     "margin": 0.046060344578975634,
+     "value": 4.090158598613037,
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.75 s3"
+     "case": "m\u00d71.15 \u03bc0.50 s1"
     },
     "leg_speed_peak": {
-     "margin": 0.1612748964386,
-     "value": 3.7157736139453443,
+     "margin": 0.16156468896444412,
+     "value": 3.722450433740793,
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s3"
+     "case": "m\u00d70.85 \u03bc0.50 s3"
     }
    },
    "failures": [],
@@ -817,12 +825,12 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "stop_time": {
-     "margin": 0.7866666666668226,
-     "value": 2.360000000000468,
+     "margin": 0.7866666666662306,
+     "value": 2.359999999998692,
      "limit": 3.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s1"
+     "case": "m\u00d70.85 \u03bc0.50 s4"
     },
     "motors_on": {
      "margin": 0.0,
@@ -841,224 +849,16 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "wheel_peak": {
-     "margin": 0.18208568258540242,
-     "value": 0.2476365283161473,
+     "margin": 0.22766764921542104,
+     "value": 0.30962800293297266,
      "limit": 1.36,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s0"
+     "case": "m\u00d71.15 \u03bc1.00 s2"
     },
     "wheel_rms10": {
-     "margin": 0.29844335492401763,
-     "value": 0.05968867098480353,
-     "limit": 0.2,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s3"
-    },
-    "wheel_sat_duty": {
-     "margin": 0.0,
-     "value": 0.0,
-     "limit": 0.05,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
-    },
-    "leg_peak": {
-     "margin": 0.1521404686564038,
-     "value": 1.9473979988019685,
-     "limit": 12.8,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s2"
-    },
-    "leg_rms": {
-     "margin": 0.2924574988309269,
-     "value": 1.1698299953237077,
-     "limit": 4.0,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s1"
-    },
-    "wheel_speed_peak": {
-     "margin": 0.13300962280355136,
-     "value": 11.811254504955363,
-     "limit": 88.80000000000001,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s1"
-    },
-    "leg_speed_peak": {
-     "margin": 0.03637269154128502,
-     "value": 0.8380268131112071,
-     "limit": 23.040000000000003,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s1"
-    }
-   },
-   "failures": [],
-   "errors": [],
-   "reference": null
-  },
-  {
-   "id": 12,
-   "name": "\uacbd\uc0ac 5\u00b0 \uc815\uc9c0",
-   "grade": "settle",
-   "passed": true,
-   "n_runs": 45,
-   "worst": {
-    "disp_max": {
-     "margin": 0.6157677332161405,
-     "value": 0.061576773321614056,
-     "limit": 0.1,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s2"
-    },
-    "pitch_dev_ma_max": {
-     "margin": 0.4562753958374918,
-     "value": 0.4562753958374918,
-     "limit": 1.0,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s4"
-    },
-    "pitch_dev_rms": {
-     "margin": 0.35510634291608206,
-     "value": 0.17755317145804103,
-     "limit": 0.5,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s2"
-    },
-    "wheel_rms10": {
-     "margin": 0.7787759706489978,
-     "value": 0.15575519412979957,
-     "limit": 0.2,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s0"
-    },
-    "wheel_peak": {
-     "margin": 0.21626492862034885,
-     "value": 0.29412030292367447,
-     "limit": 1.36,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s4"
-    },
-    "wheel_sat_duty": {
-     "margin": 0.0,
-     "value": 0.0,
-     "limit": 0.05,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
-    },
-    "leg_peak": {
-     "margin": 0.1458004024260338,
-     "value": 1.8662451510532327,
-     "limit": 12.8,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s4"
-    },
-    "leg_rms": {
-     "margin": 0.2783679335994419,
-     "value": 1.1134717343977676,
-     "limit": 4.0,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s1"
-    },
-    "wheel_speed_peak": {
-     "margin": 0.03431883122165935,
-     "value": 3.0475122124833507,
-     "limit": 88.80000000000001,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s1"
-    },
-    "leg_speed_peak": {
-     "margin": 0.04031637737567978,
-     "value": 0.9288893347356622,
-     "limit": 23.040000000000003,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d70.85 \u03bc0.75 s3"
-    }
-   },
-   "failures": [],
-   "errors": [],
-   "reference": null
-  },
-  {
-   "id": 13,
-   "name": "\uacbd\uc0ac 5\u00b0 \uc8fc\ud589 0.5 m/s(\uc624\ub974\uae30\u00b7\ub0b4\ub9ac\uae30)",
-   "grade": "settle",
-   "passed": true,
-   "n_runs": 45,
-   "worst": {
-    "rise_s": {
-     "margin": 0.9699999999998935,
-     "value": 1.4549999999998402,
-     "limit": 1.5,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s1"
-    },
-    "overshoot_pct": {
-     "margin": 0.1584085515328304,
-     "value": 3.168171030656608,
-     "limit": 20.0,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s0"
-    },
-    "ss_err": {
-     "margin": 0.36388211984633045,
-     "value": 0.018194105992316523,
-     "limit": 0.05,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s4"
-    },
-    "pitch_peak": {
-     "margin": 0.483163231653361,
-     "value": 2.415816158266805,
-     "limit": 5.0,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s1"
-    },
-    "stop_disp": {
-     "margin": 0.21330919869552956,
-     "value": 0.10665459934776478,
-     "limit": 0.5,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s4"
-    },
-    "settled": {
-     "margin": 0.0,
-     "value": 1,
-     "limit": 1,
-     "op": ">=",
-     "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
-    },
-    "wheel_peak": {
-     "margin": 0.31075902049449583,
-     "value": 0.42263226787251434,
-     "limit": 1.36,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s1"
-    },
-    "wheel_rms10": {
-     "margin": 0.8839366137384592,
-     "value": 0.17678732274769185,
+     "margin": 0.3548015434470856,
+     "value": 0.07096030868941712,
      "limit": 0.2,
      "op": "<=",
      "passed": true,
@@ -1073,36 +873,252 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "leg_peak": {
-     "margin": 0.14763144050232804,
-     "value": 1.8896824384297992,
+     "margin": 0.1499899788394467,
+     "value": 1.9198717291449179,
      "limit": 12.8,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s4"
+     "case": "m\u00d71.15 \u03bc0.75 s3"
     },
     "leg_rms": {
-     "margin": 0.2797299839458961,
-     "value": 1.1189199357835844,
+     "margin": 0.41140400247765874,
+     "value": 1.645616009910635,
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s4"
+     "case": "m\u00d71.15 \u03bc1.00 s4"
     },
     "wheel_speed_peak": {
-     "margin": 0.1379029192374295,
-     "value": 12.245779228283741,
+     "margin": 0.14000728558308898,
+     "value": 12.432646959778301,
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s0"
+     "case": "m\u00d71.00 \u03bc1.00 s4"
     },
     "leg_speed_peak": {
-     "margin": 0.03182769104295501,
-     "value": 0.7333100016296835,
+     "margin": 0.03309024812165971,
+     "value": 0.7623993167230398,
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s4"
+     "case": "m\u00d71.00 \u03bc0.50 s3"
+    }
+   },
+   "failures": [],
+   "errors": [],
+   "reference": null
+  },
+  {
+   "id": 12,
+   "name": "\uacbd\uc0ac 5\u00b0 \uc815\uc9c0",
+   "grade": "settle",
+   "passed": true,
+   "n_runs": 45,
+   "worst": {
+    "alive": {
+     "margin": 0.0,
+     "value": true,
+     "limit": 1,
+     "op": ">=",
+     "passed": true,
+     "case": "m\u00d70.85 \u03bc0.50 s0"
+    },
+    "disp_max": {
+     "margin": 0.6164568630500198,
+     "value": 0.06164568630500199,
+     "limit": 0.1,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc0.50 s2"
+    },
+    "pitch_dev_ma_max": {
+     "margin": 0.4462953580839414,
+     "value": 0.4462953580839414,
+     "limit": 1.0,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc1.00 s1"
+    },
+    "pitch_dev_rms": {
+     "margin": 0.34704621309900885,
+     "value": 0.17352310654950442,
+     "limit": 0.5,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc0.50 s2"
+    },
+    "wheel_rms10": {
+     "margin": 0.7925551092496467,
+     "value": 0.15851102184992935,
+     "limit": 0.2,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc1.00 s2"
+    },
+    "wheel_sat_duty": {
+     "margin": 0.0,
+     "value": 0.0,
+     "limit": 0.0,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d70.85 \u03bc0.50 s0"
+    },
+    "wheel_peak": {
+     "margin": 0.21709140726307852,
+     "value": 0.2952443138777868,
+     "limit": 1.36,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc0.50 s4"
+    },
+    "leg_peak": {
+     "margin": 0.14315671978605898,
+     "value": 1.8324060132615552,
+     "limit": 12.8,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc0.75 s3"
+    },
+    "leg_rms": {
+     "margin": 0.3901931788168477,
+     "value": 1.5607727152673907,
+     "limit": 4.0,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc0.50 s2"
+    },
+    "wheel_speed_peak": {
+     "margin": 0.033629910690845324,
+     "value": 2.986336069347065,
+     "limit": 88.80000000000001,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc1.00 s1"
+    },
+    "leg_speed_peak": {
+     "margin": 0.040294735989784274,
+     "value": 0.9283907172046297,
+     "limit": 23.040000000000003,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d70.85 \u03bc1.00 s3"
+    }
+   },
+   "failures": [],
+   "errors": [],
+   "reference": null
+  },
+  {
+   "id": 13,
+   "name": "\uacbd\uc0ac 5\u00b0 \uc8fc\ud589 0.5 m/s(\uc624\ub974\uae30\u00b7\ub0b4\ub9ac\uae30)",
+   "grade": "settle",
+   "passed": true,
+   "n_runs": 45,
+   "worst": {
+    "rise_s": {
+     "margin": 0.8666666666665716,
+     "value": 1.2999999999998573,
+     "limit": 1.5,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc0.50 s4"
+    },
+    "overshoot_pct": {
+     "margin": 0.5042170320382877,
+     "value": 10.084340640765754,
+     "limit": 20.0,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc0.75 s3"
+    },
+    "ss_err": {
+     "margin": 0.35226912129141197,
+     "value": 0.0176134560645706,
+     "limit": 0.05,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc0.50 s4"
+    },
+    "pitch_peak": {
+     "margin": 0.515332668259423,
+     "value": 2.5766633412971154,
+     "limit": 5.0,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc1.00 s1"
+    },
+    "stop_disp": {
+     "margin": 0.5991638590497963,
+     "value": 0.29958192952489815,
+     "limit": 0.5,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d70.85 \u03bc0.75 s1"
+    },
+    "settled": {
+     "margin": 0.0,
+     "value": 1,
+     "limit": 1,
+     "op": ">=",
+     "passed": true,
+     "case": "m\u00d70.85 \u03bc0.50 s0"
+    },
+    "wheel_peak": {
+     "margin": 0.31046571763052555,
+     "value": 0.42223337597751476,
+     "limit": 1.36,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc0.50 s1"
+    },
+    "wheel_rms10": {
+     "margin": 0.8723382920406081,
+     "value": 0.17446765840812162,
+     "limit": 0.2,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc1.00 s4"
+    },
+    "wheel_sat_duty": {
+     "margin": 0.0,
+     "value": 0.0,
+     "limit": 0.05,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d70.85 \u03bc0.50 s0"
+    },
+    "leg_peak": {
+     "margin": 0.14407856498661936,
+     "value": 1.844205631828728,
+     "limit": 12.8,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc0.50 s3"
+    },
+    "leg_rms": {
+     "margin": 0.389466580230198,
+     "value": 1.557866320920792,
+     "limit": 4.0,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc1.00 s1"
+    },
+    "wheel_speed_peak": {
+     "margin": 0.12940677615939084,
+     "value": 11.491321722953908,
+     "limit": 88.80000000000001,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc1.00 s3"
+    },
+    "leg_speed_peak": {
+     "margin": 0.027010084608387233,
+     "value": 0.6223123493772419,
+     "limit": 23.040000000000003,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc1.00 s3"
     }
    },
    "failures": [],
@@ -1111,7 +1127,7 @@
   },
   {
    "id": 15,
-   "name": "\uc9c0\uc5f0 \uc2a4\uc715(3\u00b0 \uae30\uc6b8\uae30, \ubb34\ub178\uc774\uc988)",
+   "name": "\uc9c0\uc5f0 \uc2a4\uc715(3\u00b0 \uae30\uc6b8\uae30, \ubb34\ub178\uc774\uc988; \uac15\uac74 \uc5ec\uc720\ub3c4 \ud568\uaed8 \uae30\ub85d)",
    "grade": "record",
    "passed": true,
    "n_runs": 1,
@@ -1120,6 +1136,14 @@
      "margin": 1.0,
      "value": 25,
      "limit": 25.0,
+     "op": ">=",
+     "passed": true,
+     "case": "m\u00d71.00 \u03bc0.75 s0"
+    },
+    "max_latency_robust_ms": {
+     "margin": 0.0,
+     "value": 15,
+     "limit": 0.0,
      "op": ">=",
      "passed": true,
      "case": "m\u00d71.00 \u03bc0.75 s0"
@@ -1136,37 +1160,45 @@
    "passed": false,
    "n_runs": 45,
    "worst": {
+    "alive": {
+     "margin": 0.0,
+     "value": true,
+     "limit": 1,
+     "op": ">=",
+     "passed": true,
+     "case": "m\u00d70.85 \u03bc0.50 s0"
+    },
     "pitch_ma_max": {
-     "margin": 0.7146274508633316,
-     "value": 0.7146274508633316,
+     "margin": 0.7025584097720667,
+     "value": 0.7025584097720667,
      "limit": 1.0,
      "op": "<=",
      "passed": true,
      "case": "m\u00d71.15 \u03bc0.50 s3"
     },
     "pitch_rms": {
-     "margin": 0.6211818144933976,
-     "value": 0.3105909072466988,
+     "margin": 0.616742340438517,
+     "value": 0.3083711702192585,
      "limit": 0.5,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s1"
+     "case": "m\u00d71.15 \u03bc0.50 s1"
     },
     "drift_max": {
-     "margin": 1.7634472475673695,
-     "value": 0.08817236237836848,
+     "margin": 1.8124580624600974,
+     "value": 0.09062290312300487,
      "limit": 0.05,
      "op": "<=",
      "passed": false,
-     "case": "m\u00d70.85 \u03bc0.50 s4"
+     "case": "m\u00d70.85 \u03bc0.75 s4"
     },
     "wheel_rms10": {
-     "margin": 0.22355409291012804,
-     "value": 0.04471081858202561,
+     "margin": 0.2241288245687272,
+     "value": 0.044825764913745444,
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc1.00 s4"
+     "case": "m\u00d71.15 \u03bc0.50 s2"
     },
     "wheel_sat_duty": {
      "margin": 0.0,
@@ -1177,359 +1209,359 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "wheel_peak": {
-     "margin": 0.10176042507903994,
-     "value": 0.13839417810749433,
+     "margin": 0.10382179804392744,
+     "value": 0.14119764533974133,
      "limit": 1.36,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.75 s2"
+     "case": "m\u00d71.00 \u03bc0.50 s3"
     },
     "leg_peak": {
-     "margin": 0.15386017793367396,
-     "value": 1.969410277551027,
+     "margin": 0.14918627619783673,
+     "value": 1.90958433533231,
      "limit": 12.8,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s2"
+     "case": "m\u00d71.15 \u03bc1.00 s3"
     },
     "leg_rms": {
-     "margin": 0.29136535083857834,
-     "value": 1.1654614033543134,
+     "margin": 0.4093695735773565,
+     "value": 1.637478294309426,
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s3"
+     "case": "m\u00d71.15 \u03bc0.75 s2"
     },
     "wheel_speed_peak": {
-     "margin": 0.01963145020475221,
-     "value": 1.7432727781819966,
+     "margin": 0.019462303447555517,
+     "value": 1.7282525461429301,
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s4"
+     "case": "m\u00d70.85 \u03bc0.75 s4"
     },
     "leg_speed_peak": {
-     "margin": 0.01522255034651523,
-     "value": 0.3507275599837109,
+     "margin": 0.012277937620960092,
+     "value": 0.28288368278692055,
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.75 s4"
+     "case": "m\u00d71.00 \u03bc0.50 s1"
     }
    },
    "failures": [
     {
      "case": "m\u00d70.85 \u03bc0.50 seed 0",
      "metric": "drift_max",
-     "value": 0.08704745246692555,
+     "value": 0.08869256053587841,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc0.50 seed 1",
      "metric": "drift_max",
-     "value": 0.08338341862566875,
+     "value": 0.08756659528209634,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc0.50 seed 2",
      "metric": "drift_max",
-     "value": 0.08653755179505089,
+     "value": 0.08639933356478262,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc0.50 seed 3",
      "metric": "drift_max",
-     "value": 0.08427755578327334,
+     "value": 0.08651016245595436,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc0.50 seed 4",
      "metric": "drift_max",
-     "value": 0.08817236237836848,
+     "value": 0.09049348787097593,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc0.75 seed 0",
      "metric": "drift_max",
-     "value": 0.08702083890034,
+     "value": 0.08868892135660524,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc0.75 seed 1",
      "metric": "drift_max",
-     "value": 0.08331874708314348,
+     "value": 0.0874669450235393,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc0.75 seed 2",
      "metric": "drift_max",
-     "value": 0.08645658227095282,
+     "value": 0.08652096858287986,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc0.75 seed 3",
      "metric": "drift_max",
-     "value": 0.08432745215762893,
+     "value": 0.08649328206688361,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc0.75 seed 4",
      "metric": "drift_max",
-     "value": 0.0880888827011054,
+     "value": 0.09062290312300487,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc1.00 seed 0",
      "metric": "drift_max",
-     "value": 0.08699936282129796,
+     "value": 0.08856902388865437,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc1.00 seed 1",
      "metric": "drift_max",
-     "value": 0.0833920939425324,
+     "value": 0.08748011013813609,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc1.00 seed 2",
      "metric": "drift_max",
-     "value": 0.08653755179505089,
+     "value": 0.0868086425671081,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc1.00 seed 3",
      "metric": "drift_max",
-     "value": 0.0841842237821396,
+     "value": 0.08646534138502182,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc1.00 seed 4",
      "metric": "drift_max",
-     "value": 0.08817236237836848,
+     "value": 0.09054703106671552,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc0.50 seed 0",
      "metric": "drift_max",
-     "value": 0.08763002942832344,
+     "value": 0.0887862097227654,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc0.50 seed 1",
      "metric": "drift_max",
-     "value": 0.08364500313995252,
+     "value": 0.08713866347678115,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc0.50 seed 2",
      "metric": "drift_max",
-     "value": 0.08674355970220003,
+     "value": 0.08851621901217475,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc0.50 seed 3",
      "metric": "drift_max",
-     "value": 0.08382513984043563,
+     "value": 0.0857056487064471,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc0.50 seed 4",
      "metric": "drift_max",
-     "value": 0.08764098080003782,
+     "value": 0.08981705249274992,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc0.75 seed 0",
      "metric": "drift_max",
-     "value": 0.08764779240558856,
+     "value": 0.0887770925282109,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc0.75 seed 1",
      "metric": "drift_max",
-     "value": 0.0836421795731634,
+     "value": 0.08700950704411338,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc0.75 seed 2",
      "metric": "drift_max",
-     "value": 0.08671727621213791,
+     "value": 0.08851941632612302,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc0.75 seed 3",
      "metric": "drift_max",
-     "value": 0.08393469048873711,
+     "value": 0.0857134026966679,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc0.75 seed 4",
      "metric": "drift_max",
-     "value": 0.08765348843732994,
+     "value": 0.08976873869412692,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc1.00 seed 0",
      "metric": "drift_max",
-     "value": 0.0876354057521492,
+     "value": 0.08874238547432822,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc1.00 seed 1",
      "metric": "drift_max",
-     "value": 0.08362096333890875,
+     "value": 0.08700106103765037,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc1.00 seed 2",
      "metric": "drift_max",
-     "value": 0.08674355970220003,
+     "value": 0.0885499421656896,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc1.00 seed 3",
      "metric": "drift_max",
-     "value": 0.08383467623348231,
+     "value": 0.08578708718200587,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc1.00 seed 4",
      "metric": "drift_max",
-     "value": 0.08762243774283036,
+     "value": 0.08973885864040856,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc0.50 seed 0",
      "metric": "drift_max",
-     "value": 0.08672485945069654,
+     "value": 0.08775789402156323,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc0.50 seed 1",
      "metric": "drift_max",
-     "value": 0.08425197750954373,
+     "value": 0.08515853250835316,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc0.50 seed 2",
      "metric": "drift_max",
-     "value": 0.08662846986198743,
+     "value": 0.08754046786321533,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc0.50 seed 3",
      "metric": "drift_max",
-     "value": 0.08260258686130695,
+     "value": 0.08442779232327435,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc0.50 seed 4",
      "metric": "drift_max",
-     "value": 0.08661181751019954,
+     "value": 0.08816422655755274,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc0.75 seed 0",
      "metric": "drift_max",
-     "value": 0.08667625778768573,
+     "value": 0.08774866857282224,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc0.75 seed 1",
      "metric": "drift_max",
-     "value": 0.08420566800113707,
+     "value": 0.08513826155540788,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc0.75 seed 2",
      "metric": "drift_max",
-     "value": 0.08658189995799866,
+     "value": 0.08752747974976714,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc0.75 seed 3",
      "metric": "drift_max",
-     "value": 0.08257205642731882,
+     "value": 0.08446924435783638,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc0.75 seed 4",
      "metric": "drift_max",
-     "value": 0.08660131702437879,
+     "value": 0.08818205478641601,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc1.00 seed 0",
      "metric": "drift_max",
-     "value": 0.08672485945069654,
+     "value": 0.08777895238017813,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc1.00 seed 1",
      "metric": "drift_max",
-     "value": 0.08417215226109,
+     "value": 0.08505856405805959,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc1.00 seed 2",
      "metric": "drift_max",
-     "value": 0.08662846986198743,
+     "value": 0.08750545430391612,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc1.00 seed 3",
      "metric": "drift_max",
-     "value": 0.08259078624124301,
+     "value": 0.08446948905798964,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc1.00 seed 4",
      "metric": "drift_max",
-     "value": 0.08661181751019954,
+     "value": 0.08812269302803735,
      "limit": 0.05,
      "op": "<="
     }
@@ -1544,37 +1576,45 @@
    "passed": false,
    "n_runs": 45,
    "worst": {
+    "alive": {
+     "margin": 0.0,
+     "value": true,
+     "limit": 1,
+     "op": ">=",
+     "passed": true,
+     "case": "m\u00d70.85 \u03bc0.50 s0"
+    },
     "pitch_ma_max": {
-     "margin": 0.8051576689403311,
-     "value": 0.8051576689403311,
+     "margin": 0.7924385804790923,
+     "value": 0.7924385804790923,
      "limit": 1.0,
      "op": "<=",
      "passed": true,
      "case": "m\u00d71.15 \u03bc0.75 s4"
     },
     "pitch_rms": {
-     "margin": 0.8576706030819448,
-     "value": 0.4288353015409724,
+     "margin": 0.8616135550621852,
+     "value": 0.4308067775310926,
      "limit": 0.5,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.00 \u03bc0.75 s0"
+     "case": "m\u00d71.00 \u03bc0.50 s2"
     },
     "drift_max": {
-     "margin": 2.15005767528001,
-     "value": 0.10750288376400051,
+     "margin": 2.1902531545487296,
+     "value": 0.10951265772743649,
      "limit": 0.05,
      "op": "<=",
      "passed": false,
-     "case": "m\u00d70.85 \u03bc0.75 s1"
+     "case": "m\u00d70.85 \u03bc0.50 s1"
     },
     "wheel_rms10": {
-     "margin": 0.2239082817111276,
-     "value": 0.04478165634222552,
+     "margin": 0.2243747850669365,
+     "value": 0.044874957013387305,
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.75 s2"
+     "case": "m\u00d71.15 \u03bc0.50 s2"
     },
     "wheel_sat_duty": {
      "margin": 0.0,
@@ -1585,359 +1625,359 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "wheel_peak": {
-     "margin": 0.09774264739960725,
-     "value": 0.13293000046346587,
+     "margin": 0.09932293429648754,
+     "value": 0.13507919064322307,
      "limit": 1.36,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc1.00 s3"
+     "case": "m\u00d71.15 \u03bc1.00 s0"
     },
     "leg_peak": {
-     "margin": 0.15362591301355802,
-     "value": 1.9664116865735426,
+     "margin": 0.15211003104704177,
+     "value": 1.9470083974021348,
      "limit": 12.8,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s4"
+     "case": "m\u00d71.15 \u03bc0.50 s3"
     },
     "leg_rms": {
-     "margin": 0.2953036936406003,
-     "value": 1.181214774562401,
+     "margin": 0.4176964952372107,
+     "value": 1.6707859809488428,
      "limit": 4.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s3"
+     "case": "m\u00d71.15 \u03bc0.50 s2"
     },
     "wheel_speed_peak": {
-     "margin": 0.02283451259060685,
-     "value": 2.0277047180458885,
+     "margin": 0.022690544805497675,
+     "value": 2.0149203787281937,
      "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
      "case": "m\u00d70.85 \u03bc0.50 s2"
     },
     "leg_speed_peak": {
-     "margin": 0.013479949117803406,
-     "value": 0.3105780276741905,
+     "margin": 0.010459305435989535,
+     "value": 0.2409823972451989,
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.75 s4"
+     "case": "m\u00d71.00 \u03bc0.75 s3"
     }
    },
    "failures": [
     {
      "case": "m\u00d70.85 \u03bc0.50 seed 0",
      "metric": "drift_max",
-     "value": 0.09900441690372533,
+     "value": 0.10198010464721863,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc0.50 seed 1",
      "metric": "drift_max",
-     "value": 0.10747598749582725,
+     "value": 0.10951265772743649,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc0.50 seed 2",
      "metric": "drift_max",
-     "value": 0.10248895701791697,
+     "value": 0.10469324510079825,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc0.50 seed 3",
      "metric": "drift_max",
-     "value": 0.10377064082734908,
+     "value": 0.10629756277808658,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc0.50 seed 4",
      "metric": "drift_max",
-     "value": 0.10381302199089912,
+     "value": 0.10567437672686542,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc0.75 seed 0",
      "metric": "drift_max",
-     "value": 0.0989969408293789,
+     "value": 0.10176645980928929,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc0.75 seed 1",
      "metric": "drift_max",
-     "value": 0.10750288376400051,
+     "value": 0.10940069590680977,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc0.75 seed 2",
      "metric": "drift_max",
-     "value": 0.10259578902424177,
+     "value": 0.10455265797597743,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc0.75 seed 3",
      "metric": "drift_max",
-     "value": 0.10387437322930596,
+     "value": 0.10633660736895703,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc0.75 seed 4",
      "metric": "drift_max",
-     "value": 0.10377131485187996,
+     "value": 0.10557948094521265,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc1.00 seed 0",
      "metric": "drift_max",
-     "value": 0.09901993707852333,
+     "value": 0.10178252333838886,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc1.00 seed 1",
      "metric": "drift_max",
-     "value": 0.1074513151018291,
+     "value": 0.10942844920134231,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc1.00 seed 2",
      "metric": "drift_max",
-     "value": 0.10245918479778676,
+     "value": 0.10467852927144716,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc1.00 seed 3",
      "metric": "drift_max",
-     "value": 0.10382948988533687,
+     "value": 0.10635295419818414,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d70.85 \u03bc1.00 seed 4",
      "metric": "drift_max",
-     "value": 0.10376625217414764,
+     "value": 0.10556129594840374,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc0.50 seed 0",
      "metric": "drift_max",
-     "value": 0.08974858249017455,
+     "value": 0.09133101479679706,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc0.50 seed 1",
      "metric": "drift_max",
-     "value": 0.09341531082170505,
+     "value": 0.09495692367599823,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc0.50 seed 2",
      "metric": "drift_max",
-     "value": 0.09166496453258194,
+     "value": 0.09328409751800498,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc0.50 seed 3",
      "metric": "drift_max",
-     "value": 0.09256855597148654,
+     "value": 0.09487567336090807,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc0.50 seed 4",
      "metric": "drift_max",
-     "value": 0.09253335070761601,
+     "value": 0.09452245425186431,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc0.75 seed 0",
      "metric": "drift_max",
-     "value": 0.08969901517317093,
+     "value": 0.09127222807278632,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc0.75 seed 1",
      "metric": "drift_max",
-     "value": 0.09338451975680884,
+     "value": 0.09490918879360372,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc0.75 seed 2",
      "metric": "drift_max",
-     "value": 0.09164403784529723,
+     "value": 0.0933459234152961,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc0.75 seed 3",
      "metric": "drift_max",
-     "value": 0.0926383113728456,
+     "value": 0.09475348737868455,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc0.75 seed 4",
      "metric": "drift_max",
-     "value": 0.09257045571328207,
+     "value": 0.09457175534609441,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc1.00 seed 0",
      "metric": "drift_max",
-     "value": 0.08972312437953198,
+     "value": 0.09124511158595552,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc1.00 seed 1",
      "metric": "drift_max",
-     "value": 0.09331816804921167,
+     "value": 0.09501642513648217,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc1.00 seed 2",
      "metric": "drift_max",
-     "value": 0.09153504360904932,
+     "value": 0.09318480371603217,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc1.00 seed 3",
      "metric": "drift_max",
-     "value": 0.09254723542818549,
+     "value": 0.09469874036334902,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.00 \u03bc1.00 seed 4",
      "metric": "drift_max",
-     "value": 0.09257291278225561,
+     "value": 0.09458027597211194,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc0.50 seed 0",
      "metric": "drift_max",
-     "value": 0.07951056956078977,
+     "value": 0.08148696704663264,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc0.50 seed 1",
      "metric": "drift_max",
-     "value": 0.08540408330049516,
+     "value": 0.08662025993456943,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc0.50 seed 2",
      "metric": "drift_max",
-     "value": 0.08339045990399946,
+     "value": 0.08503444885407546,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc0.50 seed 3",
      "metric": "drift_max",
-     "value": 0.08291950363891065,
+     "value": 0.08448690439998556,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc0.50 seed 4",
      "metric": "drift_max",
-     "value": 0.08295996084297275,
+     "value": 0.08398816144910473,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc0.75 seed 0",
      "metric": "drift_max",
-     "value": 0.07946277222865245,
+     "value": 0.08134942360645248,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc0.75 seed 1",
      "metric": "drift_max",
-     "value": 0.08539026547177658,
+     "value": 0.08656576943875335,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc0.75 seed 2",
      "metric": "drift_max",
-     "value": 0.08344592230764769,
+     "value": 0.08498121077306167,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc0.75 seed 3",
      "metric": "drift_max",
-     "value": 0.08300020238153817,
+     "value": 0.08452726002845849,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc0.75 seed 4",
      "metric": "drift_max",
-     "value": 0.08309946700198767,
+     "value": 0.08404786116786707,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc1.00 seed 0",
      "metric": "drift_max",
-     "value": 0.07949585498937314,
+     "value": 0.08137288030152204,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc1.00 seed 1",
      "metric": "drift_max",
-     "value": 0.08540187025069018,
+     "value": 0.08655097874653361,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc1.00 seed 2",
      "metric": "drift_max",
-     "value": 0.08342699363615291,
+     "value": 0.08492745080481315,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc1.00 seed 3",
      "metric": "drift_max",
-     "value": 0.08291360020169031,
+     "value": 0.08447463805158012,
      "limit": 0.05,
      "op": "<="
     },
     {
      "case": "m\u00d71.15 \u03bc1.00 seed 4",
      "metric": "drift_max",
-     "value": 0.08293567026154766,
+     "value": 0.08396111581345873,
      "limit": 0.05,
      "op": "<="
     }
@@ -1949,40 +1989,40 @@
    "id": 19,
    "name": "MPC \uc18d\ub3c4 \uc2a4\ud15d 0.5 m/s",
    "grade": "settle",
-   "passed": true,
+   "passed": false,
    "n_runs": 45,
    "worst": {
     "pitch_peak": {
-     "margin": 0.6458967783886733,
-     "value": 1.2917935567773466,
+     "margin": 1.000264033552081,
+     "value": 2.000528067104162,
      "limit": 2.0,
      "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s3"
+     "passed": false,
+     "case": "m\u00d71.15 \u03bc0.75 s3"
     },
     "overshoot_pct": {
-     "margin": 0.3042878584623887,
-     "value": 3.042878584623887,
+     "margin": 0.4768244315154724,
+     "value": 4.768244315154724,
      "limit": 10.0,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s1"
+     "case": "m\u00d70.85 \u03bc1.00 s1"
     },
     "rise_s": {
-     "margin": 0.6599999999999276,
-     "value": 0.9899999999998914,
+     "margin": 0.7166666666665881,
+     "value": 1.074999999999882,
      "limit": 1.5,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d70.85 \u03bc0.50 s0"
+     "case": "m\u00d70.85 \u03bc0.50 s4"
     },
     "stop_disp": {
-     "margin": 0.2512986895445709,
-     "value": 0.07538960686337126,
+     "margin": 1.000371194773615,
+     "value": 0.3001113584320845,
      "limit": 0.3,
      "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s3"
+     "passed": false,
+     "case": "m\u00d70.85 \u03bc1.00 s4"
     },
     "settled": {
      "margin": 0.0,
@@ -1993,20 +2033,20 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "wheel_peak": {
-     "margin": 0.2466671066505983,
-     "value": 0.3354672650448137,
+     "margin": 0.20961395814245273,
+     "value": 0.28507498307373574,
      "limit": 1.36,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s1"
+     "case": "m\u00d71.15 \u03bc0.50 s2"
     },
     "wheel_rms10": {
-     "margin": 0.4700754098500702,
-     "value": 0.09401508197001404,
+     "margin": 0.4126873825359162,
+     "value": 0.08253747650718324,
      "limit": 0.2,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s3"
+     "case": "m\u00d71.15 \u03bc1.00 s3"
     },
     "wheel_sat_duty": {
      "margin": 0.0,
@@ -2017,36 +2057,93 @@
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
     "leg_peak": {
-     "margin": 0.15457197156415053,
-     "value": 1.9785212360211268,
+     "margin": 0.15003099175064502,
+     "value": 1.9203966944082564,
      "limit": 12.8,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc0.50 s4"
-    },
-    "leg_rms": {
-     "margin": 0.29194437974322013,
-     "value": 1.1677775189728805,
-     "limit": 4.0,
-     "op": "<=",
-     "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s3"
-    },
-    "wheel_speed_peak": {
-     "margin": 0.13777294532074708,
-     "value": 12.234237544482342,
-     "limit": 88.80000000000001,
      "op": "<=",
      "passed": true,
      "case": "m\u00d71.15 \u03bc0.50 s1"
     },
+    "leg_rms": {
+     "margin": 0.40825667931550164,
+     "value": 1.6330267172620065,
+     "limit": 4.0,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.15 \u03bc0.75 s1"
+    },
+    "wheel_speed_peak": {
+     "margin": 0.12629015355362766,
+     "value": 11.214565635562137,
+     "limit": 88.80000000000001,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d70.85 \u03bc0.75 s1"
+    },
     "leg_speed_peak": {
-     "margin": 0.03094959023183086,
-     "value": 0.7130785589413831,
+     "margin": 0.026541496520046087,
+     "value": 0.611516079821862,
      "limit": 23.040000000000003,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s1"
+     "case": "m\u00d71.15 \u03bc0.50 s3"
+    }
+   },
+   "failures": [
+    {
+     "case": "m\u00d70.85 \u03bc0.50 seed 4",
+     "metric": "stop_disp",
+     "value": 0.300074687813239,
+     "limit": 0.3,
+     "op": "<="
+    },
+    {
+     "case": "m\u00d70.85 \u03bc0.75 seed 4",
+     "metric": "stop_disp",
+     "value": 0.300104035745417,
+     "limit": 0.3,
+     "op": "<="
+    },
+    {
+     "case": "m\u00d70.85 \u03bc1.00 seed 4",
+     "metric": "stop_disp",
+     "value": 0.3001113584320845,
+     "limit": 0.3,
+     "op": "<="
+    },
+    {
+     "case": "m\u00d71.15 \u03bc0.75 seed 3",
+     "metric": "pitch_peak",
+     "value": 2.000528067104162,
+     "limit": 2.0,
+     "op": "<="
+    }
+   ],
+   "errors": [],
+   "reference": null
+  },
+  {
+   "id": 20,
+   "name": "\ud68c\uadc0 \uc5c6\uc74c(1~17: 1\ub2e8\uacc4 \ud1b5\uacfc \uc720\uc9c0, \uac00\uc7a5 \ube60\ub4ef\ud55c \uc9c0\ud45c \uc5ec\uc720\uc728 \uc545\ud654 \u2264 10 %)",
+   "grade": "settle",
+   "passed": true,
+   "n_runs": 15,
+   "worst": {
+    "regression_flips": {
+     "margin": 0.0,
+     "value": 0,
+     "limit": 0,
+     "op": "<=",
+     "passed": true,
+     "case": "-"
+    },
+    "margin_worse_10pct": {
+     "margin": 0.0,
+     "value": 0,
+     "limit": 0,
+     "op": "<=",
+     "passed": true,
+     "case": "-"
     }
    },
    "failures": [],
@@ -2068,13 +2165,21 @@
      "passed": true,
      "case": "m\u00d70.85 \u03bc0.50 s0"
     },
+    "packet_violations": {
+     "margin": 0.0,
+     "value": 0,
+     "limit": 0,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d70.85 \u03bc0.50 s0"
+    },
     "wheel_peak": {
-     "margin": 0.31075902049449583,
-     "value": 0.42263226787251434,
+     "margin": 0.31046571763052555,
+     "value": 0.42223337597751476,
      "limit": 1.36,
      "op": "<=",
      "passed": true,
-     "case": "m\u00d71.15 \u03bc1.00 s1"
+     "case": "m\u00d71.15 \u03bc0.50 s1"
     },
     "alive": {
      "margin": 0.0,
@@ -2097,8 +2202,8 @@
    "n_runs": 1,
    "worst": {
     "solve_p99_ms": {
-     "margin": 0.06616200343705714,
-     "value": 0.3308100171852857,
+     "margin": 0.05903500667773185,
+     "value": 0.29517503338865925,
      "limit": 5.0,
      "op": "<=",
      "passed": true,
@@ -2122,7 +2227,7 @@
    "name": "MPC \ud3f4\ubc31(\uc194\ubc84 \uac15\uc81c \uc2e4\ud328)",
    "grade": "survive",
    "passed": true,
-   "n_runs": 1,
+   "n_runs": 5,
    "worst": {
     "alive": {
      "margin": 0.0,
@@ -2141,10 +2246,70 @@
      "case": "m\u00d71.00 \u03bc0.75 s0"
     },
     "passes_1_8_11": {
-     "margin": 1.0,
+     "margin": 0.0,
      "value": 1,
      "limit": 1,
      "op": ">=",
+     "passed": true,
+     "case": "m\u00d71.00 \u03bc0.75 s0"
+    },
+    "passes_8_transient": {
+     "margin": 0.0,
+     "value": 1,
+     "limit": 1,
+     "op": ">=",
+     "passed": true,
+     "case": "m\u00d71.00 \u03bc0.75 s0"
+    },
+    "mpc_resumed": {
+     "margin": 0.0,
+     "value": 1,
+     "limit": 1,
+     "op": ">=",
+     "passed": true,
+     "case": "m\u00d71.00 \u03bc0.75 s0"
+    }
+   },
+   "failures": [],
+   "errors": [],
+   "reference": null
+  },
+  {
+   "id": 24,
+   "name": "\uc8fc\ud589 \uc911 \ubc00\uae30(0.3 m/s \uc21c\ud56d, 0.75 W; \uae30\ub85d, \uac80\ud1a0 r1)",
+   "grade": "record",
+   "passed": true,
+   "n_runs": 1,
+   "worst": {
+    "alive": {
+     "margin": 0.0,
+     "value": true,
+     "limit": 1,
+     "op": ">=",
+     "passed": true,
+     "case": "m\u00d71.00 \u03bc0.75 s0"
+    },
+    "settled": {
+     "margin": 0.0,
+     "value": 1,
+     "limit": 1,
+     "op": ">=",
+     "passed": true,
+     "case": "m\u00d71.00 \u03bc0.75 s0"
+    },
+    "settle_s": {
+     "margin": 0.4987499999999455,
+     "value": 1.994999999999782,
+     "limit": 4.0,
+     "op": "<=",
+     "passed": true,
+     "case": "m\u00d71.00 \u03bc0.75 s0"
+    },
+    "v_back": {
+     "margin": 0.06145392849654995,
+     "value": 0.006145392849654995,
+     "limit": 0.1,
+     "op": "<=",
      "passed": true,
      "case": "m\u00d71.00 \u03bc0.75 s0"
     }

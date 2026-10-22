@@ -1,6 +1,7 @@
 """Shared pieces of the plan assemblies: sensor noise/latency emulation, logging, base placement."""
 from __future__ import annotations
 
+import copy
 import math
 from dataclasses import dataclass
 from typing import Dict, List
@@ -46,17 +47,27 @@ class SensorNoise:
 
 
 class ObservationDelay:
-    """Delays the whole observation dictionary by an integer number of control steps."""
+    """Delays the whole observation dictionary by an integer number of control steps.
 
-    def __init__(self, delay_steps: int):
+    Warm-up: the first delay_steps outputs are copies of the initial observation.  With dt given they are stamped as
+    a past stream (time - k dt), the way a real sensor stream looks before the controller starts, so that the MCU's
+    stale-data watchdog (review r1 m12) does not hold its estimate during the warm-up (it would then keep the first
+    sample's raw differentiated velocity for 10 ms instead of re-estimating)."""
+
+    def __init__(self, delay_steps: int, dt: float | None = None):
         self.line = None
         self.delay_steps = delay_steps
+        self.dt = dt
 
     def push(self, obs: dict) -> dict:
         if self.delay_steps <= 0:
             return obs
         if self.line is None:
             self.line = DelayLine(self.delay_steps, obs)
+            if self.dt is not None and isinstance(obs, dict) and "time" in obs:
+                self.line.buffer = [copy.deepcopy(obs) for _ in range(self.delay_steps)]
+                for k, o in enumerate(self.line.buffer):
+                    o["time"] = obs["time"] - (self.delay_steps - k) * self.dt
         return self.line.push(obs)
 
 

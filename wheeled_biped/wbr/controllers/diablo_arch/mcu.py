@@ -21,6 +21,7 @@ from wbr.common.rotations import quat_to_matrix, roll_pitch_yaw
 from wbr.common.servo import ServoCommand, torque_command
 from wbr.controllers.diablo_arch.host_link import HostLink, MotionCtrl, RobotMode
 from wbr.controllers.lqi6.fivebar import FiveBarLeg, LegGeometry
+from wbr.observers.upkie_observers import BaseOrientation
 
 LEFT_JOINTS = ("left_hip", "left_crank", "left_wheel")
 RIGHT_JOINTS = ("right_hip", "right_crank", "right_wheel")
@@ -68,6 +69,18 @@ class McuParams:
     friction_comp_width: float = 0.02   # N m
     vel_window_s: float = 0.0           # > 0: joint velocities from quantised-position differences over this window
                                         # instead of the driver's 1-step differentiated velocity (noise 1/N, delay N/2 steps)
+    friction_comp_rate_gate: float = 0.0  # rad/s: the stiction compensation fades as 1 / (1 + (pitch_rate / gate)^2); it is
+                                        # a static-posture aid and must not add high-frequency loop gain (review r1 M1:
+                                        # the relay term sustained a 13 Hz limit cycle at >= 12 ms latency).  0 = no gate
+    # real-robot IMU convention (review r1 M3): the pi3hat IMU reports its orientation in the ARS frame (z down) and is
+    # mounted rotated on the torso; both None = the IMU already reports the base orientation in the world frame
+    imu_rotation_base_to_imu: Optional[np.ndarray] = None
+    imu_rotation_ars_to_world: Optional[np.ndarray] = None
+    # sensor-data guards (review r1 M2 / m12): non-finite samples are held, then FAULT; a time stamp that stops
+    # advancing (stale driver data) is held up to stale_fault_s, then FAULT
+    max_bad_samples: int = 5
+    stale_fault_s: float = 0.05
+    fall_roll: float = math.radians(34)
     friction_comp_static_tau: float = 0.0  # > 0 (s): the compensation acts on (Tp - Tp_ff) and T minus their own low-pass
                                         # with this time constant.  A static holding-torque change (payload, mass error,
                                         # slope) is then not taken for an intended motion; comparing with the fixed Tp_ff
@@ -93,6 +106,7 @@ class Estimate:
     theta_v_dot_mean: float = 0.0
     L0_mean: float = 0.0
     position: float = 0.0
+    v_ref: float = 0.0          # the MCU's own current velocity reference (shaped v_filt): telemetry for the host
 
 
 class DiabloMcu:
@@ -103,6 +117,9 @@ class DiabloMcu:
         self.link = link or HostLink()
         self.left_joints = ("left_hip", f"left_{self.p.leg_joint}", "left_wheel")
         self.right_joints = ("right_hip", f"right_{self.p.leg_joint}", "right_wheel")
+        p = self.p
+        self.imu = (BaseOrientation(p.imu_rotation_base_to_imu, p.imu_rotation_ars_to_world)
+                    if (p.imu_rotation_base_to_imu is not None or p.imu_rotation_ars_to_world is not None) else None)
         self.reset(RobotMode.STAND)
 
     # ---------------------------------------------------------------- state
@@ -132,6 +149,10 @@ class DiabloMcu:
         self.fc_wheel_lp = 0.0
         self.last_obs: dict = {}
         self._pos_hist: Dict[str, list] = {}
+        self.bad_samples = 0
+        self.stale_samples = 0
+        self.last_obs_time: Optional[float] = None
+        self.est_hold = False
         self.law.reset()
         self.link.reset()
         self.telemetry: dict = {}
@@ -173,11 +194,71 @@ class DiabloMcu:
             out[name] = {"position": s["position"], "velocity": vel, "torque": s["torque"]}
         return out
 
+    @staticmethod
+    def _sample_valid(obs: dict) -> bool:
+        """Finite unit quaternion and gyro, finite joint positions / velocities."""
+        imu = obs["imu"]
+        q = np.asarray(imu["orientation"], dtype=float)
+        if not (np.all(np.isfinite(q)) and abs(float(np.linalg.norm(q)) - 1.0) < 0.1):
+            return False
+        if not np.all(np.isfinite(np.asarray(imu["angular_velocity"], dtype=float))):
+            return False
+        for s in obs["servo"].values():
+            if not (math.isfinite(s["position"]) and math.isfinite(s["velocity"])):
+                return False
+        return True
+
+    def _hold_history(self) -> None:
+        """A held sample still advances the position-difference window by one step (repeat the last position), so
+        that the velocity estimate keeps its time base: skipping the step made the next difference span two or more
+        control periods while being divided by one, a 10x velocity spike after the 10 ms start-up delay line."""
+        n = int(round(self.p.vel_window_s / self.p.dt))
+        if n <= 1:
+            return
+        for h in self._pos_hist.values():
+            if h:
+                h.append(h[-1])
+                if len(h) > n + 1:
+                    del h[0]
+
     def estimate(self, obs: dict) -> Estimate:
         e = self.est
-        R = quat_to_matrix(obs["imu"]["orientation"])
+        # review r1 M2 / m12: a non-finite or stale sample must never reach the integrators.  The last estimate is
+        # held for up to max_bad_samples cycles (dropped packet) or stale_fault_s (frozen driver data), then FAULT.
+        t_obs = obs.get("time")
+        stale = t_obs is not None and self.last_obs_time is not None and float(t_obs) <= self.last_obs_time
+        if stale:
+            self.stale_samples += 1
+        else:
+            self.stale_samples = 0
+            if t_obs is not None:
+                self.last_obs_time = float(t_obs)
+        if not self._sample_valid(obs):
+            self._hold_history()
+            self.bad_samples += 1
+            self.est_hold = True
+            if self.bad_samples > self.p.max_bad_samples and not self.fault:
+                self.fault = True
+                self.events.append((self.t, f"FAULT: non-finite sensor data for {self.bad_samples} cycles"))
+            return e
+        if stale:
+            self._hold_history()
+            self.est_hold = True
+            if self.stale_samples * self.p.dt > self.p.stale_fault_s and not self.fault:
+                self.fault = True
+                self.events.append((self.t, f"FAULT: sensor data stale for {self.stale_samples * self.p.dt * 1e3:.0f} ms"))
+            return e
+        self.bad_samples = 0
+        self.est_hold = False
+        gyro_raw = np.asarray(obs["imu"]["angular_velocity"], dtype=float)
+        if self.imu is not None:        # real-robot convention (ARS frame + IMU mounting) -> base frame (review r1 M3)
+            bo = self.imu.update(obs["imu"]["orientation"], gyro_raw)
+            R = bo["rotation_base_to_world"]
+            gyro = np.asarray(bo["angular_velocity"], dtype=float)
+        else:
+            R = quat_to_matrix(obs["imu"]["orientation"])
+            gyro = gyro_raw
         roll, pitch, _ = roll_pitch_yaw(R)
-        gyro = np.asarray(obs["imu"]["angular_velocity"], dtype=float)
         e.pitch, e.pitch_rate = pitch, float(gyro[1])
         e.roll, e.roll_rate = roll, float(gyro[0])
         e.yaw_rate = float((R @ gyro)[2])          # world-frame yaw rate (review B11)
@@ -268,6 +349,9 @@ class DiabloMcu:
         if abs(e.pitch) > p.fall_pitch and not self.fault:
             self.fault = True
             self.events.append((self.t, "FAULT: pitch"))
+        if abs(e.roll) > p.fall_roll and not self.fault:
+            self.fault = True
+            self.events.append((self.t, "FAULT: roll"))
         if self.link.in_control:
             self.ever_connected = True
             if self.off_latched:            # the host is back: allow re-arming (arm() still needs an upright robot)
@@ -313,24 +397,29 @@ class DiabloMcu:
         refs = dict(v_ref=v_ref, yaw_rate_ref=self.yaw_rate_ref if balance else 0.0, pitch_ref=self.pitch_ref,
                     L_ref=self.L_ref.value, L_ref_side=L_ref_side, balance=balance, tau_yaw=tau_yaw)
         law_out = self.law.compute(e, refs, self)
+        ctrl = getattr(self.law, "ctrl", None)       # telemetry: the reference the balancer is actually tracking
+        e.v_ref = float(getattr(ctrl, "v_filt", v_ref)) if ctrl is not None else float(v_ref)
         if "servo" in law_out:                       # the law produced full servo commands (Plan 3)
             self.telemetry.update({k: v for k, v in law_out.items() if k != "servo"})
             return dict(law_out["servo"])
 
         T, Tp = (law_out["T"], law_out["Tp"]) if balance else (0.0, 0.0)
         Tp_ff = law_out.get("Tp_ff", 0.0) if balance else 0.0
-        if balance and p.friction_comp_Nm > 0.0:        # break the hip stiction in the intended direction (Plan 4)
+        # stiction compensation (Plan 4): only a quasi-static aid -- faded out with the body pitch rate so that it adds
+        # no gain to the balance loop (review r1 M1)
+        fc_gate = 1.0 if p.friction_comp_rate_gate <= 0.0 else 1.0 / (1.0 + (e.pitch_rate / p.friction_comp_rate_gate) ** 2)
+        if balance and p.friction_comp_Nm > 0.0:        # break the hip stiction in the intended direction
             dev = Tp - Tp_ff
             if p.friction_comp_static_tau > 0.0:
                 self.fc_hip_lp += (dev - self.fc_hip_lp) * dt / p.friction_comp_static_tau
                 dev -= self.fc_hip_lp
-            Tp += p.friction_comp_Nm * 2.0 * math.tanh(dev / p.friction_comp_width)
+            Tp += fc_gate * p.friction_comp_Nm * 2.0 * math.tanh(dev / p.friction_comp_width)
         if balance and p.friction_comp_wheel_Nm > 0.0:
             dev = T
             if p.friction_comp_static_tau > 0.0:
                 self.fc_wheel_lp += (dev - self.fc_wheel_lp) * dt / p.friction_comp_static_tau
                 dev -= self.fc_wheel_lp
-            T += p.friction_comp_wheel_Nm * 2.0 * math.tanh(dev / p.friction_comp_width)
+            T += fc_gate * p.friction_comp_wheel_Nm * 2.0 * math.tanh(dev / p.friction_comp_width)
         F_ff = p.F_ff_N if p.F_ff_N is not None else 0.5 * (p.mass_total - p.mass_wheels) * 9.81
         # anti-split: keep both legs at the same angle (DIABLO leg_split = 0)
         d_theta = e.theta_v_body["left"] - e.theta_v_body["right"]
@@ -345,8 +434,11 @@ class DiabloMcu:
             tau_wheel = 0.5 * T + sign * 0.5 * tau_yaw
             for name, tau, lim in ((f"{side}_hip", tau_hip, p.tau_hip_max), (f"{side}_{p.leg_joint}", tau_crank, p.tau_hip_max),
                                    (f"{side}_wheel", tau_wheel, p.tau_wheel_max)):
-                if not math.isfinite(tau):          # never send NaN to the motors (review B13)
-                    tau = 0.0
+                if not math.isfinite(tau):          # never send NaN to the motors (review B13); and never silently:
+                    tau = 0.0                       # a non-finite command is a FAULT with an event (review r1 M2)
+                    if not self.fault:
+                        self.fault = True
+                        self.events.append((self.t, f"FAULT: non-finite torque command on {name}"))
                 out[name] = torque_command(clamp_abs(tau, lim), lim)
         self.telemetry.update({"T": T, "Tp": Tp, "tau_split": tau_split, "d_theta": d_theta, "armed": self.armed})
         return out

@@ -110,10 +110,11 @@ def build_params(xml_path: Path | None = None, grid=TABLE_GRID, verbose: bool = 
     # wheels (both): mass and inertia about the axle (+ rotor armature)
     wheel_bodies = groups["left_wheel"] + groups["right_wheel"]
     m_w, _, _ = _planar_inertia(m, d, wheel_bodies)
-    I_w = 0.0
+    I_w, J_w = 0.0, 0.0
     for side in ("left", "right"):
         _, _, I_side = _planar_inertia(m, d, groups[f"{side}_wheel"], about=d.xanchor[jid(f"{side}_wheel")])
-        I_w += I_side + float(m.dof_armature[m.jnt_dofadr[jid(f"{side}_wheel")]])
+        I_w += I_side                                                        # rigid wheel bodies about the axle
+        J_w += float(m.dof_armature[m.jnt_dofadr[jid(f"{side}_wheel")]])    # rotor armature: on the joint rate (m9)
     J_h = float(sum(m.dof_armature[m.jnt_dofadr[jid(f"{s}_hip")]] for s in ("left", "right")))
     c_h = float(sum(m.dof_damping[m.jnt_dofadr[jid(f"{s}_hip")]] for s in ("left", "right")))
     c_w = float(sum(m.dof_damping[m.jnt_dofadr[jid(f"{s}_wheel")]] for s in ("left", "right")))
@@ -131,13 +132,13 @@ def build_params(xml_path: Path | None = None, grid=TABLE_GRID, verbose: bool = 
     rows = np.array(rows)
     table = LegTable(L0=rows[:, 0], m_l=rows[:, 1], c=rows[:, 2], d=rows[:, 3], I_l=rows[:, 4])
     params = SerialPlantParams(R=wheel_radius, m_w=m_w, I_w=I_w, m_b=m_b, b_x=b_x, b_z=b_z, I_b=I_b, J_h=J_h, c_h=c_h,
-                               c_w=c_w, hip_above_base=hip_above_base, leg=table, L0=L_STAND, L_min=L_MIN, L_max=L_MAX,
+                               c_w=c_w, J_w=J_w, hip_above_base=hip_above_base, leg=table, L0=L_STAND, L_min=L_MIN, L_max=L_MAX,
                                tau_wheel_max=1.7, tau_hip_max=16.0, name="upkie_serial",
                                extra=dict(L1=L1, L2=L2, knee_sign=-1.0, total_mass=float(m.body_subtreemass[base]),
                                           hip_joint_z_straight=float(hip[2])))
     if verbose:
         print(f"L1={L1:.4f} L2={L2:.4f}  body m_b={m_b:.4f} b_x={b_x:+.4f} b_z={b_z:.4f} I_b={I_b:.5f}")
-        print(f"wheels m_w={m_w:.4f} I_w={I_w:.6f}  J_h={J_h} c_h={c_h} c_w={c_w}  hip above base {hip_above_base:.4f}")
+        print(f"wheels m_w={m_w:.4f} I_w={I_w:.6f} J_w={J_w:.6f}  J_h={J_h} c_h={c_h} c_w={c_w}  hip above base {hip_above_base:.4f}")
         print("  L0     m_l      c        d        I_l")
         for r in rows:
             print("  %.3f  %.4f  %.4f  %+.4f  %.5f" % tuple(r))

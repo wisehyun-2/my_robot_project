@@ -21,8 +21,10 @@ Generalized coordinates q = (x, theta, phi):
 Inputs u = (T, Tp): total wheel torque (positive drives forward) and total hip torque applied on
 the leg about +y (reaction -Tp on the body).  The hip joint coordinate is q_hip = theta + phi.
 
-Generalized forces: Q_x = T / R - c_w xdot / R^2,  Q_theta = -T + Tp - c_h (thetadot + phidot),
-Q_phi = Tp - c_h (thetadot + phidot)   (c_w, c_h: wheel / hip joint viscous damping of the model).
+Generalized forces: Q_x = T / R - c_w w / R,  Q_theta = -T + Tp - c_h (thetadot + phidot) + c_w w,
+Q_phi = Tp - c_h (thetadot + phidot),  with w = xdot / R - thetadot the wheel JOINT rate (wheel relative to the
+shank); c_w, c_h: wheel / hip joint viscous damping of the model.  The wheel rotor armature J_w acts on w as well
+(MuJoCo puts dof armature on the joint coordinate; review r1 m9 -- before, it was lumped into I_w on xdot / R).
 
 The serial structure enters through (i) the L0-dependent lumped leg parameters, (ii) the hip
 torque acting on the body-thigh joint q_hip = theta + phi (both coordinates receive +Tp, the wheel
@@ -48,7 +50,7 @@ import sympy as sp
 
 G = 9.81
 
-PARAM_NAMES = ("R", "m_w", "I_w", "m_l", "c", "d", "I_l", "m_b", "b_x", "b_z", "I_b", "L0", "J_h", "c_h", "c_w", "g")
+PARAM_NAMES = ("R", "m_w", "I_w", "m_l", "c", "d", "I_l", "m_b", "b_x", "b_z", "I_b", "L0", "J_h", "c_h", "c_w", "g", "J_w")
 
 
 @functools.lru_cache(maxsize=1)
@@ -57,7 +59,7 @@ def _symbolic():
     x, th, ph, xd, thd, phd, xdd, thdd, phdd = sp.symbols("x th ph xd thd phd xdd thdd phdd")
     T, Tp = sp.symbols("T Tp")
     P = sp.symbols(" ".join(PARAM_NAMES), real=True)
-    R, m_w, I_w, m_l, c, d, I_l, m_b, b_x, b_z, I_b, L0, J_h, c_h, c_w, g = P
+    R, m_w, I_w, m_l, c, d, I_l, m_b, b_x, b_z, I_b, L0, J_h, c_h, c_w, g, J_w = P
     q = sp.Matrix([x, th, ph])
     qd = sp.Matrix([xd, thd, phd])
     qdd = sp.Matrix([xdd, thdd, phdd])
@@ -74,11 +76,13 @@ def _symbolic():
     KE = (sp.Rational(1, 2) * (m_w + I_w / R**2) * xd**2
           + sp.Rational(1, 2) * m_l * (v_leg.T * v_leg)[0] + sp.Rational(1, 2) * I_l * thd**2
           + sp.Rational(1, 2) * m_b * (v_body.T * v_body)[0] + sp.Rational(1, 2) * I_b * phd**2
-          + sp.Rational(1, 2) * J_h * (thd + phd)**2)
+          + sp.Rational(1, 2) * J_h * (thd + phd)**2
+          + sp.Rational(1, 2) * J_w * (xd / R - thd)**2)    # wheel rotor armature on the joint (wheel - shank) rate
     V = g * (m_l * p_leg[1] + m_b * p_body[1])
     Lag = KE - V
     # generalized forces
-    Q = sp.Matrix([T / R - c_w * xd / R**2, -T + Tp - c_h * (thd + phd), Tp - c_h * (thd + phd)])
+    w_rel = xd / R - thd                                   # wheel joint rate
+    Q = sp.Matrix([T / R - c_w * w_rel / R, -T + Tp - c_h * (thd + phd) + c_w * w_rel, Tp - c_h * (thd + phd)])
     # Euler-Lagrange: d/dt(dL/dqd) - dL/dq = Q
     eqs = []
     for i in range(3):
@@ -119,7 +123,7 @@ class LegTable:
 class SerialPlantParams:
     R: float                 # wheel radius
     m_w: float               # both wheels
-    I_w: float               # both wheels about the axle (incl. rotor armature)
+    I_w: float               # both wheels about the axle (rigid wheel bodies; the rotor armature is J_w)
     m_b: float               # body (torso group)
     b_x: float               # body COM from the hip, body frame (forward)
     b_z: float               # body COM above the hip
@@ -132,6 +136,7 @@ class SerialPlantParams:
     L0: float                # standing length
     L_min: float
     L_max: float
+    J_w: float = 0.0             # wheel rotor armature (both wheels), on the wheel joint rate (review r1 m9)
     tau_wheel_max: float = 1.7   # per wheel (R weight of the LQR, torque clamp of the MCU)
     tau_hip_max: float = 16.0    # per joint
     name: str = "upkie_serial"
@@ -169,7 +174,7 @@ class SerialPlant:
         L0 = self.L0 if L0 is None else float(L0)
         leg = p.leg.at(L0)
         return (p.R, p.m_w, p.I_w, leg["m_l"], leg["c"], leg["d"], leg["I_l"], p.m_b, p.b_x, p.b_z, p.I_b, L0,
-                p.J_h, p.c_h, p.c_w, p.g)
+                p.J_h, p.c_h, p.c_w, p.g, p.J_w)
 
     def com_x(self, theta: float, L0: float | None = None, phi: float = 0.0) -> float:
         """Horizontal offset of the total COM (legs + body) from the axle."""
@@ -238,7 +243,8 @@ class SerialPlant:
         th = self.theta_eq(L0)
         Mq = np.asarray(self.sym["f_Mq"](th, 0.0, *P), dtype=float)
         HV = np.asarray(self.sym["f_HV"](th, 0.0, *P), dtype=float)
-        D = np.array([[c_w / R**2, 0.0, 0.0], [0.0, c_h, c_h], [0.0, c_h, c_h]])
+        # wheel damping on the joint rate xdot / R - thetadot, hip damping on thetadot + phidot
+        D = np.array([[c_w / R**2, -c_w / R, 0.0], [-c_w / R, c_w + c_h, c_h], [0.0, c_h, c_h]])
         E = np.array([[1.0 / R, 0.0], [-1.0, 1.0], [0.0, 1.0]])
         Minv = np.linalg.inv(Mq)
         # (q, qd) ordering with q = (x, theta, phi)

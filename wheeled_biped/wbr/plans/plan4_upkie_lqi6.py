@@ -23,7 +23,7 @@ import mujoco
 import numpy as np
 
 from wbr import MODELS_DIR
-from wbr.common.rotations import quat_to_matrix, roll_pitch_yaw
+from wbr.common.rotations import matrix_to_quat, quat_to_matrix, roll_pitch_yaw
 from wbr.common.servo import ServoCommand, ServoModel, ServoProperties
 from wbr.controllers.diablo_arch.host_link import HostEmulator, HostLink, HostLinkParams, RobotMode
 from wbr.controllers.diablo_arch.mcu import DiabloMcu, McuParams
@@ -60,8 +60,9 @@ class Plan4Config:
     kp_yaw: float = 0.4              # N m per rad/s
     ki_yaw: float = 0.8
     yaw_int_limit: float = 1.0       # rad: ki_yaw * limit = 0.8 N m steady differential torque against the tire scrub
-                                     # (two rim contacts per 40 mm cylinder tire; 0.5 rad capped it at 0.4 N m and the
-                                     # yaw rate stalled at 0.84 rad/s with mass x1.15 / friction 1.0)
+                                     # (sized with upkie_description's 40 mm cylinder tire, whose two rim contacts scrub
+                                     # when yawing: 0.5 rad capped it at 0.4 N m and the yaw rate stalled at 0.84 rad/s
+                                     # with mass x1.15 / friction 1.0; kept for the ellipsoid tire of models/upkie_plan4)
     kp_split: float = 60.0           # anti-split PD (N m/rad): upkie's light serial legs must be held together
     kd_split: float = 3.0            # firmly, otherwise differential wheel torque splits the legs instead of yawing
     friction_comp_Nm: float = 0.08   # hip stiction compensation per hip (model frictionloss 0.1 Nm)
@@ -73,6 +74,11 @@ class Plan4Config:
     predict_ms: float = 0.0          # LQI state-predictor horizon (design constant = nominal latency, not latency_ms);
                                      # 10 ms: latency tolerance 15 -> 30 ms but the push pitch peaks double, so off
                                      # by default (docs/plan4_lqi6.md 3.5)
+    friction_comp_rate_gate: float = 0.1    # rad/s: the stiction compensation fades with the body pitch rate (review r1
+                                     # M1: the relay term sustained a 13 Hz limit cycle from 12 ms latency; with the
+                                     # gate 12 ms recovers cleanly, standing quality unchanged); 0 = off
+    real_imu_convention: bool = True # feed the MCU the IMU sample the way the upkie spine reports it (ARS frame, IMU
+                                     # mounted rotated 180 deg about y) so that the MCU's frame adapter runs in every test
     mass_scale: float = 1.0
     friction: Optional[float] = None
     slope_deg: float = 0.0
@@ -133,10 +139,13 @@ class Plan4UpkieLQI6:
                                tau_hip_max=TAU_LEG_MAX, tau_wheel_max=TAU_WHEEL_MAX,
                                leg_joint="knee", F_ff_N=self._static_leg_force(), friction_comp_Nm=c.friction_comp_Nm,
                                friction_comp_wheel_Nm=c.friction_comp_wheel_Nm,
-                               friction_comp_static_tau=c.friction_comp_static_tau, vel_window_s=c.vel_window_s)
+                               friction_comp_static_tau=c.friction_comp_static_tau, vel_window_s=c.vel_window_s,
+                               friction_comp_rate_gate=c.friction_comp_rate_gate,
+                               imu_rotation_base_to_imu=self.R_BASE_TO_IMU if c.real_imu_convention else None,
+                               imu_rotation_ars_to_world=self.R_ARS_TO_WORLD if c.real_imu_convention else None)
         self.mcu = DiabloMcu(self.law, mcu_params, self.leg, self.link)
         self.noise = SensorNoise(enabled=c.noise, seed=c.seed, pitch_bias=math.radians(c.pitch_bias_deg))
-        self.delay = ObservationDelay(int(math.ceil(c.latency_ms * 1e-3 * c.rate_hz - 1e-9)))   # never round a latency away
+        self.delay = ObservationDelay(int(math.ceil(c.latency_ms * 1e-3 * c.rate_hz - 1e-9)), dt=self.dt)   # never round a latency away
         self.up_cmd = 0.0
         self.reset()
 
@@ -209,7 +218,7 @@ class Plan4UpkieLQI6:
 
     # ------------------------------------------------------------------ sign adapter
     def _obs_to_mcu(self, obs: dict) -> dict:
-        o = dict(obs)
+        o = {k: v for k, v in obs.items() if k != "sim"}      # the MCU never sees simulator ground truth (review r1 m13)
         o["servo"] = {n: {"position": self.signs[n] * s["position"], "velocity": self.signs[n] * s["velocity"],
                           "torque": self.signs[n] * s["torque"]} for n, s in obs["servo"].items()}
         return o
@@ -251,14 +260,28 @@ class Plan4UpkieLQI6:
         self.mcu.reset(mode or self.cfg.start_mode)
         self.host = self._make_host()
         self.host.set_command(forward=0.0, left=0.0, up=self.up_cmd, stand_mode=True)
-        self.delay = ObservationDelay(self.delay.delay_steps)
+        self.delay = ObservationDelay(self.delay.delay_steps, dt=self.dt)
         self.log = Logger()
         self.k = 0
         self.observation = self._observe()
 
+    # upkie's pi3hat IMU: mounted rotated 180 deg about y on the torso (imu body quat 0 0 1 0) and reporting its
+    # orientation in the ARS frame (x forward, y right, z down).  The simulator's IMU sensors sit on the base site
+    # (world-frame base orientation, base-frame rates); the sample is re-expressed the way the spine reports it and
+    # the MCU runs the same BaseOrientation adapter as the real robot (review r1 M3).
+    R_ARS_TO_WORLD = np.diag([1.0, -1.0, -1.0])
+    R_BASE_TO_IMU = np.diag([-1.0, 1.0, -1.0])
+
     def _observe(self) -> dict:
         raw = self.sim.observe()
-        obs = self.delay.push(self.noise.apply(raw, self.dt))
+        noisy = self.noise.apply(raw, self.dt)            # noise / bias in the base frame, then the IMU convention
+        if self.cfg.real_imu_convention:
+            imu = noisy["imu"]
+            R_bw = quat_to_matrix(imu["orientation"])
+            imu["orientation"] = matrix_to_quat(self.R_ARS_TO_WORLD.T @ R_bw @ self.R_BASE_TO_IMU.T)
+            imu["angular_velocity"] = self.R_BASE_TO_IMU @ np.asarray(imu["angular_velocity"], dtype=float)
+            imu["linear_acceleration"] = self.R_BASE_TO_IMU @ np.asarray(imu["linear_acceleration"], dtype=float)
+        obs = self.delay.push(noisy)
         obs["sim"] = raw["sim"]
         return obs
 
@@ -297,7 +320,9 @@ class Plan4UpkieLQI6:
 
     @property
     def fallen(self) -> bool:
-        return abs(self.mcu.est.pitch) > 1.0 or self.observation["sim"]["base"]["position"][2] < 0.6 * self.standing_base_z
+        base = self.observation["sim"]["base"]
+        true_pitch = roll_pitch_yaw(quat_to_matrix(base["orientation"]))[1]      # ground truth, not the estimate (n5)
+        return abs(true_pitch) > 1.0 or base["position"][2] < 0.6 * self.standing_base_z
 
     def push(self, force_x: float, duration: float) -> None:
         """Horizontal push applied at the robot's total COM (acceptance criteria definition)."""

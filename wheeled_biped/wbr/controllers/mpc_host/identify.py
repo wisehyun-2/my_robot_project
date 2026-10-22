@@ -29,14 +29,16 @@ from wbr import MODELS_DIR, RESULTS_DIR
 from wbr.controllers.mpc_host import model as M
 from wbr.controllers.mpc_host import reference_mpc as R
 
-INNER_MPC_MODE = dict(v_ramp_rate=4.0, v_ref_tau=0.0, freeze_int_on_ramp=False)
+# the inner loop the host sees: MotionCtrl.host_shaped = True -> LQI6 plain tracking (4 m/s^2 ramp, no pre-filter) with
+# every integrator frozen while the low-passed reference acceleration exceeds 0.1 m/s^2 (LQI6.freeze_int_on_accel_plain)
+INNER_MPC_MODE = dict(host_shaped=True, plain_ramp_rate=4.0, integrators="frozen while |a_ref_lp| > 0.1 m/s^2")
 OUT_JSON = MODELS_DIR / "upkie_plan4" / "plan4_closed_loop.json"
 OUT_DIR = RESULTS_DIR / "plan4_mpc"
 
 
 def make_plan(rate: float, noise: bool, latency_ms: float, friction: bool = True, seed: int = 0):
     from wbr.plans.plan4_upkie_lqi6 import Plan4Config, Plan4UpkieLQI6
-    cfg = Plan4Config(rate_hz=rate, host="ramp", noise=noise, latency_ms=latency_ms, seed=seed, lqi_kwargs=dict(INNER_MPC_MODE))
+    cfg = Plan4Config(rate_hz=rate, host="ramp", noise=noise, latency_ms=latency_ms, seed=seed)
     if not friction:
         cfg.friction_comp_Nm = 0.0
         cfg.friction_comp_wheel_Nm = 0.0
@@ -50,6 +52,7 @@ def make_plan(rate: float, noise: bool, latency_ms: float, friction: bool = True
 
 def run_step(plan, V: float = 0.5, t0: float = 1.5, t_on: float = 2.5, t_off: float = 3.0) -> dict:
     plan.reset()
+    plan.host.set_command(host_shaped=True)       # the MCU tracks the host reference plainly (MPC-mode inner loop)
     r_log, F_log = [], []
     for T, v in ((t0, 0.0), (t_on, V), (t_off, 0.0)):
         for _ in range(int(round(T / plan.dt))):
@@ -61,6 +64,7 @@ def run_step(plan, V: float = 0.5, t0: float = 1.5, t_on: float = 2.5, t_off: fl
 
 def run_push(plan, frac: float = 0.5, t0: float = 1.5, T: float = 4.0) -> dict:
     plan.reset()
+    plan.host.set_command(host_shaped=True)
     r_log, F_log = [], []
     for _ in range(int(round(t0 / plan.dt))):
         plan.step(0.0, 0.0)
@@ -152,13 +156,14 @@ def mass_sensitivity(plan, cfg: R.MpcConfig) -> list:
     for ms in (0.85, 1.0, 1.15):
         p = copy.deepcopy(plan.params)
         p.m_w *= ms
-        p.I_w = (p.I_w - 0.0006) * ms + 0.0006      # rotor armature (2 x 0.0003) is a joint property, not scaled
+        p.I_w *= ms                                  # rigid wheel bodies (the rotor armature J_w is a joint property, not scaled)
         p.m_b *= ms
         p.I_b *= ms
         p.leg.m_l = p.leg.m_l * ms
         p.leg.I_l = p.leg.I_l * ms
-        cl = M.lqi6_closed_loop(SerialPlant(p), K, plan.params.L0, plan.law.ctrl.Ts, d, h_base=plan.hip_above_base,
-                                **M.lqi6_options(plan.law.ctrl, plan.params.L0))
+        opts = M.lqi6_options(plan.law.ctrl, plan.params.L0)
+        cl = M.lqi6_closed_loop(SerialPlant(p), M.select_gains(K, opts), plan.params.L0, plan.law.ctrl.Ts, d,
+                                h_base=plan.hip_above_base, **M.model_kwargs(opts))
         full = cl.select(["r"], ["T", "pitch", "theta"])
         Ts = full.Ts
         t = np.arange(int(round(3.0 / Ts))) * Ts
@@ -200,7 +205,8 @@ def plot(fit: dict, path: Path) -> None:
         ax[2, col].set_ylabel("wheel torque T (total) [Nm]")
         ax[2, col].set_xlabel("t [s]")
         ax[2, col].legend(fontsize=7)
-        title = "velocity step 0 -> 0.5 -> 0 m/s" if key == "step" else "push 0.5 W (0.1 s) at t = 1.5 s"
+        title = ("velocity step 0 -> 0.5 -> 0 m/s (manoeuvre model: integrators frozen)" if key == "step"
+                 else "push 0.5 W (0.1 s) at t = 1.5 s (stand-still model: integrators active)")
         ax[0, col].set_title(f"{title}: rms v {A['rms_v']:.3f} / {B['rms_v']:.3f} m/s, pitch {A['rms_pitch_deg']:.2f} / "
                              f"{B['rms_pitch_deg']:.2f} deg (A / B)", fontsize=9)
     fig.suptitle("Plan 4 MPC host: LQI6 closed-loop prediction model vs MuJoCo (1 kHz MCU, inner loop in MPC mode)", fontsize=11)
@@ -223,10 +229,12 @@ def main(argv=None):
         fit[key] = {}
         for cond, (noise, lat, fric) in (("A", (False, 0.0, True)), ("B", (True, 10.0, True)), ("C", (True, 10.0, False))):
             plan = make_plan(rate, noise, lat, friction=fric)
-            full = M.plan_closed_loop(plan)
+            full = M.plan_closed_loop(plan)                     # manoeuvre regime: integrators frozen (MPC prediction)
+            full_rest = M.plan_closed_loop(plan, regime="rest")  # stand-still regime: integrators active (push at rest)
             step = run_step(plan)
             push = run_push(plan)
-            entry = dict(step=compare(full, step), push=compare(full, push))
+            entry = dict(step=compare(full, step), push=compare(full_rest, push), push_manoeuvre_model=compare(full, push))
+            entry["push_manoeuvre_model"].pop("trace", None)
             mdl = R.prediction_model(plan, 0.02, cfg.order)
             entry["step_reduced"] = compare_reduced(mdl["red"], step, mdl["m"])
             if cond != "B":                     # keep the json small: traces only for the figure conditions
@@ -236,7 +244,8 @@ def main(argv=None):
                     entry[k].pop("trace", None)
             fit[key][cond] = entry
             print(f"{key} Hz {cond}: step rms v {entry['step']['rms_v']:.4f} pitch {entry['step']['rms_pitch_deg']:.3f} deg "
-                  f"T {entry['step']['rms_T']:.3f} | push rms v {entry['push']['rms_v']:.4f} pitch {entry['push']['rms_pitch_deg']:.3f} | "
+                  f"T {entry['step']['rms_T']:.3f} | push (rest model) rms v {entry['push']['rms_v']:.4f} pitch {entry['push']['rms_pitch_deg']:.3f}"
+                  f" (manoeuvre model {entry['push_manoeuvre_model']['rms_v']:.4f}) | "
                   f"reduced step rms v {entry['step_reduced']['rms_v']:.4f} ({time.time() - t0:.0f} s)")
         # host model as used by the MPC at the acceptance condition (latency 10 ms)
         plan = make_plan(rate, True, 10.0)

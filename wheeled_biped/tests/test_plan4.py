@@ -300,8 +300,9 @@ class SerialPlantTests(unittest.TestCase):
         self.assertEqual(len(unstable), 2, f"open-loop poles {np.sort_complex(eig)}")
         self.assertLess(np.abs(unstable.imag).max(), 1e-9)                         # real, divergent modes
         slow, fast = np.sort(unstable.real)
-        self.assertAlmostEqual(slow / 6.12, 1.0, delta=0.02)                      # docs/plan4_model.md
-        self.assertAlmostEqual(fast / 10.07, 1.0, delta=0.02)
+        self.assertAlmostEqual(slow / 6.13, 1.0, delta=0.02)                      # docs/plan4_model.md (MuJoCo 6.125)
+        self.assertAlmostEqual(fast / 9.77, 1.0, delta=0.02)                      # 9.772 with the rotor armature on the
+        #                                                                           wheel joint rate (review r1 m9)
         self.assertGreater(B[3, 0], 0.0)     # x_ddot per wheel torque: positive T drives forward
         self.assertGreater(B[5, 1], 0.0)     # phi_ddot per hip torque: reaction -Tp pitches the body back (phi > 0)
         np.testing.assert_array_equal(A[[0, 2, 4]], np.eye(6)[[1, 3, 5]])         # kinematic rows
@@ -635,7 +636,7 @@ class AcceptanceHelperTests(unittest.TestCase):
         self.assertAlmostEqual(m["wheel_peak"], WHEEL_TAU_MAX)
         self.assertAlmostEqual(m["wheel_rms10"], math.sqrt((100 * WHEEL_TAU_MAX ** 2 + 900 * 0.25) / 1000))
         self.assertAlmostEqual(m["leg_peak"], 3.0)
-        self.assertAlmostEqual(m["leg_rms"], math.sqrt((4.0 + 9.0 + 1.0 + 0.0) / 4))
+        self.assertAlmostEqual(m["leg_rms"], 3.0)                 # worst single leg motor (review r1 m6), not pooled
         self.assertAlmostEqual(m["wheel_speed_peak"], 12.0)
         self.assertAlmostEqual(m["leg_speed_peak"], 1.5)
         late = torque_metrics(plan, t_from=0.5)

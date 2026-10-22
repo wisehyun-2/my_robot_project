@@ -111,7 +111,7 @@
                                 <body name="left_wheel_tire" pos="0 0 0.0209">
                                   <inertial pos="0 0 0" quat="0.5 0.5 -0.5 0.5" mass="0.08715" diaginertia="0.000108938 6.60888e-05 6.60888e-05"/>
                                   <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.3 0.3 0.3 1" density="0" mesh="wheel_tire"/>
-                                  <geom name="left_tire" size="0.056 0.056 0.02" type="ellipsoid" group="3" priority="1" rgba="0.3 0.3 0.3 1"/>
+                                  <geom name="left_tire" size="0.056 0.056 0.02" type="ellipsoid" condim="4" group="3" priority="1" rgba="0.3 0.3 0.3 1"/>
                                   <body name="left_contact" pos="0 0.047 0" quat="0.707107 0.707107 0 0">
                                     <inertial pos="0 0 0" mass="0.001" diaginertia="1e-07 1e-07 1e-07"/>
                                     <geom size="0.0001 0.0001 0.0001" type="box" contype="0" conaffinity="0" group="2" density="0"/>
@@ -201,7 +201,7 @@
                                 <body name="right_wheel_tire" pos="0 0 0.0209">
                                   <inertial pos="0 0 0" quat="0.5 0.5 -0.5 0.5" mass="0.08715" diaginertia="0.000108938 6.60888e-05 6.60888e-05"/>
                                   <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.3 0.3 0.3 1" density="0" mesh="wheel_tire"/>
-                                  <geom name="right_tire" size="0.056 0.056 0.02" type="ellipsoid" group="3" priority="1" rgba="0.3 0.3 0.3 1"/>
+                                  <geom name="right_tire" size="0.056 0.056 0.02" type="ellipsoid" condim="4" group="3" priority="1" rgba="0.3 0.3 0.3 1"/>
                                   <body name="right_contact" pos="0 0.047 0" quat="0.707107 0.707107 0 0">
                                     <inertial pos="0 0 0" mass="0.001" diaginertia="1e-07 1e-07 1e-07"/>
                                     <geom size="0.0001 0.0001 0.0001" type="box" contype="0" conaffinity="0" group="2" density="0"/>

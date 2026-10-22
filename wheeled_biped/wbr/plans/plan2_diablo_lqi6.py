@@ -68,7 +68,7 @@ class Plan2DiabloLQI6:
                                mass_wheels=2 * p.m_wheel, L_stand=self.plant.L0, tau_hip_max=p.tau_hip, tau_wheel_max=p.tau_wheel)
         self.mcu = DiabloMcu(self.law, mcu_params, self.leg, self.link)
         self.noise = SensorNoise(enabled=c.noise, seed=c.seed)
-        self.delay = ObservationDelay(int(round(c.latency_ms * 1e-3 * c.mcu_hz)))
+        self.delay = ObservationDelay(int(round(c.latency_ms * 1e-3 * c.mcu_hz)), dt=1.0 / c.mcu_hz)
         self.sim.reset()
         self.up_cmd = 0.0
         self.reset()
@@ -120,7 +120,7 @@ class Plan2DiabloLQI6:
         self.mcu.reset(mode or self.cfg.start_mode)
         self.host = HostEmulator(self.link, publish_hz=self.cfg.host_hz)
         self.host.set_command(forward=0.0, left=0.0, up=self.up_cmd, stand_mode=True)
-        self.delay = ObservationDelay(self.delay.delay_steps)
+        self.delay = ObservationDelay(self.delay.delay_steps, dt=self.delay.dt)
         self.log = Logger()
         self.k = 0
         self.observation = self._observe()

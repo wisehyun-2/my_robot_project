@@ -81,7 +81,7 @@ class Plan1Upkie:
             c.use_sim_contact = True
         self.agent_period = max(1, int(round(c.spine_hz / c.agent_hz)))
         self.noise = SensorNoise(enabled=c.noise, seed=c.seed)
-        self.delay = ObservationDelay(int(round(c.latency_ms * 1e-3 * c.spine_hz)))
+        self.delay = ObservationDelay(int(round(c.latency_ms * 1e-3 * c.spine_hz)), dt=1.0 / c.spine_hz)
         # wheel axle offset in the base frame (standing keyframe)
         self.sim.reset()
         base_pos = self.sim.body_position("base")
@@ -106,7 +106,7 @@ class Plan1Upkie:
         self.mapper.reset({j: self.sim.joint_position(j) for j in self.mapper.upper_leg_joints})
         if self.mpc is not None:
             self.mpc.reset()
-        self.delay = ObservationDelay(self.delay.delay_steps)
+        self.delay = ObservationDelay(self.delay.delay_steps, dt=self.delay.dt)
         self.log = Logger()
         self.k = 0
         self.ground_velocity_cmd = 0.0

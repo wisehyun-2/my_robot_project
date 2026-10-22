@@ -34,7 +34,7 @@ KNEE_LOCK_ARMATURE = 1.0e3     # kg m^2 on the knee dofs: the knee cannot move (
 class MjPlanar:
     """Helpers mapping the planar plant coordinates to the MuJoCo upkie model."""
 
-    def __init__(self, params: SerialPlantParams, xml_path: Path | None = None):
+    def __init__(self, params: SerialPlantParams, xml_path: Path | None = None, stiff_contact: bool = True):
         self.p = params
         self.m = mujoco.MjModel.from_xml_path(str(xml_path or MODELS_DIR / "upkie_plan4" / "scene.xml"))
         self.d = mujoco.MjData(self.m)
@@ -55,6 +55,15 @@ class MjPlanar:
         # the noslip post-pass of the forward solver is not part of mj_inverse: switch it off so that the
         # static torques from inverse dynamics hold the posture exactly in forward simulation
         m.opt.noslip_iterations = 0
+        # review r1 m10: with the model's soft default contact (solimp 0.9 / 0.95) the static inverse dynamics leaves
+        # a -1.2 N vertical base residual (the posture is not an exact equilibrium) and the static hip torque differs
+        # by 7 %; a stiffer impedance for the COMPARISON makes it a test of the plant, not of the contact softness
+        self.stiff_contact = stiff_contact
+        if stiff_contact:
+            for gname in ("floor", "left_tire", "right_tire"):
+                gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, gname)
+                if gid >= 0:
+                    m.geom_solimp[gid, 0], m.geom_solimp[gid, 1] = 0.99, 0.999
 
     # ---------------------------------------------------------------- posture / locking
     def lock(self, joints, armature=KNEE_LOCK_ARMATURE):
@@ -191,7 +200,9 @@ def check_L0(mp: MjPlanar, plant: SerialPlant, L0: float, response_T: float = 0.
         a_pl = B_pl @ u                                    # rows [thd, thdd, xd, xdd, phd, phdd]
         a_pl = np.array([a_pl[3], a_pl[1], a_pl[5]])
         bcheck[name] = dict(mujoco=a_mj.tolist(), plant=a_pl.tolist(),
-                            rel_err=float(np.linalg.norm(a_mj - a_pl) / max(1e-9, np.linalg.norm(a_pl))))
+                            rel_err=float(np.linalg.norm(a_mj - a_pl) / max(1e-9, np.linalg.norm(a_pl))),
+                            # per component (xdd, thdd, phdd): the norm hides a 7 % xdd error behind the large phdd (m10)
+                            rel_err_components=(np.abs(a_mj - a_pl) / np.maximum(np.abs(a_pl), 1e-9)).tolist())
     out["B_check"] = bcheck
     d.ctrl[:] = ctrl0
 
@@ -246,14 +257,39 @@ def check_L0(mp: MjPlanar, plant: SerialPlant, L0: float, response_T: float = 0.
         X = X + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
     traj_mj, traj_pl = np.array(traj_mj), np.array(traj_pl)
     err = traj_mj - traj_pl
+    # the linear plant is only expected to match while the deviation is small: report the rms over the part of the
+    # window where MuJoCo's |theta - theta_eq| < 6 deg as well (m10: the 0.3 s window runs past 20 deg at L0 = 0.25)
+    lin = np.abs(traj_mj[:, 0] - th_eq) < math.radians(6.0)
+    if lin.sum() < 2:
+        lin[:2] = True
     out["response"] = dict(t=ts, mujoco=traj_mj.tolist(), plant=traj_pl.tolist(),
                            rms_err_theta_deg=float(math.degrees(np.sqrt(np.mean(err[:, 0] ** 2)))),
                            rms_err_phi_deg=float(math.degrees(np.sqrt(np.mean(err[:, 4] ** 2)))),
                            rms_err_x_mm=float(1e3 * np.sqrt(np.mean(err[:, 2] ** 2))),
+                           linear_window_s=float(lin.sum() * dt),
+                           rms_err_theta_deg_lin=float(math.degrees(np.sqrt(np.mean(err[lin, 0] ** 2)))),
+                           rms_err_phi_deg_lin=float(math.degrees(np.sqrt(np.mean(err[lin, 4] ** 2)))),
                            final_theta_deg=dict(mujoco=math.degrees(traj_mj[-1, 0]), plant=math.degrees(traj_pl[-1, 0])),
                            final_phi_deg=dict(mujoco=math.degrees(traj_mj[-1, 4]), plant=math.degrees(traj_pl[-1, 4])))
     mp.lock(())
     return out
+
+
+def markdown_table(results, stiff: bool) -> str:
+    """Comparison table for docs/plan4_model.md (Korean headers)."""
+    lines = [f"접촉 임피던스 {'강성(solimp 0.99/0.999, 대조용)' if stiff else '모델 기본(0.9/0.95)'}; 무릎 잠금 아마추어 {KNEE_LOCK_ARMATURE:g}, 건마찰 0, noslip 0.", "",
+             "| L0 [m] | θ_eq [°] | 불안정 극 모델 / MuJoCo [rad/s] | 극 오차 | B 오차 노름 바퀴 / 엉덩이 | B 성분 오차 최대 바퀴 / 엉덩이 | 3° 0.3 s rms θ / φ / x | 선형 구간 rms θ / φ | 정적 엉덩이 토크 모델 / MuJoCo [Nm] | base 잔차 [N] |",
+             "|---|---|---|---|---|---|---|---|---|---|"]
+    for r in results:
+        up, b, rp = r["unstable_poles"], r["B_check"], r["response"]
+        pe = " / ".join(f"{100 * e:.2f} %" for e in up["rel_err"]) if up["rel_err"] else "-"
+        lines.append(f"| {r['L0']:.2f} | {r['theta_eq_deg']:+.2f} | {up['plant'][0]:.3f}, {up['plant'][1]:.3f} / {up['mujoco'][0]:.3f}, {up['mujoco'][1]:.3f} | {pe} "
+                     f"| {100 * b['wheel_T']['rel_err']:.2f} % / {100 * b['hip_Tp']['rel_err']:.2f} % "
+                     f"| {100 * max(b['wheel_T']['rel_err_components']):.2f} % / {100 * max(b['hip_Tp']['rel_err_components']):.2f} % "
+                     f"| {rp['rms_err_theta_deg']:.2f}° / {rp['rms_err_phi_deg']:.2f}° / {rp['rms_err_x_mm']:.1f} mm "
+                     f"| {rp['rms_err_theta_deg_lin']:.2f}° / {rp['rms_err_phi_deg_lin']:.2f}° ({rp['linear_window_s']:.2f} s) "
+                     f"| {r['Tp_eq_plant']:+.3f} / {r['Tp_eq_mujoco']:+.3f} | {r['static_torques']['base_residual']:.2f} |")
+    return "\n".join(lines) + "\n"
 
 
 def plot_responses(results, out_png: Path):
@@ -280,12 +316,14 @@ def plot_responses(results, out_png: Path):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--L0", type=float, nargs="*", default=[0.31, 0.25, 0.28, 0.33])
-    ap.add_argument("--out", default=str(RESULTS_DIR / "plan4_model"))
+    ap.add_argument("--out", default=str(RESULTS_DIR / "plan4_model"),
+                    help="output directory (default overwrites the repository's results/plan4_model)")
+    ap.add_argument("--soft-contact", action="store_true", help="keep the model's soft contact impedance for the comparison")
     args = ap.parse_args()
     out_dir = Path(args.out); out_dir.mkdir(parents=True, exist_ok=True)
     params = SerialPlantParams.from_json(MODELS_DIR / "upkie_plan4" / "plan4_params.json")
     plant = SerialPlant(params)
-    mp = MjPlanar(params)
+    mp = MjPlanar(params, stiff_contact=not args.soft_contact)
     results = []
     for L0 in args.L0:
         r = check_L0(mp, plant, L0)
@@ -297,15 +335,18 @@ def main():
               "| forward qacc with static ctrl: base %.3f hips %.3f" % (r["static_check_qacc"]["base"], r["static_check_qacc"]["hips"]))
         print(f"   unstable poles plant {np.round(up['plant'], 3)} mujoco {np.round(up['mujoco'], 3)} rel err {np.round(up['rel_err'], 4) if up['rel_err'] else None}")
         for k, v in r["B_check"].items():
-            print(f"   B {k}: mujoco {np.round(v['mujoco'], 4)} plant {np.round(v['plant'], 4)} rel err {v['rel_err']:.4f}")
+            print(f"   B {k}: mujoco {np.round(v['mujoco'], 4)} plant {np.round(v['plant'], 4)} rel err {v['rel_err']:.4f}"
+                  f" components {np.round(v['rel_err_components'], 4)}")
         rp = r["response"]
         print(f"   3 deg open loop 0.3 s: rms err theta {rp['rms_err_theta_deg']:.3f} deg, phi {rp['rms_err_phi_deg']:.3f} deg, x {rp['rms_err_x_mm']:.2f} mm;"
-              f" final theta {rp['final_theta_deg']['mujoco']:.2f}/{rp['final_theta_deg']['plant']:.2f} deg")
+              f" final theta {rp['final_theta_deg']['mujoco']:.2f}/{rp['final_theta_deg']['plant']:.2f} deg;"
+              f" |dtheta| < 6 deg window {rp['linear_window_s']:.2f} s: theta {rp['rms_err_theta_deg_lin']:.3f} / phi {rp['rms_err_phi_deg_lin']:.3f} deg")
     slim = []
     for r in results:
         rr = dict(r); rr["response"] = {k: v for k, v in r["response"].items() if k not in ("t", "mujoco", "plant")}
         slim.append(rr)
     (out_dir / "linearization.json").write_text(json.dumps(slim, indent=1), encoding="utf-8")
+    (out_dir / "linearization.md").write_text(markdown_table(results, stiff=mp.stiff_contact), encoding="utf-8")
     plot_responses(results, out_dir / "openloop_3deg.png")
     print("wrote", out_dir)
 

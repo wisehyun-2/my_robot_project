@@ -130,7 +130,9 @@ class HostEmulator:
     def tick(self, t: float) -> None:
         if not self.enabled:
             return
-        if t >= self.next_pub or (t - self.last_sent) * 1e3 >= self.link.p.heartbeat_ms:
+        if t >= self.next_pub - 1e-9 or (t - self.last_sent) * 1e3 >= self.link.p.heartbeat_ms:
             self.link.receive(self.cmd, t)
             self.last_sent = t
-            self.next_pub = t + self.period
+            self.next_pub += self.period            # fixed publish grid: exactly publish_hz, no float drift to 21 ms
+            if self.next_pub <= t:
+                self.next_pub = t + self.period

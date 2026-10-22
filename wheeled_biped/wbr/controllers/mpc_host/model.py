@@ -111,10 +111,11 @@ def push_input_column(plant, L0: float, total_mass_with_wheels: float | None = N
 
 def lqi6_closed_loop(plant, K: np.ndarray, L0: float, Ts: float, delay_steps: int = 0, h_base: float = 0.164,
                      rate_lpf_tau: float = 0.0, wheel_radius: float | None = None, att_gM: float | None = None,
-                     use_pos: bool = False, pred: tuple | None = None) -> LTIModel:
+                     use_pos: bool = False, pred: tuple | None = None, use_int: bool = True) -> LTIModel:
     """Discrete closed loop plant + LQI6 at the MCU period Ts, exactly as ``LQI6.step`` executes it in MPC mode
-    (no pre-filter, integrators not frozen).  Feedback vector xs = [theta, theta_dot, v - r, phi, phi_dot, z,
-    (z_att), (z_pos)], u = -K xs with K = 2 x len(xs).
+    (no pre-filter).  Feedback vector xs = [theta, theta_dot, v - r, phi, phi_dot, (z), (z_att), (z_pos)],
+    u = -K xs with K = 2 x len(xs).  use_int=False drops the velocity integrator z: the manoeuvre regime of the
+    stage-2 inner loop, whose integrators are all frozen while the host reference accelerates (lqi6_options).
 
     State X = [s_k (5), z, (z_att), (z_pos), (u_{k-1}, ..., u_{k-N} : 2 N), (f1, f2), s_{k-1} .. s_{k-d} (5 d)]
       z_k     = z_{k-1} + Ts (e_v - r)
@@ -138,14 +139,16 @@ def lqi6_closed_loop(plant, K: np.ndarray, L0: float, Ts: float, delay_steps: in
     use_att = att_gM is not None
     N_pred = 0 if pred is None else int(np.asarray(pred[1]).shape[1] // 2)
     N_u = max(N_pred, 1 if use_att else 0)
-    nK = 6 + int(use_att) + int(use_pos)
+    nK = 5 + int(use_int) + int(use_att) + int(use_pos)
     if K.shape != (2, nK):
         raise ValueError(f"gain matrix {K.shape} does not match the LQI6 options (expected (2, {nK}))")
+    if use_pos and not use_int:
+        raise ValueError("z_pos integrates z: use_pos requires use_int")
     d = int(delay_steps)
     nf = 2 if rate_lpf_tau > 0.0 else 0
     # state layout
     idx = 5
-    i_z = idx; idx += 1
+    i_z = idx if use_int else None; idx += int(use_int)
     i_za = idx if use_att else None; idx += int(use_att)
     i_zp = idx if use_pos else None; idx += int(use_pos)
     i_U = idx; idx += 2 * N_u
@@ -169,7 +172,7 @@ def lqi6_closed_loop(plant, K: np.ndarray, L0: float, Ts: float, delay_steps: in
         Se[1] = F1 - S[4]
         Se[2] = R * (F2 - S[4])
     # rows (coefficient over X, coefficient of r)
-    Z = (e(i_z) + Ts * Se[2], -Ts)
+    Z = (e(i_z) + Ts * Se[2], -Ts) if use_int else None
     rows = []
     if pred is not None:
         P, G = np.asarray(pred[0], float), np.asarray(pred[1], float)
@@ -179,7 +182,8 @@ def lqi6_closed_loop(plant, K: np.ndarray, L0: float, Ts: float, delay_steps: in
         rows += [(XH[0], 0.0), (XH[1], 0.0), (XH[2], -1.0), (XH[3], 0.0), (XH[4], 0.0)]
     else:
         rows += [(Se[0], 0.0), (Se[1], 0.0), (Se[2], -1.0), (Se[3], 0.0), (Se[4], 0.0)]
-    rows.append(Z)
+    if use_int:
+        rows.append(Z)
     ZA = ZP = None
     if use_att:
         ZA = (e(i_za) + Ts * (Se[0] + Se[3] + (e(i_U + 1) - e(i_U)) / float(att_gM)), 0.0)
@@ -197,7 +201,8 @@ def lqi6_closed_loop(plant, K: np.ndarray, L0: float, Ts: float, delay_steps: in
     B[:5, 0:1] = Bu @ Du
     B[:5, 1:2] = BF
     B[:5, 2:3] = BT
-    A[i_z, :], B[i_z, 0] = Z
+    if use_int:
+        A[i_z, :], B[i_z, 0] = Z
     if use_att:
         A[i_za, :], B[i_za, 0] = ZA
     if use_pos:
@@ -226,7 +231,7 @@ def lqi6_closed_loop(plant, K: np.ndarray, L0: float, Ts: float, delay_steps: in
     return LTIModel(A, B, C, D, Ts, ("r", "F", "Tf"), OUTPUTS,
                     dict(L0=float(L0), Ts_mcu=float(Ts), delay_steps=d, h_base=float(h_base), K=K.tolist(),
                          rate_lpf_tau=float(rate_lpf_tau), att_gM=None if att_gM is None else float(att_gM),
-                         use_pos=bool(use_pos), pred_steps=N_pred, i_z=int(i_z),
+                         use_pos=bool(use_pos), pred_steps=N_pred, i_z=None if i_z is None else int(i_z), use_int=bool(use_int),
                          i_z_att=None if i_za is None else int(i_za)))
 
 
@@ -308,7 +313,7 @@ def plant_with_damping(plan, wheel_damping: float | None = None):
 
 
 def plan_closed_loop(plan, L0: float | None = None, latency_ms: float | None = None,
-                     wheel_damping: float | None = None) -> LTIModel:
+                     wheel_damping: float | None = None, regime: str = "manoeuvre") -> LTIModel:
     """Full-order MCU-rate closed loop of a Plan4UpkieLQI6 instance (design knowledge only: plant parameters, the
     LQI6 gain table, the MCU period and the configured sensing latency -- no simulator state).  The controller gains
     are always the MCU's own (designed on the nominal plant); wheel_damping only changes the plant of the prediction."""
@@ -318,27 +323,51 @@ def plan_closed_loop(plan, L0: float | None = None, latency_ms: float | None = N
     lat = plan.cfg.latency_ms if latency_ms is None else latency_ms
     d = int(round(lat * 1e-3 / ctrl.Ts))
     lpf = float(getattr(plan.cfg, "rate_lpf_tau", 0.0) or 0.0)
-    opts = lqi6_options(ctrl, L0)
-    cl = lqi6_closed_loop(plant_with_damping(plan, wheel_damping), K, L0, ctrl.Ts, d, h_base=plan.hip_above_base,
-                          rate_lpf_tau=lpf, **opts)
+    opts = lqi6_options(ctrl, L0, regime)
+    cl = lqi6_closed_loop(plant_with_damping(plan, wheel_damping), select_gains(K, opts), L0, ctrl.Ts, d,
+                          h_base=plan.hip_above_base, rate_lpf_tau=lpf, **model_kwargs(opts))
     cl.info["wheel_damping"] = float(plan.params.c_w if wheel_damping is None else wheel_damping)
     return cl
 
 
-def lqi6_options(ctrl, L0: float) -> dict:
-    """The optional LQI6 extensions of the MCU's controller (z_att / z_pos integrators, state predictor) at L0."""
-    opts = dict(att_gM=None, use_pos=False, pred=None)
-    if getattr(ctrl, "i_att", None) is not None:
-        opts["att_gM"] = float(ctrl.att_gM(L0))
-    if getattr(ctrl, "i_pos", None) is not None:
-        opts["use_pos"] = True
+def lqi6_options(ctrl, L0: float, regime: str = "manoeuvre") -> dict:
+    """The LQI6 structure of the MCU's controller at L0 as it acts DURING A MANOEUVRE -- the regime the prediction
+    model is for.  z_att is gated on the low-passed reference acceleration (always frozen while the reference moves),
+    and with the plain-mode acceleration freeze (LQI6.freeze_int_on_accel_plain, Plan 4 stage 2) z and z_pos are
+    frozen as well: the prediction is then the pure state-feedback loop (review r1 stage 2 M4: the model that kept
+    integrating z_att over-predicted the step pitch peak, 1.8 deg vs 1.0 deg).  gain_cols = the columns of the MCU
+    gain matrix the model uses (select_gains); pass the rest with model_kwargs()."""
+    if regime not in ("manoeuvre", "rest"):
+        raise ValueError(regime)
+    # "rest": stand-still regime (target 0, reference not moving): every designed integrator is active -- used to
+    # compare the model with a push response, never for the MPC prediction
+    frozen = bool(getattr(ctrl, "freeze_int_on_accel_plain", False)) and regime == "manoeuvre"
+    gated_att = hasattr(ctrl, "att_accel_thresh") and regime == "manoeuvre"
+    use_int = not frozen
+    use_att = getattr(ctrl, "i_att", None) is not None and not frozen and not gated_att
+    use_pos = getattr(ctrl, "i_pos", None) is not None and not frozen
+    opts = dict(att_gM=float(ctrl.att_gM(L0)) if use_att else None, use_pos=use_pos, pred=None, use_int=use_int)
     if getattr(ctrl, "pred_steps", 0) > 0:
         if hasattr(ctrl, "_aux") and getattr(ctrl, "aux_table", None) is not None:
             P, G, _ = ctrl._aux(L0)
         else:
             P, G = ctrl.pred
         opts["pred"] = (np.array(P), np.array(G))
+    cols = [0, 1, 2, 3, 4] + ([5] if use_int else []) + ([int(ctrl.i_att)] if use_att else []) + ([int(ctrl.i_pos)] if use_pos else [])
+    opts["gain_cols"] = cols
     return opts
+
+
+def select_gains(K: np.ndarray, opts: dict) -> np.ndarray:
+    """Columns of the MCU gain matrix used by the prediction model (lqi6_options)."""
+    cols = opts.get("gain_cols")
+    K = np.asarray(K, dtype=float)
+    return K if cols is None else K[:, cols]
+
+
+def model_kwargs(opts: dict) -> dict:
+    """lqi6_options() entries that lqi6_closed_loop() takes as keyword arguments."""
+    return {k: v for k, v in opts.items() if k != "gain_cols"}
 
 
 def _gains_no_side_effect(ctrl, L0: float) -> np.ndarray:

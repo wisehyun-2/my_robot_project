@@ -6,6 +6,8 @@ outputs u = [T, Tp] = -K xs (total wheel torque, total hip torque).
 """
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import scipy.linalg as la
 
@@ -27,7 +29,8 @@ class LQI6:
                  reschedule_dL=0.01, table_L0=(0.10, 0.28, 0.01), a_ff=0.0, v_ref_tau=0.0, v_ref_order=1,
                  freeze_int_on_ramp=False, v_ref_tau_brake=0.0, q_att=None, q_pos=None, att_gM=None,
                  att_limit=0.2, pos_limit=0.5, pred_steps=0, freeze_tol=1e-3, quiet_boost_att=1.0,
-                 quiet_boost_pos=1.0, plain_ramp_rate=4.0, att_accel_tau=0.1, att_accel_thresh=0.1):
+                 quiet_boost_pos=1.0, plain_ramp_rate=4.0, att_accel_tau=0.1, att_accel_thresh=0.1,
+                 freeze_int_on_accel_plain=True):
         """table_L0 = (min, max, step): gains are designed once on this leg-length grid and interpolated
         at run time (no Riccati solve inside the 1 kHz loop, as a Teensy-class MCU would do it);
         None keeps the online re-design of the report.
@@ -45,7 +48,7 @@ class LQI6:
                  x_hat(k) = Ad^N x_meas(k) + sum_{j=1..N} Ad^(j-1) Bd u(k-j) on the 5 balance states with the last N
                  outputs (finite-spectrum assignment).  The feedback acts on x_hat; the integrators keep integrating the
                  measured (delayed) signals, so a constant model error cannot bias their steady state.
-        Plan 4 uses q_att only; q_pos and pred_steps are kept (default off) for the trade-off studies of
+        Plan 4 uses q_att and q_pos; pred_steps is kept (default off) for the trade-off studies of
         docs/plan4_lqi6.md (position-offset-free disturbance rejection, latency compensation)."""
         self.plant = plant
         self.Ts = Ts
@@ -89,6 +92,13 @@ class LQI6:
         self.att_accel_tau = att_accel_tau
         self.att_accel_thresh = att_accel_thresh
         self._a_ref_lp = 0.0
+        # plain tracking of a host-shaped reference (stage-2 MPC): freeze ALL integrators while the low-passed
+        # reference acceleration is above att_accel_thresh, exactly like the stage-1 ramp freeze.  Otherwise z winds
+        # up during every manoeuvre and pays back afterwards: a 0.2 m roll-back after each stop and a 10-30 %
+        # overshoot when the host hands over mid-manoeuvre (review r1 stage 2 M2 / M3).  The MPC prediction model
+        # is the integrator-free loop accordingly (mpc_host.model.lqi6_options).
+        self.freeze_int_on_accel_plain = freeze_int_on_accel_plain
+        self._last_out = (0.0, 0.0)
         self.int_limit = int_limit
         self.reschedule_dL = reschedule_dL
         self.K = None
@@ -109,6 +119,9 @@ class LQI6:
         self.v_filt = self.v_filt1 = self.v_ramp      # continuity of the reference seen by the loop
 
     def reset(self) -> None:
+        self.shaping_on = True                 # review r1 n7: a reset restores the MCU's own shaping
+        self.v_ramp_rate, self.v_ref_tau, self.freeze_int_on_ramp = self._shaped
+        self._last_out = (0.0, 0.0)
         self.z = 0.0
         self.z_att = 0.0
         self.z_pos = 0.0
@@ -202,6 +215,8 @@ class LQI6:
 
     def step(self, theta, theta_dot, v, phi, phi_dot, L0, v_ref):
         """Returns (T, Tp): total wheel torque and total hip torque."""
+        if not all(math.isfinite(float(x)) for x in (theta, theta_dot, v, phi, phi_dot, L0, v_ref)):
+            return self._last_out          # never integrate a non-finite sample (review r1 M2): hold the last output
         K = self.gains(L0)
         dv = float(np.clip(v_ref - self.v_ramp, -self.v_ramp_rate * self.Ts, self.v_ramp_rate * self.Ts))
         self.v_ramp += dv
@@ -223,7 +238,8 @@ class LQI6:
         ramping = abs(dv) > 1e-9 or abs(self.v_filt - self.v_ramp) > self.freeze_tol
         self._a_ref_lp += (dv / self.Ts - self._a_ref_lp) * self.Ts / self.att_accel_tau
         att_ramping = abs(self._a_ref_lp) > self.att_accel_thresh or abs(self.v_filt - self.v_ramp) > self.freeze_tol
-        frozen = self.freeze_int_on_ramp and ramping
+        frozen = (self.freeze_int_on_ramp and ramping) or \
+                 (self.freeze_int_on_accel_plain and not self.shaping_on and abs(self._a_ref_lp) > self.att_accel_thresh)
         if not frozen:
             self.z = float(np.clip(self.z + ev * self.Ts, -self.int_limit, self.int_limit))
         Pm = Gm = gM = None
@@ -263,6 +279,7 @@ class LQI6:
             u = -K @ xs
         self.u_prev = u.copy()
         T_out = float(u[0] + self.a_ff * dv / self.Ts)
+        self._last_out = (T_out, float(u[1]))
         if self.pred_steps > 0:      # input history of the predictor (as applied: clamped to the actuator range)
             self.U[2:] = self.U[:-2].copy()
             self.U[0] = min(max(T_out, -2 * self.plant.tau_wheel_max), 2 * self.plant.tau_wheel_max)
