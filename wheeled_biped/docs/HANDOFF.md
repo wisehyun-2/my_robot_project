@@ -19,6 +19,7 @@
 | 2단계 호스트 MPC(`wbr/controllers/mpc_host/`) | 완료(검토 2라운드 반영판): 두 주기 모두 19~23 통과(19번 정지 최대 이탈 여유 ×0.99 — 넘김 1.0 s·제동 1.17배로 맞춤), 24번 기록 통과 | `docs/plan4_mpc_host.md` |
 | Plan 4 합격 판정(전체 매트릭스, 캐시 `r5_s1`·`r5_s2`, 코드 해시 345db37b94) | **두 주기 모두 합격**: 1단계 1~13·16·17 통과(16·17은 2026-10-23 사용자 위임 결정 — 드리프트 x(0) 기준·10 cm, 합격기준 6.3: 7.2~8.7 cm), 2단계 19~23 통과; 15번 기록 20/25 ms(강건 여유 12/15 ms) | `results/acceptance/` |
 | 독립 검토 | 1라운드(Opus 5.5 ×2) major 10건, 2라운드 major 5건 전부 반영(`docs/review_plan4_r1_response.md`, 1·2라운드 절); 3라운드(축소: 반영 추적·재현) `docs/review_plan4_r3.md`·`review_plan4_mpc_r3.md` | `docs/` |
+| Plan 2 15 kg 모터 토크 산정(2026-10-23, qdd100 품절로 Plan 2 재검토) | 완료(시뮬): 권장 hip ×4 정격 ≥ 10·최대 ≥ 20 N·m, 바퀴 ×2 정격 ≥ 2.5·최대 7~8 N·m·≥ 60 rad/s(R 65 mm). 확정안은 아직 Plan 4 | `docs/plan2_15kg_torque_sizing.md`, `wbr/bench/torque_sizing.py`, `results/torque_sizing/` |
 | 단위 테스트 | 83개 통과(`tests/test_core.py` 20 + `tests/test_plan4.py` 38 + `tests/test_plan4_safety.py` 25) | `tests/` |
 | ROS 2 Jazzy 패키지(메시지 3종, upkie 4패키지, diablo_lite 4패키지) | **작성만 됨, 빌드·실행 미검증**. Plan 4(lqi6 균형기) 옵션은 아직 없음 | `ros2_ws/src`, `ros2_ws/README.md` |
 

@@ -28,6 +28,7 @@ python -m wbr.viewer.live --plan 3
 python -m wbr.bench.run_bench                       # full test battery -> results/bench/summary.md (+ json)
 python -m wbr.bench.plots                           # figures -> results/figures
 python -m wbr.bench.video --plan 2                  # demo video -> results/videos
+python -m wbr.bench.torque_sizing                   # Plan 2 motor torque sizing at 15 kg -> results/torque_sizing (docs/plan2_15kg_torque_sizing.md)
 ```
 
 ## Layout
