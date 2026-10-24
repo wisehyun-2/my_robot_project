@@ -22,5 +22,5 @@
 
 ## 작업 규칙
 - `wbr` 코어는 ROS에 의존하지 않게 유지한다(ROS 2 노드는 얇은 래퍼). 제어기·모델을 바꾸면 `python -m unittest discover -s tests`와 `python -m wbr.bench.run_bench`를 다시 돌려 `results/`와 보고서 표를 갱신한다.
-- 커밋은 사용자가 요청할 때만 한다. 커밋 메시지 끝에 `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>` 를 붙인다.
+- 커밋은 사용자가 요청할 때만 한다. 커밋 메시지 끝에 `Co-Authored-By: Claude <실제로 작업한 모델 이름> <noreply@anthropic.com>` 를 붙인다(예: `Claude Opus 5.5`). 모델 이름은 그 세션에서 실제로 작업한 모델을 쓴다.
 - 참조 저장소(upkie, upkie_description, mjlab_upkie, diablo_ros2, diablo-sim-env, DiabloSTLSDF, Col_DIABLO_Issac_RL, diablo_sdk)는 저장소 밖(`../references/`)에 클론해 쓴다. 없으면 다시 클론한다.
