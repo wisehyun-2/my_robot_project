@@ -29,6 +29,7 @@ python -m wbr.bench.run_bench                       # full test battery -> resul
 python -m wbr.bench.plots                           # figures -> results/figures
 python -m wbr.bench.video --plan 2                  # demo video -> results/videos
 python -m wbr.bench.torque_sizing                   # Plan 2 motor torque sizing at 15 kg -> results/torque_sizing (docs/plan2_15kg_torque_sizing.md)
+python -m wbr.bench.ake_sizing                      # user's build, AKE50-8/AKE60-8 motors, wheel diameter sweep -> results/ake_sizing (docs/ake_motor_sizing.md)
 ```
 
 ## Layout
