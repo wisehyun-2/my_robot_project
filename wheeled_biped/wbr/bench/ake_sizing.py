@@ -3,7 +3,8 @@ docs/ake_motor_sizing.md.
 
 Robot (the values saved in the knee-torque calculator, 2026-10-24): upkie_description leg geometry (Plan 4 builder:
 ellipsoid tire, condim 4), torso 2.5 kg with the 1.8 kg battery centred so that the torso COM is on the hip line,
-upkie link / wheel masses, hip and knee = AKE50-8 KV110 (0.19 kg), wheel = AKE60-8 KV80 (0.26 kg).  Motor model:
+upkie link / wheel masses, hip and knee = AKE50-8 KV110 (0.19 kg), wheel = AKE60-8 KV80 (0.26 kg) unless a case picks
+other motors per joint (Case.hip_motor / knee_motor / wheel_motor; the motor masses follow).  Motor model:
 peak torque, the voltage line of the torque-speed curve (no-load speed at the rated 24 V, winding resistance) while
 motoring, reflected rotor inertia (rotor inertia x gear^2) as joint armature, backdrive torque as joint friction.
 Controller: Plan 4 (MCU 1 kHz, LQI6, noise + 2 ms latency) with the plant re-identified from this model; the LQI6
@@ -15,6 +16,7 @@ wheel slip (wheel-centre speed along the floor - rim speed), to see when a large
     python -m wbr.bench.ake_sizing                       # standard cases (16, ~70 s each, parallel) -> results/ake_sizing/
     python -m wbr.bench.ake_sizing --only d150 d400
     python -m wbr.bench.ake_sizing --diameter 180 --tag my_case [--seed 1] [--volt 22.2] [--no-limits]
+    python -m wbr.bench.ake_sizing --diameter 200 --torso 4 --knee-motor AKE60-8 --wheel-motor AKE50-8 --tag swap
     python -m wbr.bench.ake_sizing --clearance [150 250 300]   # tire-to-leg gaps -> results/ake_sizing/clearance.md
 
 In upkie the wheel sits inboard of the shank, in the same lateral band as the thigh link and the knee-motor bracket on
@@ -47,6 +49,7 @@ JN = ["left_hip", "left_knee", "left_wheel", "right_hip", "right_knee", "right_w
 OUT_DIR = RESULTS_DIR / "ake_sizing"
 UPKIE_MASS = 5.33922            # Plan 4 model, the reference of the LQI6 tuning
 UPKIE_R = 0.056
+UPKIE_WHEEL_MARKERS = 0.002     # contact + wheel-centre marker bodies, counted in the 0.135 kg upkie wheel
 KNEE_REACH_DEG = 60.0           # tire clearance: smallest knee angle checked besides the Plan 4 leg lengths
 
 
@@ -89,6 +92,7 @@ AKE50_8 = Motor("AKE50-8 KV110", peak=7.5, rated=2.5, kt_motor=0.104, gear=8.0, 
                 mass=0.190, rotor_gcm2=153.81, backdrive=0.09)
 AKE60_8 = Motor("AKE60-8 KV80", peak=12.5, rated=5.0, kt_motor=0.13, gear=8.0, no_load_rpm=240, resistance=0.577,
                 mass=0.260, rotor_gcm2=647.39, backdrive=0.12)          # backdrive torque not published: assumed
+MOTORS = {"AKE50-8": AKE50_8, "AKE60-8": AKE60_8}
 
 
 @dataclass
@@ -100,14 +104,18 @@ class Case:
     limits: bool = True          # False: motor torque / speed limits off (diagnosis)
     torso_kg: float = 2.5        # motors excluded
     battery_kg: float = 1.8      # centred over the hip
+    wheel_kg: float | None = None   # one wheel (hub + tire), motor excluded; None = upkie wheel (0.135 kg)
     quick: bool = False
+    hip_motor: str = "AKE50-8"   # keys of MOTORS
+    knee_motor: str = "AKE50-8"
+    wheel_motor: str = "AKE60-8"
 
     @property
     def radius(self) -> float:
         return self.diameter_mm / 2000.0
 
     def motor(self, kind: str) -> Motor:
-        return AKE60_8 if kind == "wheel" else AKE50_8
+        return MOTORS[{"hip": self.hip_motor, "knee": self.knee_motor, "wheel": self.wheel_motor}[kind]]
 
 
 STANDARD_CASES = [Case(f"d{d}", diameter_mm=float(d)) for d in (112, 125, 135, 150, 200, 250, 300, 400, 450, 500, 600)]
@@ -143,11 +151,15 @@ def build_model(case: Case, mdir: Path):
     set_mass("battery", case.battery_kg)
     set_mass("torso", case.torso_kg - case.battery_kg - (B["base"].mass + B["imu"].mass + B["handle"].mass))
     for side in ("left", "right"):
-        set_mass(f"{side}_hip_qdd100_stator", AKE50_8.mass - B[f"{side}_hip_qdd100_rotor"].mass)
-        set_mass(f"{side}_knee_qdd100_stator", AKE50_8.mass - B[f"{side}_knee_qdd100_rotor"].mass)
-        set_mass(f"{side}_ankle_mj5208_stator", AKE60_8.mass - B[f"{side}_ankle_mj5208_rotor"].mass)
-        tire = B[f"{side}_wheel_tire"]                  # same tire mass for every diameter, inertia ~ R^2
-        tire.inertia = [float(x) * (R / UPKIE_R) ** 2 for x in tire.inertia]
+        set_mass(f"{side}_hip_qdd100_stator", case.motor("hip").mass - B[f"{side}_hip_qdd100_rotor"].mass)
+        set_mass(f"{side}_knee_qdd100_stator", case.motor("knee").mass - B[f"{side}_knee_qdd100_rotor"].mass)
+        set_mass(f"{side}_ankle_mj5208_stator", case.motor("wheel").mass - B[f"{side}_ankle_mj5208_rotor"].mass)
+        hub, tire = B[f"{side}_wheel_hub"], B[f"{side}_wheel_tire"]
+        if case.wheel_kg is not None:                   # hub + tire scaled to the wheel mass
+            k = (case.wheel_kg - UPKIE_WHEEL_MARKERS) / (hub.mass + tire.mass)
+            set_mass(hub.name, hub.mass * k)
+            set_mass(tire.name, tire.mass * k)
+        tire.inertia = [float(x) * (R / UPKIE_R) ** 2 for x in tire.inertia]  # tire shape kept: inertia ~ m R^2
         for g in tire.geoms:                            # tire touches only the floor (see module doc)
             if g.name == f"{side}_tire":
                 g.contype, g.conaffinity = 2, 0
@@ -226,7 +238,9 @@ def patched_plan4(case: Case, root: Path):
     saved = p4.MODELS_DIR, p4.WHEEL_RADIUS, p4.TAU_WHEEL_MAX, p4.TAU_LEG_MAX
     try:
         p4.MODELS_DIR, p4.WHEEL_RADIUS = root, case.radius
-        p4.TAU_WHEEL_MAX, p4.TAU_LEG_MAX = (AKE60_8.peak, AKE50_8.peak) if case.limits else (1e4, 1e4)
+        # one leg limit for hip and knee in Plan 4: the larger peak; each joint is clipped at its own motor in make_plan
+        legs = max(case.motor("hip").peak, case.motor("knee").peak)
+        p4.TAU_WHEEL_MAX, p4.TAU_LEG_MAX = (case.motor("wheel").peak, legs) if case.limits else (1e4, 1e4)
         yield p4
     finally:
         p4.MODELS_DIR, p4.WHEEL_RADIUS, p4.TAU_WHEEL_MAX, p4.TAU_LEG_MAX = saved
@@ -238,8 +252,8 @@ def available(case: Case, kind: str, tau: float, w: float) -> float:
 
 def make_plan(p4, case: Case, model_dir: str, params_json: Path, slope: float = 0.0):
     cfg = p4.Plan4Config(model_dir=model_dir, params_json=str(params_json), latency_ms=2.0, noise=True, seed=case.seed,
-                         slope_deg=slope, friction_comp_Nm=0.8 * AKE50_8.backdrive,
-                         friction_comp_wheel_Nm=0.8 * AKE60_8.backdrive)
+                         slope_deg=slope, friction_comp_Nm=0.8 * case.motor("hip").backdrive,
+                         friction_comp_wheel_Nm=0.8 * case.motor("wheel").backdrive)
     plan = p4.Plan4UpkieLQI6(cfg)
     sm = plan.sim.servo_model
     servo_torque = sm.torque
@@ -387,7 +401,7 @@ def run_case(case: Case) -> dict:
     return dict(case=dataclasses.asdict(case), radius=case.radius, total_mass=total,
                 plant=dict(m_b=params.m_b, b_x=params.b_x, J_w=params.J_w, tau_budget_wheel=params.tau_wheel_max,
                            tau_budget_hip=params.tau_hip_max),
-                motors={"hip_knee": dataclasses.asdict(AKE50_8), "wheel": dataclasses.asdict(AKE60_8)},
+                motors={k: dataclasses.asdict(case.motor(k)) for k in ("hip", "knee", "wheel")},
                 scen=S, wall_s=time.perf_counter() - t0)
 
 
@@ -416,14 +430,14 @@ def summary_markdown(results: Dict[str, dict]) -> str:
             lines.append(f"- ERROR {t}: {r['error']}")
     lines += ["| motor | peak / rated [N m] | no-load [rpm] (rad/s) | gear | mass [kg] | reflected inertia [kg m^2] | backdrive [N m] |",
               "|---|---|---|---|---|---|---|"]
-    for role, m in (("hip, knee", AKE50_8), ("wheel", AKE60_8)):
-        lines.append(f"| {m.name} ({role}) | {m.peak} / {m.rated} | {m.no_load_rpm:.0f} ({m.w0:.1f}) | {m.gear:.0f}:1 | {m.mass} | "
+    for m in MOTORS.values():
+        lines.append(f"| {m.name} | {m.peak} / {m.rated} | {m.no_load_rpm:.0f} ({m.w0:.1f}) | {m.gear:.0f}:1 | {m.mass} | "
                      f"{m.armature:.2e} | {m.backdrive} |")
     lines += ["", "## Per wheel diameter", "",
-              "| case | wheel [mm] | seed | V | mass [kg] | not recovered | wheel peak [N m] (scenario) | wheel RMS max | wheel sat % max | "
+              "| case | hip / knee / wheel motor | wheel [mm] | seed | V | mass [kg] | not recovered | wheel peak [N m] (scenario) | wheel RMS max | wheel sat % max | "
               "wheel speed max [rad/s] | v at 1.0 m/s cmd | hip peak (scenario) | hip RMS max | knee peak (scenario) | knee static max | knee RMS max | "
               "tire off the floor max [ms] (scenario) | slip max [m/s] |",
-              "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+              "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for t, r in ok.items():
         S, c = r["scen"], r["case"]
         bad = [n for n, s in S.items() if not s["recovered"]]
@@ -434,7 +448,8 @@ def summary_markdown(results: Dict[str, dict]) -> str:
                  default=None)
         rec = {n: s for n, s in S.items() if s["recovered"]}             # a fall lifts the wheels anyway
         air, airs = _worst(rec, "wheel_air_ms") if rec else (None, "-")
-        lines.append(f"| {t} | {c['diameter_mm']:.0f} | {c['seed']} | {c['volt']:.1f} | {r['total_mass']:.3f} | {', '.join(bad) if bad else 'none'} | "
+        mot = " / ".join(c.get(f"{k}_motor", d) for k, d in (("hip", "AKE50-8"), ("knee", "AKE50-8"), ("wheel", "AKE60-8")))
+        lines.append(f"| {t} | {mot} | {c['diameter_mm']:.0f} | {c['seed']} | {c['volt']:.1f} | {r['total_mass']:.3f} | {', '.join(bad) if bad else 'none'} | "
                      f"{fmt(wp)} ({wps}) | {fmt(_worst(S, 'wheel_rms')[0])} | {fmt(_worst(S, 'wheel_sat_pct')[0], 1)} | "
                      f"{fmt(_worst(S, 'wheel_speed_peak')[0], 1)} | {fmt(S['velocity_1.0'].get('v_mean') if 'velocity_1.0' in S else None)} | "
                      f"{fmt(hp)} ({hps}) | {fmt(_worst(S, 'hip_rms')[0])} | {fmt(kp)} ({kps}) | {fmt(ks)} | {fmt(_worst(S, 'knee_rms')[0])} | "
@@ -481,6 +496,10 @@ def main(argv: List[str] | None = None) -> None:
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--volt", type=float, default=24.0)
     ap.add_argument("--no-limits", action="store_true", help="motor torque / speed limits off (diagnosis)")
+    ap.add_argument("--torso", type=float, default=2.5, help="torso mass [kg] of the custom case, motors excluded")
+    ap.add_argument("--wheel-kg", type=float, help="one wheel (hub + tire) [kg] of the custom case (default: upkie 0.135)")
+    for kind, default in (("hip", "AKE50-8"), ("knee", "AKE50-8"), ("wheel", "AKE60-8")):
+        ap.add_argument(f"--{kind}-motor", choices=sorted(MOTORS), default=default, help=f"{kind} motor of the custom case")
     ap.add_argument("--quick", action="store_true")
     ap.add_argument("--jobs", type=int, default=max(1, cpu_count() - 2))
     ap.add_argument("--out", type=Path, default=OUT_DIR)
@@ -493,7 +512,8 @@ def main(argv: List[str] | None = None) -> None:
         print(clearance_markdown(rows))
         return
     if args.tag:
-        cases = [Case(args.tag, args.diameter, args.seed, args.volt, limits=not args.no_limits)]
+        cases = [Case(args.tag, args.diameter, args.seed, args.volt, limits=not args.no_limits, torso_kg=args.torso,
+                      wheel_kg=args.wheel_kg, hip_motor=args.hip_motor, knee_motor=args.knee_motor, wheel_motor=args.wheel_motor)]
     else:
         cases = [c for c in STANDARD_CASES if not args.only or c.tag in args.only]
     for c in cases:
