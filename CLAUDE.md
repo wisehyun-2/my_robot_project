@@ -9,6 +9,7 @@
 - `balancing_robot_design/` — 2륜 자가균형 로봇 설계보고서(`설계보고서.md`), 제어기 전수 비교(`제어기_비교보고서.md`), SIL 하네스(`sil/`, `sim/`, `sim6/`). **"내가 만든 제어기" = `sim6/controllers6.py`의 `MineLQI6`(LQI6, 보고서 §8).**
 - `wheeled_biped/` — 6모터 휠 이족 로봇 3개 플랜의 구현·MuJoCo 검증·ROS 2 패키지. 자세한 인수인계는 **`wheeled_biped/docs/HANDOFF.md`** 를 먼저 읽을 것.
   - `wbr/` ROS 비의존 코어(시뮬·제어기·관측기·벤치마크·뷰어), `models/`(upkie_description, diablo_lite), `ros2_ws/src/`(Jazzy 패키지, 우분투에서 빌드), `docs/`(비교보고서, Opus 검토, 세션 기록), `results/`(벤치마크 표·그림·영상), `tests/`.
+- `robot_cad/` — 실제 로봇 Fusion 모델(upkie 2.0 다리 + AKE50 hip·바퀴 / AKE60 무릎, Ø150 바퀴, 24 V 15 Ah 배터리, RPi 4B + pi3hat). **`robot_cad/README.md`를 먼저 읽을 것.** 모델은 `robot_cad/fusion/build_all.py`로 처음부터 다시 만들고 치수는 `fusion/params.py`에 있다. 내보낸 파일은 `export/`, 그림은 `images/`.
 
 ## 지금까지의 결정(2026-10-21~22)
 - 플랜: 1 = upkie 스택을 ROS 2 구조로 재작성, 2 = DIABLO 아키텍처 + LQI6(6 kg DIABLO-lite 5절 링크), 3 = DIABLO 아키텍처 + upkie 제어 코드. **최종 추천 = Plan 2**(근거: `wheeled_biped/docs/비교보고서.md` 0·4·7절).
