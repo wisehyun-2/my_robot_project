@@ -15,9 +15,13 @@ wheel slip (wheel-centre speed along the floor - rim speed), to see when a large
     python -m wbr.bench.ake_sizing                       # standard cases (16, ~70 s each, parallel) -> results/ake_sizing/
     python -m wbr.bench.ake_sizing --only d150 d400
     python -m wbr.bench.ake_sizing --diameter 180 --tag my_case [--seed 1] [--volt 22.2] [--no-limits]
+    python -m wbr.bench.ake_sizing --clearance [150 250 300]   # tire-to-leg gaps -> results/ake_sizing/clearance.md
 
-A larger tire would rub on the robot's own ankle / shank collision boxes in this model (the wheel locks and the robot
-slides); the tire therefore touches only the floor, i.e. the real build must give the wheel enough clearance.
+In upkie the wheel sits inboard of the shank, in the same lateral band as the thigh link and the knee-motor bracket on
+the thigh (a cylinder of ~50 mm radius around the knee axis, which stays 175 mm = shank length from the axle): from a
+250 mm wheel diameter the tire overlaps the bracket in every posture (the thigh link from ~300 mm), the wheel locks and
+the robot slides.  The simulation therefore lets the tire touch only the floor, i.e. it assumes a build in which the
+wheel clears the leg; `--clearance` reports the gaps of the upkie layout.
 """
 from __future__ import annotations
 
@@ -43,6 +47,7 @@ JN = ["left_hip", "left_knee", "left_wheel", "right_hip", "right_knee", "right_w
 OUT_DIR = RESULTS_DIR / "ake_sizing"
 UPKIE_MASS = 5.33922            # Plan 4 model, the reference of the LQI6 tuning
 UPKIE_R = 0.056
+KNEE_REACH_DEG = 60.0           # tire clearance: smallest knee angle checked besides the Plan 4 leg lengths
 
 
 @dataclass(frozen=True)
@@ -168,6 +173,51 @@ def build_model(case: Case, mdir: Path):
     params.tau_hip_max = 16.0 * k_m
     params.to_json(mdir / "plan4_params.json")
     return params
+
+
+def tire_clearance(diameter_mm: float, samples: int = 60) -> dict:
+    """Smallest gap [mm] between the left tire and each left-leg part over the knee range, from the MuJoCo collision
+    shapes (mj_geomDistance, which ignores the tire-floor-only contact filter of build_model; negative = overlap, capped
+    at 100 mm), for the Plan 4 leg lengths and for knee angles >= KNEE_REACH_DEG (covers every balanced posture of the
+    user's robot, 62-180 deg at the hip limit), plus every part's lateral span |y| [mm]."""
+    from wbr.models.upkie_params import L_MAX, L_MIN
+    with tempfile.TemporaryDirectory() as tmp:
+        build_model(Case("clearance", diameter_mm), Path(tmp) / "model")
+        m = mujoco.MjModel.from_xml_path(str(Path(tmp) / "model" / "scene.xml"))
+    d = mujoco.MjData(m)
+    mujoco.mj_resetDataKeyframe(m, d, m.key("stand").id)
+    mujoco.mj_kinematics(m, d)
+    tire = m.geom("left_tire").id
+    hip, knee = m.joint("left_hip").id, m.joint("left_knee")
+
+    def span(g):
+        R = d.geom_xmat[g].reshape(3, 3)
+        c, h = d.geom_xpos[g] + R @ m.geom_aabb[g, :3], np.abs(R) @ m.geom_aabb[g, 3:]
+        return [1000 * (abs(c[1]) - h[1]), 1000 * (abs(c[1]) + h[1])]
+
+    parts: Dict[int, str] = {}
+    out = {"diameter_mm": diameter_mm, "tire_span_mm": span(tire), "parts": {}}
+    for g in range(m.ngeom):
+        body = mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_BODY, m.geom_bodyid[g]) or ""
+        if g != tire and (m.geom_contype[g] or m.geom_conaffinity[g]) and body.startswith("left_") and "wheel" not in body:
+            parts[g] = name = body[len("left_"):]
+            p = out["parts"].setdefault(name, {"span_mm": span(g), "plan4": None, "reach": None})
+            s = span(g)
+            p["span_mm"] = [min(p["span_mm"][0], s[0]), max(p["span_mm"][1], s[1])]
+    fromto = np.zeros(6)
+    for q in np.linspace(0.0, m.jnt_range[knee.id][0], samples):
+        d.qpos[knee.qposadr[0]] = q
+        mujoco.mj_kinematics(m, d)
+        leg = float(np.hypot(*(d.xanchor[hip] - d.xpos[m.geom_bodyid[tire]])[[0, 2]]))
+        bands = [b for b, inside in (("plan4", L_MIN <= leg <= L_MAX), ("reach", 180 - abs(math.degrees(q)) >= KNEE_REACH_DEG))
+                 if inside]
+        for g, name in parts.items():
+            gap = 1000 * mujoco.mj_geomDistance(m, d, tire, g, 0.1, fromto)
+            p = out["parts"][name]
+            for band in bands:
+                if p[band] is None or gap < p[band]:
+                    p[band] = gap
+    return out
 
 
 @contextlib.contextmanager
@@ -400,6 +450,29 @@ def summary_markdown(results: Dict[str, dict]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def clearance_markdown(rows: List[dict]) -> str:
+    from wbr.models.upkie_params import L_MAX, L_MIN
+
+    def gap(v):
+        return "-" if v is None else "≥ 100" if v >= 99.9 else f"**{v:.0f}**" if v < 0 else f"{v:.0f}"
+
+    near = {n for r in rows for n, p in r["parts"].items() if p["reach"] is not None and p["reach"] < 99.9}
+    names = sorted(near, key=lambda n: rows[0]["parts"][n]["span_mm"][0])
+    t = rows[0]["tire_span_mm"]
+    lines = ["# Tire clearance to the leg, upkie layout (`python -m wbr.bench.ake_sizing --clearance`)", "",
+             f"Left tire lateral span |y| {t[0]:.0f}..{t[1]:.0f} mm: the wheel is inboard of the shank. Smallest gap [mm] "
+             f"between the tire and each part from the MuJoCo collision shapes, Plan 4 leg lengths {L_MIN}..{L_MAX} m / "
+             f"knee angle >= {KNEE_REACH_DEG:.0f} deg; **negative = overlap**. The simulation itself lets the tire pass "
+             "through the robot (tire-floor contact only).", "",
+             "| part | lateral span |y| [mm] | " + " | ".join(f"Ø{r['diameter_mm']:.0f}" for r in rows) + " |",
+             "|---|---|" + "---|" * len(rows)]
+    for n in names:
+        s = rows[0]["parts"][n]["span_mm"]
+        cells = [f"{gap(r['parts'][n]['plan4'])} / {gap(r['parts'][n]['reach'])}" for r in rows]
+        lines.append(f"| {n} | {s[0]:.0f}..{s[1]:.0f} | " + " | ".join(cells) + " |")
+    return "\n".join(lines) + "\n"
+
+
 def main(argv: List[str] | None = None) -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", nargs="*", help="tags of the standard cases to run")
@@ -411,7 +484,14 @@ def main(argv: List[str] | None = None) -> None:
     ap.add_argument("--quick", action="store_true")
     ap.add_argument("--jobs", type=int, default=max(1, cpu_count() - 2))
     ap.add_argument("--out", type=Path, default=OUT_DIR)
+    ap.add_argument("--clearance", type=float, nargs="*", help="only report the tire-to-leg gaps for these diameters [mm]")
     args = ap.parse_args(argv)
+    if args.clearance is not None:
+        rows = [tire_clearance(D) for D in (args.clearance or (112, 150, 200, 240, 250, 260, 300, 400))]
+        args.out.mkdir(parents=True, exist_ok=True)
+        (args.out / "clearance.md").write_text(clearance_markdown(rows), encoding="utf-8")
+        print(clearance_markdown(rows))
+        return
     if args.tag:
         cases = [Case(args.tag, args.diameter, args.seed, args.volt, limits=not args.no_limits)]
     else:
