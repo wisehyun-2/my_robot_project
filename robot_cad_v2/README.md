@@ -69,7 +69,7 @@ r4.5 mechanical), `PI3HAT_STEP`(mjbots pi3hat r4.4 mechanical) 경로를 자기 
 모터 재검증: `wheeled_biped`에서 `python -m wbr.bench.ake_cad` (`--static`은 모델 질량만), 결과 `wheeled_biped/results/ake_cad/`.
 강도: `python calc/strength.py`.
 
-`WheelBiped_v2` 문서는 허브에 아직 저장하지 않았다(`export/WheelBiped_v2.f3d`가 같은 내용). `_library`(숨김)는 재사용 부품의
+`WheelBiped_v2` 문서는 허브 `Default Project`에 저장했다(2026-10-28 버전 1, `export/WheelBiped_v2.f3d`와 같은 내용). `_library`(숨김)는 재사용 부품의
 마스터를 가지고 있어 지우면 모든 인스턴스가 사라진다.
 
 ## 3. 다리와 관절
