@@ -77,8 +77,8 @@ def _driven_boss(B, s, body, joint, c, y_link_in, y_face_out):
 
 def _motor_seat(B, s, body, joint, c, y_plate_motor_side, y_plate_far, y_cavity_end):
     """Plate holding a motor ring (pocket on the motor side), Ø30 hole, 6 x M2.5 low-head screws from
-    the far side through a stainless clamp ring (vendor.clamp_ring_stator) in a recess, lead groove + axial
-    lead slot at the motor's lead direction, can cavity r 37, M2.5 inserts for the driver cup columns."""
+    the far side through a stainless clamp ring (vendor.clamp_ring_stator) in a recess, lead groove (params.LEAD_GROOVE_*,
+    2 deep) + axial lead slot at the motor's lead direction, can cavity r 37, M2.5 inserts for the driver cup columns."""
     fr = LY.frames(joint, s)
     m = fr['motor']
     sg = 1 if y_plate_far > y_plate_motor_side else -1          # far side direction along +y (left coords)
@@ -96,8 +96,10 @@ def _motor_seat(B, s, body, joint, c, y_plate_motor_side, y_plate_far, y_cavity_
     d = C.unit((ex[0], 0.0, ex[2]))
     g0 = y_plate_motor_side - sg * 0.5
     g1 = y_plate_motor_side + sg * 2.0
-    mid = (21.5 + 41.0) / 2
-    C.cut(body, B.box((c[0] + d[0] * mid, (g0 + g1) / 2, c[1] + d[2] * mid), d, (0, 1, 0), 41.0 - 21.5, abs(g1 - g0), 7.0))
+    r0, r1 = P.LEAD_GROOVE_R
+    mid = (r0 + r1) / 2
+    C.cut(body, B.box((c[0] + d[0] * mid, (g0 + g1) / 2, c[1] + d[2] * mid), d, (0, 1, 0), r1 - r0, abs(g1 - g0),
+                      P.LEAD_GROOVE_W))
     a0, a1 = y_cavity_end - sg * 0.5, g1
     C.cut(body, B.box((c[0] + d[0] * 38.0, (a0 + a1) / 2, c[1] + d[2] * 38.0), d, (0, 1, 0), 6.0, abs(a1 - a0), 7.0))
     return body

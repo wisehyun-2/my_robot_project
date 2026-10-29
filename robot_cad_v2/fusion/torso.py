@@ -18,7 +18,7 @@ def hip_plate(s):
     6 x M2.5 counterbored on the outer face (run out into the Ø30 hole), Ø80 x 1.5 register boss for the driver cup
     on the inner face; 5 mm web: disc r 68 + column + top bar for the payload rails + ears at the tube screws,
     M5 / M4 countersunk (90 deg, ISO 10642) into the tapped spine / rail bar ends, M3 tapped (tap-drill holes) for the cup,
-    deck and shell.  No wall under 1.5 mm (params.HIP_GROOVE_R / HIP_CBORE_OPEN / HIP_CSK_EAR_R)."""
+    deck and shell.  No wall under 1.5 mm (params.LEAD_GROOVE_R / HIP_CBORE_OPEN / HIP_CSK_EAR_R)."""
     B = C.Builder(side=s)
     y_in = P.YW - P.HIP_PLATE_T                 # 164
     y_web = y_in + P.HIP_WEB_T                  # 169
@@ -46,9 +46,9 @@ def hip_plate(s):
         C.cut(web, B.box((u[0] * rc, P.YW - (cd - 1) / 2, ZH + u[2] * rc), u, (0, 1, 0), rq - db, cd + 1, cw))
     ex = LG.ldir(C.col(m, 0), s)
     d = C.unit((ex[0], 0.0, ex[2]))
-    g0, g1 = P.HIP_GROOVE_R
+    g0, g1 = P.LEAD_GROOVE_R
     C.cut(web, B.box((d[0] * (g0 + g1) / 2, y_in - 0.25, ZH + d[2] * (g0 + g1) / 2), d, (0, 1, 0), g1 - g0, 4.5,
-                     P.HIP_GROOVE_W))                                            # lead groove (phase pins)
+                     P.LEAD_GROOVE_W))                                           # lead groove (phase pins)
     for p in LG.cup_column_points('hip', s):                                     # M3 tapped for the cup
         q = LG.lc(p, s)
         C.cut(web, B.ycyl(q[0], q[2], y_in - 2, y_web + 0.5, P.TAP_DRILL['M3'] / 2))
