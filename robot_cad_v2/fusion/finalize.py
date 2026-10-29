@@ -56,8 +56,8 @@ MACHINED = {
     'rail': '6061-T6 각관 15 × 15 × 1.0(6063-T5/T6 허용), 길이 %.0f mm, Ø4.4 구멍 4쌍' % (2 * (P.YW - P.HIP_PLATE_T)),
     'end_plugs': '6061 마개 8개: 관용 Ø13.9 × 10 M5 탭 4개, 각관용 12.9 × 12.9 × 10(긴 모서리 C%.1f) M4 탭 4개'
                  '(록타이트로 접착)' % P.PLUG_CHAMFER,
-    'clamp ring output': 'SUS304 1.5 mm 레이저 가공, Ø%g/Ø%g, Ø3.4 × 6 (PCD %g)' % (P.RING_OUT + (P.AKE_PCD_OUT,)),
-    'clamp ring stator': 'SUS304 1.5 mm 레이저 가공, Ø%g/Ø%g, Ø2.8 × 6 (PCD %g)' % (P.RING_STATOR + (P.AKE_PCD_RING,)),
+    'clamp ring output': 'SUS304 %g mm 레이저 가공, Ø%g/Ø%g, Ø3.4 × 6 (PCD %g)' % ((P.RING_T,) + P.RING_OUT + (P.AKE_PCD_OUT,)),
+    'clamp ring stator': 'SUS304 %g mm 레이저 가공, Ø%g/Ø%g, Ø2.8 × 6 (PCD %g)' % ((P.RING_T,) + P.RING_STATOR + (P.AKE_PCD_RING,)),
     'magnet spacer': '6061(비자성) 선반 가공, Ø9 × 4.5, 위 Ø6.04 × 2.5 자석 포켓, 아래 Ø5.9 × 2.3 스피곳',
 }
 PURCHASED = {   # component name prefix -> (BOM name, spec / source)

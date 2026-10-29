@@ -113,10 +113,11 @@ HEAD_R = 30.0               # link head around a driven boss
 HOUSING_R = 44.0            # link housing around a motor (can r 34.5 + 2.5 clearance + 7 wall with M2.5 inserts)
 CAN_CLEAR_R = 37.0
 BEARING_FACE = 11.2         # motor output face -> M3 x 16 head bearing face (4.8 mm engagement)
-RING_T = 1.5                # laser-cut 1.5 mm stainless clamp rings: screw heads never bear on bare PETG at a joint
+RING_T = 2.0                # laser-cut 2 mm stainless clamp rings (1.5 mm sheet not stocked; 1 mm too soft, strength.py):
+                            # screw heads never bear on bare PETG at a joint; screw lengths do not depend on it
 RING_OUT = (27.0, 12.5)     # driven bosses (OD inside the Ø28 access pocket, ID): 6 x M3 x 16 12.9 on PCD 20
 RING_STATOR = (45.0, 30.0)  # knee / wheel plates, 6 x M2.5 on PCD 36.5; ID = the Ø30 plate hole (1.0 mm radial to the
-                            # turning Ø28 boss) so the web inside the Ø2.8 holes is 1.85 mm >= the 1.5 mm sheet (laser)
+                            # turning Ø28 boss) so the web inside the Ø2.8 holes is 1.85 mm (~0.9 x the 2 mm sheet)
 STATOR_RECESS_D = 45.6      # recess on the far face of the PETG motor plates for the stator ring + low heads
 CBORE_M25 = (4.8, 1.7)      # DIN 7984 low head M2.5 counterbore (dia, depth)
 CBORE_M25_HIP = (4.8, 2.7)  # ISO 4762 M2.5 12.9 at the hip stator ring (strength.py: 8.8 is over proof at SF 2)

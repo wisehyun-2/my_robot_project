@@ -59,9 +59,9 @@ PARTS = {
                        finish='없음', frame='X 축, X=0 한쪽 끝면'),
     'rail': dict(qty=2, material='AL6061-T6 각관 15 × 15 × 1.0 (6063-T5/T6 허용)', process='3축 MCT (끝면 면삭 + 구멍)',
                  finish='없음', frame='X 길이 방향(X=0 한쪽 끝면), Z 구멍 방향'),
-    'clamp_ring_output': dict(qty=4, material='SUS304 2B 1.5t', process='판금 레이저 절단 (대안: 와이어커팅)',
+    'clamp_ring_output': dict(qty=4, material='SUS304 2B %gt' % P.RING_T, process='판금 레이저 절단 (대안: 와이어커팅)',
                               finish='없음(버 제거)', frame='Z 두께 방향, 원점 링 중심'),
-    'clamp_ring_stator': dict(qty=4, material='SUS304 2B 1.5t', process='판금 레이저 절단 (대안: 와이어커팅)',
+    'clamp_ring_stator': dict(qty=4, material='SUS304 2B %gt' % P.RING_T, process='판금 레이저 절단 (대안: 와이어커팅)',
                               finish='없음(버 제거)', frame='Z 두께 방향, 원점 링 중심'),
 }
 

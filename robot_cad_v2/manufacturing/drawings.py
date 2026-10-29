@@ -562,7 +562,7 @@ def draw_ring(name, number, title, extra, pdf, png_dir):
     t = math.radians(a0)
     hp = (pcd / 2 * math.cos(t) + hole / 2 * 0.71, pcd / 2 * math.sin(t) + hole / 2 * 0.71)
     S.leader(P(*hp), (V.box[1] + 8, V.box[3] - 4), '6 × Ø%g 관통, PCD %g, 60° 등간격' % (hole, pcd))
-    S.notes(150.0, 150.0, ['단위 mm. 두께 1.5 (소재 SUS304 2B 1.5t, 평판).',
+    S.notes(150.0, 140.0, ['단위 mm. 두께 %g (소재 SUS304 2B %gt, 평판).' % (M.P.RING_T, M.P.RING_T),
                            '지시 없는 공차 ±0.1 (레이저), 평탄도 0.1.',
                            '양면 버·드로스 제거, 질소 절단 권장(산화 변색 최소).',
                            '같은 이름의 DXF(dxf/) 또는 STEP(step/) 사용.'] + extra, width=78)
@@ -585,11 +585,11 @@ def main():
         ('rail', draw_rail),
         ('clamp_ring_output', lambda pdf, d: draw_ring(
             'clamp_ring_output', 'WBv2-M07', '출력 클램프 링 (clamp ring output Ø27)',
-            ['hip·knee 구동 보스 바닥, 출력 M3×16 머리 밑.'], pdf, d)),
+            ['hip·knee 구동 보스 바닥, 출력 M3×16 머리 밑.', '구멍–테두리 살 안 2.05, 바깥 1.8 mm: 2t 레이저가 어려우면 와이어커팅·워터젯.'], pdf, d)),
         ('clamp_ring_stator', lambda pdf, d: draw_ring(
             'clamp_ring_stator', 'WBv2-M08', '고정링 클램프 링 (clamp ring stator Ø45)',
             ['knee·wheel PETG 판 바깥 홈, 고정링 M2.5×8 머리 밑.',
-             '안쪽 살(구멍–안지름) 1.85 mm, 바깥 살 2.85 mm (두께 1.5 이상).'], pdf, d)),
+             '안쪽 살(구멍–안지름) 1.85 mm, 바깥 살 2.85 mm: 2t 레이저가 어려우면 와이어커팅·워터젯.'], pdf, d)),
     ]
     for name, fn in jobs:
         with PdfPages(OUT / (name + '.pdf'), metadata={'Title': name, 'Author': PROJECT}) as pdf:

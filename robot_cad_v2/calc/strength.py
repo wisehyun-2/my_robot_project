@@ -18,7 +18,7 @@ legs print lying on their back edge so beam stresses run along the layers.  Sect
 strength.  The links are widened outboard where no other part sweeps (params.FEMUR_WIDE_* / TIBIA_WIDE_*), so the
 section varies along the link: deflections are integrated along it.
 6061-T6: E 69 GPa, yield 276 MPa.  Screws: M3 12.9 at the motor outputs, M2.5 12.9 at the hip stator ring,
-M2.5 8.8 (DIN 7984) at the knee / wheel stator rings.  Clamp rings: 1.5 mm SUS304 (params.RING_*).
+M2.5 8.8 (DIN 7984) at the knee / wheel stator rings.  Clamp rings: SUS304 params.RING_T (params.RING_*).
 """
 import json
 import math
@@ -33,6 +33,7 @@ SIM = os.path.join(os.path.dirname(os.path.dirname(HERE)), 'wheeled_biped', 'res
 
 E_PETG, S_PETG, C_PETG = 2000.0, 45.0, 50.0
 E_AL, Y_AL = 69000.0, 276.0
+E_SUS = 193000.0
 Y_6063 = {'T5': 108.0, 'T6': 177.0}               # KS minimum yield (11 / 18 kgf/mm2), tube / rail fallback
 E_CF = 120000.0                                    # pultruded carbon rod (option only)
 AS_M3, AS_M25 = 5.03, 3.39                         # stress areas mm2
@@ -159,6 +160,13 @@ def bolt_circle_max(M, n, r):
     return 2 * M / (n * r)
 
 
+def ring_peak(F, width, t, petg):
+    """Peak PETG pressure under a clamp ring next to one screw: ring = beam (thickness t, radial width) on an
+    elastic PETG foundation (thickness petg), p = F beta / (2 width).  Also returns the spread length pi / beta."""
+    beta = (E_PETG / petg / (4 * E_SUS * t ** 3 / 12)) ** 0.25
+    return F * beta / (2 * width), math.pi / beta
+
+
 def ring_area(od, idia, n, hole):
     return math.pi / 4 * (od ** 2 - idia ** 2) - n * math.pi / 4 * hole ** 2
 
@@ -221,8 +229,10 @@ def main():
 
     # ------------------------------------------------------------------ 2. joints
     h('2. 관절 체결부 (AKE60-8: 출력 Ø27 6×M3 PCD 20 + Ø3 다웰 3개, 고정링 6×M2.5 PCD 36.5)')
-    out.append('출력 쪽(hip·knee 구동 보스)과 PETG 고정판(knee·wheel)의 나사 머리는 모두 1.5 mm SUS304 클램프 링 위에 '
-               '앉는다(맨 PETG 위 M3 와셔면 검토 하중에서 지압 130 MPa 이상으로 눌린다).\n')
+    out.append(('출력 쪽(hip·knee 구동 보스)과 PETG 고정판(knee·wheel)의 나사 머리는 모두 %g mm SUS304 클램프 링 위에 '
+                '앉는다(맨 PETG 위 M3 와셔면 검토 하중에서 지압 130 MPa 이상으로 눌린다).  고정링 링은 나사 간격(%.1f mm)이 '
+                '링이 힘을 퍼뜨리는 길이보다 길어 나사 옆 최대 지압(탄성 기초 위 보)으로 보고, 출력 링은 나사 간격 10 mm가 '
+                '퍼짐 길이보다 짧아 평균 지압으로 본다.\n') % (P.RING_T, P.AKE_PCD_RING * math.sin(math.pi / 6)))
     rows = []
     a_out = ring_area(P.RING_OUT[0], P.RING_OUT[1], 6, 3.4) / 6
     a_st = ring_area(P.RING_STATOR[0], P.RING_STATOR[1], 6, 2.8) / 6
@@ -262,7 +272,10 @@ def main():
                 txt, res = '알루미늄 판, 머리 지압 문제 없음', ok(ft, proof)
             else:
                 pb = ft / a_st
-                txt, res = 'SUS 링 아래 PETG 지압 %.1f MPa (50)' % pb, ok(max(ft / proof, pb / C_PETG), 1.0)
+                pk, spread = ring_peak(ft, (P.RING_STATOR[0] - P.RING_STATOR[1]) / 2, P.RING_T, web)
+                txt = ('SUS 링 아래 PETG 지압 평균 %.1f, 나사 옆 최대 %.0f MPa (50; 링 t %g, 웹 %.1f mm, 퍼짐 %.0f mm)'
+                       % (pb, pk, P.RING_T, web, spread))
+                res = ok(max(ft / proof, pk / C_PETG), 1.0)
             rows.append(('%s 고정링, 옆 하중 %s: Mx %.0f N·m' % (joint, tag, M / 1000),
                          'M2.5 %s 인장 %.0f N (보증 %.0f), %s' % (cls, ft, proof, plate), txt, res))
             if tag == '검토':
