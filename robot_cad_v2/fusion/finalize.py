@@ -52,10 +52,10 @@ PRINT_NOTE = {
 MACHINED = {
     'hip_plate': '6061-T6 판 10t 이상(완성 9.5 mm) 3축 MCT 양면, Ø42 H7, M5·M4 90° 접시, M3 탭 11개, 검정 아노다이징 '
                  '(manufacturing/ 도면 WBv2-M01)',
-    'spine_tube': '6061-T6 관 Ø16 × 1.0(6063-T5/T6 허용), 길이 %.0f mm, 양 끝 면삭' % (2 * (P.YW - P.HIP_PLATE_T)),
-    'rail': '6061-T6 각관 15 × 15 × 1.0(6063-T5/T6 허용), 길이 %.0f mm, Ø4.4 구멍 4쌍' % (2 * (P.YW - P.HIP_PLATE_T)),
-    'end_plugs': '6061 마개 8개: 관용 Ø13.9 × 10 M5 탭 4개, 각관용 12.9 × 12.9 × 10(긴 모서리 C%.1f) M4 탭 4개'
-                 '(록타이트로 접착)' % P.PLUG_CHAMFER,
+    'spine_tube': '6061-T6 환봉 Ø16(통짜), 길이 %.0f mm, 양 끝 면삭 + M5 탭 깊이 %.0f'
+                  % (2 * (P.YW - P.HIP_PLATE_T), P.END_TAP['M5'][1]),
+    'rail': '6061-T6 각봉 15 × 15(통짜), 길이 %.0f mm, 양 끝 M4 탭 깊이 %.0f, Ø4.4 관통 4곳'
+            % (2 * (P.YW - P.HIP_PLATE_T), P.END_TAP['M4'][1]),
     'clamp ring output': 'SUS304 %g mm 레이저 가공, Ø%g/Ø%g, Ø3.4 × 6 (PCD %g)' % ((P.RING_T,) + P.RING_OUT + (P.AKE_PCD_OUT,)),
     'clamp ring stator': 'SUS304 %g mm 레이저 가공, Ø%g/Ø%g, Ø2.8 × 6 (PCD %g)' % ((P.RING_T,) + P.RING_STATOR + (P.AKE_PCD_RING,)),
     'magnet spacer': '6061(비자성) 선반 가공, Ø9 × 4.5, 위 Ø6.04 × 2.5 자석 포켓, 아래 Ø5.9 × 2.3 스피곳',
@@ -196,11 +196,11 @@ def inside_images():
     set_visible(('femur_L', 'tibia_L', 'wheel_L'), False)
     out.append(snap('21_inside_side_left_leg_off', (0, 2000, 420), c, ortho=True))
     set_visible(('femur_L', 'tibia_L', 'wheel_L'), True)
-    set_visible(('rail_', 'end_plugs', 'battery_24V'), False)
+    set_visible(('rail_', 'battery_24V'), False)
     out.append(snap('22_battery_tray_and_tubes', (700, -500, 900), c))
     set_visible(('battery_tray', 'spine_tube_'), False)
     out.append(snap('23_electronics_deck', (330, 230, 560), (0, 0, 335), fit=False))
-    set_visible(SHELL + ('top_plate', 'rail_', 'end_plugs', 'battery_24V', 'battery_tray', 'spine_tube_'), True)
+    set_visible(SHELL + ('top_plate', 'rail_', 'battery_24V', 'battery_tray', 'spine_tube_'), True)
     set_visible(('shell_front_L', 'shell_mid_L', 'shell_rear_L', 'saddle_L', 'drum_ring_L', 'deco_light_ring_L',
                  'deco_drum_arc_L'), False)
     out.append(snap('24_cutaway_left_shell_off', (900, 950, 700), (0, 0, 330)))
@@ -286,8 +286,8 @@ def fasteners():
         ('배선', '저두 볼트 DIN 7984', 'M2.5 × 6', 24, '케이블 클립 → 링크 홈 옆 인서트'),
         ('배선', '열압입 인서트 황동', 'M2.5 × 4 (구멍 Ø3.6 × 5)', 24, '링크 배선 홈 옆'),
         ('배선', '고무 그로밋', 'Ø16 구멍, 판 1.4 mm', 2, '셸 hip 케이블 출구'),
-        ('몸통', '접시 볼트 ISO 10642', 'M5 × 12', 4, '척추 관 마개 → hip 판'),
-        ('몸통', '접시 볼트 ISO 10642', 'M4 × 12', 4, '위 레일 마개 → hip 판'),
+        ('몸통', '접시 볼트 ISO 10642', 'M5 × 12', 4, 'hip 판 → 척추 봉 끝 M5 탭(물림 약 7.5 mm)'),
+        ('몸통', '접시 볼트 ISO 10642', 'M4 × 12', 4, 'hip 판 → 위 레일 끝 M4 탭(물림 약 7.5 mm)'),
         ('몸통', '육각 홈붙이 볼트 ISO 4762', 'M4 × 25', 8, '윗판 → 위 레일(관통)'),
         ('몸통', '나일론 너트 DIN 985 + 와셔 DIN 125', 'M4', 8, '위 레일 아래'),
         ('몸통', '열압입 인서트 황동', 'M4 × 5.7 (구멍 Ø5.6 × 6)', top_plate_inserts(), '윗판 25 mm 격자(짐·로봇팔)'),
@@ -297,7 +297,7 @@ def fasteners():
         ('몸통', '저두 볼트 DIN 7984', 'M2.5 × 6', 4, 'mjpower-ss → 데크 보스'),
         ('몸통', '열압입 인서트 황동', 'M2.5 × 4 (구멍 Ø3.6 × 5)', 8, '데크 보스(라즈베리파이 4, mjpower-ss 4)'),
         ('몸통', '육각 너트 / 볼트 (pi3hat 동봉)', 'M2.5', 4, 'pi3hat 위 스탠드오프'),
-        ('몸통', '벨크로 스트랩', '폭 25 mm × 400 mm', 2, '배터리 + 트레이를 척추 관에 묶음(트레이 슬롯)'),
+        ('몸통', '벨크로 스트랩', '폭 25 mm × 400 mm', 2, '배터리 + 트레이를 척추 봉에 묶음(트레이 슬롯)'),
         ('몸통', '폼 패드', '75 × 310 × 1 mm', 1, '배터리 밑'),
     ]
     return rows

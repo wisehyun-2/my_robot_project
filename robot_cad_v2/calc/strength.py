@@ -342,43 +342,43 @@ def main():
         w = F / 7 / span
         M = w * span ** 2 / 8
         dlt = 5 * w * span ** 4 / (384 * E_PETG * I)
-        rows.append(('배터리 트레이 리브 7개(T 38×2.4 + 2.4×8), 관 사이 %.0f mm, %s' % (span, tag),
+        rows.append(('배터리 트레이 리브 7개(T 38×2.4 + 2.4×8), 봉 사이 %.0f mm, %s' % (span, tag),
                      'σ %.1f MPa' % (M * c / I), '처짐 %.2f mm (한계 0.5)' % dlt, ok(dlt if F < 200 else 0, 0.5)))
         if F < 200:
             verdict.append(('배터리 트레이 처짐(설계 120 N)', '%.2f mm / 0.5' % dlt, ok(dlt, 0.5)))
-    It = math.pi / 64 * (P.TUBE_D ** 4 - (P.TUBE_D - 2 * P.TUBE_WALL) ** 4)
+    It = math.pi / 64 * P.TUBE_D ** 4                                       # solid bars (10-29)
     Lt = 2 * (P.YW - P.HIP_PLATE_T)
     for tag, F in (('설계 120 N', 120.0), ('검토 250 N', 250.0)):
         w = F / 2 / P.BATTERY[1]
         M = w * P.BATTERY[1] * (Lt / 4 - P.BATTERY[1] / 8)
         dlt = 5 * (F / 2 / Lt) * Lt ** 4 / (384 * E_AL * It)
-        rows.append(('척추 관 Ø%.0f×%.1f 6061 2개, 경간 %.0f(단순 지지), %s' % (P.TUBE_D, P.TUBE_WALL, Lt, tag),
+        rows.append(('척추 봉 Ø%.0f 통짜 6061 2개, 경간 %.0f(단순 지지), %s' % (P.TUBE_D, Lt, tag),
                      'σ %.0f MPa (항복 276)' % (M * P.TUBE_D / 2 / It), '처짐 %.2f mm' % dlt,
                      ok(dlt if F < 200 else 0, 0.5)))
         if F < 200:
-            verdict.append(('척추 관 처짐(설계 120 N)', '%.2f mm / 0.5' % dlt, ok(dlt, 0.5)))
-    Ir = (P.RAIL_S ** 4 - (P.RAIL_S - 2 * P.RAIL_WALL) ** 4) / 12
+            verdict.append(('척추 봉 처짐(설계 120 N)', '%.2f mm / 0.5' % dlt, ok(dlt, 0.5)))
+    Ir = P.RAIL_S ** 4 / 12
     for tag, F in (('설계 250 N', 250.0), ('검토 500 N', 500.0)):
         M = F / 2 * Lt / 4
         dlt = (F / 2) * Lt ** 3 / (48 * E_AL * Ir)
-        rows.append(('위 레일 %.0f×%.0f×%.1f 6061 2개, 가운데 집중, %s' % (P.RAIL_S, P.RAIL_S, P.RAIL_WALL, tag),
+        rows.append(('위 레일 %.0f×%.0f 통짜 6061 2개, 가운데 집중, %s' % (P.RAIL_S, P.RAIL_S, tag),
                      'σ %.0f MPa' % (M * P.RAIL_S / 2 / Ir), '처짐 %.2f mm (윗판이 더 받쳐 줌)' % dlt,
                      ok(M * P.RAIL_S / 2 / Ir, Y_AL / 2)))
         if F > 300:
             verdict.append(('위 레일 굽힘(검토 500 N)', '%.0f MPa / 276' % (M * P.RAIL_S / 2 / Ir),
                             ok(M * P.RAIL_S / 2 / Ir, Y_AL)))
-    # 6063 instead of 6061-T6 for the tube / square tube (only if 6061-T6 cannot be bought): KS minimum yield;
+    # 6063 instead of 6061-T6 for the round / square bar (only if 6061-T6 cannot be bought): KS minimum yield;
     # E is the same, so the deflections above do not change.  Rail checked also at the Ø4.4 bolt holes (net section).
     x_hole = Lt / 2 - 33.3                                                  # inner bolt-hole pair, from the rail end
-    I_net = Ir - 2 * (4.4 * P.RAIL_WALL ** 3 / 12 + 4.4 * P.RAIL_WALL * ((P.RAIL_S - P.RAIL_WALL) / 2) ** 2)
+    I_net = Ir - 4.4 * P.RAIL_S ** 3 / 12                                   # vertical Ø4.4 hole through the bar
     s_rail = max(500.0 / 2 * Lt / 4, 500.0 / 4 * x_hole * Ir / I_net) * P.RAIL_S / 2 / Ir
     w = 250.0 / 2 / P.BATTERY[1]
     s_tube = w * P.BATTERY[1] * (Lt / 4 - P.BATTERY[1] / 8) * P.TUBE_D / 2 / It
     for alloy, ya in Y_6063.items():
-        rows.append(('6063-%s 대체: 위 레일(검토 500 N, 구멍 단면 포함) / 척추 관(검토 250 N)' % alloy,
+        rows.append(('6063-%s 대체: 위 레일(검토 500 N, 구멍 단면 포함) / 척추 봉(검토 250 N)' % alloy,
                      'σ %.0f / %.0f MPa' % (s_rail, s_tube), '항복 ≥ %.0f MPa (KS 최소)' % ya,
                      ok(max(s_rail, s_tube), ya)))
-        verdict.append(('6063-%s 대체 시 레일·척추 관(검토)' % alloy, '%.0f MPa / %.0f' % (max(s_rail, s_tube), ya),
+        verdict.append(('6063-%s 대체 시 레일·척추 봉(검토)' % alloy, '%.0f MPa / %.0f' % (max(s_rail, s_tube), ya),
                         ok(max(s_rail, s_tube), ya)))
     for tag, Mm in (('설계 15 N·m', 15000.0), ('검토 30 N·m', 30000.0)):
         f = Mm / (2 * 50.0)
@@ -390,7 +390,7 @@ def main():
     Wp = 110 * 5.0 ** 2 / 6
     Mh = Mx_hip(F_CHK, FL_CHK)
     rows.append(('hip 판 웹 5 mm 6061, 옆 모멘트(검토) %.0f N·m' % (Mh / 1000), '한 단면(폭 110)이 전부 받으면 W %.0f mm³'
-                 % Wp, 'σ ~%.0f MPa(검토) / ~%.0f MPa(설계), 관·레일 두 경로로 나뉘면 절반' % (Mh / Wp, Mh / 2 / Wp),
+                 % Wp, 'σ ~%.0f MPa(검토) / ~%.0f MPa(설계), 봉·레일 두 경로로 나뉘면 절반' % (Mh / Wp, Mh / 2 / Wp),
                  '설계 SF %.1f (FEA 권장)' % (Y_AL / (Mh / 2 / Wp))))
     verdict.append(('hip 판 옆 모멘트(설계)', '~%.0f MPa / 276' % (Mh / 2 / Wp), ok(Mh / 2 / Wp, Y_AL)))
     table(('항목', '하중·응력', '결과', '판정'), rows)

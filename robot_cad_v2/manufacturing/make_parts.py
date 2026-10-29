@@ -16,9 +16,9 @@ whether or not Fusion has been rebuilt since; the re-cuts are idempotent:
   * no lightening holes (removed 10-29 to cut machining cost): the five Ø22 holes, the 30 × 58 window and
     the two small top windows are filled, and the shell M3 tapped holes at x ±40, z +140 re-drilled (in the
     10-28 export their centres fall inside the top windows).
-The other parts are built here from params: end plugs (round and square in separate files, tap-drill
-holes, square plug long edges params.PLUG_CHAMFER), magnet spacer without the AKE magnet body, spine tube,
-rail and the clamp rings (stator ring ID from params.RING_STATOR).
+The other parts are built here from params: magnet spacer without the AKE magnet body, spine bar and rail
+(solid, tap-drill holes params.END_TAP in both ends; the 10-28 tubes with glued end plugs are gone) and the
+clamp rings (stator ring ID from params.RING_STATOR).
 """
 import math
 import pathlib
@@ -53,13 +53,9 @@ PARTS = {
                         frame='원점 hip 축, X 로봇 뒤(−x), Y 위(+z), Z 로봇 중심 쪽(Z=0 허브 바깥 면, Z=9.5 등록 보스 면)'),
     'magnet_spacer': dict(qty=6, material='AL6061-T6 환봉 Ø10 (비자성)', process='선반', finish='없음(탈지)',
                           frame='Z 축, Z=0 스피곳 끝'),
-    'end_plug_round': dict(qty=4, material='AL6061-T6 환봉 Ø16', process='선반', finish='없음',
-                           frame='Z 축, Z=0 한쪽 끝면'),
-    'end_plug_square': dict(qty=4, material='AL6061-T6 각봉 15 또는 판재', process='3축 MCT', finish='없음',
-                            frame='Z 축, Z=0 한쪽 끝면'),
-    'spine_tube': dict(qty=2, material='AL6061-T6 원관 Ø16 × 1.0 (6063-T5/T6 허용)', process='선반 (절단 + 끝면 면삭)',
+    'spine_tube': dict(qty=2, material='AL6061-T6 환봉 Ø16 (6063-T5/T6 허용)', process='선반 (절단 + 끝면 면삭 + 양 끝 M5 탭)',
                        finish='없음', frame='X 축, X=0 한쪽 끝면'),
-    'rail': dict(qty=2, material='AL6061-T6 각관 15 × 15 × 1.0 (6063-T5/T6 허용)', process='3축 MCT (끝면 면삭 + 구멍)',
+    'rail': dict(qty=2, material='AL6061-T6 각봉 15 × 15 (6063-T5/T6 허용)', process='3축 MCT (끝면 면삭 + 양 끝 M4 탭 + 구멍)',
                  finish='없음', frame='X 길이 방향(X=0 한쪽 끝면), Z 구멍 방향'),
     'clamp_ring_output': dict(qty=4, material='SUS304 2B %gt' % P.RING_T, process='판금 레이저 절단 (대안: 와이어커팅)',
                               finish='없음(버 제거)', frame='Z 두께 방향, 원점 링 중심'),
@@ -127,29 +123,23 @@ def magnet_spacer():
     return O.clean(s)
 
 
-def end_plug_round():
-    r = P.TUBE_D / 2 - P.TUBE_WALL - 0.05
-    return O.cut(O.cyl('z', 0, 0, 0, 10.0, r), O.cyl('z', 0, 0, -1, 11, P.TAP_DRILL['M5'] / 2))
-
-
-def end_plug_square():
-    a = (P.RAIL_S - 2 * P.RAIL_WALL - 0.1) / 2
-    b = O.box(-a, a, -a, a, 0, 10.0)
-    b = O.chamfer_edges(b, P.PLUG_CHAMFER, lambda p, q: abs(p[0] - q[0]) < 1e-6 and abs(p[1] - q[1]) < 1e-6)
-    return O.clean(O.cut(b, O.cyl('z', 0, 0, -1, 11, P.TAP_DRILL['M4'] / 2)))
+def end_taps(b, size):
+    """Tap-drill holes (params.END_TAP drill depth) on the X axis in both ends of a TORSO_LEN bar."""
+    depth, r = P.END_TAP[size][0], P.TAP_DRILL[size] / 2
+    b = O.cut(b, O.cyl('x', 0, 0, -1, depth, r))
+    return O.cut(b, O.cyl('x', 0, 0, TORSO_LEN - depth, TORSO_LEN + 1, r))
 
 
 def spine_tube():
-    r = P.TUBE_D / 2
-    return O.cut(O.cyl('x', 0, 0, 0, TORSO_LEN, r), O.cyl('x', 0, 0, -1, TORSO_LEN + 1, r - P.TUBE_WALL))
+    return O.clean(end_taps(O.cyl('x', 0, 0, 0, TORSO_LEN, P.TUBE_D / 2), 'M5'))
 
 
 def rail():
-    a, w = P.RAIL_S / 2, P.RAIL_WALL
-    b = O.cut(O.box(0, TORSO_LEN, -a, a, -a, a), O.box(-1, TORSO_LEN + 1, -a + w, a - w, -a + w, a - w))
+    a = P.RAIL_S / 2
+    b = O.box(0, TORSO_LEN, -a, a, -a, a)
     for x in RAIL_HOLES:
         b = O.cut(b, O.cyl('z', x, 0, -a - 1, a + 1, 2.2))
-    return O.clean(b)
+    return O.clean(end_taps(b, 'M4'))
 
 
 def ring(od, idia, pcd, hole, a0):

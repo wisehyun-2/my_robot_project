@@ -136,7 +136,8 @@ HIP_CBORE_OPEN = 14.0        # M2.5 counterbores run out into the Ø30 hole (to 
 HIP_CSK_EAR_R = 8.0          # web ear around the tube M5 countersinks (r 61.7): 2.4 mm wall to the countersink rim
                              # (0.83 mm at the r 68 disc), the ear stands 1.7 mm proud of the disc
 TAP_DRILL = {'M3': 2.5, 'M4': 3.3, 'M5': 4.2}
-PLUG_CHAMFER = 1.0          # long edges of the square rail plugs: clear the rail's inner corner radius
+END_TAP = {'M5': (14.0, 11.0), 'M4': (12.0, 9.0)}   # spine / rail end taps: drill depth, full-thread depth
+                            # (the ISO 10642 x 12 screws from the hip plate engage ~7.5 mm)
 GAP_TYRE = 5.0              # tyre sidewall -> shank plate
 
 Y_FEMUR_IN = YW + GAP_FEMUR
@@ -203,8 +204,10 @@ BATTERY = (75.0, 310.0, 75.0)  # x, y, z
 BATTERY_MASS = 1.8
 BATTERY_X = 1.3             # tuned with check.suggest_battery_offset(): torso COM over the hip-axis midpoint
 BATTERY_Y = -0.1
-TUBE_X, TUBE_Z, TUBE_D, TUBE_WALL = 47.0, 40.0, 16.0, 1.0      # 2 x Ø16 x 1.0 6061-T6 spine tubes (battery)
-RAIL_X, RAIL_Z, RAIL_S, RAIL_WALL = 52.0, 135.5, 15.0, 1.0     # 2 x 15 x 15 x 1.0 6061-T6 top rails (payload)
+TUBE_X, TUBE_Z, TUBE_D = 47.0, 40.0, 16.0      # 2 x Ø16 6061-T6 solid spine bars (battery), ends tapped M5
+RAIL_X, RAIL_Z, RAIL_S = 52.0, 135.5, 15.0     # 2 x 15 x 15 6061-T6 solid top rails (payload), ends tapped M4
+# (10-29: solid bars tapped at the ends replace the Ø16 x 1.0 tube / 15 x 15 x 1.0 rail + 8 glued end plugs:
+#  4 fewer part kinds and no glue joint in the load path, for +0.53 kg)
 TRAY_Z = TUBE_Z + TUBE_D / 2           # tray underside on the tubes
 TRAY_T = 2.4                           # floor; 7 ribs (2.4 x 8) span the 94 mm between the tubes (calc/strength.py)
 TRAY_RIBS = (0.0, -38.0, 38.0, -76.0, 76.0, -114.0, 114.0)

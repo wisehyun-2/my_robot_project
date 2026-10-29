@@ -15,9 +15,10 @@ ZH = P.Z_HIP
 
 def hip_plate(s):
     """6061-T6 hip plate, 9.5 mm finished (10 mm+ stock): hub 8 mm with the Ø42 H7 pilot pocket, Ø30 hole,
-    6 x M2.5 low-head counterbored on the outer face, Ø80 x 1.5 register boss for the driver cup on the inner face;
-    5 mm web: disc r 68 + column + top bar for the payload rails, M5 / M4 countersunk (90 deg, ISO 10642) for
-    the tube / rail end plugs, M3 tapped (tap-drill holes) for the cup, deck and shell."""
+    6 x M2.5 counterbored on the outer face (run out into the Ø30 hole), Ø80 x 1.5 register boss for the driver cup
+    on the inner face; 5 mm web: disc r 68 + column + top bar for the payload rails + ears at the tube screws,
+    M5 / M4 countersunk (90 deg, ISO 10642) into the tapped spine / rail bar ends, M3 tapped (tap-drill holes) for the cup,
+    deck and shell.  No wall under 1.5 mm (params.HIP_GROOVE_R / HIP_CBORE_OPEN / HIP_CSK_EAR_R)."""
     B = C.Builder(side=s)
     y_in = P.YW - P.HIP_PLATE_T                 # 164
     y_web = y_in + P.HIP_WEB_T                  # 169
@@ -64,42 +65,33 @@ def hip_plate(s):
     return web
 
 
-def spine_tube(sx):
-    B = C.Builder()
+def end_taps(b, B, x, z, size):
+    """Tapped holes (tap-drill Ø, params.END_TAP drill depth) in both ends of a bar between the hip plates."""
     y = P.YW - P.HIP_PLATE_T
-    return B.tube((sx * P.TUBE_X, -y, ZH + P.TUBE_Z), (sx * P.TUBE_X, y, ZH + P.TUBE_Z), P.TUBE_D / 2, P.TUBE_D / 2 - P.TUBE_WALL)
-
-
-def rail(sx):
-    B = C.Builder()
-    y = P.YW - P.HIP_PLATE_T
-    s, w = P.RAIL_S, P.RAIL_WALL
-    c = (sx * P.RAIL_X, 0.0, ZH + P.RAIL_Z)
-    b = B.box(c, (1, 0, 0), (0, 0, 1), s, s, 2 * y)
-    C.cut(b, B.box(c, (1, 0, 0), (0, 0, 1), s - 2 * w, s - 2 * w, 2 * y + 2))
-    for yy in (-100.0, -33.3, 33.3, 100.0):                   # top plate bolts (M4 through)
-        C.cut(b, B.zcyl(sx * P.RAIL_X, yy, ZH + P.RAIL_Z - 10, ZH + P.RAIL_Z + 10, 2.2))
+    depth = P.END_TAP[size][0]
+    for sy in (-1, 1):
+        C.cut(b, B.ycyl(x, z, sy * (y - depth), sy * (y + 1.0), P.TAP_DRILL[size] / 2))
     return b
 
 
-def rail_plugs(sx):
-    """Tapped 6061 end plugs (rails M4, tubes M5), glued 10 mm into the tube / rail ends; tapped through
-    (tap-drill holes), the square rail plugs with PLUG_CHAMFER on the long edges."""
+def spine_tube(sx):
+    """Solid 6061-T6 Ø16 spine bar, both ends tapped M5 (screws from the hip plate countersinks)."""
     B = C.Builder()
     y = P.YW - P.HIP_PLATE_T
-    out = None
-    a, c = (P.RAIL_S - 2 * P.RAIL_WALL - 0.1) / 2, P.PLUG_CHAMFER
-    for sy in (-1, 1):
-        x0, z0 = sx * P.RAIL_X, ZH + P.RAIL_Z
-        sq = B.prism([(x0 + a - c, z0 - a), (x0 + a, z0 - a + c), (x0 + a, z0 + a - c), (x0 + a - c, z0 + a),
-                      (x0 - a + c, z0 + a), (x0 - a, z0 + a - c), (x0 - a, z0 - a + c), (x0 - a + c, z0 - a)],
-                     sy * (y - 10.0), sy * y)
-        C.cut(sq, B.ycyl(x0, z0, sy * (y - 11.0), sy * (y + 1.0), P.TAP_DRILL['M4'] / 2))
-        out = C.union(out, sq)
-        rd = B.ycyl(sx * P.TUBE_X, ZH + P.TUBE_Z, sy * (y - 10.0), sy * y, P.TUBE_D / 2 - P.TUBE_WALL - 0.05)
-        C.cut(rd, B.ycyl(sx * P.TUBE_X, ZH + P.TUBE_Z, sy * (y - 11.0), sy * (y + 1.0), P.TAP_DRILL['M5'] / 2))
-        out = C.union(out, rd)
-    return out
+    b = B.ycyl(sx * P.TUBE_X, ZH + P.TUBE_Z, -y, y, P.TUBE_D / 2)
+    return end_taps(b, B, sx * P.TUBE_X, ZH + P.TUBE_Z, 'M5')
+
+
+def rail(sx):
+    """Solid 6061-T6 15 x 15 top rail, both ends tapped M4, 4 x Ø4.4 through for the top plate bolts."""
+    B = C.Builder()
+    y = P.YW - P.HIP_PLATE_T
+    s = P.RAIL_S
+    c = (sx * P.RAIL_X, 0.0, ZH + P.RAIL_Z)
+    b = B.box(c, (1, 0, 0), (0, 0, 1), s, s, 2 * y)
+    for yy in (-100.0, -33.3, 33.3, 100.0):                   # top plate bolts (M4 through)
+        C.cut(b, B.zcyl(sx * P.RAIL_X, yy, ZH + P.RAIL_Z - 10, ZH + P.RAIL_Z + 10, 2.2))
+    return end_taps(b, B, sx * P.RAIL_X, ZH + P.RAIL_Z, 'M4')
 
 
 def top_plate():

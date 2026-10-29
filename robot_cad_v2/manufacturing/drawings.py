@@ -295,8 +295,8 @@ HOLE_SPEC = {
     'B': ('M3 탭 관통 (기초 Ø2.5)', '드라이버 컵 M3×40'),
     'C': ('M3 탭 관통 (기초 Ø2.5)', '전장 데크 M3×8'),
     'D': ('M3 탭 관통 (기초 Ø2.5)', '셸 M3×6'),
-    'E': ('Ø5.4 관통 + 90° 접시 Ø11.2 (Z=3 면)', '척추 관 마개 M5×12 ISO 10642'),
-    'F': ('Ø4.4 관통 + 90° 접시 Ø9.0 (Z=3 면)', '레일 마개 M4×12 ISO 10642'),
+    'E': ('Ø5.4 관통 + 90° 접시 Ø11.2 (Z=3 면)', '척추 봉 끝 M5 탭 ← M5×12 ISO 10642'),
+    'F': ('Ø4.4 관통 + 90° 접시 Ø9.0 (Z=3 면)', '레일 끝 M4 탭 ← M4×12 ISO 10642'),
 }
 
 
@@ -395,7 +395,7 @@ def draw_hip_plate(name, pdf, png_dir):
         ['3.0', '웹 바깥 면 (E·F 접시 자리가 있는 면)'],
         ['5.5', 'Ø42 포켓 바닥 = AKE 고정링 면: 평면도 0.02, Z=8 면과 평행 0.03'],
         ['6.0', '리드선 홈(P1) 바닥'],
-        ['8.0', '웹 안쪽 면 = 기준 면 (척추 관·레일 끝이 닿음): 평면도 0.1'],
+        ['8.0', '웹 안쪽 면 = 기준 면 (척추 봉·레일 끝이 닿음): 평면도 0.1'],
         ['9.5', 'Ø80 등록 보스 면 (드라이버 컵)'],
     ], row_h=5.0, title='두께 방향 면 높이 (Z)')
     S.notes(250.0, yb - 9, GENERAL_NOTES + [
@@ -447,50 +447,9 @@ def draw_magnet_spacer(pdf, png_dir):
     finish(S, pdf, png_dir, name)
 
 
-def draw_end_plug_round(pdf, png_dir):
-    name = 'end_plug_round'
-    sh = load(name)
-    S = Sheet('A4')
-    hb = half(sh, 'y', False)
-    V = View(S, hb, (0, -1, 0), (1, 0, 0), (75.0, 100.0), 5.0, hidden=False, label='단면 (축 포함)  5:1', label_dy=10)
-    V.hatch(hb, 'y', 0.0)
-    V.axis_line((0, 0, 0), (0, 0, 10))
-    P = lambda x, z: V.pt((x, 0, z))  # noqa: E731
-    S.dim(P(-6.95, 10), P(6.95, 10), V.box[3] + 8, 'Ø13.90 ±0.02 (관 실측 내경 -0.10)')
-    S.dim(P(6.95, 0), P(6.95, 10), V.box[1] + 9, '10 ±0.1', horizontal=False)
-    S.leader(P(2.1, 6.0), (V.box[1] + 22, V.box[2] + 8), 'M5 탭 관통 (기초 Ø4.2)')
-    S.notes(150.0, 185.0, GENERAL_NOTES + [
-        '척추 관(Ø16 × 1.0, 안지름 Ø14) 양 끝에 끼우고 록타이트 638 등 고정제로 접착.',
-        '바깥지름은 실제 관에 맞춤: 관 실측 안지름 -0.10 (지름 틈 0.05~0.15).',
-        '양 끝 바깥 모서리 C0.3, 탭 입구 C0.3.',
-        'hip 판 쪽에서 ISO 10642 M5×12가 약 7.5 mm 물림.',
-    ], width=78)
-    S.title_block('척추 관 마개 (end plug round, M5)', 'WBv2-M03', info(name, '5:1'))
-    finish(S, pdf, png_dir, name)
-
-
-def draw_end_plug_square(pdf, png_dir):
-    name = 'end_plug_square'
-    sh = load(name)
-    S = Sheet('A4')
-    k, a = 4.0, 6.45
-    V = View(S, sh, (0, 0, 1), (1, 0, 0), (62.0, 157.0), k, hidden=True, label='위에서 본 그림  4:1', label_dy=6)
-    P = lambda x, y: V.pt((x, y, 10))  # noqa: E731
-    S.dim(P(-a, a), P(a, a), V.box[3] + 7, '12.90 ±0.02 (각관 실측 안치수 -0.10)')
-    S.dim(P(a, -a), P(a, a), V.box[1] + 9, '12.90 ±0.02', horizontal=False)
-    S.leader(P(a - 0.5, -a + 0.5), (V.box[1] + 22, V.box[2] - 2), 'C1.0 (긴 모서리 4곳)')
-    S.leader(P(1.17, 1.17), (V.box[1] + 22, V.box[3] - 6), 'M4 탭 관통 (기초 Ø3.3)')
-    V2 = View(S, sh, (0, -1, 0), (1, 0, 0), (62.0, 72.0), k, hidden=True, label='앞에서 본 그림  4:1', label_dy=7)
-    S.dim(V2.pt((a, 0, 0)), V2.pt((a, 0, 10)), V2.box[1] + 9, '10 ±0.1', horizontal=False)
-    S.notes(150.0, 185.0, GENERAL_NOTES + [
-        '레일(각관 15 × 15 × 1.0, 안치수 13 × 13) 양 끝에 끼우고 록타이트 638 등으로 접착.',
-        '바깥 치수는 실제 각관에 맞춤: 실측 안치수 -0.10.',
-        'C1.0: 각관 안쪽 모서리 R(소재 R0.5~1.0)에 걸리지 않게 함.',
-        '양 끝면 모서리 C0.3, 탭 입구 C0.3.',
-        'hip 판 쪽에서 ISO 10642 M4×12가 약 7.5 mm 물림.',
-    ], width=78)
-    S.title_block('레일 마개 (end plug square, M4)', 'WBv2-M04', info(name, '4:1'))
-    finish(S, pdf, png_dir, name)
+def end_tap_text(size):
+    drill, thread = M.P.END_TAP[size]
+    return '양 끝 %s 탭 깊이 %g (기초 Ø%g 깊이 %g)' % (size, thread, M.P.TAP_DRILL[size], drill)
 
 
 def draw_spine_tube(pdf, png_dir):
@@ -499,21 +458,27 @@ def draw_spine_tube(pdf, png_dir):
     S = Sheet('A4')
     V = View(S, sh, (0, -1, 0), (1, 0, 0), (30.0, 165.0), 0.6, hidden=True, label='앞에서 본 그림  0.6:1')
     V.axis_line((0, 0, 0), (328, 0, 0))
+    for z in (-8.0, 8.0):                    # cylinder silhouettes (no edges there for the sampled projection)
+        S.line([V.pt((0, 0, z)), V.pt((328, 0, z))], lw=LW_VIS)
+    drill, r = M.P.END_TAP['M5'][0], M.P.TAP_DRILL['M5'] / 2
+    for x0, x1 in ((0.0, drill), (328.0 - drill, 328.0)):
+        for z in (-r, r):
+            S.line([V.pt((x0, 0, z)), V.pt((x1, 0, z))], lw=LW_HID, ls=(0, (3, 1.5)), color='0.35')
     S.dim(V.pt((0, 0, 8)), V.pt((328, 0, 8)), V.box[3] + 8, '328.00 ±0.05')
     V2 = View(S, sh, (-1, 0, 0), (0, -1, 0), (55.0, 95.0), 3.0, hidden=False, label='끝면  3:1')
     V2.axis_line((0, 8, 0), (0, -8, 0))
     V2.axis_line((0, 0, 8), (0, 0, -8))
     S.dim(V2.pt((0, 8, 0)), V2.pt((0, -8, 0)), V2.box[3] + 6, 'Ø16 (소재)')
-    S.leader(V2.pt((0, -4.95, -4.95)), (V2.box[1] + 12, V2.box[2] + 4), 'Ø14, 두께 1.0 (소재)')
+    S.leader(V2.pt((0, -1.5, -1.5)), (V2.box[1] + 12, V2.box[2] + 4), end_tap_text('M5'))
     S.notes(120.0, 126.0, GENERAL_NOTES + [
-        '시판 6061-T6 원관 Ø16 × 1.0(인발관)을 잘라 양 끝 면삭.',
-        '길이 328.00 ±0.05: 척추 관 2개와 레일 2개(WBv2-M06), 4개를 같은 값으로 같은 세팅에서 맞춤.',
-        '양 끝면 축에 직각 0.05, 안·밖 버 제거.',
+        '시판 6061-T6 환봉 Ø16(통짜)을 잘라 양 끝 면삭, 양 끝 중심에 M5 탭.',
+        '길이 328.00 ±0.05: 척추 봉 2개와 레일 2개(WBv2-M06), 4개를 같은 값으로 같은 세팅에서 맞춤.',
+        '양 끝면 축에 직각 0.05, 버 제거, 탭 입구 C0.3. 탭은 축 중심 Ø0.1 안.',
         '4개 길이가 다르면 hip 판이 비틀려 좌우 hip 모터 축이 어긋남.',
-        '양 끝에 마개 WBv2-M03을 접착(조립 때): 끝면보다 0~0.2 안쪽, 튀어나오면 안 됨.',
+        'hip 판 쪽에서 ISO 10642 M5×12가 약 7.5 mm 물림.',
         '6061-T6을 구할 수 없으면 6063-T5/T6 사용 가능(강도 재계산 통과, calc/strength.md 4절).',
     ], width=100)
-    S.title_block('척추 관 (spine tube Ø16 × 1.0)', 'WBv2-M05', info(name, '0.6:1, 3:1'))
+    S.title_block('척추 봉 (spine bar Ø16, 통짜)', 'WBv2-M05', info(name, '0.6:1, 3:1'))
     finish(S, pdf, png_dir, name)
 
 
@@ -528,19 +493,20 @@ def draw_rail(pdf, png_dir):
         S.dim(V.pt((0, 7.5, 7.5)), V.pt((x, 0, 7.5)), top + 5 + 5 * i, '%.1f ±0.1' % x)
     S.dim(V.pt((0, 7.5, 7.5)), V.pt((328, 7.5, 7.5)), top + 27, '328.00 ±0.05')
     S.leader(V.pt((M.RAIL_HOLES[0] + 1.6, -1.6, 7.5)), (V.pt((M.RAIL_HOLES[0], 0, 0))[0] + 15, V.box[2] - 7),
-             '4 × Ø4.4 관통 (위·아래 벽, 폭 중앙)')
+             '4 × Ø4.4 관통 (폭 중앙)')
     V2 = View(S, sh, (-1, 0, 0), (0, -1, 0), (55.0, 92.0), 3.0, hidden=False, label='끝면  3:1')
     S.dim(V2.pt((0, 7.5, 7.5)), V2.pt((0, -7.5, 7.5)), V2.box[3] + 6, '15 (소재)')
     S.dim(V2.pt((0, -7.5, -7.5)), V2.pt((0, -7.5, 7.5)), V2.box[1] + 8, '15', horizontal=False)
-    S.leader(V2.pt((0, -7.0, 2.0)), (V2.box[1] + 18, V2.box[2] + 2), '두께 1.0 (소재)')
+    S.leader(V2.pt((0, -1.2, 1.2)), (V2.box[1] + 18, V2.box[2] + 2), end_tap_text('M4'))
     S.notes(120.0, 126.0, GENERAL_NOTES + [
-        '시판 6061-T6 각관 15 × 15 × 1.0을 잘라 양 끝 면삭.',
-        '길이 328.00 ±0.05: 척추 관(WBv2-M05) 2개와 함께 4개를 같은 값으로 같은 세팅에서 맞춤.',
-        'Ø4.4 관통 4곳: 위·아래 벽을 한 번에(폭 중앙, 위치 ±0.1). 윗판 M4×25 관통 볼트 자리.',
-        '양 끝면 직각 0.05, 버 제거. 양 끝에 마개 WBv2-M04 접착(조립 때): 끝면보다 0~0.2 안쪽.',
-        '6061-T6을 구할 수 없으면 6063-T5/T6 사용 가능(강도 재계산 통과, calc/strength.md 4절). 관통 볼트는 각관이 눌리지 않을 만큼만 조임.',
+        '시판 6061-T6 각봉 15 × 15(통짜)를 잘라 양 끝 면삭, 양 끝 중심에 M4 탭.',
+        '길이 328.00 ±0.05: 척추 봉(WBv2-M05) 2개와 함께 4개를 같은 값으로 같은 세팅에서 맞춤.',
+        'Ø4.4 관통 4곳: 위에서 아래로 한 번에(폭 중앙, 위치 ±0.1). 윗판 M4×25 관통 볼트 자리.',
+        '양 끝면 직각 0.05, 버 제거, 탭 입구 C0.3. 탭은 단면 중심 Ø0.1 안.',
+        'hip 판 쪽에서 ISO 10642 M4×12가 약 7.5 mm 물림.',
+        '6061-T6을 구할 수 없으면 6063-T5/T6 사용 가능(강도 재계산 통과, calc/strength.md 4절).',
     ], width=100)
-    S.title_block('위 레일 (rail 15 × 15 × 1.0)', 'WBv2-M06', info(name, '0.6:1, 3:1'))
+    S.title_block('위 레일 (rail 15 × 15, 통짜)', 'WBv2-M06', info(name, '0.6:1, 3:1'))
     finish(S, pdf, png_dir, name)
 
 
@@ -575,8 +541,6 @@ def main():
         ('hip_plate_L', lambda pdf, d: draw_hip_plate('hip_plate_L', pdf, d)),
         ('hip_plate_R', lambda pdf, d: draw_hip_plate('hip_plate_R', pdf, d)),
         ('magnet_spacer', draw_magnet_spacer),
-        ('end_plug_round', draw_end_plug_round),
-        ('end_plug_square', draw_end_plug_square),
         ('spine_tube', draw_spine_tube),
         ('rail', draw_rail),
         ('clamp_ring_output', lambda pdf, d: draw_ring(

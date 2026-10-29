@@ -19,8 +19,8 @@ SPEC = {   # kind: (colour, screw, qty per plate, where it threads, head side)
     'B': ('#1f77b4', 'ISO 4762 M3 × 40', '드라이버 컵 → hip 판 M3 탭', '안쪽(컵 바닥)에서'),
     'C': ('#2ca02c', 'ISO 4762 M3 × 8', '전장 데크 플랜지 → hip 판 M3 탭', '안쪽(데크 플랜지)에서'),
     'D': ('#9467bd', 'ISO 7380 M3 × 6 (버튼)', '셸 → hip 판 M3 탭', '바깥(셸 위)에서'),
-    'E': ('#ff7f0e', 'ISO 10642 M5 × 12 (접시)', 'hip 판 → 척추 관 마개 M5 탭', '바깥 면(접시 자리)에서'),
-    'F': ('#8c564b', 'ISO 10642 M4 × 12 (접시)', 'hip 판 → 레일 마개 M4 탭', '바깥 면(접시 자리)에서'),
+    'E': ('#ff7f0e', 'ISO 10642 M5 × 12 (접시)', 'hip 판 → 척추 봉 끝 M5 탭', '바깥 면(접시 자리)에서'),
+    'F': ('#8c564b', 'ISO 10642 M4 × 12 (접시)', 'hip 판 → 레일 끝 M4 탭', '바깥 면(접시 자리)에서'),
 }
 fig = plt.figure(figsize=(17, 11))
 ax = fig.add_axes([0.0, 0.02, 0.5, 0.92]); ax.set_aspect('equal'); ax.axis('off')
@@ -49,6 +49,6 @@ for k, (c, screw, what, head) in SPEC.items():
     bx.text(7, y + 1.6, '%s  × %d개' % (screw, n), fontsize=12.5, weight='bold', va='center')
     bx.text(7, y - 2.2, '%s  ·  머리: %s' % (what, head), fontsize=10.5, va='center')
     y -= 11
-bx.text(0, y + 2, 'hip 판에 나사산(탭)이 있는 곳: B·C·D (M3 11개)\nA·E·F는 판을 지나가기만 하고, 나사산은 모터·마개 쪽에 있음\nA는 반드시 12.9급 강철 볼트 (스테인리스 A2 금지)\n경량 구멍 없음 (가공비 절감으로 제거)',
+bx.text(0, y + 2, 'hip 판에 나사산(탭)이 있는 곳: B·C·D (M3 11개)\nA·E·F는 판을 지나가기만 하고, 나사산은 모터·봉·레일 쪽에 있음\nA는 반드시 12.9급 강철 볼트 (스테인리스 A2 금지)\n경량 구멍 없음 (가공비 절감으로 제거)',
         fontsize=11, va='top', linespacing=1.6)
 fig.savefig(sys.argv[1] if len(sys.argv) > 1 else HERE / 'hip_plate_screws.png', dpi=100, bbox_inches='tight')

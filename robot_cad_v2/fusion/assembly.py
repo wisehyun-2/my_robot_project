@@ -97,7 +97,6 @@ def build_torso(parts):
     add_part(t, 'spine_tube_B', TO.spine_tube(-1), 'Al6061', 'alu')
     add_part(t, 'rail_F', TO.rail(1), 'Al6061', 'alu')
     add_part(t, 'rail_B', TO.rail(-1), 'Al6061', 'alu')
-    add_part(t, 'end_plugs', C.union(TO.rail_plugs(1), TO.rail_plugs(-1)), 'Al6061', 'alu')
     add_part(t, 'top_plate', TO.top_plate(), 'PETG print', 'black')
     add_part(t, 'battery_tray', TO.tray(), 'PETG print', 'dark grey')
     place(t, parts['battery'], TO.battery_frame())
