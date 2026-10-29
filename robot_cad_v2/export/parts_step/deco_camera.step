@@ -13,7 +13,7 @@ FILE_DESCRIPTION(
 
 FILE_NAME(
 /* name */ 'deco_camera.step',
-/* time_stamp */ '2026-10-29T20:34:45+09:00',
+/* time_stamp */ '2026-10-29T23:31:02+09:00',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20.2',
@@ -246,7 +246,7 @@ SOLID_ANGLE_UNIT()
 #191=PRODUCT_DEFINITION_SHAPE('',$,#194);
 #192=SHAPE_REPRESENTATION('',(#110),#184);
 #193=PRODUCT_DEFINITION_CONTEXT('part definition',#198,'design');
-#194=PRODUCT_DEFINITION('2026-10-29-20-34-45-214','deco_camera',#195,#193);
+#194=PRODUCT_DEFINITION('2026-10-29-23-31-02-579','deco_camera',#195,#193);
 #195=PRODUCT_DEFINITION_FORMATION('',$,#200);
 #196=PRODUCT_RELATED_PRODUCT_CATEGORY('deco_camera','deco_camera',(#200));
 #197=APPLICATION_PROTOCOL_DEFINITION('international standard',
@@ -254,7 +254,7 @@ SOLID_ANGLE_UNIT()
 #198=APPLICATION_CONTEXT(
 'Core Data for Automotive Mechanical Design Process');
 #199=PRODUCT_CONTEXT('part definition',#198,'mechanical');
-#200=PRODUCT('2026-10-29-20-34-45-214','deco_camera',
+#200=PRODUCT('2026-10-29-23-31-02-579','deco_camera',
 'PETG \X2\C587C740\X0\ \X2\C7A5C2DDD310\X0\(\X2\C0C9\X0\: \X2\C774B98400B7ADF8B9BC\X0\ 
 \X2\CC38C870\X0\), \X2\C21CAC04C811CC29C81CB85C\X0\ \X2\BD99C784\X0\',(#199));
 #201=PRESENTATION_STYLE_ASSIGNMENT((#204));

@@ -13,7 +13,7 @@ FILE_DESCRIPTION(
 
 FILE_NAME(
 /* name */ 'deco_light_ring_R.step',
-/* time_stamp */ '2026-10-29T20:34:53+09:00',
+/* time_stamp */ '2026-10-29T23:31:11+09:00',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20.2',
@@ -185,7 +185,7 @@ SOLID_ANGLE_UNIT()
 #131=PRODUCT_DEFINITION_SHAPE('',$,#134);
 #132=SHAPE_REPRESENTATION('',(#78),#124);
 #133=PRODUCT_DEFINITION_CONTEXT('part definition',#138,'design');
-#134=PRODUCT_DEFINITION('2026-10-29-20-34-53-395','deco_light_ring_R',#135,
+#134=PRODUCT_DEFINITION('2026-10-29-23-31-11-779','deco_light_ring_R',#135,
 #133);
 #135=PRODUCT_DEFINITION_FORMATION('',$,#140);
 #136=PRODUCT_RELATED_PRODUCT_CATEGORY('deco_light_ring_R',
@@ -195,7 +195,7 @@ SOLID_ANGLE_UNIT()
 #138=APPLICATION_CONTEXT(
 'Core Data for Automotive Mechanical Design Process');
 #139=PRODUCT_CONTEXT('part definition',#138,'mechanical');
-#140=PRODUCT('2026-10-29-20-34-53-395','deco_light_ring_R',
+#140=PRODUCT('2026-10-29-23-31-11-779','deco_light_ring_R',
 'PETG \X2\C587C740\X0\ \X2\C7A5C2DDD310\X0\(\X2\C0C9\X0\: \X2\C774B98400B7ADF8B9BC\X0\ 
 \X2\CC38C870\X0\), \X2\C21CAC04C811CC29C81CB85C\X0\ \X2\BD99C784\X0\',(#139));
 #141=PRESENTATION_STYLE_ASSIGNMENT((#143));

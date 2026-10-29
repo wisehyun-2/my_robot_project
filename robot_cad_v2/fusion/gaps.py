@@ -8,6 +8,7 @@ import adsk.core
 
 import cadlib as C
 import check as K
+import params as P
 import poses as PO
 
 SIDES = ('L', 'R')
@@ -49,7 +50,9 @@ def encoder_rows(k):
     rows = []
     for joint in ('hip', 'knee', 'wheel'):
         st, sp, bd = _driver_set(joint, k)
-        rows.append(('%s %s: 엔코더 칩 – 자석' % (k, joint), dist(body(sp, 'magnet'), bd), '2.0 (1.5~2.5)'))
+        rows.append(('%s %s: 엔코더 칩(STEP 1.4 높이) – 자석' % (k, joint), dist(body(sp, 'magnet'), bd),
+                     '%.2f (자석–기판 %.2f, 실제 칩 1.2 이하면 ≥ %.2f)' % (P.MAGNET_PCB - P.MOTEUS['ic_h'], P.MAGNET_PCB,
+                                                                  P.MAGNET_PCB - 1.2)))
         rows.append(('%s %s: moteus(CAN 헤더) – 모터 로터 캡' % (k, joint), dist(bd, st), '≥ 1.5'))
         link = 'torso' if joint == 'hip' else JOINT_LINK[joint] + '_' + k
         cup = [o for o in occs(link, 'cup_' + joint + '_' + k)][0]

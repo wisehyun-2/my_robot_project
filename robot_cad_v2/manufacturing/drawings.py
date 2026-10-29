@@ -410,8 +410,8 @@ def draw_hip_plate(name, pdf, png_dir):
 
 
 # ----------------------------------------------------------------------------- small parts (A4)
-def concentricity(S, x0, y0, tip, text):
-    for i, (w, s) in enumerate(((7, '◎'), (12, 'Ø0.03'), (6, 'A'))):
+def concentricity(S, x0, y0, tip, text, tol='Ø0.1'):
+    for i, (w, s) in enumerate(((7, '◎'), (12, tol), (6, 'A'))):
         xx = x0 + sum((7, 12, 6)[:i])
         S.ax.add_patch(Polygon([(xx, y0), (xx + w, y0), (xx + w, y0 + 6), (xx, y0 + 6)], closed=True, fill=False, lw=0.5))
         S.text((xx + w / 2, y0 + 3), s, fs=FS)
@@ -427,23 +427,25 @@ def draw_magnet_spacer(pdf, png_dir):
     hb = half(sh, 'y', False)
     V = View(S, hb, (0, -1, 0), (1, 0, 0), (70.0, 105.0), 6.0, hidden=False, label='단면 (축 포함)  6:1', label_dy=18)
     V.hatch(hb, 'y', 0.0)
-    V.axis_line((0, 0, 0), (0, 0, 6.8))
+    (sd, sl), (pd, pdep), h = M.P.SPACER_SPIGOT, M.P.SPACER_POCKET, M.P.SPACER_H
+    top = sl + h
+    V.axis_line((0, 0, 0), (0, 0, top))
     P = lambda x, z: V.pt((x, 0, z))  # noqa: E731
-    S.dim(P(-4.5, 6.8), P(4.5, 6.8), V.box[3] + 15, 'Ø9 ±0.05')
-    S.dim(P(-3.02, 6.8), P(3.02, 6.8), V.box[3] + 6, 'Ø6.04 +0.03/0')
-    S.dim(P(-2.95, 0), P(2.95, 0), V.box[2] - 8, 'Ø5.90 ±0.02  (기준 A)')
-    S.dim(P(4.5, 2.3), P(4.5, 6.8), V.box[1] + 9, '4.5 ±0.03', horizontal=False)
-    S.dim(P(2.95, 0), P(2.95, 2.3), V.box[1] + 9, '2.3 ±0.1', horizontal=False)
-    S.dim(P(-4.5, 4.3), P(-4.5, 6.8), V.box[0] - 8, '2.5 +0.05/0', horizontal=False)
-    concentricity(S, V.box[0] - 6, V.box[3] + 24, P(-3.02, 6.2), '포켓 Ø6.04, 스피곳 A 기준')
+    S.dim(P(-4.5, top), P(4.5, top), V.box[3] + 15, 'Ø9')
+    S.dim(P(-pd / 2, top), P(pd / 2, top), V.box[3] + 6, 'Ø%.2f ±0.05' % pd)
+    S.dim(P(-sd / 2, 0), P(sd / 2, 0), V.box[2] - 8, 'Ø%.2f ±0.05  (기준 A)' % sd)
+    S.dim(P(4.5, sl), P(4.5, top), V.box[1] + 9, '%g ±0.05' % h, horizontal=False)
+    S.dim(P(sd / 2, 0), P(sd / 2, sl), V.box[1] + 9, '%g ±0.1' % sl, horizontal=False)
+    S.dim(P(-4.5, top - pdep), P(-4.5, top), V.box[0] - 8, '%g ±0.05' % pdep, horizontal=False)
+    concentricity(S, V.box[0] - 6, V.box[3] + 24, P(-pd / 2, top - 0.6), '포켓 Ø%.2f, 스피곳 A 기준' % pd)
     S.notes(150.0, 185.0, GENERAL_NOTES + [
         '재질 비자성 필수(AL6061-T6). 강·스테인리스 금지.',
-        'Ø6.04 포켓: AKE 부속품 자석 Ø6 × 2.5를 에폭시로 붙임(로터 자석 자리 대신).',
-        'Ø5.90 스피곳(A): AKE 로터의 빈 자석 포켓에 접착. 로터 포켓 실측 뒤 그 값 -0.10으로 조정 가능.',
-        '높이 4.5가 엔코더 칩–자석 간격(2.0 ±0.5)을 정함.',
+        'Ø%.2f 포켓: AKE 부속품 자석 Ø6 × 2.5(공차 미표기, ±0.1로 봄)를 에폭시로 붙임(로터 자석 자리 대신).' % pd,
+        'Ø%.2f 스피곳(A): AKE 로터의 빈 자석 자리(Ø6)에 접착. 자리 실측 뒤 그 값 -0.10으로 조정 가능.' % sd,
+        '높이 %g가 자석 윗면–moteus 기판 거리(%.2f)를 정함: 엔코더 칩 자기장 35~70 mT.' % (h, M.P.MAGNET_PCB),
         '자석 쪽 끝면은 축에 직각, 버·턱 없이.',
     ], width=78)
-    S.title_block('자석 스페이서 (magnet spacer Ø9 × 4.5)', 'WBv2-M02', info(name, '6:1'))
+    S.title_block('자석 스페이서 (magnet spacer Ø9 × %g)' % h, 'WBv2-M02', info(name, '6:1'))
     finish(S, pdf, png_dir, name)
 
 

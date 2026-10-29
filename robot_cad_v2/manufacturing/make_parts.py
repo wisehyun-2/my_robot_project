@@ -116,7 +116,8 @@ def hip_plate(s):
 
 # ----------------------------------------------------------------------------- turned / bar parts
 def magnet_spacer():
-    sp_r, sp_l, pk_r, pk_d = 2.95, 2.3, 3.02, 2.5           # fusion/vendor.py magnet_spacer()
+    (sd, sp_l), (pd, pk_d) = P.SPACER_SPIGOT, P.SPACER_POCKET   # same as fusion/vendor.py magnet_spacer()
+    sp_r, pk_r = sd / 2, pd / 2
     s = O.cyl('z', 0, 0, 0, sp_l + 0.01, sp_r)
     s = O.fuse(s, O.cyl('z', 0, 0, sp_l, sp_l + P.SPACER_H, 4.5))
     s = O.cut(s, O.cyl('z', 0, 0, sp_l + P.SPACER_H - pk_d, sp_l + P.SPACER_H + 1, pk_r))

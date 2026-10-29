@@ -274,12 +274,13 @@ def wheel_nut():
 def magnet_spacer():
     """6061 spacer glued on the AKE Ø9 rotor boss, the AKE Ø6 x 2.5 magnet glued in its top pocket.
     Frame = motor frame (+y to the back), sits on the boss face y = AKE['magnet']."""
-    comp = C.master('magnet spacer Ø9x%.1f (6061)' % P.SPACER_H)
+    comp = C.master('magnet spacer Ø9x%g (6061)' % P.SPACER_H)
     y0 = P.AKE['magnet']
     y1 = y0 + P.SPACER_H
+    (sd, sl), (pd, pdep) = P.SPACER_SPIGOT, P.SPACER_POCKET
     s = B.cyl((0, y0, 0), (0, y1, 0), 4.5)
-    C.union(s, B.cyl((0, y0 - 2.3, 0), (0, y0, 0), 2.95))        # spigot into the empty magnet pocket
-    C.cut(s, B.cyl((0, y1 - 2.5, 0), (0, y1 + 1, 0), 3.02))       # magnet pocket
+    C.union(s, B.cyl((0, y0 - sl, 0), (0, y0, 0), sd / 2))      # spigot into the empty magnet pocket
+    C.cut(s, B.cyl((0, y1 - pdep, 0), (0, y1 + 1, 0), pd / 2))  # magnet pocket
     C.add_body(comp, s, 'spacer', 'Al6061', 'alu')
     m = B.cyl((0, y1 - 2.5, 0), (0, y1, 0), 3.0)
     C.add_body(comp, m, 'magnet Ø6x2.5 N38H (AKE)', 'Steel', 'magnet')

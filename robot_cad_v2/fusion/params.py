@@ -72,8 +72,14 @@ MOTEUS = dict(
     phase=((-14.5, 20.2), (0.0, 20.2), (14.5, 20.2)),
     mass=0.0142,
 )
-SPACER_H = 4.5              # non-magnetic (6061) spacer under the magnet: CAN headers / terminator clear the cap
-AIR_GAP = 2.0               # IC top -> magnet face
+SPACER_H = 5.35             # non-magnetic (6061) spacer body under the magnet (±0.05): CAN headers / terminator clear
+                            # the cap, and the magnet sits MAGNET_PCB from the board
+SPACER_SPIGOT = (5.90, 2.3)  # Ø ±0.05 x length into the empty rotor magnet seat (AKE drawing: magnet Ø6 x 2.5, seat not
+                             # dimensioned; Ø6 STEP)
+SPACER_POCKET = (6.20, 2.5)  # magnet pocket Ø ±0.05 x depth ±0.05: magnet Ø6 ±0.1 (GB/T1804-m) always fits, offset <= 0.18
+MAGNET_PCB = 2.55           # magnet top -> PCB motor-side face (10-29): AS5047P Bz 35..70 mT on the r 1.1 Hall circle at
+                            # the die (~0.85 above the PCB; real TSSOP <= 1.20 tall, the STEP chip is ic_h) for N35..N42,
+                            # 0..80 C, magnet ±0.1 -> window 2.34..2.76, so ±0.21 for the rest of the stack (~52 mT nominal)
 LEAD_ANGLE = 20.0           # motor lead direction in the board frame (deg from +x towards +z)
 CUP_WALL = 2.4
 CUP_CLEAR_TOP = 1.0         # XT30 top -> cup floor
@@ -81,7 +87,7 @@ CUP_CLEAR_TOP = 1.0         # XT30 top -> cup floor
 
 def board_offset():
     """Board PCB motor-side face along the motor axis (motor local y)."""
-    return AKE['magnet'] + SPACER_H + AIR_GAP + MOTEUS['ic_h']
+    return AKE['magnet'] + SPACER_H + MAGNET_PCB
 
 
 def cup_floor_in():

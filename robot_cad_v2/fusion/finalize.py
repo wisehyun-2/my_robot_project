@@ -58,7 +58,8 @@ MACHINED = {
             % (2 * (P.YW - P.HIP_PLATE_T), P.END_TAP['M4'][1]),
     'clamp ring output': 'SUS304 %g mm 레이저 가공, Ø%g/Ø%g, Ø3.4 × 6 (PCD %g)' % ((P.RING_T,) + P.RING_OUT + (P.AKE_PCD_OUT,)),
     'clamp ring stator': 'SUS304 %g mm 레이저 가공, Ø%g/Ø%g, Ø2.8 × 6 (PCD %g)' % ((P.RING_T,) + P.RING_STATOR + (P.AKE_PCD_RING,)),
-    'magnet spacer': '6061(비자성) 선반 가공, Ø9 × 4.5, 위 Ø6.04 × 2.5 자석 포켓, 아래 Ø5.9 × 2.3 스피곳',
+    'magnet spacer': '6061(비자성) 선반 가공, Ø9 × %g, 위 Ø%.2f × %g 자석 포켓, 아래 Ø%.2f × %g 스피곳'
+                     % ((P.SPACER_H,) + P.SPACER_POCKET + P.SPACER_SPIGOT),
 }
 PURCHASED = {   # component name prefix -> (BOM name, spec / source)
     'AKE60-8_KV80_stator': ('CubeMars AKE60-8 KV80', '8:1, 12.5 / 5 N·m, 0.26 kg, Ø69 × 25'),

@@ -13,7 +13,7 @@ FILE_DESCRIPTION(
 
 FILE_NAME(
 /* name */ 'cup_wheel_L.step',
-/* time_stamp */ '2026-10-29T20:34:42+09:00',
+/* time_stamp */ '2026-10-29T23:30:59+09:00',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20.2',
@@ -2377,7 +2377,7 @@ SOLID_ANGLE_UNIT()
 #2314=PRODUCT_DEFINITION_SHAPE('',$,#2317);
 #2315=SHAPE_REPRESENTATION('',(#1365),#2307);
 #2316=PRODUCT_DEFINITION_CONTEXT('part definition',#2321,'design');
-#2317=PRODUCT_DEFINITION('2026-10-29-20-34-42-061','cup_wheel_L',#2318,
+#2317=PRODUCT_DEFINITION('2026-10-29-23-30-59-329','cup_wheel_L',#2318,
 #2316);
 #2318=PRODUCT_DEFINITION_FORMATION('',$,#2323);
 #2319=PRODUCT_RELATED_PRODUCT_CATEGORY('cup_wheel_L','cup_wheel_L',(#2323));
@@ -2386,7 +2386,7 @@ SOLID_ANGLE_UNIT()
 #2321=APPLICATION_CONTEXT(
 'Core Data for Automotive Mechanical Design Process');
 #2322=PRODUCT_CONTEXT('part definition',#2321,'mechanical');
-#2323=PRODUCT('2026-10-29-20-34-42-061','cup_wheel_L',
+#2323=PRODUCT('2026-10-29-23-30-59-329','cup_wheel_L',
 'PETG 30 %, \X2\BC14B2E5\X0\(\X2\B36EAC1C\X0\ \X2\BA74\X0\)\X2\C744\X0\ 
 \X2\BC14B2E5C5D0\X0\, \X2\C11CD3ECD2B8B294\X0\ \X2\CEE4B125D130\X0\ \X2\CC3DB9CC\X0\',
 (#2322));
