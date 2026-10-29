@@ -44,19 +44,40 @@ def _beam_normal(a, b):
     return C.rf((-uz / L, 0.0, ux / L))           # Fusion axes
 
 
+def skin_area(body, normal):
+    """Surface (cm2) facing +-normal (|cos| > 0.7): each face's display mesh is split by triangle normal and the face
+    area shared out by mesh area, so a curved face counts the part of it that faces the build direction (until 10-30
+    one normal per face decided whole cylinders: thigh 480 g instead of 424, and the r 37 can cavity flipped +15.6 g
+    when the lead groove changed)."""
+    tot = 0.0
+    for f in body.faces:
+        mc = f.meshManager.createMeshCalculator()
+        mc.setQuality(adsk.fusion.TriangleMeshQualityOptions.NormalQualityTriangleMesh)
+        m = mc.calculate()
+        xyz, idx = m.nodeCoordinatesAsDouble, m.nodeIndices
+        on = all_ = 0.0
+        for k in range(0, len(idx), 3):
+            a, b, c = 3 * idx[k], 3 * idx[k + 1], 3 * idx[k + 2]
+            n = C.cross((xyz[b] - xyz[a], xyz[b + 1] - xyz[a + 1], xyz[b + 2] - xyz[a + 2]),
+                        (xyz[c] - xyz[a], xyz[c + 1] - xyz[a + 1], xyz[c + 2] - xyz[a + 2]))
+            n2 = math.sqrt(n[0] ** 2 + n[1] ** 2 + n[2] ** 2)
+            all_ += n2
+            if abs(n[0] * normal[0] + n[1] * normal[1] + n[2] * normal[2]) > 0.7 * n2:
+                on += n2
+        if all_ > 0:
+            tot += f.area * on / all_
+    return tot
+
+
 def print_fraction(body, t_wall, infill, normal=None):
     """Printed / solid mass of a PETG body: walls of thickness t_wall solid, the core at 'infill'.  With the build
-    direction given (Fusion axes), faces facing it get SKIN instead of t_wall (top / bottom layers)."""
+    direction given (Fusion axes), surface facing it gets SKIN instead of t_wall (top / bottom layers, skin_area)."""
     V = body.volume                    # cm3
     A = body.area                      # cm2
     if normal is None:
         shell = A * t_wall * 0.1
     else:
-        skin = 0.0
-        for f in body.faces:
-            ok, n = f.evaluator.getNormalAtPoint(f.pointOnFace)
-            if ok and abs(n.x * normal[0] + n.y * normal[1] + n.z * normal[2]) > 0.7:
-                skin += f.area
+        skin = skin_area(body, normal)
         shell = (A - skin) * t_wall * 0.1 + skin * SKIN * 0.1
     shell = min(V, shell)
     return (shell + infill * (V - shell)) / V
