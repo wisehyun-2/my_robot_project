@@ -115,8 +115,8 @@ def show_all():
     root = C.design().rootComponent
     for o in root.occurrences:
         o.isLightBulbOn = o.component.name != '_library'
-    for o in root.allOccurrences:
-        if o.component.name != '_library' and not o.fullPathName.startswith('_library'):
+    for o in root.allOccurrences:              # the masters too (hidden by _library): new instances copy their bulb
+        if o.component.name != '_library':
             o.isLightBulbOn = True
     root.isJointsFolderLightBulbOn = False
 

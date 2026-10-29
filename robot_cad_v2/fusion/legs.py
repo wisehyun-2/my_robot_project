@@ -17,6 +17,8 @@ M3_CLEAR, M25_CLEAR = 3.4, 2.8
 INSERT_M25, INSERT_M3 = 3.6, 4.0          # heat-set insert holes
 BEARING_FACE = P.BEARING_FACE             # on the hip / knee bosses the heads bear on a P.RING_T clamp ring
 CUP_R_IN, CUP_R_OUT = 41.0, 43.4
+CUP_LIP_BRIDGE = 2.0                      # knee / wheel cups: the first 2 mm of the wall run out to the lip OD (10-30;
+                                          # before, the lip over the housing OD was a loose ring, r 43.4 vs 44.05)
 CUP_COLUMNS = (-30.0, -90.0, 210.0)       # screw columns, deg in the board frame (+x_b towards +z_b), left side
 
 
@@ -274,8 +276,9 @@ def cup(joint, s):
     Board frame: origin = encoder IC on the PCB motor-side face, +y_b away from the motor,
     +z_b to the connector edge.  The rim sits on the mount (hip plate inner face / link housing end):
     a register (Ø80 boss on the hip plate, housing OD Ø88 on the links) centres the cup on the same
-    axis as the motor's Ø42 pilot pocket; 3 screw columns; a window at the connector edge for the
-    plugs, terminator and cap; a slot for the phase leads."""
+    axis as the motor's Ø42 pilot pocket (the link lip joins the wall through a CUP_LIP_BRIDGE ring above
+    the housing end); 3 screw columns; a window at the connector edge for the plugs, terminator and cap;
+    a slot for the phase leads."""
     Bb = C.Builder(robot=False)
     fr = LY.frames(joint, s)
     b = fr['board']
@@ -290,6 +293,9 @@ def cup(joint, s):
     C.cut(body, ycyl(0, 0, rim - 1, f_in, CUP_R_IN))
     if joint != 'hip':
         C.union(body, ycyl(0, 0, rim - 3.0, rim, P.HOUSING_R + 2.45))
+        ring = ycyl(0, 0, rim, rim + CUP_LIP_BRIDGE, P.HOUSING_R + 2.45)
+        C.cut(ring, ycyl(0, 0, rim - 1, rim + CUP_LIP_BRIDGE + 1, CUP_R_IN))
+        C.union(body, ring)
     # standoffs to the PCB far face
     for (x, z) in P.MOTEUS['holes']:
         C.union(body, ycyl(x, z, P.MOTEUS['pcb_t'], f_in + 0.5, 3.2))
@@ -313,7 +319,7 @@ def cup(joint, s):
     C.cut(body, Bb.abox(-18.0, 18.0, -12.0, f_in + 0.01, 27.0, 70.0))
     psi = math.radians(P.LEAD_ANGLE)
     d = (math.cos(psi) * sgn, 0.0, math.sin(psi))
-    C.cut(body, Bb.box((d[0] * 40.0, (rim - 1 + 1.0) / 2, d[2] * 40.0), d, (0, 1, 0), 12.0, abs(rim - 1 - 1.0), 9.0))
+    C.cut(body, Bb.box((d[0] * 40.5, (rim - 1 + 1.0) / 2, d[2] * 40.5), d, (0, 1, 0), 13.0, abs(rim - 1 - 1.0), 9.0))
     # vents over the FETs (board z 11.2 .. 16.8)
     for x in (-12.0, -4.0, 4.0, 12.0):
         C.cut(body, Bb.abox(x - 2.0, x + 2.0, f_in - 1, f_out + 1, 10.5, 17.5))
