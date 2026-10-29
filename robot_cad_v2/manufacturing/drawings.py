@@ -586,11 +586,11 @@ def main():
         ('rail', draw_rail),
         ('clamp_ring_output', lambda pdf, d: draw_ring(
             'clamp_ring_output', 'WBv2-M07', '출력 클램프 링 (clamp ring output Ø27)',
-            ['hip·knee 구동 보스 바닥, 출력 M3×16 머리 밑.', '구멍–테두리 살 안 2.05, 바깥 1.8 mm: 2t 레이저가 어려우면 와이어커팅·워터젯.'], pdf, d)),
+            ['hip·knee 구동 보스 바닥, 출력 M3×16 머리 밑.', '구멍–테두리 살 안 2.05, 바깥 1.8 mm: 2t 레이저가 어려우면 와이어커팅(워터젯은 작은 구멍 정밀도가 낮아 쓰지 않음).'], pdf, d)),
         ('clamp_ring_stator', lambda pdf, d: draw_ring(
             'clamp_ring_stator', 'WBv2-M08', '고정링 클램프 링 (clamp ring stator Ø45)',
             ['knee·wheel PETG 판 바깥 홈, 고정링 M2.5×8 머리 밑.',
-             '안쪽 살(구멍–안지름) 1.85 mm, 바깥 살 2.85 mm: 2t 레이저가 어려우면 와이어커팅·워터젯.'], pdf, d)),
+             '안쪽 살(구멍–안지름) 1.85 mm, 바깥 살 2.85 mm: 2t 레이저가 어려우면 와이어커팅(워터젯은 작은 구멍 정밀도가 낮아 쓰지 않음).'], pdf, d)),
     ]
     for name, fn in jobs:
         with PdfPages(OUT / (name + '.pdf'), metadata={'Title': name, 'Author': PROJECT}) as pdf:
