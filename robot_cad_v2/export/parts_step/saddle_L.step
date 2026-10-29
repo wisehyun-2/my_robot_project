@@ -11,7 +11,7 @@ FILE_DESCRIPTION(
 
 FILE_NAME(
 /* name */ 'saddle_L.step',
-/* time_stamp */ '2026-10-28T10:31:08+09:00',
+/* time_stamp */ '2026-10-29T20:35:17+09:00',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20.2',
@@ -642,7 +642,7 @@ SOLID_ANGLE_UNIT()
 #588=PRODUCT_DEFINITION_SHAPE('',$,#591);
 #589=SHAPE_REPRESENTATION('',(#370),#581);
 #590=PRODUCT_DEFINITION_CONTEXT('part definition',#595,'design');
-#591=PRODUCT_DEFINITION('2026-10-28-10-31-08-529','saddle_L',#592,#590);
+#591=PRODUCT_DEFINITION('2026-10-29-20-35-17-042','saddle_L',#592,#590);
 #592=PRODUCT_DEFINITION_FORMATION('',$,#597);
 #593=PRODUCT_RELATED_PRODUCT_CATEGORY('saddle_L','saddle_L',(#597));
 #594=APPLICATION_PROTOCOL_DEFINITION('international standard',
@@ -650,7 +650,7 @@ SOLID_ANGLE_UNIT()
 #595=APPLICATION_CONTEXT(
 'Core Data for Automotive Mechanical Design Process');
 #596=PRODUCT_CONTEXT('part definition',#595,'mechanical');
-#597=PRODUCT('2026-10-28-10-31-08-529','saddle_L',
+#597=PRODUCT('2026-10-29-20-35-17-042','saddle_L',
 'PETG \X2\D30CB791\X0\ 25 % (hip \X2\C704\X0\ \X2\C548C7A5\X0\)',(#596));
 #598=PRESENTATION_STYLE_ASSIGNMENT((#600));
 #599=PRESENTATION_STYLE_ASSIGNMENT((#601));

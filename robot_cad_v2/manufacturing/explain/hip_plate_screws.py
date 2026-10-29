@@ -31,8 +31,6 @@ for pl in vis:
     xs, ys = zip(*pl); ax.plot(xs, ys, color='0.25', lw=0.8)
 count = {}
 for (k, x, y) in holes:
-    if k == 'G':
-        continue
     c = SPEC[k][0]; count[k] = count.get(k, 0) + 1
     r = {'A': 3.2, 'B': 2.6, 'C': 2.6, 'D': 2.6, 'E': 5.6, 'F': 4.5}[k]
     ax.add_patch(Circle((x, y), r, fc=c, ec='k', lw=0.6, alpha=0.9, zorder=5))
@@ -51,6 +49,6 @@ for k, (c, screw, what, head) in SPEC.items():
     bx.text(7, y + 1.6, '%s  × %d개' % (screw, n), fontsize=12.5, weight='bold', va='center')
     bx.text(7, y - 2.2, '%s  ·  머리: %s' % (what, head), fontsize=10.5, va='center')
     y -= 11
-bx.text(0, y + 2, 'hip 판에 나사산(탭)이 있는 곳: B·C·D (M3 11개)\nA·E·F는 판을 지나가기만 하고, 나사산은 모터·마개 쪽에 있음\nA는 반드시 12.9급 강철 볼트 (스테인리스 A2 금지)\n흰 큰 구멍 5개(Ø22)와 사각 창은 경량 구멍 — 나사 없음',
+bx.text(0, y + 2, 'hip 판에 나사산(탭)이 있는 곳: B·C·D (M3 11개)\nA·E·F는 판을 지나가기만 하고, 나사산은 모터·마개 쪽에 있음\nA는 반드시 12.9급 강철 볼트 (스테인리스 A2 금지)\n경량 구멍 없음 (가공비 절감으로 제거)',
         fontsize=11, va='top', linespacing=1.6)
 fig.savefig(sys.argv[1] if len(sys.argv) > 1 else HERE / 'hip_plate_screws.png', dpi=100, bbox_inches='tight')

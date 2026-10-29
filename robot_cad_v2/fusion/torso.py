@@ -5,8 +5,6 @@ top payload plate on two 6061 rails that bolt to the hip plate columns -- the sh
 Coordinates: robot axes, origin on the floor below the hip midpoint (nominal pose); the hip axis is
 at z = Z_HIP, so torso features are written as z = Z_HIP + dz.
 """
-import math
-
 import cadlib as C
 import layout as LY
 import legs as LG
@@ -53,17 +51,8 @@ def hip_plate(s):
         C.cut(web, B.ycyl(sx * 45.0, ZH - 42.0, y_in - 1, y_web + 1, P.TAP_DRILL['M3'] / 2))  # deck flange M3
     for (x, z) in ((-50.0, 30.0), (50.0, 30.0), (-60.0, -20.0), (60.0, -20.0), (-40.0, 140.0), (40.0, 140.0)):
         C.cut(web, B.ycyl(x, ZH + z, y_web - 6, y_web + 1, P.TAP_DRILL['M3'] / 2))       # shell M3 (tapped)
-    # lightening (the hip cables pass outside the disc, through the shell grommet only); holes kept >= 3 mm
-    # from the cup's M3 columns (285 / 345 / 45 deg on the left), the tube screws and the lead groove (235 deg);
-    # the top windows end at z 135.5, 3.25 mm below the shell M3 holes at x ±40, z 140
-    C.cut(web, B.prism([(-15.0, ZH + 60), (15.0, ZH + 60), (15.0, ZH + 118), (-15.0, ZH + 118)], y_in - 1, y_web + 1))
-    for a in (0.0, 90.0, 180.0, 255.0, 300.0):
-        t = math.radians(a)
-        x, z = 50.0 * math.cos(t), 50.0 * math.sin(t)
-        C.cut(web, B.ycyl(x, ZH + z, y_in - 2, y_web + 1, 11.0))
-    for sx in (-1, 1):
-        C.cut(web, B.prism([(sx * 30.0, ZH + 129), (sx * 43.0, ZH + 129), (sx * 43.0, ZH + 135.5), (sx * 30.0, ZH + 135.5)][::sx],
-                           y_in - 1, y_web + 1))
+    # no lightening holes (removed 10-29 to cut machining cost, +51 g per plate); the hip cables pass outside
+    # the disc, through the shell grommet only
     return web
 
 

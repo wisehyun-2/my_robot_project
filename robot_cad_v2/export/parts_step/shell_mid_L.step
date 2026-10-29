@@ -13,7 +13,7 @@ FILE_DESCRIPTION(
 
 FILE_NAME(
 /* name */ 'shell_mid_L.step',
-/* time_stamp */ '2026-10-28T10:31:09+09:00',
+/* time_stamp */ '2026-10-29T20:35:25+09:00',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20.2',
@@ -1611,7 +1611,7 @@ SOLID_ANGLE_UNIT()
 #1553=PRODUCT_DEFINITION_SHAPE('',$,#1556);
 #1554=SHAPE_REPRESENTATION('',(#967),#1546);
 #1555=PRODUCT_DEFINITION_CONTEXT('part definition',#1560,'design');
-#1556=PRODUCT_DEFINITION('2026-10-28-10-31-09-053','shell_mid_L',#1557,
+#1556=PRODUCT_DEFINITION('2026-10-29-20-35-25-739','shell_mid_L',#1557,
 #1555);
 #1557=PRODUCT_DEFINITION_FORMATION('',$,#1562);
 #1558=PRODUCT_RELATED_PRODUCT_CATEGORY('shell_mid_L','shell_mid_L',(#1562));
@@ -1620,7 +1620,7 @@ SOLID_ANGLE_UNIT()
 #1560=APPLICATION_CONTEXT(
 'Core Data for Automotive Mechanical Design Process');
 #1561=PRODUCT_CONTEXT('part definition',#1560,'mechanical');
-#1562=PRODUCT('2026-10-28-10-31-09-053','shell_mid_L',
+#1562=PRODUCT('2026-10-29-20-35-25-739','shell_mid_L',
 'PETG \X2\C9C4D68CC0C9\X0\ 25 %, \X2\BC14AE65\X0\ \X2\BA74C744\X0\ \X2\C704B85C\X0\(
 \X2\C11CD3ECD2B8\X0\ \X2\D544C694\X0\), \X2\C55E00B7\X0\hip\X\B7\X2\B4A4\X0\ 
 \X\D7 \X2\C88CC6B0\X0\ 6\X2\C870AC01\X0\',(#1561));

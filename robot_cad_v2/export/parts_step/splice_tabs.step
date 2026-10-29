@@ -11,7 +11,7 @@ M3 + \X2\B108D2B8\X0\)'),
 
 FILE_NAME(
 /* name */ 'splice_tabs.step',
-/* time_stamp */ '2026-10-28T10:31:09+09:00',
+/* time_stamp */ '2026-10-29T20:35:34+09:00',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20.2',
@@ -2840,7 +2840,7 @@ SOLID_ANGLE_UNIT()
 #2786=PRODUCT_DEFINITION_SHAPE('',$,#2789);
 #2787=SHAPE_REPRESENTATION('',(#1717),#2779);
 #2788=PRODUCT_DEFINITION_CONTEXT('part definition',#2793,'design');
-#2789=PRODUCT_DEFINITION('2026-10-28-10-31-09-561','splice_tabs',#2790,
+#2789=PRODUCT_DEFINITION('2026-10-29-20-35-34-182','splice_tabs',#2790,
 #2788);
 #2790=PRODUCT_DEFINITION_FORMATION('',$,#2795);
 #2791=PRODUCT_RELATED_PRODUCT_CATEGORY('splice_tabs','splice_tabs',(#2795));
@@ -2849,7 +2849,7 @@ SOLID_ANGLE_UNIT()
 #2793=APPLICATION_CONTEXT(
 'Core Data for Automotive Mechanical Design Process');
 #2794=PRODUCT_CONTEXT('part definition',#2793,'mechanical');
-#2795=PRODUCT('2026-10-28-10-31-09-561','splice_tabs',
+#2795=PRODUCT('2026-10-29-20-35-34-182','splice_tabs',
 'PETG 100 %, \X2\C178\X0\ \X2\C870AC01\X0\ \X2\C774C74CD310\X0\(M3 + \X2\B108D2B8\X0\)',
 (#2794));
 #2796=PRESENTATION_STYLE_ASSIGNMENT((#2798));

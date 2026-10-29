@@ -281,7 +281,7 @@ def hip_holes(shape):
         fe.Next()
     holes = []
     for (d, x, y), (z0, z1) in seen.items():
-        kind = {2.8: 'A', 2.5: 'B', 5.4: 'E', 4.4: 'F', 22.0: 'G'}.get(d)
+        kind = {2.8: 'A', 2.5: 'B', 5.4: 'E', 4.4: 'F'}.get(d)
         if kind == 'B' and z1 < 9.0:                   # B: driver cup holes run through the Ø80 boss edge
             kind = 'C' if (y < -30 and abs(abs(x) - 45) < 0.5) else 'D'
         if kind:
@@ -297,7 +297,6 @@ HOLE_SPEC = {
     'D': ('M3 탭 관통 (기초 Ø2.5)', '셸 M3×6'),
     'E': ('Ø5.4 관통 + 90° 접시 Ø11.2 (Z=3 면)', '척추 관 마개 M5×12 ISO 10642'),
     'F': ('Ø4.4 관통 + 90° 접시 Ø9.0 (Z=3 면)', '레일 마개 M4×12 ISO 10642'),
-    'G': ('Ø22 관통 (경량 구멍)', ''),
 }
 
 
@@ -328,8 +327,7 @@ def draw_hip_plate(name, pdf, png_dir):
         count[k] = count.get(k, 0) + 1
         lab = '%s%d' % (k, count[k])
         p = V.pt((x, y, 9.5))
-        off = 7.5 if k == 'G' else 2.0
-        S.text((p[0] + off, p[1] + off), lab, fs=5.5)
+        S.text((p[0] + 2.0, p[1] + 2.0), lab, fs=5.5)
         rows.append([lab, '%.2f' % (x if abs(x) >= 0.005 else 0.0), '%.2f' % (y if abs(y) >= 0.005 else 0.0),
                      HOLE_SPEC[k][0], HOLE_SPEC[k][1]])
     # outline dimensions
@@ -339,16 +337,9 @@ def draw_hip_plate(name, pdf, png_dir):
     S.dim(V.pt((-68, 0, 0)), V.pt((68, 0, 0)), bx[2] - 6, 'Ø136')
     S.dim(V.pt((68, -68, 0)), V.pt((64, 145, 0)), bx[1] + 16, '213', horizontal=False)
     S.dim(V.pt((64, 0, 0)), V.pt((64, 125, 0)), bx[1] + 8, '125', horizontal=False)
-    S.dim(V.pt((-64, 0, 0)), V.pt((-64, 60, 0)), bx[0] - 6, '60', horizontal=False)
-    S.dim(V.pt((-64, 60, 0)), V.pt((-64, 118, 0)), bx[0] - 6, '58', horizontal=False)
-    S.dim(V.pt((-64, 129, 0)), V.pt((-64, 135.5, 0)), bx[0] - 6, '6.5', horizontal=False)
-    S.dim(V.pt((-64, 125, 0)), V.pt((-64, 129, 0)), bx[0] - 14, '4', horizontal=False)
-    S.dim(V.pt((-15, 95, 0)), V.pt((15, 95, 0)), V.pt((0, 95, 0))[1], '30')
     g = math.radians(groove_deg)
     tags = [('P1', (35.0 * math.cos(g), 35.0 * math.sin(g)), (-52.0 * s, -28.0)),
-            ('P2', (-15.0, 112.0), (-38.0, 108.0)),
-            ('P3', (-36.5, 133.0), (-50.0, 118.0)),
-            ('P4', (34.5, 112.5), (52.0, 106.0))]
+            ('P2', (34.5, 112.5), (52.0, 106.0))]
     for lab, tip, knee in tags:
         right = knee[0] > tip[0]
         S.leader(V.pt((tip[0], tip[1], 9.5)), V.pt((knee[0], knee[1], 9.5)), lab, fs=6.5, right=right)
@@ -356,15 +347,14 @@ def draw_hip_plate(name, pdf, png_dir):
                  title='구멍 표 (원점 = hip 축 = Ø42 포켓 중심, X·Y는 위 그림 기준)')
     yb = S.table(228.0, yb - 9, [('형상', 10), ('내용', 118), ('비고', 42)], [
         ['P1', '리드선 홈: 폭 7, 반경 21.5~41 (중심 31.25), 바닥 Z=6.0, 방향 X축에서 %.0f°' % groove_deg, 'AKE 상 리드선'],
-        ['P2', '창 30 × 58 (X ±15, Y 60~118), 아래는 G1과 이어짐', '경량'],
-        ['P3', '창 13 × 6.5 (X ±30~43, Y 129~135.5) 2곳', '경량 (D1·D2 탭 살 확보)'],
-        ['P4', '보강 삼각 25 × 25 (45°, X ±22~47, Y 100~125) 2곳', ''],
+        ['P2', '보강 삼각 25 × 25 (45°, X ±22~47, Y 100~125) 2곳', ''],
         ['중심', 'Ø42 H7 포켓 깊이 4.0, Ø30 관통, Ø80 보스, Ø52 허브: 2쪽 상세 C', ''],
     ], row_h=4.4, title='형상 표')
     S.notes(228.0, yb - 9, [
         '★ A 구멍 위치 공차 ±0.05 (PCD 36.5, 60° 등간격), 다른 구멍 ±0.1.',
         '탭 M3 6H 관통 11개(B·C·D), 아노다이징 뒤 탭 게이지 통과.',
-        '내부 세로 모서리(창, 보강 삼각, 리드선 홈)는 공구 반경 R3 이하 허용.',
+        '내부 세로 모서리(보강 삼각, 리드선 홈)는 공구 반경 R3 이하 허용.',
+        '경량 구멍 없음(가공비 절감).',
         '%s hip 판: %s 판과 거울상이며 같은 부품이 아님. 두께 방향은 2쪽.' % (side, other),
     ], width=118, title='이 쪽 주기')
     S.title_block(title, 'WBv2-M01-%s (1/2)' % tag, info(name, '1:1'))
@@ -392,7 +382,6 @@ def draw_hip_plate(name, pdf, png_dir):
     S.leader(P(15, 2.5), (P(15, 2.5)[0] + 30, P(15, 2.5)[1] - 18), 'Ø30 관통')
     S.leader(P(26, 1.5), (P(26, 1.5)[0] + 30, P(26, 1.5)[1] + 4), 'Ø52 허브 보스 (Z 0~3)')
     S.leader(P(36, 9.0), (P(36, 9.0)[0] - 30, P(36, 9.0)[1] + 14), 'Ø80 0/-0.1 등록 보스 (Z 8~9.5)', right=False)
-    S.leader(P(44, 5.5), (P(44, 5.5)[0] + 30, P(44, 5.5)[1] + 14), 'Ø22 경량 구멍 G1')
     S.text(((V.box[0] + V.box[1]) / 2, V.box[2] - 28), '← Z=9.5 (로봇 중심 쪽)        Z=0 (바깥 쪽) →', fs=FS_S)
     yb = S.table(250.0, 274.0, [('Z', 12), ('면', 146)], [
         ['0', '허브 바깥 면 Ø52 (허벅지 쪽, 셸 밖으로 3 mm)'],

@@ -13,12 +13,14 @@ The hip plates are read from the Fusion export (`../export/parts_step`) and brou
 whether or not Fusion has been rebuilt since; the re-cuts are idempotent:
   * Ø42 pilot pocket -> params.PILOT_D_HIP (Ø42 H7 at mid tolerance; the 10-28 export has Ø42.05);
   * M5 / M4 countersinks -> 90 deg, params.CSK_M5 / CSK_M4 (ISO 10642 theoretical dk; export ~74 / 69 deg);
-  * the two small top windows end at z +135.5 above the hip axis, so the shell M3 tapped holes at x ±40,
-    z +140 have material around them (in the 10-28 export their centres fall inside the windows).
+  * no lightening holes (removed 10-29 to cut machining cost): the five Ø22 holes, the 30 × 58 window and
+    the two small top windows are filled, and the shell M3 tapped holes at x ±40, z +140 re-drilled (in the
+    10-28 export their centres fall inside the top windows).
 The other parts are built here from params: end plugs (round and square in separate files, tap-drill
 holes, square plug long edges params.PLUG_CHAMFER), magnet spacer without the AKE magnet body, spine tube,
 rail and the clamp rings (stator ring ID from params.RING_STATOR).
 """
+import math
 import pathlib
 import sys
 
@@ -93,11 +95,19 @@ def hip_plate(s):
             sh = O.cut(sh, ycyl(z, sx * x, Y_IN - 1, Y_WEB + 1, dh / 2))
             depth = (dk - dh) / 2                    # 45 deg half angle
             sh = O.cut(sh, ycone(z, sx * x, Y_WEB - depth, Y_WEB + 1, dh / 2, dk / 2 + 1))
-    # small top windows shortened, shell M3 (tap drill) re-drilled at x ±40, z 140
+    # lightening holes filled: five Ø22 at r 50 (web, plus the 1 mm they notch from the Ø80 boss rim), the
+    # 30 x 58 window, the two top windows (z 129-141 covers the 10-28 and 10-29 exports); shell M3 (tap drill)
+    # re-drilled at x ±40, z 140
+    t0, t1 = xr(Y_IN, Y_WEB)
+    boss = ycyl(0, 0, Y_IN - 1.5, Y_IN, 40.0)
+    for a in (0.0, 90.0, 180.0, 255.0, 300.0):
+        x, z = 50.0 * math.cos(math.radians(a)), 50.0 * math.sin(math.radians(a))
+        sh = O.fuse(sh, ycyl(z, x, Y_IN, Y_WEB, 11.0))
+        sh = O.fuse(sh, O.common(ycyl(z, x, Y_IN - 1.5, Y_IN, 11.0), boss))
+    sh = O.fuse(sh, O.box(t0, t1, ZH + 60.0, ZH + 118.0, -15.0, 15.0))
     for sx in (-1, 1):
-        t0, t1 = xr(Y_IN, Y_WEB)
         x0, x1 = sorted((sx * 30.0, sx * 43.0))
-        sh = O.fuse(sh, O.box(t0, t1, ZH + 135.5, ZH + 141.0, x0, x1))
+        sh = O.fuse(sh, O.box(t0, t1, ZH + 129.0, ZH + 141.0, x0, x1))
         sh = O.cut(sh, ycyl(140.0, sx * 40.0, Y_IN - 1, Y_WEB + 1, 1.25))
     sh = O.clean(sh)
     # local frame: X = robot x (left) / -x (right), Y = robot z - ZH, Z = inward, 0 at the hub outer face
