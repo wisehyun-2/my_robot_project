@@ -33,6 +33,7 @@ SIM = os.path.join(os.path.dirname(os.path.dirname(HERE)), 'wheeled_biped', 'res
 
 E_PETG, S_PETG, C_PETG = 2000.0, 45.0, 50.0
 E_AL, Y_AL = 69000.0, 276.0
+Y_6063 = {'T5': 108.0, 'T6': 177.0}               # KS minimum yield (11 / 18 kgf/mm2), tube / rail fallback
 E_CF = 120000.0                                    # pultruded carbon rod (option only)
 AS_M3, AS_M25 = 5.03, 3.39                         # stress areas mm2
 PROOF = {'8.8': 600.0, '12.9': 970.0}
@@ -353,6 +354,19 @@ def main():
         if F > 300:
             verdict.append(('위 레일 굽힘(검토 500 N)', '%.0f MPa / 276' % (M * P.RAIL_S / 2 / Ir),
                             ok(M * P.RAIL_S / 2 / Ir, Y_AL)))
+    # 6063 instead of 6061-T6 for the tube / square tube (only if 6061-T6 cannot be bought): KS minimum yield;
+    # E is the same, so the deflections above do not change.  Rail checked also at the Ø4.4 bolt holes (net section).
+    x_hole = Lt / 2 - 33.3                                                  # inner bolt-hole pair, from the rail end
+    I_net = Ir - 2 * (4.4 * P.RAIL_WALL ** 3 / 12 + 4.4 * P.RAIL_WALL * ((P.RAIL_S - P.RAIL_WALL) / 2) ** 2)
+    s_rail = max(500.0 / 2 * Lt / 4, 500.0 / 4 * x_hole * Ir / I_net) * P.RAIL_S / 2 / Ir
+    w = 250.0 / 2 / P.BATTERY[1]
+    s_tube = w * P.BATTERY[1] * (Lt / 4 - P.BATTERY[1] / 8) * P.TUBE_D / 2 / It
+    for alloy, ya in Y_6063.items():
+        rows.append(('6063-%s 대체: 위 레일(검토 500 N, 구멍 단면 포함) / 척추 관(검토 250 N)' % alloy,
+                     'σ %.0f / %.0f MPa' % (s_rail, s_tube), '항복 ≥ %.0f MPa (KS 최소)' % ya,
+                     ok(max(s_rail, s_tube), ya)))
+        verdict.append(('6063-%s 대체 시 레일·척추 관(검토)' % alloy, '%.0f MPa / %.0f' % (max(s_rail, s_tube), ya),
+                        ok(max(s_rail, s_tube), ya)))
     for tag, Mm in (('설계 15 N·m', 15000.0), ('검토 30 N·m', 30000.0)):
         f = Mm / (2 * 50.0)
         rows.append(('팔 모멘트, 볼트 4개 받침(팔 50 mm), %s' % tag, 'M4 인서트 인발 개당 %.0f N' % f,

@@ -8,13 +8,16 @@ Each part is in its own frame (origin and axes in PARTS[...]['frame']), one body
 site prices it as a single part.  Holes to be tapped are modelled at the tap-drill diameter; threads,
 tolerances and finishes are on the PDF drawings.
 
-Differences from the Fusion export (`../export/parts_step`), see `../로봇_부품_검토사항.md` 7절:
-  * hip plate: Ø42 pilot pocket Ø42.05 -> Ø42.00 (H7 on the drawing); M5 / M4 countersinks re-cut at
-    90 deg (ISO 15065 Ø10.4 / Ø9.4) instead of ~74 / 69 deg; the two small lightening windows at the
-    top bar shortened (z +141 -> +135.5 above the hip axis) so the shell M3 tapped holes at x ±40,
-    z +140 have material around them (in the export their centres fall inside the windows).
-  * end plugs: tap-drill holes added (M5 Ø4.2, M4 Ø3.3), square plug long edges C1.0.
-  * magnet spacer: the AKE magnet body removed.
+The hip plates are read from the Fusion export (`../export/parts_step`) and brought to the current
+`fusion/params.py` / `torso.py` (2026-10-29 fixes, `../로봇_부품_검토사항.md` 3·7절), so the files are right
+whether or not Fusion has been rebuilt since; the re-cuts are idempotent:
+  * Ø42 pilot pocket -> params.PILOT_D_HIP (Ø42 H7 at mid tolerance; the 10-28 export has Ø42.05);
+  * M5 / M4 countersinks -> 90 deg, params.CSK_M5 / CSK_M4 (ISO 10642 theoretical dk; export ~74 / 69 deg);
+  * the two small top windows end at z +135.5 above the hip axis, so the shell M3 tapped holes at x ±40,
+    z +140 have material around them (in the 10-28 export their centres fall inside the windows).
+The other parts are built here from params: end plugs (round and square in separate files, tap-drill
+holes, square plug long edges params.PLUG_CHAMFER), magnet spacer without the AKE magnet body, spine tube,
+rail and the clamp rings (stator ring ID from params.RING_STATOR).
 """
 import pathlib
 import sys
@@ -36,7 +39,7 @@ Y_IN = P.YW - P.HIP_PLATE_T                    # 164: web inner face (left plate
 Y_WEB = Y_IN + P.HIP_WEB_T                     # 169: web outer face
 TORSO_LEN = 2 * Y_IN                           # 328: tube / rail length between the hip plates
 RAIL_HOLES = tuple(Y_IN + y for y in (-100.0, -33.3, 33.3, 100.0))   # from one rail end
-CSK = {'M5': (P.TUBE_X, P.TUBE_Z, 2.7, 10.4), 'M4': (P.RAIL_X, P.RAIL_Z, 2.2, 9.4)}   # x, z, hole r, csk Ø
+CSK = {'M5': (P.TUBE_X, P.TUBE_Z) + P.CSK_M5, 'M4': (P.RAIL_X, P.RAIL_Z) + P.CSK_M4}   # x, z, hole Ø, csk Ø
 
 # name -> file, quantity and what goes on the drawing / order
 PARTS = {
@@ -52,9 +55,9 @@ PARTS = {
                            frame='Z 축, Z=0 한쪽 끝면'),
     'end_plug_square': dict(qty=4, material='AL6061-T6 각봉 15 또는 판재', process='3축 MCT', finish='없음',
                             frame='Z 축, Z=0 한쪽 끝면'),
-    'spine_tube': dict(qty=2, material='AL6061-T6 원관 Ø16 × 1.0 (시판 인발관)', process='선반 (절단 + 끝면 면삭)',
+    'spine_tube': dict(qty=2, material='AL6061-T6 원관 Ø16 × 1.0 (6063-T5/T6 허용)', process='선반 (절단 + 끝면 면삭)',
                        finish='없음', frame='X 축, X=0 한쪽 끝면'),
-    'rail': dict(qty=2, material='AL6061-T6 각관 15 × 15 × 1.0 (시판 압출관)', process='3축 MCT (끝면 면삭 + 구멍)',
+    'rail': dict(qty=2, material='AL6061-T6 각관 15 × 15 × 1.0 (6063-T5/T6 허용)', process='3축 MCT (끝면 면삭 + 구멍)',
                  finish='없음', frame='X 길이 방향(X=0 한쪽 끝면), Z 구멍 방향'),
     'clamp_ring_output': dict(qty=4, material='SUS304 2B 1.5t', process='판금 레이저 절단 (대안: 와이어커팅)',
                               finish='없음(버 제거)', frame='Z 두께 방향, 원점 링 중심'),
@@ -80,16 +83,16 @@ def hip_plate(s):
             return O.cone('x', ZH + z, x, s * y_small, s * y_big, r_small, r_big)
         return O.cone('x', ZH + z, x, s * y_big, s * y_small, r_big, r_small)
 
-    # Ø42 pilot pocket: fill, re-cut at Ø42.00 (the floor stays at the stator ring face)
+    # Ø42 H7 pilot pocket: fill (covers the 10-28 export's Ø42.05), re-cut (the floor stays at the stator ring face)
     sh = O.fuse(sh, ycyl(0, 0, Y_IN - 1.5, P.Y_RING_HIP, 21.03))
-    sh = O.cut(sh, ycyl(0, 0, Y_IN - 2.0, P.Y_RING_HIP, 21.0))
-    # 90 deg countersinks on the web outer face (ISO 10642 heads): fill, re-drill, re-sink
-    for (x, z, rh, dk) in CSK.values():
+    sh = O.cut(sh, ycyl(0, 0, Y_IN - 2.0, P.Y_RING_HIP, P.PILOT_D_HIP / 2))
+    # 90 deg countersinks on the web outer face (ISO 10642 heads): fill the old seat (r <= 4.65), re-drill, re-sink
+    for (x, z, dh, dk) in CSK.values():
         for sx in (-1, 1):
-            sh = O.fuse(sh, ycyl(z, sx * x, Y_IN, Y_WEB, dk / 2 + 0.6))
-            sh = O.cut(sh, ycyl(z, sx * x, Y_IN - 1, Y_WEB + 1, rh))
-            depth = dk / 2 - rh                      # 45 deg half angle
-            sh = O.cut(sh, ycone(z, sx * x, Y_WEB - depth, Y_WEB + 1, rh, dk / 2 + 1))
+            sh = O.fuse(sh, ycyl(z, sx * x, Y_IN, Y_WEB, dh / 2 + 2.3))
+            sh = O.cut(sh, ycyl(z, sx * x, Y_IN - 1, Y_WEB + 1, dh / 2))
+            depth = (dk - dh) / 2                    # 45 deg half angle
+            sh = O.cut(sh, ycone(z, sx * x, Y_WEB - depth, Y_WEB + 1, dh / 2, dk / 2 + 1))
     # small top windows shortened, shell M3 (tap drill) re-drilled at x ±40, z 140
     for sx in (-1, 1):
         t0, t1 = xr(Y_IN, Y_WEB)
@@ -116,14 +119,14 @@ def magnet_spacer():
 
 def end_plug_round():
     r = P.TUBE_D / 2 - P.TUBE_WALL - 0.05
-    return O.cut(O.cyl('z', 0, 0, 0, 10.0, r), O.cyl('z', 0, 0, -1, 11, 4.2 / 2))
+    return O.cut(O.cyl('z', 0, 0, 0, 10.0, r), O.cyl('z', 0, 0, -1, 11, P.TAP_DRILL['M5'] / 2))
 
 
 def end_plug_square():
     a = (P.RAIL_S - 2 * P.RAIL_WALL - 0.1) / 2
     b = O.box(-a, a, -a, a, 0, 10.0)
-    b = O.chamfer_edges(b, 1.0, lambda p, q: abs(p[0] - q[0]) < 1e-6 and abs(p[1] - q[1]) < 1e-6)
-    return O.clean(O.cut(b, O.cyl('z', 0, 0, -1, 11, 3.3 / 2)))
+    b = O.chamfer_edges(b, P.PLUG_CHAMFER, lambda p, q: abs(p[0] - q[0]) < 1e-6 and abs(p[1] - q[1]) < 1e-6)
+    return O.clean(O.cut(b, O.cyl('z', 0, 0, -1, 11, P.TAP_DRILL['M4'] / 2)))
 
 
 def spine_tube():

@@ -16,10 +16,10 @@ ZH = P.Z_HIP
 
 
 def hip_plate(s):
-    """6061-T6 hip plate (8 mm stock): hub 8 mm with the Ø42 pilot pocket, Ø30 hole, 6 x M2.5 low-head
-    counterbored on the outer face, Ø80 x 1.5 register boss for the driver cup on the inner face;
-    5 mm web: disc r 68 + column + top bar for the payload rails, M5 countersunk for the tubes,
-    M4 countersunk for the rails, M3 tapped for the cup, deck and shell."""
+    """6061-T6 hip plate, 9.5 mm finished (10 mm+ stock): hub 8 mm with the Ø42 H7 pilot pocket, Ø30 hole,
+    6 x M2.5 low-head counterbored on the outer face, Ø80 x 1.5 register boss for the driver cup on the inner face;
+    5 mm web: disc r 68 + column + top bar for the payload rails, M5 / M4 countersunk (90 deg, ISO 10642) for
+    the tube / rail end plugs, M3 tapped (tap-drill holes) for the cup, deck and shell."""
     B = C.Builder(side=s)
     y_in = P.YW - P.HIP_PLATE_T                 # 164
     y_web = y_in + P.HIP_WEB_T                  # 169
@@ -33,7 +33,7 @@ def hip_plate(s):
     C.union(web, B.ycyl(0, ZH, y_in - 1.5, y_in + 0.01, 40.0))                  # cup register boss Ø80
     fr = LY.frames('hip', s)
     m = fr['motor']
-    C.cut(web, B.ycyl(0, ZH, y_in - 2, P.Y_RING_HIP, 21.025))                  # Ø42 pilot pocket
+    C.cut(web, B.ycyl(0, ZH, y_in - 2, P.Y_RING_HIP, P.PILOT_D_HIP / 2))       # Ø42 H7 pilot pocket
     C.cut(web, B.ycyl(0, ZH, y_in - 2, P.YW + 1, 15.0))
     for p in LY.motor_points(m, P.AKE_PCD_RING / 2, P.AKE_RING_M25, P.AKE['ring']):
         q = LG.lc(p, s)
@@ -44,24 +44,25 @@ def hip_plate(s):
     C.cut(web, B.box((d[0] * 31.25, y_in - 0.25, ZH + d[2] * 31.25), d, (0, 1, 0), 19.5, 4.5, 7.0))  # lead groove
     for p in LG.cup_column_points('hip', s):                                     # M3 tapped for the cup
         q = LG.lc(p, s)
-        C.cut(web, B.ycyl(q[0], q[2], y_in - 2, y_web + 0.5, 1.25))
+        C.cut(web, B.ycyl(q[0], q[2], y_in - 2, y_web + 0.5, P.TAP_DRILL['M3'] / 2))
     for sx in (-1, 1):
-        C.cut(web, B.ycyl(sx * P.TUBE_X, ZH + P.TUBE_Z, y_in - 1, y_web + 1, 2.7))          # M5 tube screw
-        C.cut(web, B.ycyl(sx * P.TUBE_X, ZH + P.TUBE_Z, y_web - 2.6, y_web + 1, 2.7, 5.4))  # 90 deg countersink
-        C.cut(web, B.ycyl(sx * P.RAIL_X, ZH + P.RAIL_Z, y_in - 1, y_web + 1, 2.2))          # M4 rail screw
-        C.cut(web, B.ycyl(sx * P.RAIL_X, ZH + P.RAIL_Z, y_web - 2.2, y_web + 1, 2.2, 4.4))
-        C.cut(web, B.ycyl(sx * 45.0, ZH - 42.0, y_in - 1, y_web + 1, 1.25))                  # deck flange M3
+        for (x, z, (dh, dk)) in ((P.TUBE_X, P.TUBE_Z, P.CSK_M5), (P.RAIL_X, P.RAIL_Z, P.CSK_M4)):   # tube M5, rail M4
+            C.cut(web, B.ycyl(sx * x, ZH + z, y_in - 1, y_web + 1, dh / 2))
+            depth = (dk - dh) / 2                                                   # 90 deg countersink on the outer face
+            C.cut(web, B.ycyl(sx * x, ZH + z, y_web - depth, y_web + 1, dh / 2, dk / 2 + 1))
+        C.cut(web, B.ycyl(sx * 45.0, ZH - 42.0, y_in - 1, y_web + 1, P.TAP_DRILL['M3'] / 2))  # deck flange M3
     for (x, z) in ((-50.0, 30.0), (50.0, 30.0), (-60.0, -20.0), (60.0, -20.0), (-40.0, 140.0), (40.0, 140.0)):
-        C.cut(web, B.ycyl(x, ZH + z, y_web - 6, y_web + 1, 1.25))                         # shell M3 (tapped)
+        C.cut(web, B.ycyl(x, ZH + z, y_web - 6, y_web + 1, P.TAP_DRILL['M3'] / 2))       # shell M3 (tapped)
     # lightening (the hip cables pass outside the disc, through the shell grommet only); holes kept >= 3 mm
-    # from the cup's M3 columns (285 / 345 / 45 deg on the left), the tube screws and the lead groove (235 deg)
+    # from the cup's M3 columns (285 / 345 / 45 deg on the left), the tube screws and the lead groove (235 deg);
+    # the top windows end at z 135.5, 3.25 mm below the shell M3 holes at x ±40, z 140
     C.cut(web, B.prism([(-15.0, ZH + 60), (15.0, ZH + 60), (15.0, ZH + 118), (-15.0, ZH + 118)], y_in - 1, y_web + 1))
     for a in (0.0, 90.0, 180.0, 255.0, 300.0):
         t = math.radians(a)
         x, z = 50.0 * math.cos(t), 50.0 * math.sin(t)
         C.cut(web, B.ycyl(x, ZH + z, y_in - 2, y_web + 1, 11.0))
     for sx in (-1, 1):
-        C.cut(web, B.prism([(sx * 30.0, ZH + 129), (sx * 43.0, ZH + 129), (sx * 43.0, ZH + 141), (sx * 30.0, ZH + 141)][::sx],
+        C.cut(web, B.prism([(sx * 30.0, ZH + 129), (sx * 43.0, ZH + 129), (sx * 43.0, ZH + 135.5), (sx * 30.0, ZH + 135.5)][::sx],
                            y_in - 1, y_web + 1))
     return web
 
@@ -85,14 +86,22 @@ def rail(sx):
 
 
 def rail_plugs(sx):
-    """Tapped 6061 end plugs (rails M4, tubes M5)."""
+    """Tapped 6061 end plugs (rails M4, tubes M5), glued 10 mm into the tube / rail ends; tapped through
+    (tap-drill holes), the square rail plugs with PLUG_CHAMFER on the long edges."""
     B = C.Builder()
     y = P.YW - P.HIP_PLATE_T
     out = None
+    a, c = (P.RAIL_S - 2 * P.RAIL_WALL - 0.1) / 2, P.PLUG_CHAMFER
     for sy in (-1, 1):
-        s = P.RAIL_S - 2 * P.RAIL_WALL - 0.1
-        out = C.union(out, B.box((sx * P.RAIL_X, sy * (y - 5.0), ZH + P.RAIL_Z), (1, 0, 0), (0, 0, 1), s, s, 10.0))
-        out = C.union(out, B.ycyl(sx * P.TUBE_X, ZH + P.TUBE_Z, sy * (y - 10.0), sy * y, P.TUBE_D / 2 - P.TUBE_WALL - 0.05))
+        x0, z0 = sx * P.RAIL_X, ZH + P.RAIL_Z
+        sq = B.prism([(x0 + a - c, z0 - a), (x0 + a, z0 - a + c), (x0 + a, z0 + a - c), (x0 + a - c, z0 + a),
+                      (x0 - a + c, z0 + a), (x0 - a, z0 + a - c), (x0 - a, z0 - a + c), (x0 - a + c, z0 - a)],
+                     sy * (y - 10.0), sy * y)
+        C.cut(sq, B.ycyl(x0, z0, sy * (y - 11.0), sy * (y + 1.0), P.TAP_DRILL['M4'] / 2))
+        out = C.union(out, sq)
+        rd = B.ycyl(sx * P.TUBE_X, ZH + P.TUBE_Z, sy * (y - 10.0), sy * y, P.TUBE_D / 2 - P.TUBE_WALL - 0.05)
+        C.cut(rd, B.ycyl(sx * P.TUBE_X, ZH + P.TUBE_Z, sy * (y - 11.0), sy * (y + 1.0), P.TAP_DRILL['M5'] / 2))
+        out = C.union(out, rd)
     return out
 
 

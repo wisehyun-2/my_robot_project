@@ -91,7 +91,8 @@ def cup_floor_in():
 # ----------------------------------------------------------------------------- lateral stack (left side, y outward)
 POCKET = 2.5                # Ø42 pilot pocket depth (pilot is 3 mm long)
 YW = 172.0                  # hip plate hub face = torso side face
-HIP_PLATE_T = 8.0           # hub (5 mm web + 3 mm boss through the shell)
+HIP_PLATE_T = 8.0           # hub (5 mm web + 3 mm boss through the shell); with the 1.5 mm cup register boss
+                            # on the inner face the machined plate is 9.5 mm thick (10 mm+ stock)
 HIP_WEB_T = 5.0
 GAP_FEMUR = 2.0
 FEMUR_T = 30.0
@@ -114,10 +115,17 @@ CAN_CLEAR_R = 37.0
 BEARING_FACE = 11.2         # motor output face -> M3 x 16 head bearing face (4.8 mm engagement)
 RING_T = 1.5                # laser-cut 1.5 mm stainless clamp rings: screw heads never bear on bare PETG at a joint
 RING_OUT = (27.0, 12.5)     # driven bosses (OD inside the Ø28 access pocket, ID): 6 x M3 x 16 12.9 on PCD 20
-RING_STATOR = (45.0, 31.0)  # knee / wheel plates (ID clears the Ø28 boss in the Ø30 hole): 6 x M2.5 on PCD 36.5
+RING_STATOR = (45.0, 30.0)  # knee / wheel plates, 6 x M2.5 on PCD 36.5; ID = the Ø30 plate hole (1.0 mm radial to the
+                            # turning Ø28 boss) so the web inside the Ø2.8 holes is 1.85 mm >= the 1.5 mm sheet (laser)
 STATOR_RECESS_D = 45.6      # recess on the far face of the PETG motor plates for the stator ring + low heads
 CBORE_M25 = (4.8, 1.7)      # DIN 7984 low head M2.5 counterbore (dia, depth)
 CBORE_M25_HIP = (4.8, 2.7)  # ISO 4762 M2.5 12.9 at the hip stator ring (strength.py: 8.8 is over proof at SF 2)
+PILOT_D_HIP = 42.0125       # machined hip plate pilot pocket: Ø42 H7 (+0 / +0.025) modelled at mid tolerance
+                            # (the printed knee / wheel pockets keep Ø42.05, legs.py)
+CSK_M5 = (5.4, 11.2)        # hip plate web, ISO 10642 heads: through hole Ø, 90 deg countersink Ø = theoretical dk
+CSK_M4 = (4.4, 9.0)         #   (M5 11.20, M4 8.96 rounded up), so no compliant head stands proud of the web
+TAP_DRILL = {'M3': 2.5, 'M4': 3.3, 'M5': 4.2}
+PLUG_CHAMFER = 1.0          # long edges of the square rail plugs: clear the rail's inner corner radius
 GAP_TYRE = 5.0              # tyre sidewall -> shank plate
 
 Y_FEMUR_IN = YW + GAP_FEMUR

@@ -295,8 +295,8 @@ HOLE_SPEC = {
     'B': ('M3 탭 관통 (기초 Ø2.5)', '드라이버 컵 M3×40'),
     'C': ('M3 탭 관통 (기초 Ø2.5)', '전장 데크 M3×8'),
     'D': ('M3 탭 관통 (기초 Ø2.5)', '셸 M3×6'),
-    'E': ('Ø5.4 관통 + 90° 접시 Ø10.4 (Z=3 면)', '척추 관 마개 M5×12 ISO 10642'),
-    'F': ('Ø4.4 관통 + 90° 접시 Ø9.4 (Z=3 면)', '레일 마개 M4×12 ISO 10642'),
+    'E': ('Ø5.4 관통 + 90° 접시 Ø11.2 (Z=3 면)', '척추 관 마개 M5×12 ISO 10642'),
+    'F': ('Ø4.4 관통 + 90° 접시 Ø9.0 (Z=3 면)', '레일 마개 M4×12 ISO 10642'),
     'G': ('Ø22 관통 (경량 구멍)', ''),
 }
 
@@ -404,10 +404,10 @@ def draw_hip_plate(name, pdf, png_dir):
         ['9.5', 'Ø80 등록 보스 면 (드라이버 컵)'],
     ], row_h=5.0, title='두께 방향 면 높이 (Z)')
     S.notes(250.0, yb - 9, GENERAL_NOTES + [
-        '소재 AL6061-T6 판재 10t 이상(가능하면 12t). 완성 두께 9.5 mm (BOM의 "8 mm 판"은 오기).',
+        '소재 AL6061-T6 판재 10t 이상(가능하면 12t). 완성 두께 9.5 mm (8 mm 허브 + 1.5 mm 등록 보스).',
         '양면 2공정. Ø42 포켓, Z=5.5 바닥, Z=8 면은 같은 공정에서 가공 권장(모터 축 정렬).',
         '검정 아노다이징(황산 10~15 µm). Ø42 H7 포켓은 마스킹하거나 피막 뒤 H7 만족.',
-        '나사: A는 M2.5×6 (AKE 링 물림 3.2 mm), E·F 접시 머리는 Z=3 면 아래로 0~0.2.',
+        '나사: A는 M2.5×6 (AKE 링 물림 3.2 mm). E·F 접시 자리 지름은 KS B ISO 10642 이론 머리 지름이라 머리가 Z=3 면보다 0.5~0.9 아래.',
     ], width=96)
     S.title_block(title, 'WBv2-M01-%s (2/2)' % tag, info(name, '1:1, 3.5:1'))
     finish(S, pdf, png_dir, name + '_2')
@@ -467,7 +467,7 @@ def draw_end_plug_round(pdf, png_dir):
         '척추 관(Ø16 × 1.0, 안지름 Ø14) 양 끝에 끼우고 록타이트 638 등 고정제로 접착.',
         '바깥지름은 실제 관에 맞춤: 관 실측 안지름 -0.10 (지름 틈 0.05~0.15).',
         '양 끝 바깥 모서리 C0.3, 탭 입구 C0.3.',
-        'hip 판 쪽에서 ISO 10642 M5×12가 약 7 mm 물림.',
+        'hip 판 쪽에서 ISO 10642 M5×12가 약 7.5 mm 물림.',
     ], width=78)
     S.title_block('척추 관 마개 (end plug round, M5)', 'WBv2-M03', info(name, '5:1'))
     finish(S, pdf, png_dir, name)
@@ -491,7 +491,7 @@ def draw_end_plug_square(pdf, png_dir):
         '바깥 치수는 실제 각관에 맞춤: 실측 안치수 -0.10.',
         'C1.0: 각관 안쪽 모서리 R(소재 R0.5~1.0)에 걸리지 않게 함.',
         '양 끝면 모서리 C0.3, 탭 입구 C0.3.',
-        'hip 판 쪽에서 ISO 10642 M4×12가 약 7 mm 물림.',
+        'hip 판 쪽에서 ISO 10642 M4×12가 약 7.5 mm 물림.',
     ], width=78)
     S.title_block('레일 마개 (end plug square, M4)', 'WBv2-M04', info(name, '4:1'))
     finish(S, pdf, png_dir, name)
@@ -515,6 +515,7 @@ def draw_spine_tube(pdf, png_dir):
         '양 끝면 축에 직각 0.05, 안·밖 버 제거.',
         '4개 길이가 다르면 hip 판이 비틀려 좌우 hip 모터 축이 어긋남.',
         '양 끝에 마개 WBv2-M03을 접착(조립 때).',
+        '6061-T6을 구할 수 없으면 6063-T5/T6 사용 가능(강도 재계산 통과, calc/strength.md 4절).',
     ], width=100)
     S.title_block('척추 관 (spine tube Ø16 × 1.0)', 'WBv2-M05', info(name, '0.6:1, 3:1'))
     finish(S, pdf, png_dir, name)
@@ -541,7 +542,7 @@ def draw_rail(pdf, png_dir):
         '길이 328.00 ±0.05: 척추 관(WBv2-M05) 2개와 함께 4개를 같은 값으로 같은 세팅에서 맞춤.',
         'Ø4.4 관통 4곳: 위·아래 벽을 한 번에(폭 중앙, 위치 ±0.1). 윗판 M4×25 관통 볼트 자리.',
         '양 끝면 직각 0.05, 버 제거. 양 끝에 마개 WBv2-M04 접착(조립 때).',
-        '6061-T6을 구할 수 없으면 6063 사용 여부는 설계자 확인(강도 다시 계산).',
+        '6061-T6을 구할 수 없으면 6063-T5/T6 사용 가능(강도 재계산 통과, calc/strength.md 4절). 관통 볼트는 각관이 눌리지 않을 만큼만 조임.',
     ], width=100)
     S.title_block('위 레일 (rail 15 × 15 × 1.0)', 'WBv2-M06', info(name, '0.6:1, 3:1'))
     finish(S, pdf, png_dir, name)
@@ -588,7 +589,7 @@ def main():
         ('clamp_ring_stator', lambda pdf, d: draw_ring(
             'clamp_ring_stator', 'WBv2-M08', '고정링 클램프 링 (clamp ring stator Ø45)',
             ['knee·wheel PETG 판 바깥 홈, 고정링 M2.5×8 머리 밑.',
-             '안쪽 살(구멍–안지름) 1.35 mm로 두께 1.5보다 얇음: 레이저 열변형이 크면 와이어커팅.'], pdf, d)),
+             '안쪽 살(구멍–안지름) 1.85 mm, 바깥 살 2.85 mm (두께 1.5 이상).'], pdf, d)),
     ]
     for name, fn in jobs:
         with PdfPages(OUT / (name + '.pdf'), metadata={'Title': name, 'Author': PROJECT}) as pdf:
