@@ -50,6 +50,28 @@
   그대로)라, 토크가 질량에 비례한다고 보면 최대 hip 10.1 → 약 10.2 N·m(12.5의 82 %)다. DLL이 풀리면
   `python -m wbr.bench.ake_cad`로 확인할 것(`calc/mass_properties.json`은 이미 8.563 kg 값).
 
+10-29 3차 재빌드(hip 판 얇은 살 보강; 순서는 2차와 같고 자세 스윕·고정 간격도 다시 돌림):
+- 1.5 mm 미만 살 3종류를 없앴다(`manufacturing/wall_check.py`가 판 전체 표면에서 안쪽으로 광선을 쏴 잰다; 그림
+  `manufacturing/explain/hip_plate_thin_walls.png`): Ø42 포켓 옆 리드선 홈 살 0.49 → 2.0 mm(홈 시작 반경 21.5 → 23,
+  `params.HIP_GROOVE_R`), M2.5 카운터보어와 Ø30 구멍 사이 0.86 mm는 카운터보어를 Ø30 쪽으로 터서 없앰(`HIP_CBORE_OPEN`),
+  M5 접시 자리와 판 테두리 사이 0.74 → 2.4 mm(척추 관 Ø16과 같은 R8 귀, `HIP_CSK_EAR_R`). 가장 얇은 살은 이제 1.85 mm
+  (A 구멍 Ø2.8 ↔ Ø30, 원래 그대로).
+- 판 1장 104 029.8 → 104 077.9 mm³(+0.13 g), 로봇 8.563 kg 그대로. 구멍 21개와 Z 방향 원통면(Ø42 H7, Ø30, Ø80, Ø52, 카운터보어
+  Ø4.8)은 위치·지름이 모두 같고 새로 생긴 건 귀 원통 Ø16 두 개뿐이라 짝 부품의 조립 위치는 바뀌지 않는다.
+- 기준 자세 실제 간섭 0건(hip 판이 걸린 결과 0건), 30자세 스윕 실제 간섭 0건이고 240개 최소 간격이 커밋된 10-29 스윕과 0.000 mm까지 같다.
+  고정 간격 49개도 같다. hip 판과 주변 부품(24종) 최소 거리도 재빌드 전과 모두 같다: 전장 데크 0.5, 셸 0.6(허브 보스),
+  허벅지 1.0(Ø30 구멍 – Ø28 보스), 파란 안장 1.6 mm. 귀는 척추 관 끝과 맞닿는 면(결합), 셸 1.6, 배선 4.5 mm.
+  홈 끝(r 23)과 AKE 리드선 사이 1.25 mm. 조인트 6개 20° 돌렸다 되돌리면 0.0 mm 복귀, BOM 그대로.
+- 그림 24장은 다시 렌더하지 않았다(귀가 1.7 mm라 보이지 않음). 견적 STEP·도면(형상 표 P3 귀, P4 카운터보어)·설명 그림
+  3장은 새 판으로 바꿨다.
+
+10-29 5차 재빌드(hip 판 리드선 홈 폭 7 → 12 mm, `params.HIP_GROOVE_W`; 그림 `manufacturing/explain/hip_plate_lead_groove.png`):
+- AKE60의 3상 핀(Ø1.5 × 4, 반경 25, 간격 3 mm)은 끝이 Ø80 보스 면 높이까지 나와 있는데, 7 mm 홈(±3.5)이 핀 폭(±3.75)보다
+  좁아 바깥 두 핀이 판 면에 닿아(0.0 mm) 납땜하고 선을 뺄 자리가 없었다. 12 mm로 넓혀 세 핀 모두 판과 1.25 mm 이상(옆벽까지
+  2.25, 홈 안쪽 끝까지 1.25), 핀 아래 3.5 mm가 빈다. 드라이버 컵의 리드선 슬롯(폭 9)과 같은 방향이다.
+- 판 1장 104 077.9 → 103 772.5 mm³(−0.8 g), 로봇 9.094 kg. 1.5 mm 미만 살 없음(wall_check), 구멍 21개 그대로, 기준 자세 실제
+  간섭 0건. 재료를 덜어 내기만 해서 스윕·고정 간격은 다시 돌리지 않았다. knee·wheel PETG 판의 홈은 아직 7 mm다.
+
 ![정면 왼쪽](images/01_iso_front_left.png)
 
 ## 0. 결과 한눈에
@@ -79,7 +101,7 @@
 | `fusion/check.py`, `poses.py`, `gaps.py` | 질량·관성(출력 방향별 벽·스킨), 간섭 / 자세 스윕 / 고정 간격 측정 |
 | `fusion/finalize.py` | 부품번호, 그림, BOM, 조인트, 내보내기 |
 | `calc/` | `strength.py`→`strength.md`(손계산), `mass_properties.json`, `sweep_part1/2.json`, `gaps.json` |
-| `manufacturing/` | 가공 부품 견적용 단일 부품 STEP·링 DXF·2D 도면 PDF (`make_parts.py`, `drawings.py`, Fusion 없이 OCP로) |
+| `manufacturing/` | 가공 부품 견적용 단일 부품 STEP·링 DXF·2D 도면 PDF (`make_parts.py`, `drawings.py`, Fusion 없이 OCP로), 살 두께 검사 `wall_check.py`(gmsh) |
 | `로봇_부품_검토사항.md` | BOM "가공" 품목의 판금·CNC 판정, MakeIT 공정 매핑, 주문 전 확인 사항 |
 | `export/` | f3d, 조립 STEP, `parts_step/`, `parts_stl/` |
 | `images/` | 그림 24장(외관 16 + 내부 8) |

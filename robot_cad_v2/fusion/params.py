@@ -125,6 +125,16 @@ PILOT_D_HIP = 42.0125       # machined hip plate pilot pocket: Ø42 H7 (+0 / +0.
                             # (the printed knee / wheel pockets keep Ø42.05, legs.py)
 CSK_M5 = (5.4, 11.2)        # hip plate web, ISO 10642 heads: through hole Ø, 90 deg countersink Ø = theoretical dk
 CSK_M4 = (4.4, 9.0)         #   (M5 11.20, M4 8.96 rounded up), so no compliant head stands proud of the web
+# hip plate thin walls (10-29, manufacturing/wall_check.py; nothing under 1.5 mm is left on the machined plate):
+HIP_GROOVE_R = (23.0, 41.0)  # lead groove radial span: 2.0 mm wall to the Ø42 pocket (was 21.5 -> 0.49 mm fin);
+                             # the phase leads leave the stator front at r 25
+HIP_GROOVE_W = 12.0          # lead groove width: the 3 phase pins (Ø1.5 x 4 at r 25, 3 mm apart, tips at the boss
+                             # face) span 7.5 mm, so 2.25 mm each side for the soldered wires (7 mm put the outer
+                             # pins on the groove edges)
+HIP_CBORE_OPEN = 14.0        # M2.5 counterbores run out into the Ø30 hole (to r 14): the 0.86 mm wall between them
+                             # cannot grow (PCD 36.5 fixed by the AKE ring, Ø30 by the turning Ø28 boss), so it goes
+HIP_CSK_EAR_R = 8.0          # web ear around the tube M5 countersinks (r 61.7): 2.4 mm wall to the countersink rim
+                             # (0.83 mm at the r 68 disc), the ear stands 1.7 mm proud of the disc
 TAP_DRILL = {'M3': 2.5, 'M4': 3.3, 'M5': 4.2}
 PLUG_CHAMFER = 1.0          # long edges of the square rail plugs: clear the rail's inner corner radius
 GAP_TYRE = 5.0              # tyre sidewall -> shank plate

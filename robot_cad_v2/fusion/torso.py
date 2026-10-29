@@ -27,19 +27,27 @@ def hip_plate(s):
                           (-64.0, ZH + P.RAIL_Z + P.RAIL_S / 2 + 2)], y_in, y_web))
     for sx in (-1, 1):                          # gussets column -> bar
         C.union(web, B.prism([(sx * 22.0, ZH + 100), (sx * 22.0, ZH + 125), (sx * 47.0, ZH + 125)][::sx], y_in, y_web))
+        C.union(web, B.ycyl(sx * P.TUBE_X, ZH + P.TUBE_Z, y_in, y_web, P.HIP_CSK_EAR_R))   # ear: csk rim wall
     C.union(web, B.ycyl(0, ZH, y_web - 0.01, P.YW, 26.0))                       # 3 mm hub boss through the shell
     C.union(web, B.ycyl(0, ZH, y_in - 1.5, y_in + 0.01, 40.0))                  # cup register boss Ø80
     fr = LY.frames('hip', s)
     m = fr['motor']
     C.cut(web, B.ycyl(0, ZH, y_in - 2, P.Y_RING_HIP, P.PILOT_D_HIP / 2))       # Ø42 H7 pilot pocket
     C.cut(web, B.ycyl(0, ZH, y_in - 2, P.YW + 1, 15.0))
+    db, (cw, cd) = P.HIP_CBORE_OPEN, P.CBORE_M25_HIP
     for p in LY.motor_points(m, P.AKE_PCD_RING / 2, P.AKE_RING_M25, P.AKE['ring']):
         q = LG.lc(p, s)
         C.cut(web, B.ycyl(q[0], q[2], P.Y_RING_HIP - 0.5, P.YW + 1, LG.M25_CLEAR / 2))
-        C.cut(web, B.ycyl(q[0], q[2], P.YW - P.CBORE_M25_HIP[1], P.YW + 1, P.CBORE_M25_HIP[0] / 2))
+        C.cut(web, B.ycyl(q[0], q[2], P.YW - cd, P.YW + 1, cw / 2))
+        u = C.unit((q[0], 0.0, q[2] - ZH))                                       # run-out into the Ø30 hole
+        rq = (q[0] ** 2 + (q[2] - ZH) ** 2) ** 0.5
+        rc = (db + rq) / 2
+        C.cut(web, B.box((u[0] * rc, P.YW - (cd - 1) / 2, ZH + u[2] * rc), u, (0, 1, 0), rq - db, cd + 1, cw))
     ex = LG.ldir(C.col(m, 0), s)
     d = C.unit((ex[0], 0.0, ex[2]))
-    C.cut(web, B.box((d[0] * 31.25, y_in - 0.25, ZH + d[2] * 31.25), d, (0, 1, 0), 19.5, 4.5, 7.0))  # lead groove
+    g0, g1 = P.HIP_GROOVE_R
+    C.cut(web, B.box((d[0] * (g0 + g1) / 2, y_in - 0.25, ZH + d[2] * (g0 + g1) / 2), d, (0, 1, 0), g1 - g0, 4.5,
+                     P.HIP_GROOVE_W))                                            # lead groove (phase pins)
     for p in LG.cup_column_points('hip', s):                                     # M3 tapped for the cup
         q = LG.lc(p, s)
         C.cut(web, B.ycyl(q[0], q[2], y_in - 2, y_web + 0.5, P.TAP_DRILL['M3'] / 2))
