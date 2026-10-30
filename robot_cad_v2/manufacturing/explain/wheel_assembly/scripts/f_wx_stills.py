@@ -83,7 +83,7 @@ def run(_context: str):
         return C.inter(h1, h2)
 
     feats = {
-        'cut1': {'② M3 × 16 + 와셔': (10 * math.cos(math.radians(-5)), 198.3, W.AX_Z + 10 * math.sin(math.radians(-5))),
+        'cut1': {'② M3 × 14 + 와셔': (10 * math.cos(math.radians(-5)), 200.0, W.AX_Z + 10 * math.sin(math.radians(-5))),
                  '④ M3 × 8 + 인서트': (0.0, 196.0, W.AX_Z + 18.0),
                  '⑤ M5 × 50 머리 (플랜지 포켓 안)': (0.0, 200.5, W.AX_Z + 2.0),
                  'A Ø11.8 스피곳': (5.5 * math.cos(math.radians(-5)), 212.3, W.AX_Z + 5.5 * math.sin(math.radians(-5))),

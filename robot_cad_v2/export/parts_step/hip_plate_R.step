@@ -15,7 +15,7 @@ turing/ \X2\B3C4BA74\X0\ WBv2-M01)'),
 
 FILE_NAME(
 /* name */ 'hip_plate_R.step',
-/* time_stamp */ '2026-10-30T21:05:20+09:00',
+/* time_stamp */ '2026-10-31T00:21:43+09:00',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20.2',
@@ -2924,7 +2924,7 @@ SOLID_ANGLE_UNIT()
 #2851=PRODUCT_DEFINITION_SHAPE('',$,#2854);
 #2852=SHAPE_REPRESENTATION('',(#1678),#2844);
 #2853=PRODUCT_DEFINITION_CONTEXT('part definition',#2858,'design');
-#2854=PRODUCT_DEFINITION('2026-10-30-21-05-20-000','hip_plate_R',#2855,
+#2854=PRODUCT_DEFINITION('2026-10-31-00-21-42-958','hip_plate_R',#2855,
 #2853);
 #2855=PRODUCT_DEFINITION_FORMATION('',$,#2860);
 #2856=PRODUCT_RELATED_PRODUCT_CATEGORY('hip_plate_R','hip_plate_R',(#2860));
@@ -2933,7 +2933,7 @@ SOLID_ANGLE_UNIT()
 #2858=APPLICATION_CONTEXT(
 'Core Data for Automotive Mechanical Design Process');
 #2859=PRODUCT_CONTEXT('part definition',#2858,'mechanical');
-#2860=PRODUCT('2026-10-30-21-05-20-000','hip_plate_R',
+#2860=PRODUCT('2026-10-31-00-21-42-958','hip_plate_R',
 '6061-T6 \X2\D310\X0\ 10t \X2\C774C0C1\X0\(\X2\C644C131\X0\ 9.5 mm) 3\X2\CD95\X0\ 
 MCT \X2\C591BA74\X0\, \X\D842 H7, \X2\BCF4C2A4\X0\ \X2\BA74\X0\ \X\D86
 3 \X\D7 0.5 \X2\D648\X0\, M5\X\B7M4 90\X\B0 \X2\C811C2DC\X0\, M3 \X2\D0ED\X0\ 

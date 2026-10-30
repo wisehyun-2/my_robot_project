@@ -50,7 +50,7 @@ def run(_context: str):
     lv = LG.hub_levels()
     y_out = P.y_output('wheel')
     rec = P.Y_TIBIA_IN + P.RING_T + P.CBORE_M25[1]
-    bear = y_out - P.BEARING_FACE
+    bear = y_out - P.HUB_SCREW_SEAT                # washer seat of the M3 x 14 (10-30)
 
     def hexprism(x, z, af, y0, y1):
         r = af / 2 / math.cos(math.radians(30))
@@ -84,8 +84,9 @@ def run(_context: str):
                      'steel', (p[0], p[2])))
     for i, p in enumerate(LY.motor_points(fr, P.AKE_PCD_OUT / 2, P.AKE_OUT_M3, A['out'])):
         x, z = p[0], p[2]
-        fast.append(('S316', 'M3x16 ISO4762 12.9 #%d' % i,
-                     cap_screw(x, z, bear - 3.5, 1, 5.5, 3.0, 3.0, 16.0, 2.5, 1.3, pitch=0.8), 'black satin', (x, z)))
+        fast.append(('S316', 'M3x%d ISO4762 12.9 #%d' % (P.HUB_SCREW_L, i),
+                     cap_screw(x, z, bear - 3.5, 1, 5.5, 3.0, 3.0, float(P.HUB_SCREW_L), 2.5, 1.3, pitch=0.8), 'black satin',
+                     (x, z)))
         w = B.ycyl(x, z, bear - 0.5, bear, 3.5)
         C.cut(w, B.ycyl(x, z, bear - 1, bear + 1, 1.6))
         fast.append(('WASH', 'washer DIN125 M3 #%d' % i, w, 'steel', (x, z)))

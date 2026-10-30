@@ -322,8 +322,8 @@ def standoff(length, name):
     the male stud points to -Z."""
     comp = C.master(name)
     s = _hex_prism(5.0, 0.0, length)
-    C.cut(s, B.zcyl(0, 0, length - 5.0, length + 1, 1.1))
-    C.union(s, B.zcyl(0, 0, -6.0, 0.0, 1.2))
+    C.cut(s, B.zcyl(0, 0, length - 5.0, length + 1, 1.025))      # threads at the M2.5 minor Ø (fasteners.MINOR)
+    C.union(s, B.zcyl(0, 0, -6.0, 0.0, 1.025))
     C.add_body(comp, s, 'standoff', 'Brass', 'brass')
     return comp
 

@@ -20,7 +20,7 @@ HOME = dict(SHANK=0, MOTOR=55, RING=-30, S25=-45, PINS=-60, FLANGE=-88, INS=-108
 ORDER = list(HOME)
 NAMES = dict(SHANK='정강이 (PETG, 아래쪽만)', MOTOR='AKE60-8 모터', RING='SUS304 클램프 링 2 t',
              S25='① M2.5 × 8 저두 × 6', INS='황동 인서트 M3 × 6', FLANGE='허브 플랜지 (PETG)',
-             PINS='③ 평행핀 Ø3 × 10 × 3', WASH='평와셔 M3 × 6', S316='② M3 × 16 (12.9) × 6',
+             PINS='③ 평행핀 Ø3 × 10 × 3', WASH='평와셔 M3 × 6', S316='② M3 × 14 (12.9) × 6',
              BOLT='⑤ M5 × 50 축 볼트', HEX='육각 허브 (PETG)', WHEEL='RC 바퀴 Ø150 × 60', NUT='⑥ M5 플랜지 너트',
              S38='④ M3 × 8 × 6')
 # moves: (group, target) with target 0 (final place) or another group's name (ride on that group's current offset)
@@ -37,7 +37,7 @@ STEPS = [
          moves=[[('INS', 'FLANGE')]], bench=['FLANGE', 'INS'], view=(0.55, -0.8, 0.45)),
     dict(key='s3', title='4단계  허브 플랜지 → 모터 출력부',
          text='③ 평행핀 3개를 출력부 구멍에 꽂고, 플랜지를 Ø30 판 구멍으로 넣어 Ø11.8 스피곳을 맞춘 뒤\n'
-              '평와셔 + ② M3 × 16 (12.9) 6개로 출력부에 조인다 (나사 머리는 플랜지 안쪽 카운터보어 안).',
+              '평와셔 + ② M3 × 14 (12.9) 6개로 출력부에 조인다 (머리는 플랜지 안쪽 카운터보어 안, 육각 허브 턱에서 0.5 mm).',
          moves=[[('PINS', 0)], [('FLANGE', 0), ('INS', 0)], [('WASH', 0)], [('S316', 0)]], spin=['S316'],
          view=(0.8, -0.65, 0.4)),
     dict(key='s4', title='5단계  M5 축 볼트 → 육각 허브 (작업대)',
@@ -57,7 +57,7 @@ STEPS = [
 VIEW0 = (1.0, -0.3, 0.38)                     # overview
 VIEW_DONE = (0.85, -0.55, 0.42)
 CUTS = [dict(key='cut1', a=-5.0, b=90.0, view=(0.62, -0.72, 0.6),
-             title='단면 ①  M3 × 16 (-5°) · M3 × 8 (90°) 자리를 지나는 단면'),
+             title='단면 ①  M3 × 14 (-5°) · M3 × 8 (90°) 자리를 지나는 단면'),
         dict(key='cut2', a=25.0, b=145.0, view=(0.12, -0.7, 0.9),
              title='단면 ②  평행핀 · M2.5 × 8 (25°, 145°) 자리를 지나는 단면')]
 

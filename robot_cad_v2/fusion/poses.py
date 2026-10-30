@@ -110,10 +110,22 @@ def link_of(o):
     return p.split(':')[0]
 
 
+def _hip_joint_part(o):
+    """A fastener of the hip joint riding on the thigh (output screws, washers, dowels within 25 mm of the hip axis):
+    it turns with the hip output inside the motor, so it belongs to the joint gaps, not to the thigh-side sweep."""
+    if not o.component.name.startswith('FX '):
+        return False
+    bb = o.boundingBox
+    x = (bb.minPoint.z + bb.maxPoint.z) * 5.0             # Fusion (X, Y, Z) = robot (y, z, x), cm -> mm
+    z = (bb.minPoint.y + bb.maxPoint.y) * 5.0
+    return math.hypot(x, z - P.Z_HIP) < 25.0
+
+
 GROUPS = {
     # name: (selector of moving parts, selector of the parts they are measured against)
     'knee driver / cup / thigh cables vs torso': (
-        lambda o, lk: lk.startswith('femur') and not o.component.name.startswith(('thigh', 'AKE60')),
+        lambda o, lk: lk.startswith('femur') and not o.component.name.startswith(('thigh', 'AKE60'))
+        and not _hip_joint_part(o),
         lambda o, lk: lk == 'torso'),
     'tyre / rim / hub vs torso': (
         lambda o, lk: lk.startswith('wheel') and not o.component.name.startswith('AKE60'),

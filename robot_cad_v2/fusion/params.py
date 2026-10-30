@@ -118,7 +118,10 @@ WIDE_TAPER = 15.0
 HEAD_R = 30.0               # link head around a driven boss
 HOUSING_R = 44.0            # link housing around a motor (can r 34.5 + 2.5 clearance + 7 wall with M2.5 inserts)
 CAN_CLEAR_R = 37.0
-BEARING_FACE = 11.2         # motor output face -> M3 x 16 head bearing face (4.8 mm engagement)
+BEARING_FACE = 11.2         # motor output face -> washer seat of the hip / knee M3 x 16 (washer 0.5, 4.3 mm engagement)
+HUB_SCREW_SEAT = 9.5        # wheel hub flange: output face -> washer seat of its 6 x M3 x 14 (12.9) (10-30: with the
+HUB_SCREW_L = 14            # hip / knee 11.2 seat the M3 x 16 heads stood 1.2 mm into the hex hub's Ø20 register spigot;
+                            # now the heads stop 0.5 mm short of it, 4.0 mm engagement in the 5 mm output taps)
 RING_T = 2.0                # laser-cut 2 mm stainless clamp rings (1.5 mm sheet not stocked; 1 mm too soft, strength.py):
                             # screw heads never bear on bare PETG at a joint; screw lengths do not depend on it
 RING_OUT = (27.0, 12.5)     # driven bosses (OD inside the Ø28 access pocket, ID): 6 x M3 x 16 12.9 on PCD 20

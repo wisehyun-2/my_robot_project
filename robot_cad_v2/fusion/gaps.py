@@ -101,6 +101,13 @@ def joint_rows(k):
             ('%s 허브 플랜지 – 정강이' % k, dist(hf, sh), '> 0'),
             ('%s 육각 허브 – 정강이' % k, dist(hx, sh), '> 0'),
             ('%s 타이어·림 – 정강이' % k, dist(whl, sh), '> 0')]
+    # fasteners (10-30): the wheel output screws under the hex hub's Ø20 register spigot, the stator ring screw
+    # heads under the turning hub flange
+    hub_screws = occs('wheel_' + k, 'FX ISO 4762 M3x%d 12.9 hub' % P.HUB_SCREW_L)
+    stator_screws = occs('tibia_' + k, 'FX DIN 7984 M2.5x8 stator')
+    rows += [('%s 바퀴 출력 M3 × %d 머리 – 육각 허브(Ø20 등록 턱)' % (k, P.HUB_SCREW_L),
+              min(dist(o, hx) for o in hub_screws), '> 0'),
+             ('%s 바퀴 고정링 M2.5 × 8 머리(정강이) – 허브 플랜지' % k, min(dist(o, hf) for o in stator_screws), '> 0')]
     return rows
 
 

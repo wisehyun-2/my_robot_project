@@ -11,7 +11,7 @@ FILE_DESCRIPTION(
 
 FILE_NAME(
 /* name */ 'drum_ring_R.step',
-/* time_stamp */ '2026-10-29T23:31:19+09:00',
+/* time_stamp */ '2026-10-31T00:21:33+09:00',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20.2',
@@ -417,7 +417,7 @@ SOLID_ANGLE_UNIT()
 #364=PRODUCT_DEFINITION_SHAPE('',$,#367);
 #365=SHAPE_REPRESENTATION('',(#215),#357);
 #366=PRODUCT_DEFINITION_CONTEXT('part definition',#371,'design');
-#367=PRODUCT_DEFINITION('2026-10-29-23-31-19-345','drum_ring_R',#368,#366);
+#367=PRODUCT_DEFINITION('2026-10-31-00-21-33-262','drum_ring_R',#368,#366);
 #368=PRODUCT_DEFINITION_FORMATION('',$,#373);
 #369=PRODUCT_RELATED_PRODUCT_CATEGORY('drum_ring_R','drum_ring_R',(#373));
 #370=APPLICATION_PROTOCOL_DEFINITION('international standard',
@@ -425,7 +425,7 @@ SOLID_ANGLE_UNIT()
 #371=APPLICATION_CONTEXT(
 'Core Data for Automotive Mechanical Design Process');
 #372=PRODUCT_CONTEXT('part definition',#371,'mechanical');
-#373=PRODUCT('2026-10-29-23-31-19-345','drum_ring_R',
+#373=PRODUCT('2026-10-31-00-21-33-262','drum_ring_R',
 'PETG \X2\AC80C815\X0\, \X2\D770\X0\ \X2\BE5B\X0\ \X2\B9C100B7D30CB780\X0\ 
 \X2\D638\X0\ \X2\D648\X0\',(#372));
 #374=PRESENTATION_STYLE_ASSIGNMENT((#376));

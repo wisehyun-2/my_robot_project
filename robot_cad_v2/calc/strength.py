@@ -299,12 +299,21 @@ def main():
     for tag, F, Fl in (('검토', F_CHK, FL_CHK), ('설계', F_DES, FL_DES)):
         M = F * d + Fl * P.R_WHEEL
         fb = bolt_circle_max(M, 6, 10.0)
-        rows.append(('플랜지 → 출력, %s: Mx %.1f N·m' % (tag, M / 1000), 'M3 12.9 인장 %.0f N' % fb,
+        rows.append(('플랜지 → 출력, %s: Mx %.1f N·m' % (tag, M / 1000), 'M3 × %d 12.9 인장 %.0f N' % (P.HUB_SCREW_L, fb),
                      'Ø28 보스 %.1f MPa, DIN 125 와셔 지압 %.0f MPa' % (M / W_boss, fb / 30.4),
                      ok(max(M / W_boss / S_PETG, fb / 30.4 / C_PETG), 1.0)))
         if tag == '검토':
             verdict.append(('허브 플랜지 → 바퀴 모터 출력(검토)', '와셔 지압 %.0f MPa / 50' % (fb / 30.4),
                             ok(fb / 30.4, C_PETG)))
+            fb_hub = fb
+    # 10-30: M3 x 14 with the washer seat 9.5 from the output face (heads clear of the hex hub register spigot):
+    # thread shear in the output taps over the shorter engagement (internal thread, ~50 % of the cylinder at the
+    # major diameter; output material not published -- 6061-T6 shear 0.6 x yield assumed)
+    eng = P.HUB_SCREW_L - P.HUB_SCREW_SEAT - 0.5
+    tau = fb_hub / (0.5 * math.pi * 3.0 * eng)
+    rows.append(('M3 × %d 출력 탭 물림 %.1f mm, 검토' % (P.HUB_SCREW_L, eng), '나사 인장 %.0f N (12.9 보증 %.0f N)'
+                 % (fb_hub, PROOF['12.9'] * AS_M3), '나사산 전단 %.0f MPa (알루미늄 가정 %.0f)' % (tau, 0.6 * Y_AL),
+                 ok(max(tau / (0.6 * Y_AL), fb_hub / (PROOF['12.9'] * AS_M3)), 1.0)))
     f = T_CHK / (6 * 18.0)
     rows.append(('육각 허브 → 플랜지, 토크 25 N·m', 'M3 6개 + 열압입 인서트 (r 18), 개당 전단 %.0f N' % f,
                  '인서트(Ø4×6) 지압 %.1f MPa, Ø20 등록 턱이 반경 하중' % (f / (4.0 * 6.0)), ok(f / 24.0, C_PETG)))

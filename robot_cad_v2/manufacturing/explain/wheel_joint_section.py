@@ -12,13 +12,16 @@ import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
 from matplotlib.patches import Polygon, Rectangle
-F = '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc'
-font_manager.fontManager.addfont(F); plt.rcParams['font.family'] = font_manager.FontProperties(fname=F).get_name()
+for F in ('/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc', 'C:/Windows/Fonts/malgun.ttf'):
+    if pathlib.Path(F).exists():
+        font_manager.fontManager.addfont(F); plt.rcParams['font.family'] = font_manager.FontProperties(fname=F).get_name()
+        break
 A = P.AKE
 def a(y): return A['ring'] - y                       # motor local y -> axial a (0 = stator ring face, + toward the tyre)
 OUT = a(A['out']); SF = a(A['stator_front']); CF = a(A['can_front'])
 FAR = P.WHEEL_PLATE_T - P.POCKET; MF = -P.POCKET; REC = FAR - P.RING_T - P.CBORE_M25[1]
-F1 = FAR + 1.0; F0 = F1 + 8.0; BEAR = OUT + P.BEARING_FACE; H0 = F0 + 6.0
+F1 = FAR + 1.0; F0 = F1 + 8.0; BEAR = OUT + P.HUB_SCREW_SEAT; H0 = F0 + 6.0     # BEAR: washer seat (10-30: M3 x 14)
+LS = P.HUB_SCREW_L; ENG = LS - P.HUB_SCREW_SEAT - 0.5
 OD, ID = P.RING_STATOR; RP = P.AKE_PCD_RING / 2; RO = P.AKE_PCD_OUT / 2
 g = dict(stator='#b8b8b8', rotor='#7f9fbf', out='#d9b38c', petg='#9fd29f', ring='#8a9bb0', hub='#e07b39',
          hex='#f2a65a', screw='#3a3a3a', washer='#d4af37', pin='#c0392b')
@@ -41,11 +44,11 @@ poly([(OUT - 1.4, -5.9), (OUT, -5.9), (OUT, -14), (F1, -14), (F1, -23), (F0, -23
 poly([(F0 - 1.5, -10), (F0, -10), (F0, -23), (H0, -23), (H0, 23), (F0, 23), (F0, 10), (F0 - 1.5, 10)], g['hex'])
 # M5 axle bolt (head in the flange pocket)
 rect(F0 - 6.5, F0 - 1.5, -4.25, 4.25, g['screw']); rect(F0 - 1.5, H0 + 2, -2.5, 2.5, g['screw'])
-# upper half: M3 x 16 at r 10 with washer, counterbore Ø7.5 down to BEAR; stator M2.5 x 8 at r 18.25
+# upper half: M3 x 14 at r 10 with washer, counterbore Ø7.5 down to BEAR; stator M2.5 x 8 at r 18.25
 rect(BEAR, F0, RO - 3.75, RO + 3.75, 'white', lw=0.6)
 rect(BEAR, BEAR + 0.5, RO - 3.5, RO + 3.5, g['washer'], lw=0.8)
 rect(BEAR + 0.5, BEAR + 3.5, RO - 2.75, RO + 2.75, g['screw'])
-rect(BEAR + 0.5 - 16, BEAR + 0.5, RO - 1.25, RO + 1.25, g['screw'])
+rect(BEAR + 0.5 - LS, BEAR + 0.5, RO - 1.25, RO + 1.25, g['screw'])
 rect(REC, REC + P.RING_T, RP - 1.4, RP + 1.4, 'white', lw=0)
 rect(-3.2, REC + P.RING_T, RP - 1.25, RP + 1.25, g['screw'], lw=0.6)
 rect(REC + P.RING_T, REC + P.RING_T + 1.5, RP - 2.25, RP + 2.25, g['screw'], lw=0.6)
@@ -67,10 +70,11 @@ def call(xy, xt, txt, c='k'):
 X = H0 + 6
 call((REC + P.RING_T + 0.75, RP + 1.5), (X, 38), '① M2.5 × 8 저두 + 클램프 링 — 정강이 판을 모터 고정자에 조임 (6개/관절)')
 call((BEAR + 0.25, RO + 3.2), (X, 28), '② 평와셔 DIN 125 M3 (Ø7 × 0.5, 노란색) — 6개/관절\n   나사 머리 힘을 넓게 펴서 PETG가 눌리지 않게,\n   두께 0.5만큼 나사가 덜 들어가 탭 바닥(5 mm)에 안 닿게', '#9a7b00')
-call((BEAR + 2.0, RO - 1.0), (X, 16), '③ M3 × 16 (12.9) — 6개/관절\n   허브 플랜지를 모터 출력부에 조임, 출력부 탭에 4.3 mm 물림')
+call((BEAR + 2.0, RO - 1.0), (X, 16), '③ M3 × %d (12.9) — 6개/관절\n   허브 플랜지를 모터 출력부에 조임, 출력부 탭에 %.1f mm 물림\n'
+     '   (머리는 육각 허브 Ø20 턱에서 0.5 mm 떨어짐)' % (LS, ENG))
 call((OUT + 2, -RO), (X, -12), '④ 평행핀 ISO 8734 Ø3 × 10 (m6, 경화) — 3개/관절\n   출력부 핀 구멍에 3 mm, 허브 플랜지에 7 mm 끼움.\n   두 부품 위치를 정확히 맞추고(나사 구멍은 0.2 mm 여유),\n   모터 토크를 나사와 함께 받아 플랜지가 돌며 밀리지 않게', '#c0392b')
 call((OUT - 0.7, -3.0), (X, -27), '⑤ Ø11.8 스피곳: 플랜지가 출력부 홈(Ø12)에 들어가 중심 맞춤')
-ax.text(X, -36, 'hip·knee 구동 보스도 같은 방식: 평행핀 3 + M3 × 16 6 + 평와셔 6.\n단, 거기는 와셔 밑에 출력 클램프 링(Ø27, 2 mm)이 한 장 더 깔린다.', fontsize=10, va='center')
+ax.text(X, -36, 'hip·knee 구동 보스도 같은 방식: 평행핀 3 + M3 × 16 6 + 평와셔 6 (와셔 자리는 출력면에서 11.2).\n단, 거기는 와셔 밑에 출력 클램프 링(Ø27, 2 mm)이 한 장 더 깔린다.', fontsize=10, va='center')
 ax.set_xlim(-16, X + 48); ax.set_ylim(-47, 48)
 ax.set_title('바퀴 관절 단면 — 평행핀·평와셔·나사 배치 (모델 치수, 실제 비율)', fontsize=15, loc='left')
 fig.savefig(sys.argv[1] if len(sys.argv) > 1 else HERE / 'wheel_joint_pins_washers.png', dpi=100, bbox_inches='tight')

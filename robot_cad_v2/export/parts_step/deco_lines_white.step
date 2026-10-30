@@ -13,7 +13,7 @@ FILE_DESCRIPTION(
 
 FILE_NAME(
 /* name */ 'deco_lines_white.step',
-/* time_stamp */ '2026-10-29T23:31:13+09:00',
+/* time_stamp */ '2026-10-31T00:21:25+09:00',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20.2',
@@ -1453,7 +1453,7 @@ SOLID_ANGLE_UNIT()
 #1397=PRODUCT_DEFINITION_SHAPE('',$,#1400);
 #1398=SHAPE_REPRESENTATION('',(#880),#1390);
 #1399=PRODUCT_DEFINITION_CONTEXT('part definition',#1404,'design');
-#1400=PRODUCT_DEFINITION('2026-10-29-23-31-13-167','deco_lines_white',#1401,
+#1400=PRODUCT_DEFINITION('2026-10-31-00-21-25-837','deco_lines_white',#1401,
 #1399);
 #1401=PRODUCT_DEFINITION_FORMATION('',$,#1406);
 #1402=PRODUCT_RELATED_PRODUCT_CATEGORY('deco_lines_white',
@@ -1463,7 +1463,7 @@ SOLID_ANGLE_UNIT()
 #1404=APPLICATION_CONTEXT(
 'Core Data for Automotive Mechanical Design Process');
 #1405=PRODUCT_CONTEXT('part definition',#1404,'mechanical');
-#1406=PRODUCT('2026-10-29-23-31-13-167','deco_lines_white',
+#1406=PRODUCT('2026-10-31-00-21-25-837','deco_lines_white',
 'PETG \X2\C587C740\X0\ \X2\C7A5C2DDD310\X0\(\X2\C0C9\X0\: \X2\C774B98400B7ADF8B9BC\X0\ 
 \X2\CC38C870\X0\), \X2\C21CAC04C811CC29C81CB85C\X0\ \X2\BD99C784\X0\',(#1405));
 #1407=PRESENTATION_STYLE_ASSIGNMENT((#1409));

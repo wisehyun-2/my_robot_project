@@ -16,7 +16,7 @@ W, H = 1920, 1080
 RED, GREEN, INK, GREY = '#c0392b', '#2e7d32', '#222222', '#8a929a'
 SHORT = ['모터 → 정강이 포켓', 'SUS 링 + ① M2.5 × 8', '인서트 → 허브 플랜지', '허브 플랜지 → 출력부 (③ ②)',
          '⑤ M5 볼트 → 육각 허브', '바퀴 + ⑥ 너트', '육각 허브 → 플랜지 (④)']
-LEGEND = ['① M2.5 × 8 저두 × 6', '② M3 × 16 (12.9) × 6 + 와셔', '③ 평행핀 Ø3 × 10 × 3', '④ M3 × 8 × 6 + 인서트',
+LEGEND = ['① M2.5 × 8 저두 × 6', '② M3 × 14 (12.9) × 6 + 와셔', '③ 평행핀 Ø3 × 10 × 3', '④ M3 × 8 × 6 + 인서트',
           '⑤ M5 × 50', '⑥ M5 플랜지 너트']
 
 
@@ -119,7 +119,7 @@ def main():
         name = 'v%04d.png' % k
         cv.save(out / name)
         items.append((name, fr['hold'] / fps))
-    for k, (fn, cap) in enumerate((('09_cut1.png', '단면 ① — ② M3 × 16 · ④ M3 × 8 · ⑤ M5 볼트 · A/B/C 중심 맞춤'),
+    for k, (fn, cap) in enumerate((('09_cut1.png', '단면 ① — ② M3 × 14 · ④ M3 × 8 · ⑤ M5 볼트 · A/B/C 중심 맞춤'),
                                    ('10_cut2.png', '단면 ② — ③ 평행핀 · ① M2.5 × 8 + SUS 링'))):
         im = Image.open(ann / fn).convert('RGB')
         s = min(rw / im.width, (H - 64) / im.height)

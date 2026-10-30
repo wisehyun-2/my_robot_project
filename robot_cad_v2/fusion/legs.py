@@ -87,7 +87,7 @@ def _motor_seat(B, s, body, joint, c, y_plate_motor_side, y_plate_far, y_cavity_
     ring = P.Y_RING_HIP if joint == 'hip' else (P.Y_RING_KNEE if joint == 'knee' else P.Y_RING_WHEEL)
     # can cavity
     C.cut(body, B.ycyl(c[0], c[1], y_cavity_end, y_plate_motor_side, P.CAN_CLEAR_R))
-    C.cut(body, B.ycyl(c[0], c[1], y_plate_motor_side - sg * 0.01, ring, 21.025))      # Ø42 H7 pilot pocket
+    C.cut(body, B.ycyl(c[0], c[1], y_plate_motor_side - sg * 0.01, ring, 21.025))      # Ø42.05 pilot pocket (printed)
     C.cut(body, B.ycyl(c[0], c[1], y_plate_motor_side - sg, y_plate_far + sg, 15.0))   # Ø30 output hole
     for p in LY.motor_points(m, P.AKE_PCD_RING / 2, P.AKE_RING_M25, P.AKE['ring']):
         q = lc(p, s)
@@ -214,7 +214,7 @@ def hub_flange(s):
     body = B.ycyl(W[0], W[1], lv['f1'] - 0.5, y_out, P.HUB_BOSS_D / 2)
     C.union(body, B.ycyl(W[0], W[1], y_out, y_out + 1.4, 5.9))
     C.union(body, B.ycyl(W[0], W[1], lv['f0'], lv['f1'], 23.0))
-    bear = y_out - BEARING_FACE
+    bear = y_out - P.HUB_SCREW_SEAT                # washer seat: the M3 x 14 heads clear the hex hub's register spigot
     for p in LY.motor_points(fr['motor'], P.AKE_PCD_OUT / 2, P.AKE_OUT_M3, P.AKE['out']):
         q = lc(p, s)
         C.cut(body, B.ycyl(q[0], q[2], lv['f0'] - 1, y_out + 2, M3_CLEAR / 2))

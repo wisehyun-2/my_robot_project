@@ -42,12 +42,14 @@ NUT1 = WEB - 6.0                                 # 145.5 nut far face (modelled 
 BOLT_HEAD = F0 + 1.5                             # 198.0 M5 head bears on the hex hub register spigot
 BOLT_L = 50.0
 BOLT_TIP = BOLT_HEAD - BOLT_L                    # 148.0
-BEAR = OUT - P.BEARING_FACE                      # 200.3 M3 x 16 counterbore floor in the flange
+BEAR = OUT - P.HUB_SCREW_SEAT                    # 202.0 washer seat of the M3 x 14 in the flange (10-30)
+LS = P.HUB_SCREW_L                               # 14
+ENG = BEAR - 0.5 + LS - OUT                      # 4.0 thread engagement in the output taps
 T0, T1 = TC - P.TYRE_W / 2, TC + P.TYRE_W / 2    # 140.5 .. 200.5
 RO, RB = P.R_WHEEL, P.TYRE_BEAD_D / 2
 RP, RQ, RH = P.AKE_PCD_RING / 2, P.AKE_PCD_OUT / 2, 18.0        # M2.5 r 18.25, output M3 r 10, hub M3 r 18
 HEXF = P.HEX_AF / 2
-ROBOT_KG = 8.92
+ROBOT_KG = 9.18                                  # CAD with every fastener modelled (10-30)
 W_STATIC = ROBOT_KG * P.G / 2
 
 g = dict(petg='#9fd29f', flange='#e07b39', hexhub='#f2a65a', stator='#b8b8b8', rotor='#7f9fbf', out='#d9b38c',
@@ -108,10 +110,10 @@ def draw_parts(ax, tyre=True):
         # stator ring screws: DIN 7984 M2.5 x 8 low head on the SUS ring (6 on PCD 36.5: both halves)
         rect(REC - P.RING_T, REC - P.RING_T + 8.0, RP - 1.25, RP + 1.25, g['screw'], s, z=3)
         rect(REC - P.RING_T - 1.5, REC - P.RING_T, RP - 2.25, RP + 2.25, g['screw'], s, z=3)
-    # upper half: output M3 x 16 at r 10 (washer under the head), hub M3 x 8 at r 18 into a brass insert
+    # upper half: output M3 x 14 at r 10 (washer under the head), hub M3 x 8 at r 18 into a brass insert
     rect(BEAR - 0.5, BEAR, RQ - 3.5, RQ + 3.5, g['washer'], z=3, lw=0.8)
     rect(BEAR - 3.5, BEAR - 0.5, RQ - 2.75, RQ + 2.75, g['screw'], z=3)
-    rect(BEAR - 0.5, BEAR - 0.5 + 16, RQ - 1.25, RQ + 1.25, g['screw'], z=3)
+    rect(BEAR - 0.5, BEAR - 0.5 + LS, RQ - 1.25, RQ + 1.25, g['screw'], z=3)
     rect(F0 + 0.1, F0 + 5.8, RH - 2.0, RH + 2.0, g['insert'], z=2.5, lw=0.8)
     rect(H0 + 3.5 - 3.0, H0 + 3.5, RH - 2.75, RH + 2.75, g['screw'], z=3)
     rect(H0 + 3.5, H0 + 3.5 + 8.0, RH - 1.25, RH + 1.25, g['screw'], z=3)
@@ -223,7 +225,7 @@ for txt, xy, xt in (('Ø30 몸통', (175, 15.0), (162, 21.0)),
                     ('17 육각(맞변)', (158, HEXF), (143, 16.5)),
                     ('Ø42 파일럿 / Ø42.05 포켓', (214.2, 21.0), (219.5, 41.0))):
     label(ax, txt, xy, xt, fs=11)
-for txt, xy, xt in (('핀 · M3 × 16: PCD 20', (206.0, -RQ - 1.5), (195, -29.0)),
+for txt, xy, xt in (('핀 · M3 × %d: PCD 20' % LS, (206.0, -RQ - 1.5), (195, -29.0)),
                     ('M2.5 × 8: PCD 36.5 (M3 × 8은 PCD 36)', (205.8, -RP - 2.2), (195, -34.5))):
     label(ax, txt, xy, xt, fs=11, ha='right')
 
@@ -236,9 +238,9 @@ dim_h(ax, BOLT_TIP, BOLT_HEAD, -55.0, 'M5 × 50 (머리 받침면 → 끝)', (-2
 dim_h(ax, BOLT_TIP, WEB, -61.0, '너트 물림 3.5', (-2.5, -6), fs=11, c='#b03020')
 dim_h(ax, F1, PL0, -50.0, '1', (-23, -44), fs=11)
 dim_h(ax, PL0, PL1, -50.0, '판 9', (None, -44), fs=11)
-dim_h(ax, BEAR, OUT, -55.0, '11.2', (-RQ - 3.5, -14), fs=11)
-dim_h(ax, OUT, OUT + 4.3, -61.0, '4.3', (-14, None), fs=11)
-ax.text(OUT + 5.0, -61.6, '← M3 × 16 물림', fontsize=11, va='top')
+dim_h(ax, BEAR, OUT, -55.0, '%.1f' % P.HUB_SCREW_SEAT, (-RQ - 3.5, -14), fs=11)
+dim_h(ax, OUT, OUT + ENG, -61.0, '%.1f' % ENG, (-14, None), fs=11)
+ax.text(OUT + 5.0, -61.6, '← M3 × %d 물림' % LS, fontsize=11, va='top')
 dim_h(ax, RING, PL1, 55.0, '포켓 2.5', (52, 52), fs=10.5, above=True)
 dim_h(ax, PL0, REC, 55.0, '링 자리 3.7', (52, 52), fs=10.5, above=True)
 ax.set_xlim(140.5, 242); ax.set_ylim(-66, 60)
@@ -249,9 +251,9 @@ rows = [
     ('1', '#1f4e9c', 'M2.5 × 8  저두 볼트 DIN 7984 8.8   × 6',
      '정강이 판 → AKE 고정자 링 (PCD 36.5).  SUS304 클램프 링 2 t (Ø45 / Ø30) 위에서 조임,\n'
      '머리 1.5 t는 판 면보다 0.2 들어감.  고정자 탭(깊이 5)에 3.2 mm 물림'),
-    ('2', '#1f4e9c', 'M3 × 16  ISO 4762 12.9   × 6   + 평와셔 DIN 125 M3 (Ø7 × 0.5)   × 6',
-     '허브 플랜지 → 모터 출력부 (PCD 20).  머리는 플랜지 카운터보어 Ø7.5 안,\n'
-     '받침면이 출력면에서 11.2 → 출력부 탭(깊이 5)에 4.3 mm 물림'),
+    ('2', '#1f4e9c', 'M3 × %d  ISO 4762 12.9   × 6   + 평와셔 DIN 125 M3 (Ø7 × 0.5)   × 6' % LS,
+     '허브 플랜지 → 모터 출력부 (PCD 20).  머리는 플랜지 카운터보어 Ø7.5 안, 육각 허브 Ø20 턱에서 0.5 mm,\n'
+     '와셔 자리가 출력면에서 %.1f → 출력부 탭(깊이 5)에 %.1f mm 물림' % (P.HUB_SCREW_SEAT, ENG)),
     ('3', '#c0392b', '평행핀 ISO 8734 Ø3 × 10  m6 경화   × 3',
      '출력부 구멍 3 mm + 허브 플랜지 7 mm (PCD 20, 나사와 다른 각도).\n'
      '두 부품 위치를 맞추고 바퀴 토크를 나사와 함께 받음'),
@@ -275,7 +277,7 @@ for n, c, head, body in rows:
 
 tx.text(0.0, y + 0.02, '조립 순서', fontsize=16, weight='bold', va='top')
 tx.text(0.0, y - 0.025,
-        '1) 허브 플랜지를 모터 출력부에: ③ 핀 3개 → ② M3 × 16 6개 (머리는 나중에 육각 허브 플랜지에 덮임)\n'
+        '1) 허브 플랜지를 모터 출력부에: ③ 핀 3개 → ② M3 × %d 6개 (머리는 나중에 육각 허브 플랜지에 덮임)\n' % LS +
         '2) ⑤ M5 볼트를 육각 허브에 끼우고, 바퀴를 육각에 끼운 뒤 ⑥ 너트 조임 (볼트 머리를 육각 렌치로 잡고)\n'
         '3) 육각 허브 + 바퀴를 허브 플랜지 Ø20 홈(B)에 맞추고, 스포크 사이로 ④ M3 × 8 6개 조임',
         fontsize=13, va='top', linespacing=1.5)
@@ -293,7 +295,7 @@ for n, txt in (('A', 'Ø11.8 스피곳 (허브 플랜지)\n→ 출력부 Ø12 ×
 y -= 0.02
 tb.text(0.0, y, '무게가 지나가는 길 (빨간 선)', fontsize=16, weight='bold', va='top')
 steps = ['바닥', '타이어 → 림', '17 mm 육각 (물림 13)', '육각 허브', 'B 등록 턱 + ④ M3 × 8 × 6',
-         '허브 플랜지', 'A 스피곳 + ③ 핀 × 3 + ② M3 × 16 × 6', 'AKE 출력부 → 모터 안 출력 베어링 → 고정자',
+         '허브 플랜지', 'A 스피곳 + ③ 핀 × 3 + ② M3 × %d × 6' % LS, 'AKE 출력부 → 모터 안 출력 베어링 → 고정자',
          'C Ø42 파일럿 + ① M2.5 × 8 × 6', 'PETG 정강이 → 무릎']
 y -= 0.05
 for k, st in enumerate(steps):

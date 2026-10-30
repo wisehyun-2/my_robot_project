@@ -3,7 +3,7 @@
 Run each step in its own MCP script after v2run.load() (a failed script rolls the whole step back):
     finalize.set_part_numbers()
     finalize.images()        # direct design, poses set with poses.apply
-    finalize.bom()           # ../BOM.csv, ../BOM.md (purchased parts counted in the model, fasteners by rule)
+    finalize.bom()           # ../BOM.csv, ../BOM.md (parts and fasteners counted in the model)
     finalize.joints()        # switches the design to parametric (assembly.reset() switches back for a rebuild)
     finalize.exports()       # ../export: f3d (with the joints), assembly STEP, designed parts STEP + STL
 
@@ -19,7 +19,6 @@ import adsk.fusion
 
 import cadlib as C
 import layout as LY
-import legs as LG
 import params as P
 import poses as PO
 import view
@@ -211,11 +210,6 @@ def inside_images():
 
 
 # ----------------------------------------------------------------------------- BOM
-def cup_screws():
-    """{joint: (counterbore depth, length)} of the cup column screws (legs.cup_screw, 4 mm engagement)."""
-    return {joint: LG.cup_screw(joint)[::-1] for joint in ('hip', 'knee', 'wheel')}
-
-
 WIRE_CLASS = ((3.5, '12 AWG 배터리·변환기 리드', '배터리·변환기에 포함'),
               (2.5, '16 AWG 실리콘선', '전원 데이지 체인, P5 → pi3hat'),
               (1.8, 'CAN 26 AWG 꼬은선(PH-3, 1번 H·2번 L)', 'JC1·JC2 → hip → knee → 바퀴'),
@@ -249,59 +243,15 @@ def counts():
     return n
 
 
-def top_plate_inserts():
-    lx, ly, _t = P.TOP_PLATE
-    k = 0
-    for i in range(-2, 3):
-        for j in range(-4, 5):
-            x, y = 25.0 * i, 25.0 * j
-            if abs(x) > lx / 2 - 10 or abs(y) > ly / 2 - 10:
-                continue
-            if any(abs(x - sx * P.RAIL_X) < 8 and abs(y - yy) < 8 for sx in (-1, 1) for yy in (-100.0, -33.3, 33.3, 100.0)):
-                continue
-            k += 1
-    return k
-
-
 def fasteners():
-    cs = cup_screws()
-    rows = [
-        # (group, item, spec, qty, where)
-        ('관절', '육각 홈붙이 볼트 ISO 4762 12.9', 'M2.5 × 6', 12, 'hip 고정링 → 6061 hip 판(나사산 3.2 mm, AKE 링 탭 깊이 5)'),
-        ('관절', '저두 볼트 DIN 7984 8.8', 'M2.5 × 8', 24, 'knee·wheel 고정링 → PETG 판, SUS 클램프 링 위'),
-        ('관절', '육각 홈붙이 볼트 ISO 4762 12.9', 'M3 × 16', 36, '모터 출력 → hip·knee 구동 보스(클램프 링 위)와 허브 플랜지'),
-        ('관절', '평와셔 DIN 125 A2', 'M3', 36, '위 M3 × 16 머리 밑(나사산 4.3 mm)'),
-        ('관절', '평행 핀 ISO 8734 m6 경화', 'Ø3 × 10', 18, '모터 출력 다웰(출력 3 mm + PETG 7 mm)'),
-        ('바퀴', '육각 홈붙이 볼트 ISO 4762 8.8', 'M3 × 8', 12, '육각 허브 → 허브 플랜지'),
-        ('바퀴', '열압입 인서트 황동', 'M3 × 5.7 (구멍 Ø4.0 × 6)', 12, '허브 플랜지'),
-        ('바퀴', '육각 홈붙이 볼트 ISO 4762 8.8', 'M5 × 50', 2, '바퀴 축 볼트(머리는 플랜지 포켓 안, 육각 허브를 누름)'),
-        ('드라이버', '저두 볼트 DIN 7984', 'M2.5 × 6', 24, 'moteus → 컵 스탠드오프(보드 모터 쪽에서)'),
-        ('드라이버', '열압입 인서트 황동', 'M2.5 × 4 (구멍 Ø3.6 × 5)', 24, '컵 스탠드오프'),
-        ('드라이버', '육각 홈붙이 볼트 ISO 4762', 'M3 × %d' % cs['hip'][1], 6,
-         'hip 컵 → hip 판 M3 탭(컵 바닥 카운터보어 %.1f mm, 나사산 4 mm)' % cs['hip'][0]),
-        ('드라이버', '육각 홈붙이 볼트 ISO 4762', 'M2.5 × %d' % cs['knee'][1], 6,
-         'knee 컵 → 허벅지 인서트(카운터보어 %.1f mm)' % cs['knee'][0]),
-        ('드라이버', '육각 홈붙이 볼트 ISO 4762', 'M2.5 × %d' % cs['wheel'][1], 6,
-         'wheel 컵 → 정강이 인서트(카운터보어 %.1f mm)' % cs['wheel'][0]),
-        ('드라이버', '열압입 인서트 황동', 'M2.5 × 4 (구멍 Ø3.6 × 5)', 12, '링크의 컵 기둥 자리'),
-        ('배선', '저두 볼트 DIN 7984', 'M2.5 × 6', 24, '케이블 클립 → 링크 홈 옆 인서트'),
-        ('배선', '열압입 인서트 황동', 'M2.5 × 4 (구멍 Ø3.6 × 5)', 24, '링크 배선 홈 옆'),
-        ('배선', '고무 그로밋', 'Ø16 구멍, 판 1.4 mm', 2, '셸 hip 케이블 출구'),
-        ('몸통', '접시 볼트 ISO 10642', 'M5 × 12', 4, 'hip 판 → 척추 봉 끝 M5 탭(물림 약 7.5 mm)'),
-        ('몸통', '접시 볼트 ISO 10642', 'M4 × 12', 4, 'hip 판 → 위 레일 끝 M4 탭(물림 약 7.5 mm)'),
-        ('몸통', '육각 홈붙이 볼트 ISO 4762', 'M4 × 25', 8, '윗판 → 위 레일(관통)'),
-        ('몸통', '나일론 너트 DIN 985 + 와셔 DIN 125', 'M4', 8, '위 레일 아래'),
-        ('몸통', '열압입 인서트 황동', 'M4 × 5.7 (구멍 Ø5.6 × 6)', top_plate_inserts(), '윗판 25 mm 격자(짐·로봇팔)'),
-        ('몸통', '육각 홈붙이 볼트 ISO 4762', 'M3 × 8', 4, '전장 데크 플랜지 → hip 판 M3 탭'),
-        ('몸통', '버튼 볼트 ISO 7380', 'M3 × 6', 12, '셸(hip 부분) → hip 판 M3 탭'),
-        ('몸통', '버튼 볼트 ISO 7380 + 육각 너트 DIN 934', 'M3 × 8', 24, '셸 앞·뒤 조각 ↔ hip 조각 이음판 12개'),
-        ('몸통', '저두 볼트 DIN 7984', 'M2.5 × 6', 4, 'mjpower-ss → 데크 보스'),
-        ('몸통', '열압입 인서트 황동', 'M2.5 × 4 (구멍 Ø3.6 × 5)', 8, '데크 보스(라즈베리파이 4, mjpower-ss 4)'),
-        ('몸통', '육각 너트 / 볼트 (pi3hat 동봉)', 'M2.5', 4, 'pi3hat 위 스탠드오프'),
-        ('몸통', '벨크로 스트랩', '폭 25 mm × 400 mm', 2, '배터리 + 트레이를 척추 봉에 묶음(트레이 슬롯)'),
-        ('몸통', '폼 패드', '75 × 310 × 1 mm', 1, '배터리 밑'),
-    ]
-    return rows
+    """BOM rows of the fasteners: modelled ones (fasteners.specs(), 'FX ...' masters) counted in the model, plus the
+    parts not modelled (fasteners.NOT_MODELLED)."""
+    import fasteners as FX
+    n = counts()
+    rows = []
+    for name, (_g, _m, _l, (grp, item, spec, where), _k) in FX.specs().items():
+        rows.append((grp, item, spec, n.get(name, 0), where))
+    return rows + list(FX.NOT_MODELLED)
 
 
 def bom():

@@ -5,8 +5,8 @@ import os
 import sys
 
 PATH = os.path.dirname(os.path.abspath(__file__))
-MODS = ['params', 'cadlib', 'layout', 'vendor', 'legs', 'torso', 'shell', 'harness', 'assembly', 'view', 'check',
-        'poses', 'gaps', 'finalize']
+MODS = ['params', 'cadlib', 'layout', 'vendor', 'legs', 'torso', 'shell', 'harness', 'assembly', 'fasteners', 'view',
+        'check', 'poses', 'gaps', 'finalize']
 
 
 def load(names=None):
@@ -34,4 +34,7 @@ def build(with_harness=True):
     A.build_leg(1, parts)
     A.build_leg(-1, parts)
     st = A.build_harness(parts) if with_harness else []
+    n, bad = M['fasteners'].build_all()            # every screw / insert / nut as geometry (10-30)
+    if bad:
+        raise RuntimeError('fastener counts differ from fasteners.specs(): %r' % bad)
     return M, st
