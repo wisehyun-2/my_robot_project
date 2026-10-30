@@ -61,9 +61,10 @@ def chip(ax, lw=0.8):
 # ------------------------------------------------------------------ 1. whole cup, 1:1-ish
 ax = fig.add_axes([0.02, 0.05, 0.50, 0.88]); ax.set_aspect('equal')
 if JOINT == 'hip':
-    # hip plate (machined): Ø136 disc, Ø80 register boss, Ø42 H7 pilot pocket, Ø30 through hole
+    # hip plate (machined): Ø136 disc, Ø80 register boss with the Ø63 x 0.5 stator relief, Ø42 H7 pilot pocket, Ø30 through hole
     ax.add_patch(Circle((0, 0), 68.0, fc='#e3e6ea', ec='0.5', lw=0.8, zorder=0))
     ax.add_patch(Circle((0, 0), 40.0, fc='#c9ced6', ec='0.3', lw=1.0, zorder=1))
+    ax.add_patch(Circle((0, 0), P.HIP_STATOR_RELIEF[0] / 2, fc='#d3d8df', ec='0.3', lw=0.8, zorder=1))
     ax.add_patch(Circle((0, 0), P.PILOT_D_HIP / 2, fc='#b7bec8', ec='0.3', lw=0.8, ls='--', zorder=1))
     ax.add_patch(Circle((0, 0), 15.0, fc='#a9b0ba', ec='0.3', lw=0.8, ls=':', zorder=1))
 else:
@@ -112,7 +113,7 @@ hdim(ax, -CUP_R_IN, CUP_R_IN, 36.0, '컵 안지름 Ø%.0f' % (2 * CUP_R_IN), '0.
 if JOINT == 'hip':
     ax.text(0, -46.8, '컵 나사 기둥 3개의 안쪽 면(Ø80.04, 높이 1.5)이 hip 판 Ø80 등록 보스(0/-0.1, Ø42 H7과 동심 Ø0.05)를 3점으로 잡음 = 중심 기준', ha='center',
             fontsize=9.5, color='0.25', bbox=dict(fc='w', ec='none', alpha=0.85, pad=0.5), zorder=8)
-    for r, t, yy in ((40.0, 'Ø80 보스', 8.0), (P.PILOT_D_HIP / 2, 'Ø42 H7 포켓', 4.5), (15.0, 'Ø30 구멍', 1.0)):
+    for r, t, yy in ((40.0, 'Ø80 보스', 8.0), (P.HIP_STATOR_RELIEF[0] / 2, 'Ø63 × 0.5 홈', 6.2), (P.PILOT_D_HIP / 2, 'Ø42 H7 포켓', 4.5), (15.0, 'Ø30 구멍', 1.0)):
         ax.text(-r + 0.6, yy, t, fontsize=8.5, color='0.25', zorder=8)
 else:
     ax.text(0, -LIP_OUT - 1.8, '컵 립 안지름 Ø%.1f → %s 하우징 Ø%.0f(점선)에 끼움 = 중심 기준' % (2 * LIP_IN, HOUSING, 2 * P.HOUSING_R),

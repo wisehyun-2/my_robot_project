@@ -16,7 +16,7 @@ ZH = P.Z_HIP
 def hip_plate(s):
     """6061-T6 hip plate, 9.5 mm finished (10 mm+ stock): hub 8 mm with the Ø42 H7 pilot pocket, Ø30 hole,
     6 x M2.5 counterbored on the outer face (run out into the Ø30 hole), Ø80 x 1.5 register boss for the driver cup
-    on the inner face; 5 mm web: disc r 68 + column + top bar for the payload rails + ears at the tube screws,
+    on the inner face with a Ø63 x 0.5 relief so the AKE stator front clears it (params.HIP_STATOR_RELIEF); 5 mm web: disc r 68 + column + top bar for the payload rails + ears at the tube screws,
     M5 / M4 countersunk (90 deg, ISO 10642) into the tapped spine / rail bar ends, M3 tapped (tap-drill holes) for the cup,
     deck and shell.  No wall under 1.5 mm (params.LEAD_GROOVE_R / HIP_CBORE_OPEN / HIP_CSK_EAR_R)."""
     B = C.Builder(side=s)
@@ -34,6 +34,8 @@ def hip_plate(s):
     fr = LY.frames('hip', s)
     m = fr['motor']
     C.cut(web, B.ycyl(0, ZH, y_in - 2, P.Y_RING_HIP, P.PILOT_D_HIP / 2))       # Ø42 H7 pilot pocket
+    rd, rh = P.HIP_STATOR_RELIEF
+    C.cut(web, B.ycyl(0, ZH, y_in - 2.5, y_in - 1.5 + rh, rd / 2))           # boss face relief: stator front clears
     C.cut(web, B.ycyl(0, ZH, y_in - 2, P.YW + 1, 15.0))
     db, (cw, cd) = P.HIP_CBORE_OPEN, P.CBORE_M25_HIP
     for p in LY.motor_points(m, P.AKE_PCD_RING / 2, P.AKE_RING_M25, P.AKE['ring']):

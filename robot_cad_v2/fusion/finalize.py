@@ -50,7 +50,7 @@ PRINT_NOTE = {
     'splice_tabs': 'PETG 100 %, 셸 조각 이음판(M3 + 너트)',
 }
 MACHINED = {
-    'hip_plate': '6061-T6 판 10t 이상(완성 9.5 mm) 3축 MCT 양면, Ø42 H7, M5·M4 90° 접시, M3 탭 11개, 검정 아노다이징 '
+    'hip_plate': '6061-T6 판 10t 이상(완성 9.5 mm) 3축 MCT 양면, Ø42 H7, 보스 면 Ø63 × 0.5 홈, M5·M4 90° 접시, M3 탭 11개, 검정 아노다이징 '
                  '(manufacturing/ 도면 WBv2-M01)',
     'spine_tube': '6061-T6 환봉 Ø16(통짜), 길이 %.0f mm, 양 끝 면삭 + M5 탭 깊이 %.0f'
                   % (2 * (P.YW - P.HIP_PLATE_T), P.END_TAP['M5'][1]),

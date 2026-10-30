@@ -129,6 +129,10 @@ CBORE_M25 = (4.8, 1.7)      # DIN 7984 low head M2.5 counterbore (dia, depth)
 CBORE_M25_HIP = (4.8, 2.7)  # ISO 4762 M2.5 12.9 at the hip stator ring (strength.py: 8.8 is over proof at SF 2)
 PILOT_D_HIP = 42.0125       # machined hip plate pilot pocket: Ø42 H7 (+0 / +0.025) modelled at mid tolerance
                             # (the printed knee / wheel pockets keep Ø42.05, legs.py)
+HIP_STATOR_RELIEF = (63.0, 0.5)  # Ø x depth cut into the Ø80 boss face (10-30): the pocket is 4.0 deep and the AKE stator
+                            # front (r <= 30.75) is 4.0 from the pilot end, so the stator met the boss face as the pilot
+                            # met the pocket floor; with the relief the pilot end alone locates the motor (0.5 clear),
+                            # like the printed knee / wheel plates (1.5 clear); the Ø63..Ø80 rim still registers the cup
 CSK_M5 = (5.4, 11.2)        # hip plate web, ISO 10642 heads: through hole Ø, 90 deg countersink Ø = theoretical dk
 CSK_M4 = (4.4, 9.0)         #   (M5 11.20, M4 8.96 rounded up), so no compliant head stands proud of the web
 # lead groove of every motor plate (10-29; hip 6061, knee / wheel PETG): the AKE60 phase pins (Ø1.5 x 4 at r 25 on

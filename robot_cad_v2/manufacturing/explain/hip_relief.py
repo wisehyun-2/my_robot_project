@@ -1,4 +1,4 @@
-"""What a boss and a pilot are, and the proposed Ø63 x 0.5 relief in the hip plate's Ø80 boss face (before / after).
+"""What a boss and a pilot are, and the Ø63 x 0.5 relief in the hip plate's Ø80 boss face (before / after, added 10-30).
 Explanatory figure, not a manufacturing drawing.  Run make_parts.py first.
 
     python hip_relief.py             # -> hip_relief.png next to this script
@@ -22,7 +22,7 @@ font_manager.fontManager.addfont(F)
 plt.rcParams['axes.unicode_minus'] = False
 plt.rcParams['font.family'] = font_manager.FontProperties(fname=F).get_name()
 
-R_REL, D_REL = 31.5, 0.5                 # proposed relief Ø63 x 0.5 deep in the boss face (Z 9.5 -> 9.0)
+R_REL, D_REL = P.HIP_STATOR_RELIEF[0] / 2, P.HIP_STATOR_RELIEF[1]   # relief Ø63 x 0.5 deep in the boss face (Z 9.5 -> 9.0)
 RP = P.PILOT_D_HIP / 2
 C = dict(plate='#9aa3ad', motor='#c8c8c8', pilot='#5b8fd6', boss='#f0a040', rel='#ffd54f', screw='#3a3a3a',
          bad='#d9534f', ok='#2e7d32')
@@ -57,7 +57,7 @@ a1.set_title('① 용어: 파일럿·포켓·보스 (모터 축을 지나는 단
 
 # ------------------------------------------------------------------ 2. isometric of the real hip plate with the relief
 sh = O.solids(O.read_step(ROOT + '/manufacturing/step/hip_plate_L.step'))[0]
-after = O.cut(sh, O.cyl('z', 0, 0, 9.5 - D_REL, 10.5, R_REL))
+after = sh                                               # make_parts.py already cuts the relief
 tw = np.array([1.0, -1.0, 1.25]); tw /= np.linalg.norm(tw)
 xd = np.array([1.0, 1.0, 0.0]); xd /= np.linalg.norm(xd)
 yd = np.cross(tw, xd)
@@ -84,7 +84,7 @@ lab(a2, P2(-28, -28.3, 9.5), (-118, 10), 'Ø80 보스 바깥 둘레 (주황): �
 lab(a2, P2(22, -22.3, 9.0), (-118, -10), '새 홈 Ø63 × 0.5 (노랑): 보스 면 안쪽을 0.5 깎음', '#b08000')
 lab(a2, P2(14.9, -14.9, 9.0), (-118, -30), 'Ø42 H7 포켓 (파랑): 파일럿 자리', C['pilot'])
 lab(a2, P2(-21.7, 21.7, 9.5), (-118, 30), '빨간 점선 = 고정자 앞면 바깥 지름 Ø61.5\n(이 안쪽이 보스 면과 닿던 곳)', C['bad'])
-a2.set_title('② 실제 hip 판(업로드용 STEP)에 홈을 넣은 모습, 로봇 안쪽에서 비스듬히 봄', fontsize=13, loc='left')
+a2.set_title('② 실제 hip 판(업로드용 STEP, 홈 포함), 로봇 안쪽에서 비스듬히 봄', fontsize=13, loc='left')
 
 
 # ------------------------------------------------------------------ 3/4. section before / after (one side)
@@ -120,8 +120,8 @@ def section(ax, relief, title):
     ax.set_title(title, fontsize=13, loc='left')
 
 
-section(fig.add_axes([0.05, 0.33, 0.60, 0.25]), False, '③ 지금 (단면 한쪽)')
-section(fig.add_axes([0.05, 0.03, 0.60, 0.25]), True, '④ 홈을 넣은 뒤')
+section(fig.add_axes([0.05, 0.33, 0.60, 0.25]), False, '③ 홈 넣기 전 (10-30 이전 설계, 단면 한쪽)')
+section(fig.add_axes([0.05, 0.03, 0.60, 0.25]), True, '④ 홈을 넣은 뒤 (현재 설계)')
 
 # ------------------------------------------------------------------ 5. top view (inside face) of the centre
 a5 = fig.add_axes([0.69, 0.03, 0.30, 0.52]); a5.set_aspect('equal')

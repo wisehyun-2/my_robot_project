@@ -1,5 +1,5 @@
 """Hip motor seating: the AKE pilot end vs the stator front face against the hip plate pocket floor / Ø80 boss face.
-Four cases (CAD, pilot seats, stator seats, printed leg plate for comparison); the 0.1 mm differences are drawn x5.  From fusion/params.py; explanatory figure, not a manufacturing drawing.
+Shows the design before the 10-30 Ø63 x 0.5 relief (see hip_relief.py). Four cases (CAD, pilot seats, stator seats, printed leg plate for comparison); the 0.1 mm differences are drawn x5.  From fusion/params.py; explanatory figure, not a manufacturing drawing.
 
     python hip_seat.py               # -> hip_seat.png next to this script
 """
@@ -63,7 +63,7 @@ def mark(ax, y, x0, x1, col, lw=3.0):
 fig, axg = plt.subplots(2, 2, figsize=(22, 15.5))
 plt.subplots_adjust(left=0.05, right=0.99, top=0.93, bottom=0.08, hspace=0.42, wspace=0.10)
 axs = axg.ravel()
-titles = ['① 설계(CAD): 파일럿 끝과 고정자 앞면이 동시에 닿음', '② 실물 A: p가 s보다 조금 김 → 파일럿 끝이 바닥에 앉음 (정상)',
+titles = ['① 홈 넣기 전 설계(CAD): 파일럿 끝과 고정자 앞면이 동시에 닿음', '② 실물 A: p가 s보다 조금 김 → 파일럿 끝이 바닥에 앉음 (정상)',
           '③ 실물 B: p가 s보다 조금 짧음 → 고정자 앞면이 보스에 먼저 앉음', '④ 비교: knee·wheel (출력 PETG 판)']
 notes = [('포켓 깊이 s = 4.0 (hip 판 가공, ±0.05)\nAKE 파일럿 끝 → 고정자 앞면 p = 4.0 (모델 값, CubeMars 공차 미공개)\n'
           '→ 실물에서는 p와 s가 조금씩 달라서 ② 또는 ③ 중 하나가 됨', 'k'),
@@ -123,7 +123,8 @@ ax.text(33.6, (front + RING + P.POCKET) / 2, '틈 1.5', fontsize=11, color='b', 
 lab(ax, (14.0, ring), (12.4, -4.0), '파일럿 끝만 닿음', C['ok'])
 ax.text(34.0, -11.0, 'PETG 판 (포켓 2.5)', fontsize=10, zorder=8)
 
-fig.suptitle('hip 모터 자리: 모터가 어느 면에 앉는가 (단면 한쪽, 실제 비율, 0.1 mm 차이만 5배 과장)', fontsize=14, x=0.01, ha='left')
+fig.suptitle('hip 모터 자리: 모터가 어느 면에 앉는가 — Ø63 × 0.5 홈을 넣기 전 설계 (단면 한쪽, 실제 비율, 0.1 mm 차이만 5배 과장)\n'
+             '10-30 보스 면에 Ø63 × 0.5 홈을 넣어 ③은 생기지 않음 (고정자 앞면과 보스 사이 틈 0.5, hip_relief.png ④)', fontsize=14, x=0.01, ha='left')
 fig.text(0.01, 0.005, 's = 포켓 바닥 → Ø80 보스 면 (hip 판, 가공 4.0 ± 0.05)     p = AKE 파일럿 끝 → 고정자 앞면 (모델 4.0, CubeMars 공차 미공개)     '
          '주황 화살표 = M2.5 나사가 고정링을 당기는 방향', fontsize=10)
 fig.savefig(sys.argv[1] if len(sys.argv) > 1 else HERE / 'hip_seat.png', dpi=95, bbox_inches='tight')

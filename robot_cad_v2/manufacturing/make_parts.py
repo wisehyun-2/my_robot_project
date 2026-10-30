@@ -105,6 +105,9 @@ def hip_plate(s):
         x0, x1 = sorted((sx * 30.0, sx * 43.0))
         sh = O.fuse(sh, O.box(t0, t1, ZH + 129.0, ZH + 141.0, x0, x1))
         sh = O.cut(sh, ycyl(140.0, sx * 40.0, Y_IN - 1, Y_WEB + 1, 1.25))
+    # Ø63 x 0.5 relief in the Ø80 boss face (10-30, params.HIP_STATOR_RELIEF): the AKE stator front clears the boss
+    rd, rh = P.HIP_STATOR_RELIEF
+    sh = O.cut(sh, ycyl(0, 0, Y_IN - 2.5, Y_IN - 1.5 + rh, rd / 2))
     sh = O.clean(sh)
     # local frame: X = robot x (left) / -x (right), Y = robot z - ZH, Z = inward, 0 at the hub outer face
     if s > 0:

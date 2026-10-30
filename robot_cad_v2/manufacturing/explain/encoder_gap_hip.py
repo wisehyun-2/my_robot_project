@@ -63,9 +63,10 @@ def vdim(a, x, y0, y1, text, col='k', dx=0.6, fs=9.5, ha='left'):
 
 # ------------------------------------------------------------------ 1. whole stack (plane through the motor axis and the board z axis)
 ax = fig.add_axes([0.04, 0.49, 0.94, 0.48]); ax.set_aspect('equal')
-# hip plate (machined 6061): hub Ø52 Z0..3, web Z3..8, Ø42 pocket Z5.5..9.5, Ø80 boss Z8..9.5, Ø30 hole
-plate = [(15.0, 0.0), (26.0, 0.0), (26.0, 3.0), (60.0, 3.0), (60.0, 8.0), (40.0, 8.0), (40.0, 9.5), (P.PILOT_D_HIP / 2, 9.5),
-         (P.PILOT_D_HIP / 2, 5.5), (15.0, 5.5)]
+# hip plate (machined 6061): hub Ø52 Z0..3, web Z3..8, Ø42 pocket Z5.5..9.5, Ø80 boss Z8..9.5 with the Ø63 x 0.5 relief, Ø30 hole
+RD, RH = P.HIP_STATOR_RELIEF
+plate = [(15.0, 0.0), (26.0, 0.0), (26.0, 3.0), (60.0, 3.0), (60.0, 8.0), (40.0, 8.0), (40.0, 9.5), (RD / 2, 9.5), (RD / 2, 9.5 - RH),
+         (P.PILOT_D_HIP / 2, 9.5 - RH), (P.PILOT_D_HIP / 2, 5.5), (15.0, 5.5)]
 for sx in (1, -1):
     ax.add_patch(Polygon([(sx * r, z + ZOFF) for r, z in plate], fc=C['plate'], ec='k', lw=0.9, zorder=2))
 ax.text(47.0, 3.2 + ZOFF, 'hip 판 (6061 가공)', fontsize=9.5, zorder=8)
@@ -119,8 +120,8 @@ for y, t, dy in ((RING, '%.2f 포켓 바닥 = 모터 고정면' % RING, -0.9), (
                  (B + PCB_T, '%.2f PCB 윗면 = 스탠드오프 끝' % (B + PCB_T), 0.9), (B, '%.2f PCB 모터 쪽 면' % B, -0.6),
                  (BOSS, '%.2f 로터 보스 끝면' % BOSS, 0.0), (MAG_TOP, '%.2f 자석 윗면 (다이 %.2f는 ② 확대)' % (MAG_TOP, DIE), -1.0)):
     ax.text(61.5, y + dy, t, fontsize=9, va='center', zorder=8)
-ax.annotate('고정자 앞면 %.1f = Ø80 보스 면 %.1f (설계상 틈 0)' % (A['stator_front'], BOSS80), xy=(26.0, BOSS80),
-            xytext=(52.0, -12.5), fontsize=9, color='r', arrowprops=dict(arrowstyle='->', color='r', lw=0.8), zorder=9)
+ax.annotate('고정자 앞면 %.1f, Ø63 × %.1f 홈 바닥 %.1f (틈 %.1f)' % (A['stator_front'], RH, BOSS80 - RH, A['stator_front'] - BOSS80 + RH),
+            xy=(26.0, BOSS80 - RH), xytext=(52.0, -12.5), fontsize=9, color='b', arrowprops=dict(arrowstyle='->', color='b', lw=0.8), zorder=9)
 ax.set_xlim(-76, 92); ax.set_ylim(ZOFF - 2.5, F_OUT + 3.0)
 ax.xaxis.set_major_locator(MultipleLocator(10)); ax.yaxis.set_major_locator(MultipleLocator(5))
 ax.xaxis.set_minor_locator(MultipleLocator(1)); ax.yaxis.set_minor_locator(MultipleLocator(1))
