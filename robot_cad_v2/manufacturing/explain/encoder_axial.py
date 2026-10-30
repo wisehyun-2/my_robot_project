@@ -1,9 +1,11 @@
-"""Axial view of the wheel driver cup: moteus r4.11 outline, mount holes / standoffs, AS5147(P) package and Hall circle,
+"""Axial view of a driver cup (wheel by default, --joint knee / hip): moteus r4.11 outline, mount holes / standoffs, AS5147(P) package and Hall circle,
 AKE magnet, magnet spacer and the cup, projected along the motor axis (board frame, from main-branch params).  Explanatory figure, not a
 manufacturing drawing.
 
-    python encoder_axial.py          # -> encoder_axial.png next to this script
+    python encoder_axial.py              # wheel -> encoder_axial.png next to this script
+    python encoder_axial.py --joint hip  # -> encoder_axial_hip.png (knee: encoder_axial_knee.png)
 """
+import argparse
 import math
 import pathlib
 import sys
@@ -19,6 +21,13 @@ F = '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc'
 font_manager.fontManager.addfont(F)
 plt.rcParams['axes.unicode_minus'] = False
 plt.rcParams['font.family'] = font_manager.FontProperties(fname=F).get_name()
+
+ap = argparse.ArgumentParser()
+ap.add_argument('--joint', choices=('wheel', 'knee', 'hip'), default='wheel')
+ap.add_argument('--out', default=None)
+ARGS = ap.parse_args()
+JOINT = ARGS.joint
+HOUSING = {'wheel': '정강이', 'knee': '넓적다리'}.get(JOINT)
 
 MO = P.MOTEUS
 HOLES = MO['holes']
@@ -51,14 +60,21 @@ def chip(ax, lw=0.8):
 
 # ------------------------------------------------------------------ 1. whole cup, 1:1-ish
 ax = fig.add_axes([0.02, 0.05, 0.50, 0.88]); ax.set_aspect('equal')
-ax.add_patch(Wedge((0, 0), LIP_OUT, 0, 360, width=LIP_OUT - LIP_IN, fc='#eceff1', ec='0.4', lw=0.8, zorder=1))
-ax.add_patch(Circle((0, 0), P.HOUSING_R, fc='none', ec='0.5', lw=0.8, ls='--', zorder=1))
+if JOINT == 'hip':
+    # hip plate (machined): Ø136 disc, Ø80 register boss, Ø42 H7 pilot pocket, Ø30 through hole
+    ax.add_patch(Circle((0, 0), 68.0, fc='#e3e6ea', ec='0.5', lw=0.8, zorder=0))
+    ax.add_patch(Circle((0, 0), 40.0, fc='#c9ced6', ec='0.3', lw=1.0, zorder=1))
+    ax.add_patch(Circle((0, 0), P.PILOT_D_HIP / 2, fc='#b7bec8', ec='0.3', lw=0.8, ls='--', zorder=1))
+    ax.add_patch(Circle((0, 0), 15.0, fc='#a9b0ba', ec='0.3', lw=0.8, ls=':', zorder=1))
+else:
+    ax.add_patch(Wedge((0, 0), LIP_OUT, 0, 360, width=LIP_OUT - LIP_IN, fc='#eceff1', ec='0.4', lw=0.8, zorder=1))
+    ax.add_patch(Circle((0, 0), P.HOUSING_R, fc='none', ec='0.5', lw=0.8, ls='--', zorder=1))
 ax.add_patch(Wedge((0, 0), CUP_R_OUT, 0, 360, width=CUP_R_OUT - CUP_R_IN, fc=C['cup'], ec='k', lw=0.8, zorder=1))
 for t in CUP_COLUMNS:
     tt = math.radians(t)
     x, z = 40.5 * math.cos(tt), 40.5 * math.sin(tt)
     ax.add_patch(Circle((x, -z), 3.4, fc=C['cup'], ec='k', lw=0.8, zorder=2))
-    ax.add_patch(Circle((x, -z), 1.4, fc='w', ec='k', lw=0.6, zorder=3))
+    ax.add_patch(Circle((x, -z), 1.7 if JOINT == 'hip' else 1.4, fc='w', ec='k', lw=0.6, zorder=3))
 board_outline(ax)
 for (x, z) in HOLES:
     ax.add_patch(Circle((x, -z), 3.2, fc=C['so'], ec='k', lw=0.8, zorder=4))
@@ -93,20 +109,27 @@ for (x, z), r in ((HOLES[1], 25.0), (HOLES[3], math.hypot(20, 23))):
     ax.text(x * 0.55 + 1.0, -z * 0.55 + (1.2 if z < 0 else -1.2), 'R%.2f' % r, color='m', fontsize=10, zorder=8,
             bbox=dict(fc='w', ec='none', alpha=0.8, pad=0.4))
 hdim(ax, -CUP_R_IN, CUP_R_IN, 36.0, '컵 안지름 Ø%.0f' % (2 * CUP_R_IN), '0.3')
-ax.text(0, -LIP_OUT - 1.8, '컵 립 안지름 Ø%.1f → 정강이 하우징 Ø%.0f(점선)에 끼움 = 중심 기준' % (2 * LIP_IN, 2 * P.HOUSING_R), ha='center',
-        fontsize=9.5, color='0.35')
+if JOINT == 'hip':
+    ax.text(0, -46.8, '컵 나사 기둥 3개의 안쪽 면(Ø80.04, 높이 1.5)이 hip 판 Ø80 등록 보스(0/-0.1, Ø42 H7과 동심 Ø0.05)를 3점으로 잡음 = 중심 기준', ha='center',
+            fontsize=9.5, color='0.25', bbox=dict(fc='w', ec='none', alpha=0.85, pad=0.5), zorder=8)
+    for r, t, yy in ((40.0, 'Ø80 보스', 8.0), (P.PILOT_D_HIP / 2, 'Ø42 H7 포켓', 4.5), (15.0, 'Ø30 구멍', 1.0)):
+        ax.text(-r + 0.6, yy, t, fontsize=8.5, color='0.25', zorder=8)
+else:
+    ax.text(0, -LIP_OUT - 1.8, '컵 립 안지름 Ø%.1f → %s 하우징 Ø%.0f(점선)에 끼움 = 중심 기준' % (2 * LIP_IN, HOUSING, 2 * P.HOUSING_R),
+            ha='center', fontsize=9.5, color='0.35')
 ax.text(-21.5, -(MO['edge_conn'] - 2.0), 'XT30 커넥터 쪽', fontsize=9, color='k')
 ax.text(-15.0, 12.5, 'moteus r4.11 (46 × 53)', fontsize=10, color=C['pcb'], weight='bold')
 ax.annotate('스탠드오프 Ø6.4\n인서트 구멍 Ø3.6\nPCB 구멍 Ø2.6 (파랑 점선)\nM2.5 볼트', xy=(23.0, 16.0), xytext=(27.5, 6.0), fontsize=8.5,
             va='center', arrowprops=dict(arrowstyle='->', lw=0.7), zorder=8)
-ax.text(30.0, -30.0, '나사 기둥 3개\n(컵 → 하우징)', fontsize=8.5, va='center', color='0.3')
+ax.text(28.0, -30.0, '나사 기둥 3개\n' + ('(M3 × 40, 컵 → hip 판 탭 B)' if JOINT == 'hip' else '(M2.5, 컵 → 하우징)'),
+        fontsize=8.5, va='center', color='0.3', bbox=dict(fc='w', ec='none', alpha=0.8, pad=0.4), zorder=8)
 ax.set_xlim(-49, 49); ax.set_ylim(-49, 49)
 ax.xaxis.set_major_locator(MultipleLocator(10)); ax.yaxis.set_major_locator(MultipleLocator(10))
 ax.xaxis.set_minor_locator(MultipleLocator(1)); ax.yaxis.set_minor_locator(MultipleLocator(1))
 ax.grid(which='major', color='0.88', lw=0.5, zorder=0)
 ax.set_xlabel('보드 x [mm] (모터 축 = 0)', fontsize=10); ax.set_ylabel('보드 z [mm] (아래 = 커넥터 쪽)', fontsize=10)
 ax.set_yticks(range(-40, 50, 10)); ax.set_yticklabels([str(-v) for v in range(-40, 50, 10)])
-ax.set_title('① cup_wheel 축 방향 투영 (모터 축과 평행하게 본 모습, 부품을 겹쳐 그림, 왼쪽 다리)', fontsize=13, loc='left')
+ax.set_title('① cup_%s 축 방향 투영 (모터 축과 평행하게 본 모습, 부품을 겹쳐 그림, 왼쪽)' % JOINT, fontsize=13, loc='left')
 
 # ------------------------------------------------------------------ 2. centre zoom
 bx = fig.add_axes([0.55, 0.05, 0.44, 0.88]); bx.set_aspect('equal')
@@ -145,4 +168,5 @@ bx.xaxis.set_minor_locator(MultipleLocator(0.1)); bx.yaxis.set_minor_locator(Mul
 bx.grid(which='major', color='0.85', lw=0.5, zorder=0)
 bx.set_xlabel('[mm] (모터 축 = 0)', fontsize=10)
 bx.set_title('② 가운데 확대: 칩·홀 원·자석·포켓·스페이서', fontsize=13, loc='left')
-fig.savefig(sys.argv[1] if len(sys.argv) > 1 else HERE / 'encoder_axial.png', dpi=95, bbox_inches='tight')
+out = ARGS.out or HERE / ('encoder_axial.png' if JOINT == 'wheel' else 'encoder_axial_%s.png' % JOINT)
+fig.savefig(out, dpi=95, bbox_inches='tight')
