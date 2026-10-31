@@ -234,8 +234,9 @@ r4.5 mechanical), `PI3HAT_STEP`(mjbots pi3hat r4.4 mechanical) 경로를 자기 
 강도: `python calc/strength.py`.
 
 `WheelBiped_v2` 문서는 허브 `Default Project`에 저장했다(버전 1 = 10-28 빌드, 버전 2 = 10-30 빌드(git `f156f82`, 8.93 kg),
-버전 3 = 10-30 9차 재빌드(git `3a73a8c`, hip 판 Ø63 홈, 8.924 kg), **버전 4 = 10-31 재빌드**(git `a6fad77`, 체결 부품 428개,
-바퀴 M3 × 14, 9.181 kg, 조인트 6개) — `export/WheelBiped_v2.f3d`와 같은 모델). `_library`(숨김)는 재사용 부품의
+버전 3 = 10-30 9차 재빌드(git `3a73a8c`, hip 판 Ø63 홈, 8.924 kg), 버전 4 = 10-31 재빌드(git `a6fad77`, 체결 부품 428개,
+바퀴 M3 × 14, 9.181 kg, 조인트 6개), **버전 5 = 10-31 mjpower-ss STEP**(git `c14da18`, 실제 간섭 0건, 9.178 kg) —
+`export/WheelBiped_v2.f3d`와 같은 모델). `_library`(숨김)는 재사용 부품의
 마스터를 가지고 있어 지우면 모든 인스턴스가 사라진다.
 
 ## 3. 다리와 관절
