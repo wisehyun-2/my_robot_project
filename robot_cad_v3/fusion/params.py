@@ -140,6 +140,9 @@ COVER_S = {'femur': (24.0, 60.0, 95.0, 130.0), 'tibia': (24.0, 50.0, 90.0, 130.0
 DUCT_DEPTH = 12.0           # leg cables run inside the boxes this far in from the back face (v2: 12 x 8 edge groove)
 DUCT_NOTCH = (10.0, 6.5)    # cable windows in the back wall: width along the link, depth past the duct centre plane
 BEARING_FACE = 11.2         # motor output face -> washer seat of the hip / knee M3 x 16 (washer 0.5, 4.3 mm engagement)
+DOWEL_HOLE = 7.5            # hip / knee boss dowel holes, deep from the output face (10-31, user; was 7.0): the Ø3 x 10
+                            # pins pressed to the bottom stand 2.5 proud (2.15 .. 2.75 with the pin length ±0.25), so
+                            # they cannot bottom in the AKE output's 3 mm holes before the faces meet
 HUB_SCREW_SEAT = 9.5        # wheel hub flange: output face -> washer seat of its 6 x M3 x 14 (12.9) (10-30: with the
 HUB_SCREW_L = 14            # hip / knee 11.2 seat the M3 x 16 heads stood 1.2 mm into the hex hub's Ø20 register spigot;
                             # now the heads stop 0.5 mm short of it, 4.0 mm engagement in the 5 mm output taps)

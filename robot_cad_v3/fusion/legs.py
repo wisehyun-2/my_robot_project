@@ -132,7 +132,7 @@ def _driven_boss(B, s, body, joint, c, y_link_in, y_face_out):
         C.cut(body, B.ycyl(q[0], q[2], y_out - 2, floor + 1, M3_CLEAR / 2))
     for p in LY.motor_points(fr['motor'], P.AKE_PCD_OUT / 2, P.AKE_OUT_PIN, P.AKE['out']):
         q = lc(p, s)
-        C.cut(body, B.ycyl(q[0], q[2], y_out - 2, y_out + 7.0, 1.5))
+        C.cut(body, B.ycyl(q[0], q[2], y_out - 2, y_out + P.DOWEL_HOLE, 1.5))
     return body
 
 

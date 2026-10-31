@@ -140,7 +140,7 @@ def specs():
         'FX DIN 125 M3': (lambda: washer(3), 'Steel', 'steel', (
             '관절', '평와셔 DIN 125 A2', 'M3', '출력 M3 × 16·M3 × %d·림 M3 × 14 머리 밑' % P.HUB_SCREW_L), 48),
         'FX ISO 8734 3x10': (lambda: dowel(3.0, 10.0), 'Steel', 'steel', (
-            '관절', '평행 핀 ISO 8734 m6 경화', 'Ø3 × 10', '모터 출력 다웰(출력 3 mm + 6061 보스 / PETG 허브 7 mm)'), 18),
+            '관절', '평행 핀 ISO 8734 m6 경화', 'Ø3 × 10', '모터 출력 다웰(6061 보스 7.5 mm 압입 + 출력 2.5 mm / PETG 허브 7 + 출력 3 mm)'), 18),
         'FX ISO 4762 M3x14 rim': (sc(3, 14), 'Steel', 'steel', (
             '바퀴', '육각 홈붙이 볼트 ISO 4762 8.8', 'M3 × 14',
             '림 → 허브 플랜지 인서트(와셔 위, 림 허브 %.0f mm 체결, 인서트 %.1f mm 물림)'
@@ -255,7 +255,7 @@ def positions():
                 out.append((link, 'FX ISO 4762 M3x16 12.9', (q[0], Y(bear), q[2]), D(-1)))
                 out.append((link, 'FX DIN 125 M3', (q[0], Y(bear), q[2]), D(-1)))
             for q in LY.motor_points(mm, P.AKE_PCD_OUT / 2, P.AKE_OUT_PIN, A['out']):
-                out.append((link, 'FX ISO 8734 3x10', (q[0], Y(yo + 7.0), q[2]), D(-1)))
+                out.append((link, 'FX ISO 8734 3x10', (q[0], Y(yo + P.DOWEL_HOLE), q[2]), D(-1)))
         # driver cups: board screws + standoff inserts, column screws, the link inserts under the columns
         for joint, link in (('hip', 'torso'), ('knee', 'femur_' + k), ('wheel', 'tibia_' + k)):
             b = LY.frames(joint, s)['board']
