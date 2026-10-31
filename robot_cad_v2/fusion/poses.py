@@ -130,9 +130,12 @@ GROUPS = {
     'tyre / rim / hub vs torso': (
         lambda o, lk: lk.startswith('wheel') and not o.component.name.startswith('AKE60'),
         lambda o, lk: lk == 'torso'),
-    'tyre / rim / hub vs thigh, knee cup, thigh cables': (
+    'tyre / rim / hub vs thigh, knee cup': (
         lambda o, lk: lk.startswith('wheel') and not o.component.name.startswith('AKE60'),
-        lambda o, lk: lk.startswith('femur')),
+        lambda o, lk: lk.startswith('femur') and not o.component.name.startswith('harness')),
+    'tyre / rim / hub vs thigh cables': (                       # 10-31: the user re-routes these on the real robot
+        lambda o, lk: lk.startswith('wheel') and not o.component.name.startswith('AKE60'),
+        lambda o, lk: lk.startswith('femur') and o.component.name.startswith('harness')),
     'thigh vs torso shell / shell screws': (                    # 10-31: the thigh body itself (ISO 7380 heads)
         lambda o, lk: lk.startswith('femur') and o.component.name.startswith('thigh'),
         lambda o, lk: lk == 'torso' and o.component.name.startswith(('shell_', 'saddle_', 'FX ISO 7380',

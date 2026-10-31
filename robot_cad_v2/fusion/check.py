@@ -83,9 +83,9 @@ def print_fraction(body, t_wall, infill, normal=None):
     return (shell + infill * (V - shell)) / V
 
 
-def apply_print_mass(wheel_kg=P.WHEEL_MASS):
-    """Give every printed body a PETG density scaled to its print settings (params.PRINT) and the bought RC
-    wheel its real mass (the model's solid rubber tyre would weigh 0.7 kg).  Run after a build."""
+def apply_print_mass(wheel_kg=P.TYRE_MASS):
+    """Give every printed body a PETG density scaled to its print settings (params.PRINT) and the bought tyre
+    its real mass (listing: 721 g).  Run after a build."""
     out = []
     for o in leaves():
         n = o.component.name
@@ -97,10 +97,10 @@ def apply_print_mass(wheel_kg=P.WHEEL_MASS):
                     f = print_fraction(b, *prof, normal=nrm)
                     b.material = C.custom_density_material('PETG printed %d%%' % round(100 * f), P.PETG_RHO * f)
                     out.append((n, round(f, 2)))
-        elif n.startswith('RC wheel'):
+        elif n.startswith('tyre M365'):
             vol = sum(b.volume for b in o.bRepBodies if b.isSolid)
             for b in o.bRepBodies:
-                b.material = C.custom_density_material('RC wheel %.0f g' % (wheel_kg * 1000), wheel_kg / (vol * 1e-6))
+                b.material = C.custom_density_material('tyre %.0f g' % (wheel_kg * 1000), wheel_kg / (vol * 1e-6))
     return out
 
 

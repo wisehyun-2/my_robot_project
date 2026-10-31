@@ -92,15 +92,15 @@ def cable_rows():
 def joint_rows(k):
     th, sh = occs('femur_' + k, 'thigh_')[0], occs('tibia_' + k, 'shank_')[0]
     hp = occs('torso', 'hip_plate_' + k)[0]
-    hf, hx = occs('wheel_' + k, 'hub_flange_')[0], occs('wheel_' + k, 'hex_hub_')[0]
-    whl = occs('wheel_' + k, 'RC wheel')[0]
+    hf, hx = occs('wheel_' + k, 'hub_flange_')[0], occs('wheel_' + k, 'rim_')[0]
+    whl = occs('wheel_' + k, 'tyre M365')[0]
     rows = [('%s 허벅지 – hip 판 (면 2.0, 보스 반경 1.0)' % k, dist(th, hp), '> 0'),
             ('%s 허벅지 – 정강이 (면 1.5, 보스 반경 1.0)' % k, dist(th, sh), '> 0'),
             ('%s 무릎 고정 링(허벅지) – 정강이' % k, dist(occs('femur_' + k, 'clamp ring stator')[0], sh), '> 0'),
             ('%s 바퀴 고정 링(정강이) – 허브 플랜지' % k, dist(occs('tibia_' + k, 'clamp ring stator')[0], hf), '> 0'),
             ('%s 허브 플랜지 – 정강이' % k, dist(hf, sh), '> 0'),
-            ('%s 육각 허브 – 정강이' % k, dist(hx, sh), '> 0'),
-            ('%s 타이어·림 – 정강이' % k, dist(whl, sh), '> 0')]
+            ('%s 림 – 정강이' % k, dist(hx, sh), '> 0'),
+            ('%s 타이어 – 정강이' % k, dist(whl, sh), '> 0')]
     # fasteners (10-30): the wheel output screws under the hex hub's Ø20 register spigot, the stator ring screw
     # heads under the turning hub flange
     shell_heads = occs('torso', 'FX ISO 7380 M3x6 shell')
@@ -108,7 +108,7 @@ def joint_rows(k):
                  min(dist(th, o) for o in shell_heads), '≥ 1.5'))
     hub_screws = occs('wheel_' + k, 'FX ISO 4762 M3x%d 12.9 hub' % P.HUB_SCREW_L)
     stator_screws = occs('tibia_' + k, 'FX DIN 7984 M2.5x8 stator')
-    rows += [('%s 바퀴 출력 M3 × %d 머리 – 육각 허브(Ø20 등록 턱)' % (k, P.HUB_SCREW_L),
+    rows += [('%s 바퀴 출력 M3 × %d 머리 – 림 허브 면' % (k, P.HUB_SCREW_L),
               min(dist(o, hx) for o in hub_screws), '> 0'),
              ('%s 바퀴 고정링 M2.5 × 8 머리(정강이) – 허브 플랜지' % k, min(dist(o, hf) for o in stator_screws), '> 0')]
     return rows

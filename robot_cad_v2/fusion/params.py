@@ -19,7 +19,7 @@ import math
 # ----------------------------------------------------------------------------- legs and pose
 L1 = 175.0                  # hip -> knee
 L2 = 175.0                  # knee -> wheel axle
-TYRE_OD = 150.0
+TYRE_OD = 202.0             # Xiaomi M365 8.5 x 2 solid tyre (10-31, the user's order; 150 RC wheel before)
 R_WHEEL = TYRE_OD / 2
 L0 = 310.0                  # standing hip-axle distance
 L0_MIN, L0_MAX = 200.0, 335.0
@@ -167,15 +167,29 @@ Y_RING_KNEE = Y_FEMUR_OUT - KNEE_PLATE_T + POCKET
 Y_RING_WHEEL = Y_TIBIA_IN + WHEEL_PLATE_T - POCKET
 AXIS_HIP, AXIS_KNEE, AXIS_WHEEL = -1, -1, +1    # sign of the motor back direction along robot y (left side)
 
-# ----------------------------------------------------------------------------- wheel (bought 1/8 RC truggy tyre)
-TYRE_W = 60.0               # parameter: 1/8 truggy class (≈150 x 60)
-TYRE_BEAD_D = 100.0
-HEX_AF = 17.0               # 1/8 RC standard hex
-HEX_L = 12.0                # hex socket depth of the wheel
-WHEEL_SEAT = -15.0          # tyre centre plane in the wheel frame (Z from the hex seat, + towards the robot centre);
-                            # car wheels have the spoke face near the outer side, so the centre is ~15 mm towards the motor
-WHEEL_NUT = 'M5 serrated flange nut'
-WHEEL_MASS = 0.250          # tyre + rim, typical 1/8 truggy pre-mounted
+# ----------------------------------------------------------------------------- wheel (10-31: the user's tyre)
+# Xiaomi M365 8 1/2 x 2 solid honeycomb tyre (AliExpress listing photo: OD 202, tread 54 wide, bore Ø141 x 36.5 wide,
+# 721 g; rectangular cavities open to the bore, the rubber between them sits on the rim).  The section between the
+# bore band and the full-width tread is not given: modelled as a TYRE_BEAD_H band of bore width, then a straight
+# flare to the full width at TYRE_FLARE_R (measure the real tyre).  Printed one-piece rim: legs.rim (10-31 rev 2:
+# rim_out merged, lugs in the bore cavities, thick hub; strength.py section 3).
+TYRE_W = 54.0
+TYRE_BORE_D, TYRE_BORE_W = 141.0, 36.5
+TYRE_BEAD_H, TYRE_FLARE_R = 5.0, 85.0
+TYRE_CAVITY = (24, 9.0, 10.0, 27.5)  # bore cavities (modelled from the listing photo): count, width, depth, length
+TYRE_MASS = 0.721
+RIM_SEAT_T = 6.0            # seat ring wall (r 64.5 .. 70.5) the tyre is stretched onto
+RIM_FLANGE_D = 150.0        # bead flanges (inside the bead band, 0.5 short of the flare)
+RIM_FLANGE_T = 3.0          # open-side flange (the tyre goes on over it, like the M365 one-piece rim)
+RIM_LUGS = (24, 8.0, 4.5, 26.5)  # lugs on the seat ring into the tyre's bore cavities: count, width, height (tips at the
+                            # flange radius, so mounting stretches the tyre no further than the flange), length; both
+                            # ends 45 deg (print overhang / mounting lead-in).  Re-measure the cavities on the real tyre.
+RIM_HUB_T, RIM_HUB_R = 10.0, 32.0   # rim hub thickness from the flange face, out to this radius (the 4.75 mm disc of
+                            # the first rim was 81 MPa at the design load at the flange edge r 23, strength.py)
+RIM_WEB_T = 6.0             # web thickness at the seat ring (straight taper from RIM_HUB_T at RIM_HUB_R), no holes
+RIM_SCREW_SEAT = 8.0        # flange face -> washer seat of the 6 x M3 x 14 (washer 0.5, 5.5 mm into the flange inserts)
+RIM_REG = (5.5, 3.0)        # centre register: Ø11 x 3 spigot on the hub flange (inside the output screw counterbores,
+                            # 0.75 mm clear) into a Ø11.4 x 3.2 recess, so the rim's flange face prints flat on the bed
 HUB_BOSS_D = 28.0           # through the Ø30 plate hole
 
 
@@ -239,7 +253,8 @@ GROMMET_DEG, GROMMET_R = 216.0, 75.0   # hip cable exit through the shell (outsi
 # part name prefix: (perimeter / skin thickness mm, infill fraction).  Printed mass = rho * (A t + f (V - A t)).
 PRINT = {
     'thigh': (4.8, 0.20), 'shank': (4.8, 0.20),                 # 12 walls, 8 top / bottom layers, 20 % gyroid
-    'hub_flange': (99.0, 1.0), 'hex_hub': (99.0, 1.0),          # 100 %
+    'hub_flange': (99.0, 1.0),                                  # 100 %
+    'rim_': (2.4, 0.40),                                        # 6 walls, 40 %
     'cup_': (1.6, 0.30), 'cable_clips': (1.6, 0.40),
     'top_plate': (1.6, 0.25), 'battery_tray': (1.6, 0.30), 'electronics_deck': (1.6, 0.30),
     'shell_': (1.6, 0.25), 'saddle_': (1.6, 0.25),

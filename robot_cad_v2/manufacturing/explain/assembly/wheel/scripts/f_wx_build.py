@@ -27,9 +27,9 @@ def run(_context: str):
     picks = [('SHANK', 'tibia_L:1+shank_L'), ('MOTOR', 'tibia_L:1+AKE60-8_KV80_stator'),
              ('MOTOR', 'tibia_L:1+magnet spacer'), ('MOTOR', 'wheel_L:1+AKE60-8_KV80_output'),
              ('RING', 'tibia_L:1+clamp ring stator'), ('FLANGE', 'wheel_L:1+hub_flange_L'),
-             ('HEX', 'wheel_L:1+hex_hub_L'), ('WHEEL', 'wheel_L:1+RC wheel'), ('NUT', 'wheel_L:1+M5 serrated')]
+             ('RIM', 'wheel_L:1+rim_L'), ('TYRE', 'wheel_L:1+tyre M365')]
     RECOLOR = {'SHANK': ('wx petg green', (120, 185, 120)), 'FLANGE': ('wx flange orange', (215, 105, 40)),
-               'HEX': ('wx hex amber', (240, 165, 70))}
+               'RIM': ('wx rim amber', (240, 165, 70))}
     items = {}
     for o in des.rootComponent.allOccurrences:
         for g, pre in picks:
@@ -105,10 +105,12 @@ def run(_context: str):
             C.cut(g, B.ycyl(x, z, yc - 1, yc + 1, 1.9))
             C.cut(ins, g)
         fast.append(('INS', 'insert M3x5.7 #%d' % i, ins, 'brass', (x, z)))
-        fast.append(('S38', 'M3x8 ISO4762 8.8 #%d' % i,
-                     cap_screw(x, z, lv['h0'] + 0.5, 1, 5.5, 3.0, 3.0, 8.0, 2.5, 1.3, pitch=0.8), 'steel', (x, z)))
-    fast.append(('BOLT', 'M5x55 ISO4762 8.8', cap_screw(0.0, P.R_WHEEL, lv['f0'] + 6.5, -1, 8.5, 5.0, 5.0, 55.0, 4.0,
-                                                         2.5, thread_len=22.0, pitch=1.0), 'steel', (0.0, P.R_WHEEL)))
+        seat = lv['f0'] - P.RIM_SCREW_SEAT             # rim hub washer seat (10-31 rev 2: M3 x 14 8.8 + DIN 125)
+        fast.append(('S314', 'M3x14 ISO4762 8.8 #%d' % i,
+                     cap_screw(x, z, seat - 3.5, 1, 5.5, 3.0, 3.0, 14.0, 2.5, 1.3, pitch=0.8), 'steel', (x, z)))
+        w = B.ycyl(x, z, seat - 0.5, seat, 3.5)
+        C.cut(w, B.ycyl(x, z, seat - 1, seat + 1, 1.6))
+        fast.append(('RWASH', 'washer DIN125 M3 rim #%d' % i, w, 'steel', (x, z)))
 
     # ---------------------------------------------------------------- new document
     doc = app.documents.add(adsk.core.DocumentTypes.FusionDesignDocumentType)

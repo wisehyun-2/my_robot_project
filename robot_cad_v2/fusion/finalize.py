@@ -36,7 +36,8 @@ PRINT_NOTE = {
              '자이로이드 20 %, '
              '보스 주변 100 % 모디파이어',
     'hub_flange': 'PETG 100 %, 모터 쪽 면을 바닥에',
-    'hex_hub': 'PETG 100 %, 플랜지 면을 바닥에(육각 위)',
+    'rim_': 'PETG 벽 6겹(2.4 mm) · 채움 40 %, 한 조각 — 허브 쪽 평면을 바닥에(돌기 양 끝 45°), 열린 쪽 플랜지 밑 '
+            '4.5 mm 턱만 서포트',
     'cup_': 'PETG 30 %, 바닥(덮개 면)을 바닥에, 서포트는 커넥터 창만',
     'cable_clips': 'PETG 40 %',
     'top_plate': 'PETG 25 %, M4 열압입 인서트',
@@ -65,8 +66,8 @@ PURCHASED = {   # component name prefix -> (BOM name, spec / source)
     'raspberry_pi_4b': ('Raspberry Pi 4 Model B', '4 GB 이상'),
     'mjpower_ss': ('mjbots power dist (mjpower-ss)', 'XT90 입력, XT30 출력 ×6, 프리차지·스위치'),
     'battery_24V_15Ah': ('배터리 24 V 15 Ah', '75 × 310 × 75 mm, XT60(F) 리드'),
-    'RC wheel': ('1/8 트러기 RC 휠·타이어(접착 완제품)', 'Ø150 × 60, 17 mm 육각, 약 250 g'),
-    'M5 serrated wheel nut': ('M5 세레이션 플랜지 휠 너트', '1/8 RC용'),
+    'tyre M365': ('Xiaomi M365 8.5 × 2(8 1/2 × 2) 통고무 허니콤 타이어',
+                  '외경 202 × 폭 54, 안지름 141 × 안쪽 폭 36.5, 721 g (사용자 주문, AliExpress)'),
     'XT30U plug': ('XT30U 플러그(16 AWG)', '암·수는 README 배선표'),
     'JST PHR-3': ('JST PHR-3 하우징 + SPH-002T-P0.5S 단자 3개', 'CAN 케이블 끝'),
     'CAN terminator': ('CAN-FD 종단 저항 120 Ω (PH-3)', '20 × 15 × 10 이하, 바퀴 드라이버 CAN1'),

@@ -12,17 +12,17 @@ TAG = 'wheel_output_explode'
 WORK = os.path.join(tempfile.gettempdir(), 'wbv2_wheel_assembly')   # raw captures / video frames (not in git)
 OUT = os.path.join(WORK, 'raw')
 FRAMES = os.path.join(WORK, 'frames')
-AX_Z = 75.0                                   # wheel axis height (robot z, mm)
+AX_Z = 101.0                                  # wheel axis height (robot z, mm) = params.R_WHEEL (M365 tyre, 10-31)
 
 # exploded (home) offsets along the wheel axis, robot mm (- = towards the robot centre)
-HOME = dict(SHANK=0, MOTOR=55, RING=-30, S25=-45, PINS=-60, FLANGE=-88, INS=-108, WASH=-112, S316=-135, BOLT=-160,
-            HEX=-215, WHEEL=-300, NUT=-360, S38=-420)
+HOME = dict(SHANK=0, MOTOR=55, RING=-30, S25=-45, PINS=-60, FLANGE=-88, INS=-108, WASH=-112, S316=-135,
+            RIM=-215, TYRE=-310, RWASH=-380, S314=-420)
 ORDER = list(HOME)
 NAMES = dict(SHANK='정강이 (PETG, 아래쪽만)', MOTOR='AKE60-8 모터', RING='SUS304 클램프 링 2 t',
              S25='① M2.5 × 8 저두 × 6', INS='황동 인서트 M3 × 6', FLANGE='허브 플랜지 (PETG)',
              PINS='③ 평행핀 Ø3 × 10 × 3', WASH='평와셔 M3 × 6', S316='② M3 × 14 (12.9) × 6',
-             BOLT='⑤ M5 × 55 축 볼트', HEX='육각 허브 (PETG)', WHEEL='RC 바퀴 Ø150 × 60', NUT='⑥ M5 플랜지 너트',
-             S38='④ M3 × 8 × 6')
+             RIM='한 조각 림 (PETG)', TYRE='M365 8.5 × 2 통고무 타이어', RWASH='평와셔 M3 × 6 (림)',
+             S314='④ M3 × 14 (8.8) × 6')
 # moves: (group, target) with target 0 (final place) or another group's name (ride on that group's current offset)
 STEPS = [
     dict(key='s1', title='1단계  모터 → 정강이 포켓',
@@ -37,19 +37,17 @@ STEPS = [
          moves=[[('INS', 'FLANGE')]], bench=['FLANGE', 'INS'], view=(0.55, -0.8, 0.45)),
     dict(key='s3', title='4단계  허브 플랜지 → 모터 출력부',
          text='③ 평행핀 3개를 출력부 구멍에 꽂고, 플랜지를 Ø30 판 구멍으로 넣어 Ø11.8 스피곳을 맞춘 뒤\n'
-              '평와셔 + ② M3 × 14 (12.9) 6개로 출력부에 조인다 (머리는 플랜지 안쪽 카운터보어 안, 육각 허브 턱에서 0.5 mm).',
+              '평와셔 + ② M3 × 14 (12.9) 6개로 출력부에 조인다 (머리는 플랜지 안쪽 카운터보어 안, 림 허브 면에서 2.0 mm).',
          moves=[[('PINS', 0)], [('FLANGE', 0), ('INS', 0)], [('WASH', 0)], [('S316', 0)]], spin=['S316'],
          view=(0.8, -0.65, 0.4)),
-    dict(key='s4', title='5단계  M5 축 볼트 → 육각 허브 (작업대)',
-         text='⑤ M5 × 55 볼트를 육각 허브의 플랜지 쪽(Ø20 턱)에서 끼운다. 머리는 나중에 허브 플랜지 포켓 안에 들어간다.',
-         moves=[[('BOLT', 'HEX')]], bench=['HEX', 'BOLT'], view=(0.7, 0.65, 0.4)),
-    dict(key='s5', title='6단계  바퀴 → 17 mm 육각, ⑥ 너트 (작업대)',
-         text='바퀴를 육각에 끼우고 ⑥ M5 세레이션 너트로 림 웹을 육각 끝면에 조인다 (볼트 머리는 육각 렌치로 잡는다).',
-         moves=[[('WHEEL', 'HEX')], [('NUT', 'HEX')]], spin=['NUT'], bench=['HEX', 'BOLT', 'WHEEL', 'NUT'],
-         view=(0.7, -0.65, 0.4)),
-    dict(key='s6', title='7단계  육각 허브 + 바퀴 → 허브 플랜지',
-         text='육각 허브의 Ø20 턱을 플랜지 Ø20.2 홈에 맞춰 밀어 넣고,\n바퀴 스포크 사이로 ④ M3 × 8 6개를 인서트에 조인다.',
-         moves=[[('HEX', 0), ('BOLT', 0), ('WHEEL', 0), ('NUT', 0)], [('S38', 0)]], spin=['S38'],
+    dict(key='s4', title='5단계  타이어 → 한 조각 림 (작업대)',
+         text='타이어를 뜨거운 물(60~80 °C)에 데워 열린 쪽 플랜지(Ø150) 위로 굴려 넣고, 안쪽 구멍 24개를 림 돌기 24개에\n'
+              '맞춘다 (안지름 Ø141 → 6.4 % 늘림, M365 순정 한 조각 림과 같은 방식). 토크는 돌기가 전한다.',
+         moves=[[('TYRE', 'RIM')]], bench=['RIM', 'TYRE'], view=(0.7, -0.65, 0.4)),
+    dict(key='s5', title='6단계  림 + 타이어 → 허브 플랜지, ④ M3 × 14 × 6',
+         text='림 허브의 Ø11.4 홈을 허브 플랜지의 Ø11 등록 턱에 맞춰 밀어 넣고, 열린 쪽에서 평와셔 + ④ M3 × 14 (8.8)\n'
+              '6개를 플랜지 인서트에 조인다 (림 허브 8 mm 체결, 인서트 물림 5.5 mm, 2.5 mm 육각 렌치가 축 방향으로 닿는다).',
+         moves=[[('RIM', 0), ('TYRE', 0)], [('RWASH', 0)], [('S314', 0)]], spin=['S314'],
          view=(0.55, -0.8, 0.35)),
 ]
 
@@ -57,7 +55,7 @@ STEPS = [
 VIEW0 = (1.0, -0.3, 0.38)                     # overview
 VIEW_DONE = (0.85, -0.55, 0.42)
 CUTS = [dict(key='cut1', a=-5.0, b=90.0, view=(0.62, -0.72, 0.6),
-             title='단면 ①  M3 × 14 (-5°) · M3 × 8 (90°) 자리를 지나는 단면'),
+             title='단면 ①  ② M3 × 14 (-5°) · ④ M3 × 14 (90°) 자리를 지나는 단면'),
         dict(key='cut2', a=25.0, b=145.0, view=(0.12, -0.7, 0.9),
              title='단면 ②  평행핀 · M2.5 × 8 (25°, 145°) 자리를 지나는 단면')]
 

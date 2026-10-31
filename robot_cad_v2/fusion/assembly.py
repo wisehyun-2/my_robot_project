@@ -59,9 +59,8 @@ def add_part(parent, name, temp, mat='PETG print', look='black'):
     return comp
 
 
-def rc_wheel_frame(s):
-    lv = LG.hub_levels()
-    return C.frame((0.0, s * lv['seat'], P.R_WHEEL), (1, 0, 0), (0, 0, s), (0, -s, 0))
+def tyre_frame(s):
+    return C.frame((0.0, s * P.tyre_centre_y(), P.R_WHEEL), (1, 0, 0), (0, 0, s), (0, -s, 0))
 
 
 def conn_plug_frame(board, x_b, y_b, z_edge):
@@ -235,8 +234,5 @@ def build_leg(s, parts):
     place(tibia, parts['xt30cap'], port_frame('wheel', s, 'J2'))
     place(wheel, out, fw['motor'])
     add_part(wheel, 'hub_flange_' + k, LG.hub_flange(s), 'PETG print', 'black')
-    add_part(wheel, 'hex_hub_' + k, LG.hex_hub(s), 'PETG print', 'black')
-    place(wheel, parts['wheel'], rc_wheel_frame(s))
-    lv = LG.hub_levels()
-    nut_z = lv['seat'] - 5.0                     # flange (Z -1..0) on the wheel's spoke face (Z = 4)
-    place(wheel, parts['nut'], C.frame((0.0, s * nut_z, P.R_WHEEL), (1, 0, 0), (0, 0, s), (0, -s, 0)))
+    add_part(wheel, 'rim_' + k, LG.rim(s), 'PETG print', 'black')
+    place(wheel, parts['wheel'], tyre_frame(s))

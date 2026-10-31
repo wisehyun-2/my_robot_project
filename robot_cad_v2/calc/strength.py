@@ -293,7 +293,7 @@ def main():
                % (S_PETG / (Mx_hip(F_DES, FL_DES) / W_boss)))
 
     # ------------------------------------------------------------------ 3. hub
-    h('3. 바퀴 허브 (PETG 100 %, 옆으로 눕혀 출력)와 17 mm 육각')
+    h('3. 바퀴 허브 플랜지 (PETG 100 %)와 한 조각 림 (PETG, M365 8.5 × 2 통고무 타이어)')
     d = P.wheel_offset()
     f1 = P.Y_TIBIA_IN - 1.0
     f0 = f1 - 8.0
@@ -318,28 +318,82 @@ def main():
     rows.append(('M3 × %d 출력 탭 물림 %.1f mm, 검토' % (P.HUB_SCREW_L, eng), '나사 인장 %.0f N (12.9 보증 %.0f N)'
                  % (fb_hub, PROOF['12.9'] * AS_M3), '나사산 전단 %.0f MPa (알루미늄 가정 %.0f)' % (tau, 0.6 * Y_AL),
                  ok(max(tau / (0.6 * Y_AL), fb_hub / (PROOF['12.9'] * AS_M3)), 1.0)))
+    # 10-31 rev 2 rim: 6 x M3 x 14 + DIN 125 washers clamp RIM_SCREW_SEAT of the rim hub (the first rim: 2.5 mm)
+    ts = P.RIM_SCREW_SEAT
     f = T_CHK / (6 * 18.0)
-    rows.append(('육각 허브 → 플랜지, 토크 25 N·m', 'M3 6개 + 열압입 인서트 (r 18), 개당 전단 %.0f N' % f,
-                 '인서트(Ø4×6) 지압 %.1f MPa, Ø20 등록 턱이 반경 하중' % (f / (4.0 * 6.0)), ok(f / 24.0, C_PETG)))
+    rows.append(('림 → 플랜지, 토크 25 N·m', 'M3 × 14 6개 + 열압입 인서트 (r 18), 개당 전단 %.0f N' % f,
+                 '인서트(Ø4×6) 지압 %.1f, 림 구멍(체결 %.0f mm) 지압 %.1f MPa, Ø11 등록 턱이 반경 하중'
+                 % (f / 24.0, ts, f / (3.0 * ts)), ok(max(f / 24.0, f / (3.0 * ts)), C_PETG)))
     for tag, F, Fl in (('검토', F_CHK, FL_CHK), ('설계', F_DES, FL_DES)):
         M = F * arm_joint + Fl * P.R_WHEEL
         fb = bolt_circle_max(M, 6, 18.0)
-        rows.append(('육각 허브 → 플랜지 굽힘, %s: %.1f N·m' % (tag, M / 1000), 'M3 인서트 인발 %.0f N (약 %.0f)'
-                     % (fb, INSERT_M3_PULL), 'M5 축 볼트는 바퀴만 육각 허브에 고정 — 이 접합부는 M3 6개가 버팀',
-                     ok(fb, INSERT_M3_PULL)))
+        pw, tp = fb / 30.4, fb / (math.pi * 7.0 * ts)
+        res = ok(max(fb / INSERT_M3_PULL, pw / C_PETG), 1.0)
+        rows.append(('림 → 플랜지 굽힘, %s: %.1f N·m' % (tag, M / 1000), 'M3 인서트 인발 %.0f N (약 %.0f)'
+                     % (fb, INSERT_M3_PULL), 'DIN 125 와셔 지압 %.0f MPa (50), 림 허브 %.0f mm 뚫림 전단 %.1f MPa'
+                     % (pw, ts, tp), res))
         if tag == '검토':
-            verdict.append(('육각 허브 → 플랜지 인서트 인발(검토)', '%.0f N / 약 1000' % fb, ok(fb, INSERT_M3_PULL)))
-    p_hex = T_CHK / (6 * 7.0) / (4.0 * P.HEX_L)
-    rows.append(('17 mm 육각 ↔ RC 휠, 25 N·m', '6면 접촉, 깊이 %.0f mm' % P.HEX_L, '%.1f MPa' % p_hex, ok(p_hex, C_PETG)))
+            verdict.append(('림 → 플랜지 인서트 인발·와셔 지압(검토)', '%.0f N / 약 1000, %.0f MPa / 50' % (fb, pw), res))
+    # rim hub + web as a plate tilted by M about a diameter: the radial moment per unit length at radius r is at most
+    # M / (pi r) (cos distribution, the hub shear's share ignored -> conservative), sigma = 6 m / t^2.  Critical at
+    # the hub flange's edge (r 23), where the plate leaves its support.
+    rs = P.TYRE_BORE_D / 2
+    ri = rs - P.RIM_SEAT_T
+    t_at = lambda r: (P.RIM_HUB_T if r <= P.RIM_HUB_R else
+                      P.RIM_HUB_T - (P.RIM_HUB_T - P.RIM_WEB_T) * (r - P.RIM_HUB_R) / (ri - P.RIM_HUB_R))
+    plate = lambda M, r, t: 6 * M / (math.pi * r * t ** 2)
+    stations = (23.0, P.RIM_HUB_R, (P.RIM_HUB_R + ri) / 2, ri)
+    for tag, F, Fl in (('검토', F_CHK, FL_CHK), ('설계', F_DES, FL_DES)):
+        M = F * arm_joint + Fl * P.R_WHEEL
+        sv = [plate(M, r, t_at(r)) for r in stations]
+        rows.append(('림 허브·웨브 판 굽힘, %s: %.1f N·m' % (tag, M / 1000),
+                     '허브 %g mm (r ≤ %g) → 웨브 %g mm (r %.1f), 구멍 없음' % (P.RIM_HUB_T, P.RIM_HUB_R, P.RIM_WEB_T, ri),
+                     ', '.join('r %.0f: %.0f' % (r, s_) for r, s_ in zip(stations, sv)) + ' MPa', ok(max(sv), S_PETG)))
+        if tag == '검토':
+            verdict.append(('림 허브·웨브 판 굽힘(검토)', '%.1f MPa / 45' % max(sv), ok(max(sv), S_PETG)))
+            first = (plate(M, 23.0, 4.75), bolt_circle_max(M, 6, 18.0) / (math.pi * 5.5 * 2.5))
+        else:
+            first += (plate(M, 23.0, 4.75),)
+    # the seat ring (6 mm) carries the tyre load as a cantilever from the web to the tyre centre (fillet and lugs
+    # ignored); section = the 60 deg arc under the contact patch.  Printed flange face down, so this stress runs across
+    # the layers.
+    arm_seat = P.TYRE_BORE_W / 2
+    arc = rs * math.pi / 3
+    Ws = arc * P.RIM_SEAT_T ** 2 / 6
+    for tag, F in (('검토', F_CHK), ('설계', F_DES)):
+        sg = F * arm_seat / Ws
+        rows.append(('림 안장 링 %.0f mm (웨브에서 외팔), %s %.0f N' % (P.RIM_SEAT_T, tag, F),
+                     '타이어 중심까지 %.2f mm, 60° 호 %.0f mm 폭' % (arm_seat, arc), '%.1f MPa (층 사이 방향, 필릿·돌기 무시)' % sg,
+                     ok(sg, S_PETG)))
+        if tag == '검토':
+            verdict.append(('림 안장 링 굽힘(검토)', '%.1f MPa / 45' % sg, ok(sg, S_PETG)))
+    rf = P.RIM_FLANGE_D / 2
+    sfl = 6 * (FL_CHK * (rf - rs) / 2 / arc) / P.RIM_FLANGE_T ** 2
+    rows.append(('열린 쪽 플랜지 뿌리, 옆 %.0f N(검토)' % FL_CHK, '%g mm 판, %.1f mm 턱, 60° 호' % (P.RIM_FLANGE_T, rf - rs),
+                 '%.1f MPa (림과 한 조각, 나사 없음)' % sfl, ok(sfl, S_PETG)))
+    n, lw, lh, ll = P.RIM_LUGS
+    fl = T_CHK / (rs + lh / 2) / (n / 4)
+    flat = ll - 2 * lh
+    rows.append(('타이어 ↔ 림 토크 25 N·m(검토)', '돌기 %d개 %g × %g × 높이 %g, 1/4이 받는다고 봄: 개당 %.0f N'
+                 % (n, lw, ll, lh, fl),
+                 '고무 면압 %.2f MPa(45° 끝 뺀 %.1f mm, 2 MPa로 봄), 돌기 뿌리 전단 %.2f MPa'
+                 % (fl / (lh * flat), flat, fl / (lw * ll)), ok(fl / (lh * flat), 2.0)))
     rows.append(('AKE60 출력 베어링', '반경 600 N이 %.0f mm에 → %.1f N·m' % (d, F_CHK * d / 1000),
                  'AKE60-8 베어링 정격 비공개', '확인 필요'))
     table(('항목', '값', '응력·힘', '판정'), rows)
+    out.append('\n10-31 첫 림(원판 4.75 mm, 나사 머리 밑 2.5 mm, Ø22 구멍 6개)은 같은 식으로 허브 플랜지 끝(r 23)에서 검토 '
+               '%.0f / 설계 %.0f MPa, 머리 밑 2.5 mm 뚫림 전단 %.0f MPa(검토)였다 — 머리 자리만이 아니라 원판 전체가 얇았다.  '
+               '나사 머리 밑에 SUS 클램프 링을 대면 지압·뚫림은 풀리지만 플랜지 끝 굽힘은 그대로라, 허브를 %g mm로 두껍게 '
+               '하고(와셔 자리 %g mm, M3 × 14 + DIN 125) 웨브를 %g mm까지 줄여 가며 구멍을 없앴다.  타이어는 열린 쪽 플랜지와 '
+               '돌기 끝(둘 다 Ø%.0f)을 넘어 끼운다: 안지름 Ø%.0f → %.1f %% 늘림(M365 한 조각 림과 같은 방식, 뜨거운 물에 데움).'
+               % (first[0], first[2], first[1], P.RIM_HUB_T, P.RIM_SCREW_SEAT, P.RIM_WEB_T, P.RIM_FLANGE_D,
+                  P.TYRE_BORE_D, 100 * (P.RIM_FLANGE_D / P.TYRE_BORE_D - 1)))
     tbl = []
-    for W in (45.0, 60.0, 76.0):
+    for W in (45.0, 54.0, 60.0, 76.0):
         dd = d - P.TYRE_W / 2 + W / 2
         tbl.append('폭 %.0f mm: %.1f mm → 정지 %.2f N·m, 설계 %.1f N·m' % (W, dd, F_STATIC * dd / 1000, F_DES * dd / 1000))
     out.append('\n타이어 폭에 따른 출력 굽힘 팔(= 바퀴 판 %.0f mm − 포켓 + 간격 %.0f mm + 폭/2): ' % (P.WHEEL_PLATE_T, P.GAP_TYRE)
-               + '; '.join(tbl) + '.  60 mm(1/8 트러기, 17 mm 육각 150 mm급에서 가장 좁은 흔한 규격)를 기본값으로 했다.')
+               + '; '.join(tbl) + '.  10-31부터 54 mm(M365 8.5 × 2, 사용자 주문).')
 
     # ------------------------------------------------------------------ 4. torso
     h('4. 몸통 하중 경로')

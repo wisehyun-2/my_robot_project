@@ -9,5 +9,5 @@
 
 | case | hip / knee / wheel motor | wheel [mm] | seed | V | mass [kg] | not recovered | wheel peak [N m] (scenario) | wheel RMS max | wheel sat % max | wheel speed max [rad/s] | v at 1.0 m/s cmd | hip peak (scenario) | hip RMS max | knee peak (scenario) | knee static max | knee RMS max | tire off the floor max [ms] (scenario) | slip max [m/s] |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| payload5 | AKE60-8 / AKE60-8 / AKE60-8 | 150 | 0 | 24.0 | 14.164 | none | 9.10 (tilt_25) | 1.42 | 0.9 | 30.1 | 1.04 | 10.23 (push_1.5) | 3.17 | 10.14 (height_full_range) | 7.30 | 7.29 | 2 (tilt_25) | 0.02 |
-| robot | AKE60-8 / AKE60-8 / AKE60-8 | 150 | 0 | 24.0 | 9.164 | none | 5.61 (tilt_25) | 0.95 | 1.1 | 26.9 | 1.05 | 7.79 (push_1.5) | 1.16 | 6.47 (push_1.5) | 4.15 | 4.16 | 6 (tilt_25) | 0.02 |
+| payload5 | AKE60-8 / AKE60-8 / AKE60-8 | 202 | 0 | 24.0 | 15.571 | none | 12.50 (tilt_25) | 2.07 | 0.2 | 27.3 | 1.04 | 12.50 (push_1.5) | 2.62 | 11.13 (push_1.5) | 7.28 | 7.28 | 42 (slope_15_down_0.5) | 0.47 |
+| robot | AKE60-8 / AKE60-8 / AKE60-8 | 202 | 0 | 24.0 | 10.571 | none | 7.41 (tilt_25) | 1.44 | 0.8 | 25.1 | 1.05 | 11.24 (push_1.5) | 1.61 | 8.19 (push_1.5) | 4.14 | 4.15 | 21 (push_1.5) | 0.02 |

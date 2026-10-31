@@ -1,5 +1,5 @@
 """Purchased parts: imported STEP models (AKE60-8, moteus r4.5, pi3hat r4.4, mjpower-ss r2) and modelled
-stand-ins (Raspberry Pi 4B, battery, connectors, RC wheel, fan, switch, magnet spacer, standoffs).
+stand-ins (Raspberry Pi 4B, battery, connectors, M365 tyre, fan, switch, magnet spacer, standoffs).
 
 Every part is a master component in the hidden _library at the identity; instances are placed with
 cadlib.instance().  Part frames:
@@ -231,40 +231,37 @@ def rocker_switch():
     return comp
 
 
-def rc_wheel():
-    """Generic 1/8 truggy wheel + tyre (bought, product open): OD 150, width TYRE_W, bead Ø100,
-    17 mm hex socket.  Frame: Z = wheel axis pointing away from the motor (towards the robot centre),
-    Z = 0 at the hex seat (spoke face the hub's hex end bears on), tyre centre plane at Z = WHEEL_SEAT."""
-    comp = C.master('RC wheel 150x%d (1-8 truggy, 17 mm hex)' % round(P.TYRE_W))
-    zc = P.WHEEL_SEAT
-    W = P.TYRE_W
-    ro, rb = P.TYRE_OD / 2, P.TYRE_BEAD_D / 2
-    rr = min(14.0, W / 4)
-    t = B.zcyl(0, 0, zc - W / 2 + rr, zc + W / 2 - rr, ro)
-    C.union(t, B.zcyl(0, 0, zc - W / 2, zc + W / 2, ro - rr))
-    for z in (zc - W / 2 + rr, zc + W / 2 - rr):
+def m365_tyre():
+    """Xiaomi M365 8.5 x 2 solid honeycomb tyre (the user's order, 10-31): OD 202, tread TYRE_W wide, bore Ø141 x
+    TYRE_BORE_W with 24 rectangular cavities open to the bore, bead band TYRE_BEAD_H then a flare to the full width at
+    TYRE_FLARE_R (modelled; listing photo dims only), rounded crown with block tread.  Frame: Z = wheel axis towards
+    the robot centre, Z = 0 at the tyre centre plane.  Mass set by check.apply_print_mass (TYRE_MASS)."""
+    comp = C.master('tyre M365 8.5x2 solid (%.0f x %.0f)' % (P.TYRE_OD, P.TYRE_W))
+    ro, rb = P.TYRE_OD / 2, P.TYRE_BORE_D / 2
+    hw, hb = P.TYRE_W / 2, P.TYRE_BORE_W / 2
+    r_bead, r_full = rb + P.TYRE_BEAD_H, P.TYRE_FLARE_R
+    rr = 12.0
+    t = B.zcyl(0, 0, -hw + rr, hw - rr, ro)
+    C.union(t, B.zcyl(0, 0, -hw, hw, ro - rr))
+    for z in (-hw + rr, hw - rr):
         C.union(t, _ztorus_part(z, ro - rr, rr))
-    C.cut(t, B.zcyl(0, 0, zc - W, zc + W, rb))
-    for k in range(36):                            # block tread
-        a = math.radians(10 * k)
+    C.cut(t, B.zcyl(0, 0, -hw - 1, hw + 1, rb))
+    for sg in (1, -1):                                           # bead band, flare to the full width
+        C.cut(t, B.cyl((0, 0, sg * hb), (0, 0, sg * hw), r_bead, r_full))
+        C.cut(t, B.cyl((0, 0, sg * hw), (0, 0, sg * (hw + 2)), r_full + 2))
+    n, cw, cd, cl = P.TYRE_CAVITY                                # bore cavities (the rim's lugs sit in them)
+    for k in range(n):
+        a = math.radians(360.0 / n * k)
         u = (math.cos(a), math.sin(a), 0.0)
-        for zz in (zc - W / 4, zc + W / 4):
-            C.cut(t, B.box((u[0] * (ro + 1.0), u[1] * (ro + 1.0), zz + (5 if k % 2 else -5)), u, (-u[1], u[0], 0),
-                           6.0, 4.0, W / 2 - 8))
+        rc = rb + (cd - 1.0) / 2
+        C.cut(t, B.box((u[0] * rc, u[1] * rc, 0.0), u, (-u[1], u[0], 0), cd + 1.0, cw, cl))
+    for k in range(40):                                          # block tread
+        a = math.radians(9 * k)
+        u = (math.cos(a), math.sin(a), 0.0)
+        for zz in (-hw / 3, hw / 3):
+            C.cut(t, B.box((u[0] * (ro + 1.0), u[1] * (ro + 1.0), zz + (4 if k % 2 else -4)), u, (-u[1], u[0], 0),
+                           6.0, 4.0, hw / 2))
     C.add_body(comp, t, 'tyre', 'Rubber', 'rubber')
-    # rim: barrel, bead flanges, 6 spokes, hex socket hub
-    rim = B.zcyl(0, 0, zc - W / 2 + 2, zc + W / 2 - 2, rb)
-    C.cut(rim, B.zcyl(0, 0, zc - W, zc + W, rb - 3.0))
-    hubz0, hubz1 = -P.HEX_L - 1.0, 4.0
-    C.union(rim, B.zcyl(0, 0, hubz0, hubz1, 15.5))
-    for k in range(6):
-        a = math.radians(60 * k)
-        u = (math.cos(a), math.sin(a), 0.0)
-        C.union(rim, B.box((u[0] * 31.5, u[1] * 31.5, 1.0), u, (-u[1], u[0], 0), 35.0, 9.0, 6.0))
-    hexp = _hex_prism(P.HEX_AF + 0.2, hubz0 - 1, 0.0)
-    C.cut(rim, hexp)
-    C.cut(rim, B.zcyl(0, 0, -1, hubz1 + 1, 2.8))
-    C.add_body(comp, rim, 'rim', 'Nylon', 'black')
     return comp
 
 
@@ -281,15 +278,6 @@ def _hex_prism(af, z0, z1):
     r = af / 2 / math.cos(math.radians(30))
     poly = [(r * math.cos(math.radians(30 + 60 * k)), r * math.sin(math.radians(30 + 60 * k))) for k in range(6)]
     return B.prism(poly, z0, z1, plane='xy')
-
-
-def wheel_nut():
-    comp = C.master('M5 serrated wheel nut')
-    n = _hex_prism(8.0, 0.0, 5.0)
-    C.union(n, B.zcyl(0, 0, -1.0, 0.0, 6.0))
-    C.cut(n, B.zcyl(0, 0, -2, 6, 2.5))
-    C.add_body(comp, n, 'nut', 'Steel', 'steel')
-    return comp
 
 
 def magnet_spacer():
@@ -356,8 +344,8 @@ def build_all():
     out['pi3hat'] = pi3hat()
     for k, f in (('rpi', rpi4b), ('mjpower', mjpower_ss), ('battery', battery), ('xt30', xt30_plug),
                  ('ph3', jst_ph3_plug), ('term', terminator), ('xt30cap', xt30_cap), ('xt90', xt90_xt60_adapter),
-                 ('xt60', xt60_pair), ('fan', fan30), ('switch', rocker_switch), ('wheel', rc_wheel),
-                 ('nut', wheel_nut), ('spacer', magnet_spacer), ('ring_out', clamp_ring_out),
+                 ('xt60', xt60_pair), ('fan', fan30), ('switch', rocker_switch), ('wheel', m365_tyre),
+                 ('spacer', magnet_spacer), ('ring_out', clamp_ring_out),
                  ('ring_stator', clamp_ring_stator)):
         out[k] = f()
     out['standoff11'] = standoff(11.0, 'standoff M2.5x11 M-F (pi3hat)')

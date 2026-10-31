@@ -1,4 +1,4 @@
-"""Designed leg parts (PETG): thigh, shank, two-piece wheel hub and the moteus driver cups.
+"""Designed leg parts (PETG): thigh, shank, wheel hub flange + one-piece rim and the moteus driver cups.
 
 All parts are written in robot coordinates of the LEFT leg in the nominal pose and mirrored for the
 right leg by cadlib.Builder(side=-1).  Hole patterns at motor interfaces come from the real motor
@@ -193,8 +193,8 @@ def tibia(s):
     return body
 
 
-# ----------------------------------------------------------------------------- wheel hub (two pieces)
-HUB_SCREWS = [math.radians(30 + 60 * k) for k in range(6)]     # hex hub -> flange: 6 x M3 into heat-set inserts, r 18
+# ----------------------------------------------------------------------------- wheel hub + rim
+HUB_SCREWS = [math.radians(30 + 60 * k) for k in range(6)]     # rim -> flange: 6 x M3 into heat-set inserts, r 18
 
 
 def hub_levels():
@@ -202,12 +202,10 @@ def hub_levels():
     y_out = P.y_output('wheel')                    # output face, faces -y
     y_plate = P.Y_TIBIA_IN                        # shank plate inner face
     f1 = y_plate - 1.0                            # flange outer face (1 mm from the plate / screw heads)
-    f0 = f1 - 8.0                                 # flange inner face = hex hub flange face
-    h0 = f0 - 6.0                                 # hex hub flange inner face
+    f0 = f1 - 8.0                                 # flange inner face = rim disc face
     y_tc = P.tyre_centre_y()
-    seat = y_tc + P.WHEEL_SEAT                    # wheel frame Z points to -y on the left: y = seat - Z
-    hex1 = seat + P.HEX_L + 2.0
-    return dict(out=y_out, plate=y_plate, f1=f1, f0=f0, h0=h0, seat=seat, hex1=hex1, tc=y_tc)
+    b_in, b_out = y_tc + P.TYRE_BORE_W / 2, y_tc - P.TYRE_BORE_W / 2    # tyre bore edges (motor side, centre side)
+    return dict(out=y_out, plate=y_plate, f1=f1, f0=f0, tc=y_tc, b_in=b_in, b_out=b_out)
 
 
 def hub_flange(s):
@@ -219,7 +217,7 @@ def hub_flange(s):
     body = B.ycyl(W[0], W[1], lv['f1'] - 0.5, y_out, P.HUB_BOSS_D / 2)
     C.union(body, B.ycyl(W[0], W[1], y_out, y_out + 1.4, 5.9))
     C.union(body, B.ycyl(W[0], W[1], lv['f0'], lv['f1'], 23.0))
-    bear = y_out - P.HUB_SCREW_SEAT                # washer seat: the M3 x 14 heads clear the hex hub's register spigot
+    bear = y_out - P.HUB_SCREW_SEAT                # washer seat: the M3 x 14 heads stop 2.0 short of the rim hub face
     for p in LY.motor_points(fr['motor'], P.AKE_PCD_OUT / 2, P.AKE_OUT_M3, P.AKE['out']):
         q = lc(p, s)
         C.cut(body, B.ycyl(q[0], q[2], lv['f0'] - 1, y_out + 2, M3_CLEAR / 2))
@@ -227,28 +225,59 @@ def hub_flange(s):
     for p in LY.motor_points(fr['motor'], P.AKE_PCD_OUT / 2, P.AKE_OUT_PIN, P.AKE['out']):
         q = lc(p, s)
         C.cut(body, B.ycyl(q[0], q[2], y_out - 7.0, y_out + 2, 1.5))
-    C.cut(body, B.ycyl(W[0], W[1], lv['f0'] - 1, lv['f0'] + 7.0, 4.75))          # M5 head pocket
-    C.cut(body, B.ycyl(W[0], W[1], lv['f0'] - 1, lv['f0'] + 1.6, 10.1))          # register recess
+    C.union(body, B.ycyl(W[0], W[1], lv['f0'] - P.RIM_REG[1], lv['f0'] + 0.5, P.RIM_REG[0]))   # centre register
     for a in HUB_SCREWS:
         C.cut(body, B.ycyl(18 * math.cos(a), W[1] + 18 * math.sin(a), lv['f0'] - 1, lv['f0'] + 6.0, INSERT_M3 / 2))
     return body
 
 
-def hex_hub(s):
+def rim(s):
+    """One-piece printed rim for the M365 8.5 x 2 solid tyre (10-31 rev 2, rim_out merged): a RIM_HUB_T hub on the
+    hub flange (6 x M3 x 14 + DIN 125 washers into the flange inserts, Ø11 centre register) tapering to a RIM_WEB_T
+    web that is also the motor-side bead flange, the Ø141 seat ring with RIM_LUGS lugs keyed into the tyre's bore
+    cavities (torque by the lugs, not by friction), and the open-side bead flange the tyre is stretched over.
+    Prints on the flat flange face; only the open-side flange's 4.5 mm ledge needs support."""
     B = C.Builder(side=s)
     W = (0.0, P.R_WHEEL)
     lv = hub_levels()
-    body = B.ycyl(W[0], W[1], lv['h0'], lv['f0'], 23.0)
-    C.union(body, B.ycyl(W[0], W[1], lv['f0'], lv['f0'] + 1.5, 10.0))            # register spigot
-    C.union(body, B.ycyl(W[0], W[1], lv['hex1'], lv['h0'] + 0.5, 15.0))
-    r = P.HEX_AF / 2 / math.cos(math.radians(30))
-    poly = [(r * math.cos(math.radians(30 + 60 * k)), W[1] + r * math.sin(math.radians(30 + 60 * k))) for k in range(6)]
-    C.union(body, B.prism(poly, lv['seat'], lv['hex1'] + 0.5))
-    C.cut(body, B.ycyl(W[0], W[1], lv['seat'] - 1, lv['f0'] + 3, 2.65))            # M5 axle bolt
+    f0, tc = lv['f0'], lv['tc']
+    rs = P.TYRE_BORE_D / 2
+    ri = rs - P.RIM_SEAT_T
+    rf = P.RIM_FLANGE_D / 2
+    body = B.ycyl(W[0], W[1], lv['b_in'], f0, rf)                                 # motor-side flange
+    C.union(body, B.ycyl(W[0], W[1], f0 - P.RIM_WEB_T, f0, ri + 0.5))            # web
+    C.union(body, B.ycyl(W[0], W[1], f0 - P.RIM_HUB_T, f0 - P.RIM_WEB_T + 0.01, P.RIM_HUB_R, ri))   # hub + taper
+    y_w = f0 - P.RIM_WEB_T
+    fil = B.ycyl(W[0], W[1], y_w - 5.0, y_w + 0.5, ri + 0.5)                     # 5 mm 45 deg fillet web -> seat
+    C.cut(fil, B.ycyl(W[0], W[1], y_w - 5.5, y_w + 0.5, ri + 0.5, ri - 5.5))
+    C.union(body, fil)
+    y_o = lv['b_out'] - P.RIM_FLANGE_T
+    seat = B.ycyl(W[0], W[1], y_o, lv['b_in'] + 0.5, rs)
+    C.union(seat, B.ycyl(W[0], W[1], y_o, lv['b_out'], rf))                      # open-side flange
+    C.cut(seat, B.ycyl(W[0], W[1], y_o - 1, lv['b_in'] + 1, ri))
+    C.union(body, seat)
+    n, lw, lh, ll = P.RIM_LUGS
+    lugs = None
+    for k in range(n):
+        a = math.radians(360.0 / n * k)
+        u = (math.cos(a), 0.0, math.sin(a))
+        rc = rs + (lh - 0.5) / 2
+        lug = B.box((W[0] + u[0] * rc, tc, W[1] + u[2] * rc), u, (0, 1, 0), lh + 0.5, ll, lw)
+        if lugs is None:
+            lugs = lug
+        else:
+            C.union(lugs, lug)
+    for sg in (1, -1):                                                           # 45 deg ends
+        ye = tc + sg * ll / 2
+        cut = B.ycyl(W[0], W[1], ye - sg * (lh + 1.0), ye + sg * 0.5, rs + lh + 2.0)
+        C.cut(cut, B.ycyl(W[0], W[1], ye - sg * (lh + 1.0), ye + sg * 0.5, rs + lh + 1.0, rs - 0.5))
+        C.cut(lugs, cut)
+    C.union(body, lugs)
+    C.cut(body, B.ycyl(W[0], W[1], f0 - P.RIM_REG[1] - 0.2, f0 + 1, P.RIM_REG[0] + 0.2))   # register recess
     for a in HUB_SCREWS:
         x, z = 18 * math.cos(a), W[1] + 18 * math.sin(a)
-        C.cut(body, B.ycyl(x, z, lv['h0'] - 1, lv['f0'] + 1, M3_CLEAR / 2))
-        C.cut(body, B.ycyl(x, z, lv['h0'] - 1, lv['h0'] + 3.5, 3.25))
+        C.cut(body, B.ycyl(x, z, f0 - P.RIM_HUB_T - 1, f0 + 1, M3_CLEAR / 2))
+        C.cut(body, B.ycyl(x, z, f0 - P.RIM_HUB_T - 1, f0 - P.RIM_SCREW_SEAT, 3.8))    # washer + head seat
     return body
 
 

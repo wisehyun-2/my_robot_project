@@ -69,11 +69,15 @@ def run(_context: str):
     W.set_view(W.VIEW_DONE, target=(0.0, W.AX_Z, 0.0))
     W.zoom(0.95)
     cams['done'] = W.cam_dict()
-    shot('08_done.png', allg, dict(kind='done'))
+    n_st = len(W.STEPS)
+    shot('%02d_done.png' % (n_st + 1), allg, dict(kind='done'))
 
-    # cutaways: copies of every body with the sector a..b (deg, atan2(z - 75, x) about the wheel axis) removed
+    # cutaways: copies of every body with the sector a..b (deg, atan2(z - AX_Z, x) about the wheel axis) removed
+    import params as P
     B = C.Builder(1)
     root = dd.rootComponent
+    f0 = P.Y_TIBIA_IN - 9.0                        # hub flange face = rim hub face (legs.hub_levels)
+    tc = P.tyre_centre_y()
 
     def sector(a, b):
         ta, tb = math.radians(a), math.radians(b)
@@ -84,13 +88,11 @@ def run(_context: str):
 
     feats = {
         'cut1': {'② M3 × 14 + 와셔': (10 * math.cos(math.radians(-5)), 200.0, W.AX_Z + 10 * math.sin(math.radians(-5))),
-                 '④ M3 × 8 + 인서트': (0.0, 196.0, W.AX_Z + 18.0),
-                 '⑤ M5 × 55 머리 (플랜지 포켓 안)': (0.0, 200.5, W.AX_Z + 2.0),
+                 '④ M3 × 14 + 와셔 + 인서트': (0.0, f0 - 4.0, W.AX_Z + 18.0),
                  'A Ø11.8 스피곳': (5.5 * math.cos(math.radians(-5)), 212.3, W.AX_Z + 5.5 * math.sin(math.radians(-5))),
-                 'B Ø20 등록 턱': (0.0, 197.3, W.AX_Z + 8.0),
+                 'B Ø11 등록 턱 (플랜지 → 림)': (0.0, f0 - 1.5, W.AX_Z + 5.5),
                  'C Ø42 파일럿 ↔ 포켓': (21.0 * math.cos(math.radians(-5)), 213.3, W.AX_Z + 21.0 * math.sin(math.radians(-5))),
-                 '17 mm 육각 ↔ 바퀴': (0.0, 162.0, W.AX_Z + 8.6),
-                 '⑥ 너트': (0.0, 148.5, W.AX_Z + 5.0)},
+                 '림 돌기 ↔ 타이어 구멍': (0.0, tc, W.AX_Z + 73.0)},
         'cut2': {'③ 평행핀 Ø3 × 10': (10 * math.cos(math.radians(25)), 209.5, W.AX_Z + 10 * math.sin(math.radians(25))),
                  '① M2.5 × 8 + SUS 링': (18.25 * math.cos(math.radians(145)), 210.0, W.AX_Z + 18.25 * math.sin(math.radians(145))),
                  '③ 평행핀 (145°)': (10 * math.cos(math.radians(145)), 209.5, W.AX_Z + 10 * math.sin(math.radians(145))),
@@ -99,10 +101,11 @@ def run(_context: str):
     def onface(t_deg, r, y):
         t = math.radians(t_deg)
         return (r * math.cos(t), y, W.AX_Z + r * math.sin(t))
-    for cut in W.CUTS:
-        feats[cut['key']].update({'허브 플랜지': onface(cut['a'], 19.5, 201.0), '육각 허브': onface(cut['a'], 12.0, 182.0),
+    for i_cut, cut in enumerate(W.CUTS):
+        feats[cut['key']].update({'허브 플랜지': onface(cut['a'], 19.5, 201.0),
+                                  '림 허브 10 mm': onface(cut['a'], 27.0, f0 - 5.0),
                                   '정강이 판': onface(cut['a'], 30.0, 210.0), 'AKE60-8 출력부': onface(cut['a'], 9.0, 222.0),
-                                  'RC 바퀴 림': onface(cut['a'], 30.0, 154.5)})
+                                  '타이어': onface(cut['a'], 90.0, tc)})
         made = []
         cut_body = sector(cut['a'], cut['b'])
         nfail = 0
@@ -128,7 +131,7 @@ def run(_context: str):
         W.recenter((198.0, W.AX_Z, 0.0), 0.62)
         cams[cut['key']] = W.cam_dict()
         pts = {name: W.project_pt((p[1], p[2], p[0])) for name, p in feats[cut['key']].items()}
-        path = W.snap('%s.png' % ('09_' + cut['key'] if cut['key'] == 'cut1' else '10_' + cut['key']))
+        path = W.snap('%02d_%s.png' % (n_st + 2 + i_cut, cut['key']))
         js['stills'].append(dict(file=path.split('\\')[-1], kind='cut', key=cut['key'], title=cut['title'],
                                  pts=pts, cam=W.cam_dict(), fails=nfail))
         for occ in made:

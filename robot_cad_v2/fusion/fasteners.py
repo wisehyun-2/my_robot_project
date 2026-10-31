@@ -134,18 +134,18 @@ def specs():
             '관절', '육각 홈붙이 볼트 ISO 4762 12.9', 'M3 × 16', '모터 출력 → hip·knee 구동 보스(SUS 출력 링 + 와셔 위, 나사산 4.3 mm)'), 24),
         'FX ISO 4762 M3x%d 12.9 hub' % P.HUB_SCREW_L: (sc(3, P.HUB_SCREW_L), 'Steel', 'black satin', (
             '바퀴', '육각 홈붙이 볼트 ISO 4762 12.9', 'M3 × %d' % P.HUB_SCREW_L,
-            '바퀴 모터 출력 → 허브 플랜지(와셔 위, 나사산 %.1f mm, 머리는 육각 허브 Ø20 턱에서 0.5 mm)'
+            '바퀴 모터 출력 → 허브 플랜지(와셔 위, 나사산 %.1f mm, 머리는 림 허브 면에서 2.0 mm)'
             % (P.HUB_SCREW_L - P.HUB_SCREW_SEAT - WASHER[3][2])), 12),
         'FX DIN 125 M3': (lambda: washer(3), 'Steel', 'steel', (
-            '관절', '평와셔 DIN 125 A2', 'M3', '출력 M3 × 16·M3 × %d 머리 밑' % P.HUB_SCREW_L), 36),
+            '관절', '평와셔 DIN 125 A2', 'M3', '출력 M3 × 16·M3 × %d·림 M3 × 14 머리 밑' % P.HUB_SCREW_L), 48),
         'FX ISO 8734 3x10': (lambda: dowel(3.0, 10.0), 'Steel', 'steel', (
             '관절', '평행 핀 ISO 8734 m6 경화', 'Ø3 × 10', '모터 출력 다웰(출력 3 mm + PETG 7 mm)'), 18),
-        'FX ISO 4762 M3x8 hex hub': (sc(3, 8), 'Steel', 'steel', (
-            '바퀴', '육각 홈붙이 볼트 ISO 4762 8.8', 'M3 × 8', '육각 허브 → 허브 플랜지'), 12),
+        'FX ISO 4762 M3x14 rim': (sc(3, 14), 'Steel', 'steel', (
+            '바퀴', '육각 홈붙이 볼트 ISO 4762 8.8', 'M3 × 14',
+            '림 → 허브 플랜지 인서트(와셔 위, 림 허브 %.0f mm 체결, 인서트 %.1f mm 물림)'
+            % (P.RIM_SCREW_SEAT, 14 - P.RIM_SCREW_SEAT - WASHER[3][2])), 12),
         'FX insert M3x5.7 hub': (lambda: insert(3, 5.7, LG.INSERT_M3), 'Brass', 'brass', (
             '바퀴', '열압입 인서트 황동', 'M3 × 5.7 (구멍 Ø4.0 × 6)', '허브 플랜지'), 12),
-        'FX ISO 4762 M5x55 axle': (sc(5, 55), 'Steel', 'steel', (                 # 10-31: 50 -> 55, full nut
-            '바퀴', '육각 홈붙이 볼트 ISO 4762 8.8', 'M5 × 55', '바퀴 축 볼트(머리는 플랜지 포켓 안, 육각 허브를 누름)'), 2),
         'FX DIN 7984 M2.5x6 board': (sc(2.5, 6, 'low'), 'Steel', 'steel', (
             '드라이버', '저두 볼트 DIN 7984', 'M2.5 × 6', 'moteus → 컵 스탠드오프(보드 모터 쪽에서)'), 24),
         'FX insert M2.5x4 cup': (lambda: insert(2.5, 4.0, LG.INSERT_M25), 'Brass', 'brass', (
@@ -238,8 +238,9 @@ def positions():
         for a in LG.HUB_SCREWS:
             x, z = 18 * math.cos(a), P.R_WHEEL + 18 * math.sin(a)
             out.append(('wheel_' + k, 'FX insert M3x5.7 hub', (x, Y(lv['f0'] + 0.1), z), D(+1)))
-            out.append(('wheel_' + k, 'FX ISO 4762 M3x8 hex hub', (x, Y(lv['h0'] + 3.5), z), D(+1)))
-        out.append(('wheel_' + k, 'FX ISO 4762 M5x55 axle', (0.0, Y(lv['f0'] + 1.5), P.R_WHEEL), D(-1)))
+            yw = lv['f0'] - P.RIM_SCREW_SEAT - WASHER[3][2]
+            out.append(('wheel_' + k, 'FX ISO 4762 M3x14 rim', (x, Y(yw), z), D(+1)))
+            out.append(('wheel_' + k, 'FX DIN 125 M3', (x, Y(yw), z), D(+1)))
         # knee: stator on the thigh plate (screws from its outer face), output on the shank
         m = LY.frames('knee', s)['motor']
         for q in LY.motor_points(m, P.AKE_PCD_RING / 2, P.AKE_RING_M25, A['ring']):

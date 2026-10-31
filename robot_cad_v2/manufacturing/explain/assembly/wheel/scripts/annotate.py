@@ -14,7 +14,7 @@ HEADER, FOOTER = 175, 46
 RED, INK, GREY, GREEN = '#c0392b', '#222222', '#777777', '#2e7d32'
 NOTE = '색은 부품 구분용 (실제 허브·정강이는 검정 PETG)  ·  정강이는 바퀴 쪽 아래 부분만  ·  moteus 드라이버 컵은 생략  ·  ' \
        '나사·와셔·핀·인서트는 BOM 규격으로 모델링'
-N_STEPS = 7
+N_STEPS = 7                                  # set from stills.json in main()
 
 
 def font(sz, bold=False):
@@ -181,14 +181,15 @@ def compose(raw, rec, names):
     if k == 'overview':
         header(dr, W, '바퀴 출력부 분해도  (왼쪽 다리)',
                '모든 부품이 떨어진 상태 — 오른쪽이 바깥(모터 쪽), 왼쪽이 로봇 중심 쪽.  모두 바퀴 축 위에서 축 방향으로 끼워진다.\n'
-               '체결 부품: ① M2.5 × 8 × 6  ② M3 × 14 × 6 + 와셔  ③ 평행핀 × 3  ④ M3 × 8 × 6 + 인서트  ⑤ M5 × 55  ⑥ M5 너트')
+               '체결 부품: ① M2.5 × 8 × 6  ② M3 × 14 (12.9) × 6 + 와셔  ③ 평행핀 × 3  ④ M3 × 14 (8.8) × 6 + 와셔 + 인서트')
     elif k in ('before', 'after'):
         header(dr, W, rec['title'], rec['text'], step=rec['step'], tag='조립 전' if k == 'before' else '조립 후',
                tag_col='#7f8c8d' if k == 'before' else GREEN)
     elif k == 'done':
         header(dr, W, '조립 완료 — 바퀴 출력부',
-               '로봇 무게: 바닥 → 타이어 → 17 mm 육각 → 육각 허브 → (④ + Ø20 턱) → 허브 플랜지 → (② + ③ + Ø11.8 스피곳)\n'
-               '→ AKE 출력부 → 모터 베어링 → 고정자 → (① + Ø42 파일럿) → 정강이', tag='완성', tag_col=GREEN)
+               '로봇 무게: 바닥 → 타이어 → (안장 링 + 돌기 24개) → 한 조각 림 → (④ + Ø11 등록 턱) → 허브 플랜지\n'
+               '→ (② + ③ + Ø11.8 스피곳) → AKE 출력부 → 모터 베어링 → 고정자 → (① + Ø42 파일럿) → 정강이', tag='완성',
+               tag_col=GREEN)
     else:
         header(dr, W, rec['title'], '바퀴 축을 지나는 두 평면 사이를 잘라 냄 — 나사·핀이 어디까지 들어가는지 보인다.',
                tag='단면', tag_col='#2c3e50')
@@ -197,11 +198,11 @@ def compose(raw, rec, names):
             labels.append((name, off(p), 'feat' if name[0] in '①②③④⑤⑥ABC1' else 'part'))
     else:
         mv = set(rec.get('moving', []))
-        major = {'SHANK', 'MOTOR', 'FLANGE', 'HEX', 'WHEEL'}
+        major = {'SHANK', 'MOTOR', 'FLANGE', 'RIM', 'TYRE'}
         for g, p in rec['proj'].items():
             if k in ('before', 'after') and g not in mv and g not in major:
                 continue                                   # small parts of earlier steps are hidden by now
-            if k == 'done' and g not in ('SHANK', 'MOTOR', 'WHEEL', 'NUT'):
+            if k == 'done' and g not in ('SHANK', 'MOTOR', 'TYRE', 'S314'):
                 continue
             style = 'part'
             if g in mv:
@@ -222,6 +223,8 @@ def main():
     src, dst = Path(sys.argv[1]), Path(sys.argv[2])
     dst.mkdir(parents=True, exist_ok=True)
     js = json.load(open(src / 'stills.json', encoding='utf-8'))
+    global N_STEPS
+    N_STEPS = max(rec.get('step', 0) for rec in js['stills'])
     for rec in js['stills']:
         cv = compose(src / rec['file'], rec, js['names'])
         cv.save(dst / rec['file'])
