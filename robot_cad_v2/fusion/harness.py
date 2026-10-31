@@ -121,7 +121,7 @@ def mj_port(name):
     import vendor as V
     m = TO.mjpower_frame()
     x, y = V.MJPOWER_OUT[name]
-    base = C.apply(m, (x, y, 1.6 + 10.8 - 4.0))
+    base = C.apply(m, (x, y, V.MJPOWER_XT30_TOP - 4.0))
     return vertical_plug_frame(base), C.add(base, (0, 0, XT30_L)), (0.0, 0.0, 1.0)
 
 
@@ -303,8 +303,9 @@ def torso_cables():
     pts = [b0, C.add(b0, (0, 4.5, 0)), (30.0, 159.5, ZH + 95.0), (62.0, 159.5, ZH + 60.0), (70.0, 152.0, ZH + 36.0),
            C.add(xt60, (0, 0, 16.0))]
     out.append(dict(name='battery_lead', runs=[run('torso', pts, W12, ['wire red', 'wire black'])], plugs=[]))
+    import vendor as V
     m = TO.mjpower_frame()
-    xt90 = C.apply(m, (-35.0, 13.5, 1.6 + 8.5))
+    xt90 = C.apply(m, V.MJPOWER_XT90)
     rear = C.add(xt90, (0.0, 28.0, 0.0))
     pts = [C.add(xt60, (0, 0, -16.0)), (70.0, 140.0, ZH - 17.0), (66.0, 128.0, ZH - 30.0), (40.0, 116.0, ZH - 42.0),
            C.add(rear, (0, 10, 0)), rear]
@@ -314,7 +315,7 @@ def torso_cables():
     pts = [pr, C.add(pr, (0, 0, 20)), (-6.0, -40.0, ZH - 4.0), C.add(hr, (0, 0, 12)), hr]
     out.append(dict(name='power_board_to_pi3hat', runs=[run('torso', pts, POWER, POWER_LOOKS)],
                     plugs=[('xt30', pf, 'torso'), ('xt30', hf, 'torso')]))
-    ph4 = C.apply(m, (-31.0, -19.0, 1.6 + 6.0 + 4.0))
+    ph4 = C.apply(m, C.add(V.MJPOWER_PH4, (0.0, 0.0, 4.0)))
     sw = (-P.TORSO_X + 2.0 + 24.0, P.SWITCH_Y, ZH + P.SWITCH_Z)
     pts = [ph4, C.add(ph4, (0, 0, 10)), (-70.0, 95.0, ZH - 2.0), (-92.0, P.SWITCH_Y, ZH + 40.0), sw]
     out.append(dict(name='switch_harness', runs=[run('torso', pts, [(-1.3, THIN / 2), (0.0, THIN / 2), (1.3, THIN / 2)],

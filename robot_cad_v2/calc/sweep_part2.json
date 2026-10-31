@@ -3,28 +3,7 @@
   {
    "L0": 310.0,
    "hip": -80.0,
-   "real": [
-    [
-     "XT90-M",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.378922429324795
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181254
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181245
-    ],
-    [
-     "PH-4 switch",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.581366156388444
-    ]
-   ],
+   "real": [],
    "groups": {
     "knee driver / cup / thigh cables vs torso": [
      4.000000000000021,
@@ -33,12 +12,12 @@
     ],
     "tyre / rim / hub vs torso": [
      26.35291577437863,
-     "wheel_R:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):90",
+     "wheel_R:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):92",
      "torso:1+shell_rear_R:1"
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.54999999999998,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):89",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -56,7 +35,7 @@
     ],
     "knee_to_wheel_L": [
      5.200059397649987,
-     "tibia_L:1+FX DIN 7984 M2.5x6 clip:56",
+     "tibia_L:1+FX DIN 7984 M2.5x6 clip:80",
      true,
      74.49767693406463
     ],
@@ -68,7 +47,7 @@
     ],
     "knee_to_wheel_R": [
      5.200059397649987,
-     "tibia_R:1+FX DIN 7984 M2.5x6 clip:68",
+     "tibia_R:1+FX DIN 7984 M2.5x6 clip:92",
      true,
      74.49767693406463
     ]
@@ -77,28 +56,7 @@
   {
    "L0": 310.0,
    "hip": -60.0,
-   "real": [
-    [
-     "XT90-M",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.378922429324795
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181254
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181245
-    ],
-    [
-     "PH-4 switch",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.581366156388444
-    ]
-   ],
+   "real": [],
    "groups": {
     "knee driver / cup / thigh cables vs torso": [
      4.000000000000021,
@@ -107,12 +65,12 @@
     ],
     "tyre / rim / hub vs torso": [
      64.06728447784435,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):89",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
      "torso:1+shell_rear_L:1"
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.54999999999989,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):89",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -130,7 +88,7 @@
     ],
     "knee_to_wheel_L": [
      5.8658990600544065,
-     "tibia_L:1+FX DIN 7984 M2.5x6 clip:56",
+     "tibia_L:1+FX DIN 7984 M2.5x6 clip:80",
      true,
      74.49767693406463
     ],
@@ -142,7 +100,7 @@
     ],
     "knee_to_wheel_R": [
      5.8658990600544065,
-     "tibia_R:1+FX DIN 7984 M2.5x6 clip:68",
+     "tibia_R:1+FX DIN 7984 M2.5x6 clip:92",
      true,
      74.49767693406463
     ]
@@ -151,28 +109,7 @@
   {
    "L0": 310.0,
    "hip": -30.0,
-   "real": [
-    [
-     "XT90-M",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.378922429324795
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181254
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181245
-    ],
-    [
-     "PH-4 switch",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.581366156388444
-    ]
-   ],
+   "real": [],
    "groups": {
     "knee driver / cup / thigh cables vs torso": [
      4.000000000000021,
@@ -186,7 +123,7 @@
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.55000000000008,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):89",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -225,28 +162,7 @@
   {
    "L0": 310.0,
    "hip": 0.0,
-   "real": [
-    [
-     "XT90-M",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.378922429324795
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181254
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181245
-    ],
-    [
-     "PH-4 switch",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.581366156388444
-    ]
-   ],
+   "real": [],
    "groups": {
     "knee driver / cup / thigh cables vs torso": [
      4.000000000000021,
@@ -299,28 +215,7 @@
   {
    "L0": 310.0,
    "hip": 30.0,
-   "real": [
-    [
-     "XT90-M",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.378922429324795
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181254
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181245
-    ],
-    [
-     "PH-4 switch",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.581366156388444
-    ]
-   ],
+   "real": [],
    "groups": {
     "knee driver / cup / thigh cables vs torso": [
      4.000000000000021,
@@ -334,7 +229,7 @@
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.54999999999998,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):89",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -373,28 +268,7 @@
   {
    "L0": 310.0,
    "hip": 60.0,
-   "real": [
-    [
-     "XT90-M",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.378922429324795
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181254
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181245
-    ],
-    [
-     "PH-4 switch",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.581366156388444
-    ]
-   ],
+   "real": [],
    "groups": {
     "knee driver / cup / thigh cables vs torso": [
      4.000000000000021,
@@ -403,12 +277,12 @@
     ],
     "tyre / rim / hub vs torso": [
      109.33613347831754,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):89",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
      "torso:1+shell_front_L:1"
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.549999999999905,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):89",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -447,28 +321,7 @@
   {
    "L0": 335.0,
    "hip": -80.0,
-   "real": [
-    [
-     "XT90-M",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.378922429324795
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181254
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181245
-    ],
-    [
-     "PH-4 switch",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.581366156388444
-    ]
-   ],
+   "real": [],
    "groups": {
     "knee driver / cup / thigh cables vs torso": [
      4.000000000000021,
@@ -477,12 +330,12 @@
     ],
     "tyre / rim / hub vs torso": [
      44.834284198264065,
-     "wheel_R:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):90",
+     "wheel_R:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):92",
      "torso:1+shell_rear_R:1"
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.55000000000001,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):89",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -500,7 +353,7 @@
     ],
     "knee_to_wheel_L": [
      5.510911776022908,
-     "tibia_L:1+FX DIN 7984 M2.5x6 clip:56",
+     "tibia_L:1+FX DIN 7984 M2.5x6 clip:80",
      true,
      100.2770589385776
     ],
@@ -512,7 +365,7 @@
     ],
     "knee_to_wheel_R": [
      5.510911776022908,
-     "tibia_R:1+FX DIN 7984 M2.5x6 clip:68",
+     "tibia_R:1+FX DIN 7984 M2.5x6 clip:92",
      true,
      100.2770589385776
     ]
@@ -521,28 +374,7 @@
   {
    "L0": 335.0,
    "hip": -60.0,
-   "real": [
-    [
-     "XT90-M",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.378922429324795
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181254
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181245
-    ],
-    [
-     "PH-4 switch",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.581366156388444
-    ]
-   ],
+   "real": [],
    "groups": {
     "knee driver / cup / thigh cables vs torso": [
      4.000000000000021,
@@ -551,12 +383,12 @@
     ],
     "tyre / rim / hub vs torso": [
      84.35113490222825,
-     "wheel_R:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):90",
+     "wheel_R:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):92",
      "torso:1+shell_rear_R:1"
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.550000000000125,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):89",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -574,7 +406,7 @@
     ],
     "knee_to_wheel_L": [
      6.414599097869017,
-     "tibia_L:1+FX DIN 7984 M2.5x6 clip:56",
+     "tibia_L:1+FX DIN 7984 M2.5x6 clip:80",
      true,
      100.27705893857755
     ],
@@ -586,7 +418,7 @@
     ],
     "knee_to_wheel_R": [
      6.414599097869017,
-     "tibia_R:1+FX DIN 7984 M2.5x6 clip:68",
+     "tibia_R:1+FX DIN 7984 M2.5x6 clip:92",
      true,
      100.27705893857755
     ]
@@ -595,28 +427,7 @@
   {
    "L0": 335.0,
    "hip": -30.0,
-   "real": [
-    [
-     "XT90-M",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.378922429324795
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181254
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181245
-    ],
-    [
-     "PH-4 switch",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.581366156388444
-    ]
-   ],
+   "real": [],
    "groups": {
     "knee driver / cup / thigh cables vs torso": [
      4.000000000000021,
@@ -630,7 +441,7 @@
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.55000000000008,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):89",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -669,28 +480,7 @@
   {
    "L0": 335.0,
    "hip": 0.0,
-   "real": [
-    [
-     "XT90-M",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.378922429324795
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181254
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181245
-    ],
-    [
-     "PH-4 switch",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.581366156388444
-    ]
-   ],
+   "real": [],
    "groups": {
     "knee driver / cup / thigh cables vs torso": [
      4.000000000000021,
@@ -704,7 +494,7 @@
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.549999999999955,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):89",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -743,28 +533,7 @@
   {
    "L0": 335.0,
    "hip": 30.0,
-   "real": [
-    [
-     "XT90-M",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.378922429324795
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181254
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181245
-    ],
-    [
-     "PH-4 switch",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.581366156388444
-    ]
-   ],
+   "real": [],
    "groups": {
     "knee driver / cup / thigh cables vs torso": [
      4.000000000000021,
@@ -778,7 +547,7 @@
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.54999999999997,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):89",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -817,28 +586,7 @@
   {
    "L0": 335.0,
    "hip": 60.0,
-   "real": [
-    [
-     "XT90-M",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.378922429324795
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181254
-    ],
-    [
-     "XT30-F x6",
-     "FX DIN 7984 M2.5x6 mjpower",
-     2.3170895175181245
-    ],
-    [
-     "PH-4 switch",
-     "FX DIN 7984 M2.5x6 mjpower",
-     21.581366156388444
-    ]
-   ],
+   "real": [],
    "groups": {
     "knee driver / cup / thigh cables vs torso": [
      4.000000000000021,
@@ -847,12 +595,12 @@
     ],
     "tyre / rim / hub vs torso": [
      133.99129570142475,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):89",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
      "torso:1+shell_front_L:1"
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.54999999999993,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):89",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -889,5 +637,5 @@
    }
   }
  ],
- "seconds": 63.06769561767578
+ "seconds": 60.24021029472351
 }

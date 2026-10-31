@@ -13,7 +13,7 @@ FILE_DESCRIPTION(
 
 FILE_NAME(
 /* name */ 'deco_stripes_blue.step',
-/* time_stamp */ '2026-10-31T00:21:29+09:00',
+/* time_stamp */ '2026-10-31T00:56:38+09:00',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20.2',
@@ -2665,7 +2665,7 @@ SOLID_ANGLE_UNIT()
 #2605=PRODUCT_DEFINITION_SHAPE('',$,#2608);
 #2606=SHAPE_REPRESENTATION('',(#1640),#2598);
 #2607=PRODUCT_DEFINITION_CONTEXT('part definition',#2612,'design');
-#2608=PRODUCT_DEFINITION('2026-10-31-00-21-29-597','deco_stripes_blue',
+#2608=PRODUCT_DEFINITION('2026-10-31-00-56-38-802','deco_stripes_blue',
 #2609,#2607);
 #2609=PRODUCT_DEFINITION_FORMATION('',$,#2614);
 #2610=PRODUCT_RELATED_PRODUCT_CATEGORY('deco_stripes_blue',
@@ -2675,7 +2675,7 @@ SOLID_ANGLE_UNIT()
 #2612=APPLICATION_CONTEXT(
 'Core Data for Automotive Mechanical Design Process');
 #2613=PRODUCT_CONTEXT('part definition',#2612,'mechanical');
-#2614=PRODUCT('2026-10-31-00-21-29-597','deco_stripes_blue',
+#2614=PRODUCT('2026-10-31-00-56-38-802','deco_stripes_blue',
 'PETG \X2\C587C740\X0\ \X2\C7A5C2DDD310\X0\(\X2\C0C9\X0\: \X2\C774B98400B7ADF8B9BC\X0\ 
 \X2\CC38C870\X0\), \X2\C21CAC04C811CC29C81CB85C\X0\ \X2\BD99C784\X0\',(#2613));
 #2615=PRESENTATION_STYLE_ASSIGNMENT((#2617));

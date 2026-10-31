@@ -13,7 +13,7 @@ FILE_DESCRIPTION(
 
 FILE_NAME(
 /* name */ 'deco_drum_arc_R.step',
-/* time_stamp */ '2026-10-31T00:21:18+09:00',
+/* time_stamp */ '2026-10-31T00:56:26+09:00',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20.2',
@@ -247,7 +247,7 @@ SOLID_ANGLE_UNIT()
 #193=PRODUCT_DEFINITION_SHAPE('',$,#196);
 #194=SHAPE_REPRESENTATION('',(#116),#186);
 #195=PRODUCT_DEFINITION_CONTEXT('part definition',#200,'design');
-#196=PRODUCT_DEFINITION('2026-10-31-00-21-18-786','deco_drum_arc_R',#197,
+#196=PRODUCT_DEFINITION('2026-10-31-00-56-26-166','deco_drum_arc_R',#197,
 #195);
 #197=PRODUCT_DEFINITION_FORMATION('',$,#202);
 #198=PRODUCT_RELATED_PRODUCT_CATEGORY('deco_drum_arc_R',
@@ -257,7 +257,7 @@ SOLID_ANGLE_UNIT()
 #200=APPLICATION_CONTEXT(
 'Core Data for Automotive Mechanical Design Process');
 #201=PRODUCT_CONTEXT('part definition',#200,'mechanical');
-#202=PRODUCT('2026-10-31-00-21-18-786','deco_drum_arc_R',
+#202=PRODUCT('2026-10-31-00-56-26-166','deco_drum_arc_R',
 'PETG \X2\C587C740\X0\ \X2\C7A5C2DDD310\X0\(\X2\C0C9\X0\: \X2\C774B98400B7ADF8B9BC\X0\ 
 \X2\CC38C870\X0\), \X2\C21CAC04C811CC29C81CB85C\X0\ \X2\BD99C784\X0\',(#201));
 #203=PRESENTATION_STYLE_ASSIGNMENT((#205));

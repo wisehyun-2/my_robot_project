@@ -1,5 +1,5 @@
-"""Purchased parts: imported STEP models (AKE60-8, moteus r4.5, pi3hat r4.4) and modelled stand-ins
-(Raspberry Pi 4B, mjpower-ss, battery, connectors, RC wheel, fan, switch, magnet spacer, standoffs).
+"""Purchased parts: imported STEP models (AKE60-8, moteus r4.5, pi3hat r4.4, mjpower-ss r2) and modelled
+stand-ins (Raspberry Pi 4B, battery, connectors, RC wheel, fan, switch, magnet spacer, standoffs).
 
 Every part is a master component in the hidden _library at the identity; instances are placed with
 cadlib.instance().  Part frames:
@@ -22,6 +22,7 @@ import params as P
 AKE60_STEP = r'C:\Users\User\Desktop\ake60\AKE60-8-KV80.STEP'
 MOTEUS_STEP = r'C:\Users\User\Desktop\moteus_r45\20210124-moteus-controller-r45-mechanical.step'
 PI3HAT_STEP = r'C:\Users\User\Desktop\pihat\20210424-pi3hat-r4-4-mechanical.step'
+MJPOWER_STEP = r'C:\Users\User\Desktop\mjpower_ss\20240827-mjpower-ss-r2.step'
 
 # bodies of the CubeMars STEP that turn with the output carrier (the rest is stator + spinning bell)
 AKE_OUTPUT_BODIES = ('본체40', '본체36', '본체37', '본체43', '본체44', '본체52')
@@ -89,37 +90,57 @@ def rpi4b():
 
 
 def mjpower_ss():
-    """mjbots mjpower-ss (no STEP used): 70 x 50, 4 x M2.5 on 64 x 44, XT90-M lying at the -X end
-    (plug enters from -X), slide switch and PH-4 switch header at the -X edge, 6 x XT30-F vertical
-    on the +X end (P1/P2 top row ... P5/P6 bottom row as on the silkscreen photo).
-    Frame: PCB centre at the origin, bottom face Z = 0, X along 70, Y along 50."""
-    comp = C.master('mjpower_ss')
-    t = 1.6
-    pcb = B.rbox((0, 0, t / 2), (1, 0, 0), (0, 1, 0), 70.0, 50.0, t, 3.0)
-    for sx in (-1, 1):
-        for sy in (-1, 1):
-            C.cut(pcb, B.zcyl(sx * 32.0, sy * 22.0, -1, t + 1, 1.35))
-    C.add_body(comp, pcb, 'pcb', 'FR4 PCB', 'pcb black')
-    xt90 = B.rbox((-21.0, 13.5, t + 8.5), (1, 0, 0), (0, 1, 0), 28.0, 21.0, 17.0, 3.0)
-    C.add_body(comp, xt90, 'XT90-M', 'Nylon', 'connector yellow')
-    out = None
-    for i, (x, y) in enumerate(((22.0, 15.0), (30.0, 15.0), (22.0, 0.0), (30.0, 0.0), (22.0, -15.0), (30.0, -15.0))):
-        out = C.union(out, B.abox(x - 3.0, x + 3.0, y - 5.5, y + 5.5, t, t + 10.8))
-    C.add_body(comp, out, 'XT30-F x6', 'Nylon', 'connector yellow')
-    sw = B.abox(-35.5, -27.0, -10.0, 0.0, t, t + 6.5)
-    C.add_body(comp, sw, 'slide switch', 'Nylon', 'black')
-    ph = B.abox(-35.0, -27.0, -24.0, -14.0, t, t + 6.0)
-    C.add_body(comp, ph, 'PH-4 switch', 'Nylon', 'connector white')
-    fet = None
-    for y in (14.0, 0.0, -14.0):
-        fet = C.union(fet, B.abox(1.0, 11.0, y - 5.0, y + 5.0, t, t + 4.5))
-    C.add_body(comp, fet, 'MOSFETs', 'FR4 PCB', 'black')
+    """mjbots mjpower-ss r2 from its STEP (20240827-mjpower-ss-r2.step, one solid; 10-31, replaces the hand-made
+    stand-in whose XT90 / PH-4 blocks covered two mounting holes).  70 x 50, 4 x Ø2.5 holes on 64 x 44 (M2.5).
+    The STEP is Y-up (PCB Y 0..1.6, X along 70, Z along 50); it is turned to the board frame used here (PCB
+    centre at the origin, bottom face Z = 0, X along 70 with the XT90 at -X, Y along 50: Y = -Z_step) and split
+    into the PCB and the connector groups so plugs can be told apart (check.RECEPTACLES)."""
+    comp = C.find_comp('mjpower_ss')
+    if comp is not None and not any(b.name == 'pcb (STEP)' for b in comp.bRepBodies):
+        for o in list(C.library().component.occurrences):        # the old hand-made master: replace it
+            if o.component == comp:
+                o.deleteMe()
+        comp = None
+    if comp is not None:
+        return comp
+    comp = import_step(MJPOWER_STEP, 'mjpower_ss')
+    rot = adsk.core.Matrix3D.create()
+    rot.setToRotation(math.pi / 2, adsk.core.Vector3D.create(1, 0, 0), adsk.core.Point3D.create(0, 0, 0))
+    src = [b for b in comp.bRepBodies]
+    whole = None
+    for b in src:
+        t = C.TBM.copy(b)
+        C.TBM.transform(t, rot)
+        whole = C.union(whole, t)
+    for b in src:
+        b.deleteMe()
+    t = MJPOWER_T
+    groups = [('pcb (STEP)', (-36.0, 36.0, -26.0, 26.0, -5.0, t), 'FR4 PCB', 'pcb black'),
+              ('XT90-M', (-36.0, -7.0, -6.5, 16.5, t, 14.0), 'Nylon', 'connector yellow'),
+              ('XT30-F x6', (20.5, 34.5, -18.0, 18.0, t, 12.0), 'Nylon', 'connector yellow'),
+              ('slide switch', (-30.5, -15.5, -16.0, -6.0, t, 13.0), 'Nylon', 'black'),
+              ('PH-4 switch', (-26.5, -12.5, -24.5, -18.0, t, 10.0), 'Nylon', 'connector white'),
+              ('MOSFETs', (4.5, 15.5, -21.0, 21.0, t, 8.0), 'FR4 PCB', 'black')]
+    vol = 0.0
+    for name, (x0, x1, y0, y1, z0, z1), mat, look in groups:
+        part = C.TBM.copy(whole)
+        C.inter(part, B.abox(x0, x1, y0, y1, z0, z1))
+        if part.faces.count:
+            vol += part.volume
+            C.add_body(comp, part, name, mat, look)
+    if abs(vol - whole.volume) > 1e-3 * whole.volume:
+        raise RuntimeError('mjpower-ss split lost volume: %.1f of %.1f mm3' % (vol * 1000, whole.volume * 1000))
     return comp
 
 
-# mjpower-ss output connector centres (board frame, top of the housing)
-MJPOWER_OUT = {'P1': (22.0, 15.0), 'P2': (30.0, 15.0), 'P3': (22.0, 0.0), 'P4': (30.0, 0.0),
-               'P5': (22.0, -15.0), 'P6': (30.0, -15.0)}
+# mjpower-ss r2 connectors in the board frame (from the STEP): XT30-F outputs (centre; P1 .. P6 as on the silkscreen),
+# XT30-F housing top, XT90-M face centre at the -X edge, PH-4 switch header top centre
+MJPOWER_T = 1.6
+MJPOWER_OUT = {'P1': (24.0, 12.0), 'P2': (31.0, 12.0), 'P3': (24.0, 0.0), 'P4': (31.0, 0.0),
+               'P5': (24.0, -12.0), 'P6': (31.0, -12.0)}
+MJPOWER_XT30_TOP = 10.9
+MJPOWER_XT90 = (-35.0, 4.9, 6.85)
+MJPOWER_PH4 = (-19.4, -21.4, 8.3)
 
 
 def battery():
@@ -172,7 +193,7 @@ def xt30_cap():
 def xt90_xt60_adapter():
     """XT90-F -> XT60-M adapter pigtail (housing parts only, the wires are modelled by the harness)."""
     comp = C.master('XT90-F to XT60-M adapter')
-    b = B.rbox((0, 0, 14.0), (1, 0, 0), (0, 1, 0), 21.0, 17.0, 28.0, 3.0)
+    b = B.rbox((0, 0, 14.0), (1, 0, 0), (0, 1, 0), 21.0, 10.5, 28.0, 2.0)        # XT90 section (mjpower-ss STEP)
     C.add_body(comp, b, 'XT90-F', 'Nylon', 'connector yellow')
     return comp
 
