@@ -5,16 +5,17 @@ Shape: a hip section of full width (|y| <= YW) around the hip plates and narrowe
 (TORSO_Y_END) that the knee drivers and tyres swing past; length 2 x TORSO_X with the hip axis at mid-length
 (TITA: length ≈ 1.4 x width).  Side view: raked front face (a short top-front chamfer, then a long slope back to
 the bottom); the rear (user's sketch) is an upper slope from the top down to a short vertical face and a lower slope
-from the face back to the bottom, cutting the whole width.  Plan view: chamfered vertical corners at both ends.
-Colours: body dark grey; blue = hip saddles, drum arcs, three-bar stripes on the right front top corner and the right
-rear upper slope, the rear band with its side dashes; white = drum light rings, the line along the top of the
-vertical rear face and the side ticks.
+from the face back to the bottom, cutting the whole width.  Plan view: chamfered vertical corners at both ends; the
+hip section's tapered ends run the full height (10-31: no top / bottom edge chamfers, so the saddle's front and back
+faces go straight up to the top and to the rear upper slope).
+Colours: body dark grey; blue = hip saddles, the rear band with its side dashes; white = the line along the top of
+the vertical rear face (wrapping onto the right side only) and the right side ticks.  10-31 (user): the top stripes, the
+face panel, the camera, the left white line and the hip drums (ring, light ring, arc) are gone; the shell side wall
+fills the old drum seat.
 
 The shell carries no load: the hip section hangs on the hip plates (M3), the front / rear sections are joined to it
 by inner splice tabs (M3 + nuts); the payload plate sits on the rails through an opening in the top.
 """
-import math
-
 import adsk.core
 import adsk.fusion
 
@@ -58,8 +59,7 @@ def end_plan():
 
 
 def mid_side_profile():
-    ch = P.MID_CH
-    pts = [(-XM, T), (XM, T), (XT, T - ch), (XT, BOT + ch), (XM, BOT), (-XM, BOT), (-XT, BOT + ch), (-XT, T - ch)]
+    pts = [(-XT, T), (XT, T), (XT, BOT), (-XT, BOT)]                     # 10-31: no edge chamfers (MID_CH 20 before)
     return [(x, ZH + z) for (x, z) in pts]
 
 
@@ -159,7 +159,6 @@ def openings(h):
     for sy in (-1, 1):
         y0, y1 = sy * (YW - P.SHELL_T - 1), sy * (YW + 1)
         C.cut(h, B.ycyl(0, ZH, y0, y1, 26.6))                                  # hip plate boss
-        C.cut(h, B.ycyl(0, ZH, sy * (YW - 1.0), y1, 55.0))                     # drum ring seat (1 mm)
         g = P.theta_dir(P.GROMMET_DEG)
         C.cut(h, B.ycyl(g[0] * P.GROMMET_R, ZH + g[1] * P.GROMMET_R, y0, y1, 8.0))   # cable grommet Ø16
         for (x, z) in ((-50.0, 30.0), (50.0, 30.0), (-60.0, -20.0), (60.0, -20.0), (-40.0, 140.0), (40.0, 140.0)):
@@ -167,7 +166,6 @@ def openings(h):
         for x in (-205.0, -198.0, -191.0):                                     # side vents (three slots)
             C.cut(h, B.slot((x, sy * YE, ZH + 30.0), (x, sy * YE, ZH + 48.0), (0, 1, 0), 1.25, 8.0))
     p0, u, n, L = face_frame()
-    C.cut(h, B.cyl(on_face(32.0, 0.0, -4.0), on_face(32.0, 0.0, 2.0), 5.0))   # camera window
     for k in range(9):                                                          # chin vents
         y = -64.0 + 16.0 * k
         C.cut(h, B.slot(on_face(L - 34.0, y), on_face(L - 20.0, y), n, 1.5, 8.0))
@@ -214,44 +212,6 @@ def splice_tabs():
     return out
 
 
-# ----------------------------------------------------------------------------- hip drums
-ARC_HALF = 60.0                                   # blue arc: +-60 deg around straight down
-
-
-def _arc_wedge(B, s):
-    """Region within ARC_HALF of straight down around the hip axis (left-side builder coordinates)."""
-    a = math.radians(ARC_HALF)
-    w = B.halfspace((0.0, 0.0, ZH), (math.cos(a), 0.0, math.sin(a)))
-    C.inter(w, B.halfspace((0.0, 0.0, ZH), (-math.cos(a), 0.0, math.sin(a))))
-    return w
-
-
-def drum_ring(s):
-    """Black drum disc around the hip boss (flush in the 1 mm seat) with grooves for the white light ring and the
-    blue arc inlays."""
-    B = C.Builder(side=s)
-    r = B.ycyl(0, ZH, YW - 1.0, YW, 54.9)
-    C.cut(r, B.ycyl(0, ZH, YW - 2, YW + 1, 27.2))
-    C.cut(r, light_ring(s))
-    C.cut(r, drum_arc(s))
-    return r
-
-
-def light_ring(s):
-    B = C.Builder(side=s)
-    r = B.ycyl(0, ZH, YW - 1.0, YW, 50.0)
-    C.cut(r, B.ycyl(0, ZH, YW - 2, YW + 1, 47.0))
-    return r
-
-
-def drum_arc(s):
-    B = C.Builder(side=s)
-    r = B.ycyl(0, ZH, YW - 1.0, YW, 43.0)
-    C.cut(r, B.ycyl(0, ZH, YW - 2, YW + 1, 35.0))
-    C.inter(r, _arc_wedge(B, s))
-    return r
-
-
 # ----------------------------------------------------------------------------- glued-on trim (0.6 mm)
 TRIM = 0.6
 
@@ -263,11 +223,12 @@ def _bar(B, a, b, n, width):
     return B.box(c, d, C.cross(n, d), C.norm(d), width, TRIM)
 
 
-def _wrap_band(B, z, hgt, x_side_end, dashes):
-    """Band at height z around the rear: rear face, both corner chamfers, both sides to x_side_end, then dashes."""
+def _wrap_band(B, z, hgt, x_side_end, dashes, sides=(-1, 1)):
+    """Band at height z around the rear: rear face, then on the given sides the corner chamfer and the side to
+    x_side_end, then dashes."""
     c = P.PLAN_CORNER
     out = _bar(B, (-X, -(YE - c), z), (-X, YE - c, z), (-1, 0, 0), hgt)
-    for sy in (-1, 1):
+    for sy in sides:
         out = C.union(out, _bar(B, (-X, sy * (YE - c), z), (-X + c, sy * YE, z), (-1, sy, 0), hgt))
         out = C.union(out, _bar(B, (-X + c, sy * YE, z), (x_side_end, sy * YE, z), (0, sy, 0), hgt))
         x = x_side_end + 5.0
@@ -278,51 +239,22 @@ def _wrap_band(B, z, hgt, x_side_end, dashes):
 
 
 def stripes_blue():
-    """Three-bar stripes on the right (-y) front top corner and the right rear upper slope, the rear band with its
-    side dashes."""
-    B = C.Builder()
-    out = None
-    for x0 in (125.0, 143.0, 161.0):                   # front set on the flat top
-        a = (x0, -YE + 3.0, ZH + T)
-        b = (x0 + 39.0, -YE + 67.0, ZH + T)
-        out = C.union(out, _bar(B, a, b, (0, 0, 1), 8.0))
-    _p, _d, nu = rear_slopes()[0]
-    for x0 in (98.0, 118.0, 138.0):                    # rear set on the upper rear slope
-        a, b = slope_point(0, -x0, -YE + 3.0), slope_point(0, -(x0 + 30.0), -YE + 67.0)
-        out = C.union(out, _bar(B, a, b, nu, 8.0))
-    return C.union(out, _wrap_band(B, ZH + REAR_BAND_Z, 6.0, -140.0, 3))
+    """The rear band with its side dashes (10-31: the three-bar stripes on the top and the upper rear slope are
+    gone)."""
+    return _wrap_band(C.Builder(), ZH + REAR_BAND_Z, 6.0, -140.0, 3)
 
 
 def lines_white():
-    """White line along the top of the vertical rear face (wrapping onto the sides) and two slanted ticks per side."""
+    """White line along the top of the vertical rear face (round the right corner onto the right side) and two
+    slanted ticks on the right side (10-31: nothing on the left side)."""
     B = C.Builder()
-    out = _wrap_band(B, ZH + REAR_LINE_Z, 3.0, -150.0, 0)
-    for sy in (-1, 1):
+    out = _wrap_band(B, ZH + REAR_LINE_Z, 3.0, -150.0, 0, sides=(-1,))
+    for sy in (-1,):
         for x in (-115.0, 115.0):
             a = (x - 4.0, sy * YE, ZH + 116.0)
             b = (x + 4.0, sy * YE, ZH + 128.0)
             out = C.union(out, _bar(B, a, b, (0, sy, 0), 3.0))
     return out
-
-
-def face_panel():
-    """Dark textured face plate on the raked front face (TITA's 'face'), clear of the chin vents."""
-    B = C.Builder()
-    p0, u, n, L = face_frame()
-    s0, s1 = 18.0, L - 42.0
-    c = on_face((s0 + s1) / 2, 0.0, 0.5)
-    p = B.rbox(c, (0, 1, 0), u, 190.0, s1 - s0, 1.0, 8.0)
-    C.cut(p, B.cyl(on_face(32.0, 0.0, -2.0), on_face(32.0, 0.0, 3.0), 11.5))
-    return p
-
-
-def camera():
-    """Camera bezel at the top centre of the face; the lens is a second body."""
-    B = C.Builder()
-    bez = B.cyl(on_face(32.0, 0.0, 0.0), on_face(32.0, 0.0, 4.5), 11.0)
-    C.cut(bez, B.cyl(on_face(32.0, 0.0, 1.5), on_face(32.0, 0.0, 5.0), 6.5))
-    lens = B.cyl(on_face(32.0, 0.0, 1.5), on_face(32.0, 0.0, 4.0), 6.4)
-    return bez, lens
 
 
 def rear_panel():

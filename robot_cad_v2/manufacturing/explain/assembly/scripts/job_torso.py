@@ -24,13 +24,8 @@ def config(M):
         ('FAN', 'torso:1+fan 30x30', None, None), ('TRAY', 'torso:1+battery_tray', None, None),
         ('BATT', 'torso:1+battery_24V', None, None), ('TOP', 'torso:1+top_plate', None, None),
         ('SHMID_L', 'torso:1+shell_mid_L', None, None), ('SHMID_L', 'torso:1+saddle_L', None, None),
-        ('SHMID_L', 'torso:1+drum_ring_L', None, None), ('SHMID_L', 'torso:1+deco_light_ring_L', None, None),
-        ('SHMID_L', 'torso:1+deco_drum_arc_L', None, None),
         ('SHMID_R', 'torso:1+shell_mid_R', None, None), ('SHMID_R', 'torso:1+saddle_R', None, None),
-        ('SHMID_R', 'torso:1+drum_ring_R', None, None), ('SHMID_R', 'torso:1+deco_light_ring_R', None, None),
-        ('SHMID_R', 'torso:1+deco_drum_arc_R', None, None),
-        ('SHFR', 'torso:1+shell_front_', None, None), ('SHFR', 'torso:1+deco_face_panel', None, None),
-        ('SHFR', 'torso:1+deco_camera', None, None),
+        ('SHFR', 'torso:1+shell_front_', None, None),
         ('SHRE', 'torso:1+shell_rear_', None, None), ('SHRE', 'torso:1+deco_rear_panel', None, None),
         ('TABS', 'torso:1+splice_tabs', None, None),
         ('DECO', 'torso:1+deco_stripes_blue', None, None), ('DECO', 'torso:1+deco_lines_white', None, None)]
@@ -102,7 +97,7 @@ def config(M):
                   '레일 밑에서 평와셔 + 나일론 너트로 조인다.',
              moves=[[('TOP', 0)], [('TBOLT', 0)], [('TNUT', 0)]], spin=['TBOLT', 'TNUT'], view=(0.8, 0.55, 0.8)),
         dict(key='s7', title='7단계  셸 hip 부분 → hip 판 + ⑤ M3 × 6 × 12',
-             text='셸 hip 부분(좌·우, 파란 안장·드럼 링 포함)을 hip 판 보스에 끼워 옆에서 씌우고,\n'
+             text='셸 hip 부분(좌·우, 파란 안장 포함)을 hip 판 보스에 끼워 옆에서 씌우고,\n'
                   '⑤ M3 × 6 버튼 볼트 6개씩을 hip 판 웹의 M3 탭에 조인다.',
              moves=[[('SHMID_L', 0), ('SHMID_R', 0)], [('S_SHL', 0), ('S_SHR', 0)]], spin=['S_SHL', 'S_SHR'],
              view=(0.85, 0.75, 0.55)),
@@ -111,8 +106,8 @@ def config(M):
              moves=[[('TABS', 0)], [('SHFR', 0), ('SHRE', 0)], [('S_TAB', 0)], [('TABNUT', 0)]],
              spin=['S_TAB', 'TABNUT'], view=(0.75, 0.8, 0.6)),
         dict(key='s9', title='9단계  장식판 (순간접착)',
-             text='파란 줄무늬와 흰 선 장식판을 셸 위에 순간접착제로 붙인다 (하중 없음).',
-             moves=[[('DECO', 0)]], view=(0.85, 0.7, 0.55)),
+             text='뒤쪽 파란 띠와 흰 선 장식판을 셸에 순간접착제로 붙인다 (하중 없음).',
+             moves=[[('DECO', 0)]], view=(-0.85, -0.7, 0.55)),               # rear band, right side line (10-31)
     ]
     tgt = (0.0, 0.0, ZH + 30.0)
     cuts = [dict(key='cut1', remove=[((0, 0, 0), (-1, 0, 0)), ((0, 0, 0), (0, -1, 0))], view=(1.0, 1.0, 0.65),
@@ -144,7 +139,7 @@ def config(M):
                    TRAY='배터리 트레이 (PETG)', BATT='배터리 24 V 15 Ah', TOP='윗판 (PETG)', TBOLT='④ M4 × 25 × 8',
                    TNUT='M4 와셔 + 나일론 너트 × 8', SHMID_L='셸 hip 부분 (왼쪽)', SHMID_R='셸 hip 부분 (오른쪽)',
                    S_SHL='⑤ M3 × 6 버튼 × 6', S_SHR='⑤ M3 × 6 버튼 × 6', TABS='셸 이음판 × 12', SHFR='셸 앞 조각',
-                   SHRE='셸 뒤 조각', S_TAB='⑥ M3 × 8 버튼 × 24', TABNUT='M3 너트 × 24', DECO='장식판 (줄무늬·선)'),
+                   SHRE='셸 뒤 조각', S_TAB='⑥ M3 × 8 버튼 × 24', TABNUT='M3 너트 × 24', DECO='장식판 (파란 띠·흰 선)'),
         captions=dict(DINS='황동 인서트 M2.5 × 8 → 데크 보스', RPI='Raspberry Pi 4B → 데크', STAND='M2.5 × 11 스탠드오프 × 4',
                       HAT='pi3hat r4.5 → 스탠드오프 위', MJ='mjpower-ss + XT90 변환 → 데크', MJS='M2.5 × 6 저두 × 4 (mjpower-ss)',
                       FAN='팬 30 × 30 (양면 폼테이프)', TUBES='척추 봉 × 2 + 위 레일 × 2 → 왼쪽 hip 판',

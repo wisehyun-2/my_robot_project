@@ -133,6 +133,10 @@ GROUPS = {
     'tyre / rim / hub vs thigh, knee cup, thigh cables': (
         lambda o, lk: lk.startswith('wheel') and not o.component.name.startswith('AKE60'),
         lambda o, lk: lk.startswith('femur')),
+    'thigh vs torso shell / shell screws': (                    # 10-31: the thigh body itself (ISO 7380 heads)
+        lambda o, lk: lk.startswith('femur') and o.component.name.startswith('thigh'),
+        lambda o, lk: lk == 'torso' and o.component.name.startswith(('shell_', 'saddle_', 'deco_', 'FX ISO 7380',
+                                                                     'FX grommet'))),
     'shank parts vs torso': (
         lambda o, lk: lk.startswith('tibia'),
         lambda o, lk: lk == 'torso'),

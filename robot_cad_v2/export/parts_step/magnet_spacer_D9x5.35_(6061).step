@@ -13,7 +13,7 @@ FILE_DESCRIPTION(
 
 FILE_NAME(
 /* name */ 'magnet_spacer_D9x5.35_(6061).step',
-/* time_stamp */ '2026-10-31T09:58:46+09:00',
+/* time_stamp */ '2026-10-31T11:56:46+09:00',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20.2',
@@ -291,7 +291,7 @@ SOLID_ANGLE_UNIT()
 #236=PRODUCT_DEFINITION_SHAPE('',$,#239);
 #237=SHAPE_REPRESENTATION('',(#135),#229);
 #238=PRODUCT_DEFINITION_CONTEXT('part definition',#243,'design');
-#239=PRODUCT_DEFINITION('2026-10-31-09-58-46-000',
+#239=PRODUCT_DEFINITION('2026-10-31-11-56-46-830',
 'magnet spacer \X\D89x5.35 (6061)',#240,#238);
 #240=PRODUCT_DEFINITION_FORMATION('',$,#245);
 #241=PRODUCT_RELATED_PRODUCT_CATEGORY('magnet spacer \X\D89x5.35 (6061
@@ -301,7 +301,7 @@ SOLID_ANGLE_UNIT()
 #243=APPLICATION_CONTEXT(
 'Core Data for Automotive Mechanical Design Process');
 #244=PRODUCT_CONTEXT('part definition',#243,'mechanical');
-#245=PRODUCT('2026-10-31-09-58-46-000','magnet spacer \X\D89x5.35 (606
+#245=PRODUCT('2026-10-31-11-56-46-830','magnet spacer \X\D89x5.35 (606
 1)',
 '6061(\X2\BE44C790C131\X0\) \X2\C120BC18\X0\ \X2\AC00ACF5\X0\, \X\D89 
 \X\D7 4.5, \X2\C704\X0\ \X\D86.04 \X\D7 2.5 \X2\C790C11D\X0\ \X2\D3ECCF13\X0\,

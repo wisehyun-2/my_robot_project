@@ -10,7 +10,7 @@ FILE_DESCRIPTION(
 
 FILE_NAME(
 /* name */ 'cable_clips_shank_L.step',
-/* time_stamp */ '2026-10-31T09:57:38+09:00',
+/* time_stamp */ '2026-10-31T11:55:53+09:00',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20.2',
@@ -777,7 +777,7 @@ SOLID_ANGLE_UNIT()
 #725=PRODUCT_DEFINITION_SHAPE('',$,#728);
 #726=SHAPE_REPRESENTATION('',(#448),#718);
 #727=PRODUCT_DEFINITION_CONTEXT('part definition',#732,'design');
-#728=PRODUCT_DEFINITION('2026-10-31-09-57-37-989','cable_clips_shank_L',
+#728=PRODUCT_DEFINITION('2026-10-31-11-55-52-976','cable_clips_shank_L',
 #729,#727);
 #729=PRODUCT_DEFINITION_FORMATION('',$,#734);
 #730=PRODUCT_RELATED_PRODUCT_CATEGORY('cable_clips_shank_L',
@@ -787,7 +787,7 @@ SOLID_ANGLE_UNIT()
 #732=APPLICATION_CONTEXT(
 'Core Data for Automotive Mechanical Design Process');
 #733=PRODUCT_CONTEXT('part definition',#732,'mechanical');
-#734=PRODUCT('2026-10-31-09-57-37-989','cable_clips_shank_L',
+#734=PRODUCT('2026-10-31-11-55-52-976','cable_clips_shank_L',
 'PETG 40 %',(#733));
 #735=PRESENTATION_STYLE_ASSIGNMENT((#737));
 #736=PRESENTATION_STYLE_ASSIGNMENT((#738));

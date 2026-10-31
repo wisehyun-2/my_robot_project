@@ -101,6 +101,9 @@ HIP_PLATE_T = 8.0           # hub (5 mm web + 3 mm boss through the shell); with
                             # on the inner face the machined plate is 9.5 mm thick (10 mm+ stock)
 HIP_WEB_T = 5.0
 GAP_FEMUR = 2.0
+FEMUR_IN_RELIEF = (1.5, 40.0)  # thigh inner face set back 1.5 mm beyond r 40 from the hip axis, except the knee housing
+                            # (10-31): the shell's ISO 7380 M3 x 6 heads (1.65 high on the y = YW face) stood 0.35 mm
+                            # from the thigh, now 1.85; the hip head (boss joint) and the knee cup seat keep 174
 FEMUR_T = 30.0
 FEMUR_H = 50.0              # in-plane depth of the thigh beam
 KNEE_PLATE_T = 9.0          # femur knee plate (outer face), the knee motor hangs inboard of it
@@ -208,7 +211,6 @@ FRONT_BOT_X = 105.0         # ... and the face slopes back to the bottom at x 10
 REAR_TOP_X, REAR_Z_TOP = 73.0, 81.0
 REAR_BOT_X, REAR_Z_BOT = 34.0, -25.0
 PLAN_CORNER = 30.0          # vertical corner chamfers of the front / rear ends (plan view)
-MID_CH = 20.0               # top / bottom edge chamfers of the hip section ends
 SADDLE_Z = 95.0             # blue 'saddle' = hip-section shell above this height outside the end width
 SWITCH_Y, SWITCH_Z = 88.0, 45.0            # rocker switch on the vertical rear face (inside the corner chamfers)
 DECK_T_FLOOR = 2.4
@@ -240,7 +242,7 @@ PRINT = {
     'hub_flange': (99.0, 1.0), 'hex_hub': (99.0, 1.0),          # 100 %
     'cup_': (1.6, 0.30), 'cable_clips': (1.6, 0.40),
     'top_plate': (1.6, 0.25), 'battery_tray': (1.6, 0.30), 'electronics_deck': (1.6, 0.30),
-    'shell_': (1.6, 0.25), 'saddle_': (1.6, 0.25), 'drum_ring': (1.6, 0.25), 'deco_': (1.6, 1.0),
+    'shell_': (1.6, 0.25), 'saddle_': (1.6, 0.25), 'deco_': (1.6, 1.0),
     'splice_tabs': (1.6, 1.0),
 }
 PETG_RHO = 1270.0

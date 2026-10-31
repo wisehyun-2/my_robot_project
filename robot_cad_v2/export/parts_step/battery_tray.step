@@ -11,7 +11,7 @@ FILE_DESCRIPTION(
 
 FILE_NAME(
 /* name */ 'battery_tray.step',
-/* time_stamp */ '2026-10-31T09:57:35+09:00',
+/* time_stamp */ '2026-10-31T11:55:50+09:00',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20.2',
@@ -5368,7 +5368,7 @@ SOLID_ANGLE_UNIT()
 #5291=PRODUCT_DEFINITION_SHAPE('',$,#5294);
 #5292=SHAPE_REPRESENTATION('',(#3310),#5284);
 #5293=PRODUCT_DEFINITION_CONTEXT('part definition',#5298,'design');
-#5294=PRODUCT_DEFINITION('2026-10-31-09-57-35-803','battery_tray',#5295,
+#5294=PRODUCT_DEFINITION('2026-10-31-11-55-50-294','battery_tray',#5295,
 #5293);
 #5295=PRODUCT_DEFINITION_FORMATION('',$,#5300);
 #5296=PRODUCT_RELATED_PRODUCT_CATEGORY('battery_tray','battery_tray',(#5300));
@@ -5377,7 +5377,7 @@ SOLID_ANGLE_UNIT()
 #5298=APPLICATION_CONTEXT(
 'Core Data for Automotive Mechanical Design Process');
 #5299=PRODUCT_CONTEXT('part definition',#5298,'mechanical');
-#5300=PRODUCT('2026-10-31-09-57-35-803','battery_tray',
+#5300=PRODUCT('2026-10-31-11-55-50-294','battery_tray',
 'PETG 30 %, \X2\B9ACBE0CB97C\X0\ \X2\C704B85C\X0\',(#5299));
 #5301=PRESENTATION_STYLE_ASSIGNMENT((#5303));
 #5302=PRESENTATION_STYLE_ASSIGNMENT((#5304));

@@ -44,7 +44,6 @@ PRINT_NOTE = {
     'electronics_deck': 'PETG 30 %',
     'shell_': 'PETG 진회색 25 %, 바깥 면을 위로(서포트 필요), 앞·hip·뒤 × 좌우 6조각',
     'saddle_': 'PETG 파랑 25 % (hip 위 안장)',
-    'drum_ring': 'PETG 검정, 흰 빛 링·파란 호 홈',
     'deco_': 'PETG 얇은 장식판(색: 이름·그림 참조), 순간접착제로 붙임',
     'splice_tabs': 'PETG 100 %, 셸 조각 이음판(M3 + 너트)',
 }
@@ -126,7 +125,7 @@ def set_visible(prefixes, on):
             o.isLightBulbOn = on
 
 
-SHELL = ('shell_', 'saddle_', 'deco_', 'drum_ring', 'splice_tabs')
+SHELL = ('shell_', 'saddle_', 'deco_', 'splice_tabs')
 
 
 def snap(name, eye, target, **kw):
@@ -201,8 +200,7 @@ def inside_images():
     set_visible(('battery_tray', 'spine_tube_'), False)
     out.append(snap('23_electronics_deck', (330, 230, 560), (0, 0, 335), fit=False))
     set_visible(SHELL + ('top_plate', 'rail_', 'battery_24V', 'battery_tray', 'spine_tube_'), True)
-    set_visible(('shell_front_L', 'shell_mid_L', 'shell_rear_L', 'saddle_L', 'drum_ring_L', 'deco_light_ring_L',
-                 'deco_drum_arc_L'), False)
+    set_visible(('shell_front_L', 'shell_mid_L', 'shell_rear_L', 'saddle_L'), False)
     out.append(snap('24_cutaway_left_shell_off', (900, 950, 700), (0, 0, 330)))
     show_all()
     view.look((1100, 800, 750), (0, 0, 290))

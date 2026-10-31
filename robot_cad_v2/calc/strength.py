@@ -116,11 +116,13 @@ def ramp(s, s1, s2, a, b):
 
 
 def link(name, L, ya, yb, yg, hgt, z_root, z_tip, locked_root, locked_tip, wall=WALL, core=CORE):
-    """Link of length L from the upper joint (s = 0, height z_root) to the lower one (z_tip); section y ya..yb(s).
+    """Link of length L from the upper joint (s = 0, height z_root) to the lower one (z_tip); section y ya(s)..yb(s)
+    (ya a number or a function of s).
     Out-of-plane moment Mx = lateral force x height + vertical force x (section centroid - tyre plane), split into
     bending (cos phi) and torsion (sin phi) of the inclined link; in-plane moment = the joint torque at both ends.
     Stresses at both ends and where the widened part ends; tip deflections integrated along the link."""
-    sec = lambda s: props(section(ya, yb(s), hgt, yg, wall=wall, core=core))
+    ya_s = ya if callable(ya) else (lambda s: ya)
+    sec = lambda s: props(section(ya_s(s), yb(s), hgt, yg, wall=wall, core=core))
     s_end = next((L * i / 400 for i in range(400) if yb(L * i / 400) <= yb(L) + 1e-9), L)
     rows = []
     vm_max = 0.0
@@ -131,11 +133,11 @@ def link(name, L, ya, yb, yg, hgt, z_root, z_tip, locked_root, locked_tip, wall=
             Mx = Fl * z + F * (yc - YTC)
             Mb, Tq = Mx * math.cos(PHI), Mx * math.sin(PHI)
             s_out, s_in, s_ax = Mb * cy / Iy, Tm * cn / In, F * math.cos(PHI) / A
-            tau = Tq / (2 * (yb(s) - ya - wall) * (hgt - SKIN) * SKIN)
+            tau = Tq / (2 * (yb(s) - ya_s(s) - wall) * (hgt - SKIN) * SKIN)
             vm = math.sqrt((s_out + s_in + s_ax) ** 2 + 3 * tau ** 2)
             if tag.startswith('검토'):
                 vm_max = max(vm_max, vm)
-            rows.append((name, tag, where, '%.0f' % (yb(s) - ya), '%.1f' % (Mx / 1000), '%.1f' % (Mb / 1000),
+            rows.append((name, tag, where, '%.1f' % (yb(s) - ya_s(s)), '%.1f' % (Mx / 1000), '%.1f' % (Mb / 1000),
                          '%.1f' % (Tq / 1000), '%.1f' % (Tm / 1000), '%.1f' % s_out, '%.1f' % s_in, '%.1f' % tau,
                          '**%.1f**' % vm))
     # deflections of the link end at the design level (cantilever from the upper joint)
@@ -188,9 +190,11 @@ def main():
     st = P.L2 - P.TIBIA_WIDE_END
     wide_f = lambda s: ramp(s, sf - P.WIDE_TAPER, sf, P.FEMUR_WIDE_OUT, P.Y_FEMUR_OUT)
     wide_t = lambda s: ramp(s, st - P.WIDE_TAPER, st, P.TIBIA_WIDE_OUT, P.Y_TIBIA_OUT)
+    dr, r0 = P.FEMUR_IN_RELIEF                     # inner face relief over the shell screw heads (10-31): between r0
+    yf_in = lambda s: P.Y_FEMUR_IN + (dr if r0 < s < P.L1 - P.HOUSING_R else 0.0)   # and the knee housing
     nf = '허벅지 %.0f→%.0f×%.0f' % (P.FEMUR_WIDE_OUT - P.Y_FEMUR_IN, P.FEMUR_T, P.FEMUR_H)
     nt = '정강이 %.0f→%.0f×%.0f' % (P.TIBIA_WIDE_OUT - P.Y_TIBIA_IN, P.TIBIA_T, P.TIBIA_H)
-    links = [link(nf, P.L1, P.Y_FEMUR_IN, wide_f, yg_f, P.FEMUR_H, P.Z_HIP, P.KNEE_Z, 0.0, k_lock),
+    links = [link(nf, P.L1, yf_in, wide_f, yg_f, P.FEMUR_H, P.Z_HIP, P.KNEE_Z, 0.0, k_lock),
              link(nt, P.L2, P.Y_TIBIA_IN, wide_t, yg_t, P.TIBIA_H, P.KNEE_Z, P.R_WHEEL, k_lock, 0.0)]
     before = [link('보강 전 허벅지 30×50', P.L1, P.Y_FEMUR_IN, lambda s: P.Y_FEMUR_OUT, yg_f, 50.0, P.Z_HIP,
                    P.KNEE_Z, 0.0, k_lock, wall=2.4, core=0.2),

@@ -202,14 +202,6 @@ def build_shell():
     for name, body in SH.pieces(h).items():
         add_part(t, name, body, 'PETG print', 'blue' if name.startswith('saddle') else 'shell grey')
     add_part(t, 'splice_tabs', SH.splice_tabs(), 'PETG print', 'dark grey')
-    for s in (1, -1):
-        add_part(t, 'drum_ring_' + SFX[s], SH.drum_ring(s), 'PETG print', 'black')
-        add_part(t, 'deco_light_ring_' + SFX[s], SH.light_ring(s), 'PETG print', 'white')
-        add_part(t, 'deco_drum_arc_' + SFX[s], SH.drum_arc(s), 'PETG print', 'blue')
-    add_part(t, 'deco_face_panel', SH.face_panel(), 'PETG print', 'dark grey')
-    bez, lens = SH.camera()
-    cam = add_part(t, 'deco_camera', bez, 'PETG print', 'black')
-    C.add_body(cam, lens, 'lens', 'PETG print', 'lens')
     add_part(t, 'deco_stripes_blue', SH.stripes_blue(), 'PETG print', 'blue')
     add_part(t, 'deco_lines_white', SH.lines_white(), 'PETG print', 'white')
     add_part(t, 'deco_rear_panel', SH.rear_panel(), 'PETG print', 'dark grey')
