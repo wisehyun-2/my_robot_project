@@ -12,12 +12,12 @@
     ],
     "tyre / rim / hub vs torso": [
      26.35291577437863,
-     "wheel_R:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):92",
+     "wheel_R:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):94",
      "torso:1+shell_rear_R:1"
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.54999999999998,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):93",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -35,7 +35,7 @@
     ],
     "knee_to_wheel_L": [
      5.200059397649987,
-     "tibia_L:1+FX DIN 7984 M2.5x6 clip:80",
+     "tibia_L:1+FX DIN 7984 M2.5x6 clip:104",
      true,
      74.49767693406463
     ],
@@ -47,7 +47,7 @@
     ],
     "knee_to_wheel_R": [
      5.200059397649987,
-     "tibia_R:1+FX DIN 7984 M2.5x6 clip:92",
+     "tibia_R:1+FX DIN 7984 M2.5x6 clip:116",
      true,
      74.49767693406463
     ]
@@ -65,12 +65,12 @@
     ],
     "tyre / rim / hub vs torso": [
      64.06728447784435,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):93",
      "torso:1+shell_rear_L:1"
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.54999999999989,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):93",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -88,7 +88,7 @@
     ],
     "knee_to_wheel_L": [
      5.8658990600544065,
-     "tibia_L:1+FX DIN 7984 M2.5x6 clip:80",
+     "tibia_L:1+FX DIN 7984 M2.5x6 clip:104",
      true,
      74.49767693406463
     ],
@@ -100,7 +100,7 @@
     ],
     "knee_to_wheel_R": [
      5.8658990600544065,
-     "tibia_R:1+FX DIN 7984 M2.5x6 clip:92",
+     "tibia_R:1+FX DIN 7984 M2.5x6 clip:116",
      true,
      74.49767693406463
     ]
@@ -123,7 +123,7 @@
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.55000000000008,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):93",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -229,7 +229,7 @@
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.54999999999998,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):93",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -277,12 +277,12 @@
     ],
     "tyre / rim / hub vs torso": [
      109.33613347831754,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):93",
      "torso:1+shell_front_L:1"
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.549999999999905,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):93",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -330,12 +330,12 @@
     ],
     "tyre / rim / hub vs torso": [
      44.834284198264065,
-     "wheel_R:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):92",
+     "wheel_R:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):94",
      "torso:1+shell_rear_R:1"
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.55000000000001,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):93",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -353,7 +353,7 @@
     ],
     "knee_to_wheel_L": [
      5.510911776022908,
-     "tibia_L:1+FX DIN 7984 M2.5x6 clip:80",
+     "tibia_L:1+FX DIN 7984 M2.5x6 clip:104",
      true,
      100.2770589385776
     ],
@@ -365,7 +365,7 @@
     ],
     "knee_to_wheel_R": [
      5.510911776022908,
-     "tibia_R:1+FX DIN 7984 M2.5x6 clip:92",
+     "tibia_R:1+FX DIN 7984 M2.5x6 clip:116",
      true,
      100.2770589385776
     ]
@@ -383,12 +383,12 @@
     ],
     "tyre / rim / hub vs torso": [
      84.35113490222825,
-     "wheel_R:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):92",
+     "wheel_R:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):94",
      "torso:1+shell_rear_R:1"
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.550000000000125,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):93",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -406,7 +406,7 @@
     ],
     "knee_to_wheel_L": [
      6.414599097869017,
-     "tibia_L:1+FX DIN 7984 M2.5x6 clip:80",
+     "tibia_L:1+FX DIN 7984 M2.5x6 clip:104",
      true,
      100.27705893857755
     ],
@@ -418,7 +418,7 @@
     ],
     "knee_to_wheel_R": [
      6.414599097869017,
-     "tibia_R:1+FX DIN 7984 M2.5x6 clip:92",
+     "tibia_R:1+FX DIN 7984 M2.5x6 clip:116",
      true,
      100.27705893857755
     ]
@@ -441,7 +441,7 @@
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.55000000000008,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):93",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -494,7 +494,7 @@
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.549999999999955,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):93",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -547,7 +547,7 @@
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.54999999999997,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):93",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -595,12 +595,12 @@
     ],
     "tyre / rim / hub vs torso": [
      133.99129570142475,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):93",
      "torso:1+shell_front_L:1"
     ],
     "tyre / rim / hub vs thigh, knee cup, thigh cables": [
      53.54999999999993,
-     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):91",
+     "wheel_L:1+RC wheel 150x60 (1-8 truggy, 17 mm hex):93",
      "femur_L:1+cup_knee_L:1"
     ],
     "shank parts vs torso": [
@@ -637,5 +637,5 @@
    }
   }
  ],
- "seconds": 60.24021029472351
+ "seconds": 59.255149841308594
 }

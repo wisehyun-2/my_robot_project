@@ -13,7 +13,7 @@ FILE_DESCRIPTION(
 
 FILE_NAME(
 /* name */ 'deco_rear_panel.step',
-/* time_stamp */ '2026-10-31T00:56:36+09:00',
+/* time_stamp */ '2026-10-31T09:58:20+09:00',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20.2',
@@ -474,7 +474,7 @@ SOLID_ANGLE_UNIT()
 #419=PRODUCT_DEFINITION_SHAPE('',$,#422);
 #420=SHAPE_REPRESENTATION('',(#246),#412);
 #421=PRODUCT_DEFINITION_CONTEXT('part definition',#426,'design');
-#422=PRODUCT_DEFINITION('2026-10-31-00-56-36-625','deco_rear_panel',#423,
+#422=PRODUCT_DEFINITION('2026-10-31-09-58-20-872','deco_rear_panel',#423,
 #421);
 #423=PRODUCT_DEFINITION_FORMATION('',$,#428);
 #424=PRODUCT_RELATED_PRODUCT_CATEGORY('deco_rear_panel',
@@ -484,7 +484,7 @@ SOLID_ANGLE_UNIT()
 #426=APPLICATION_CONTEXT(
 'Core Data for Automotive Mechanical Design Process');
 #427=PRODUCT_CONTEXT('part definition',#426,'mechanical');
-#428=PRODUCT('2026-10-31-00-56-36-625','deco_rear_panel',
+#428=PRODUCT('2026-10-31-09-58-20-872','deco_rear_panel',
 'PETG \X2\C587C740\X0\ \X2\C7A5C2DDD310\X0\(\X2\C0C9\X0\: \X2\C774B98400B7ADF8B9BC\X0\ 
 \X2\CC38C870\X0\), \X2\C21CAC04C811CC29C81CB85C\X0\ \X2\BD99C784\X0\',(#427));
 #429=PRESENTATION_STYLE_ASSIGNMENT((#431));

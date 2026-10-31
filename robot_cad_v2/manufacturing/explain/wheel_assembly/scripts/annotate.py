@@ -181,7 +181,7 @@ def compose(raw, rec, names):
     if k == 'overview':
         header(dr, W, '바퀴 출력부 분해도  (왼쪽 다리)',
                '모든 부품이 떨어진 상태 — 오른쪽이 바깥(모터 쪽), 왼쪽이 로봇 중심 쪽.  모두 바퀴 축 위에서 축 방향으로 끼워진다.\n'
-               '체결 부품: ① M2.5 × 8 × 6  ② M3 × 14 × 6 + 와셔  ③ 평행핀 × 3  ④ M3 × 8 × 6 + 인서트  ⑤ M5 × 50  ⑥ M5 너트')
+               '체결 부품: ① M2.5 × 8 × 6  ② M3 × 14 × 6 + 와셔  ③ 평행핀 × 3  ④ M3 × 8 × 6 + 인서트  ⑤ M5 × 55  ⑥ M5 너트')
     elif k in ('before', 'after'):
         header(dr, W, rec['title'], rec['text'], step=rec['step'], tag='조립 전' if k == 'before' else '조립 후',
                tag_col='#7f8c8d' if k == 'before' else GREEN)

@@ -144,8 +144,8 @@ def specs():
             '바퀴', '육각 홈붙이 볼트 ISO 4762 8.8', 'M3 × 8', '육각 허브 → 허브 플랜지'), 12),
         'FX insert M3x5.7 hub': (lambda: insert(3, 5.7, LG.INSERT_M3), 'Brass', 'brass', (
             '바퀴', '열압입 인서트 황동', 'M3 × 5.7 (구멍 Ø4.0 × 6)', '허브 플랜지'), 12),
-        'FX ISO 4762 M5x50 axle': (sc(5, 50), 'Steel', 'steel', (
-            '바퀴', '육각 홈붙이 볼트 ISO 4762 8.8', 'M5 × 50', '바퀴 축 볼트(머리는 플랜지 포켓 안, 육각 허브를 누름)'), 2),
+        'FX ISO 4762 M5x55 axle': (sc(5, 55), 'Steel', 'steel', (                 # 10-31: 50 -> 55, full nut
+            '바퀴', '육각 홈붙이 볼트 ISO 4762 8.8', 'M5 × 55', '바퀴 축 볼트(머리는 플랜지 포켓 안, 육각 허브를 누름)'), 2),
         'FX DIN 7984 M2.5x6 board': (sc(2.5, 6, 'low'), 'Steel', 'steel', (
             '드라이버', '저두 볼트 DIN 7984', 'M2.5 × 6', 'moteus → 컵 스탠드오프(보드 모터 쪽에서)'), 24),
         'FX insert M2.5x4 cup': (lambda: insert(2.5, 4.0, LG.INSERT_M25), 'Brass', 'brass', (
@@ -239,7 +239,7 @@ def positions():
             x, z = 18 * math.cos(a), P.R_WHEEL + 18 * math.sin(a)
             out.append(('wheel_' + k, 'FX insert M3x5.7 hub', (x, Y(lv['f0'] + 0.1), z), D(+1)))
             out.append(('wheel_' + k, 'FX ISO 4762 M3x8 hex hub', (x, Y(lv['h0'] + 3.5), z), D(+1)))
-        out.append(('wheel_' + k, 'FX ISO 4762 M5x50 axle', (0.0, Y(lv['f0'] + 1.5), P.R_WHEEL), D(-1)))
+        out.append(('wheel_' + k, 'FX ISO 4762 M5x55 axle', (0.0, Y(lv['f0'] + 1.5), P.R_WHEEL), D(-1)))
         # knee: stator on the thigh plate (screws from its outer face), output on the shank
         m = LY.frames('knee', s)['motor']
         for q in LY.motor_points(m, P.AKE_PCD_RING / 2, P.AKE_RING_M25, A['ring']):

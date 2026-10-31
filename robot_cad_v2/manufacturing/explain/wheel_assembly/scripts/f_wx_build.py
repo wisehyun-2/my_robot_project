@@ -107,7 +107,7 @@ def run(_context: str):
         fast.append(('INS', 'insert M3x5.7 #%d' % i, ins, 'brass', (x, z)))
         fast.append(('S38', 'M3x8 ISO4762 8.8 #%d' % i,
                      cap_screw(x, z, lv['h0'] + 0.5, 1, 5.5, 3.0, 3.0, 8.0, 2.5, 1.3, pitch=0.8), 'steel', (x, z)))
-    fast.append(('BOLT', 'M5x50 ISO4762 8.8', cap_screw(0.0, P.R_WHEEL, lv['f0'] + 6.5, -1, 8.5, 5.0, 5.0, 50.0, 4.0,
+    fast.append(('BOLT', 'M5x55 ISO4762 8.8', cap_screw(0.0, P.R_WHEEL, lv['f0'] + 6.5, -1, 8.5, 5.0, 5.0, 55.0, 4.0,
                                                          2.5, thread_len=22.0, pitch=1.0), 'steel', (0.0, P.R_WHEEL)))
 
     # ---------------------------------------------------------------- new document

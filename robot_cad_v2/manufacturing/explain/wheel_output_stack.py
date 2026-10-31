@@ -40,8 +40,8 @@ SOCK = SEAT + P.HEX_L + 1.0                      # 168.5 end of the wheel's hex 
 WEB = SEAT - 4.0                                 # 151.5 wheel web outer face (the nut flange bears here)
 NUT1 = WEB - 6.0                                 # 145.5 nut far face (modelled flange nut: flange 1 + hex 5)
 BOLT_HEAD = F0 + 1.5                             # 198.0 M5 head bears on the hex hub register spigot
-BOLT_L = 50.0
-BOLT_TIP = BOLT_HEAD - BOLT_L                    # 148.0
+BOLT_L = 55.0                                    # 10-31: 50 -> 55 (the M5 x 50 engaged only 3.5 of the 6 mm nut)
+BOLT_TIP = BOLT_HEAD - BOLT_L                    # 143.0, 2.5 past the nut, 2.5 inside the tyre side face
 BEAR = OUT - P.HUB_SCREW_SEAT                    # 202.0 washer seat of the M3 x 14 in the flange (10-30)
 LS = P.HUB_SCREW_L                               # 14
 ENG = BEAR - 0.5 + LS - OUT                      # 4.0 thread engagement in the output taps
@@ -102,7 +102,7 @@ def draw_parts(ax, tyre=True):
         # hex hub (PETG 100 %): 17 mm hex in the wheel, Ø30 body, Ø46 flange, Ø20 register spigot
         poly([(SEAT, 2.65), (SEAT, HEXF), (HEX1 + 0.5, HEXF), (HEX1 + 0.5, 15.0), (H0, 15.0), (H0, 23.0),
               (F0, 23.0), (F0, 10.0), (F0 + 1.5, 10.0), (F0 + 1.5, 2.65)], g['hexhub'], s)
-        # M5 x 50 axle bolt (head in the flange pocket, on the hex hub spigot) + serrated flange nut on the web
+        # M5 x 55 axle bolt (head in the flange pocket, on the hex hub spigot) + serrated flange nut on the web
         rect(BOLT_HEAD, BOLT_HEAD + 5.0, 0, 4.25, g['screw'], s, z=3)
         rect(BOLT_TIP, BOLT_HEAD, 0, 2.5, g['screw'], s, z=3)
         rect(WEB - 1.0, WEB, 2.5, 6.0, g['nut'], s, z=3)
@@ -234,8 +234,9 @@ dim_h(ax, SEAT, SOCK, -44.0, '육각 물림 13', (-HEXF, -15.5), fs=11)
 dim_h(ax, H0, F0, -44.0, '6', (-23, -23), fs=11)
 dim_h(ax, F0, F1, -44.0, '8', (None, -23), fs=11)
 dim_h(ax, NUT1, WEB, -50.0, '너트 6', (-4, -6), fs=11)
-dim_h(ax, BOLT_TIP, BOLT_HEAD, -55.0, 'M5 × 50 (머리 받침면 → 끝)', (-2.5, -4.25), fs=11)
-dim_h(ax, BOLT_TIP, WEB, -61.0, '너트 물림 3.5', (-2.5, -6), fs=11, c='#b03020')
+dim_h(ax, BOLT_TIP, BOLT_HEAD, -55.0, 'M5 × 55 (머리 받침면 → 끝)', (-2.5, -4.25), fs=11)
+dim_h(ax, NUT1, WEB, -61.0, '너트 물림 6 (전체)', (-2.5, -6), fs=11)
+dim_h(ax, BOLT_TIP, NUT1, -50.0, '2.5', (-2.5, -6), fs=11)
 dim_h(ax, F1, PL0, -50.0, '1', (-23, -44), fs=11)
 dim_h(ax, PL0, PL1, -50.0, '판 9', (None, -44), fs=11)
 dim_h(ax, BEAR, OUT, -55.0, '%.1f' % P.HUB_SCREW_SEAT, (-RQ - 3.5, -14), fs=11)
@@ -260,11 +261,11 @@ rows = [
     ('4', '#1f4e9c', 'M3 × 8  ISO 4762 8.8   × 6   + 황동 열압입 인서트 M3 × 5.7   × 6',
      '육각 허브 → 허브 플랜지 (r 18 = PCD 36).  인서트 구멍 Ø4.0 × 6, 물림 5.5 mm.\n'
      '나사는 바퀴 스포크 사이(30° 어긋남)에 있어 바퀴를 끼운 채 렌치가 들어감'),
-    ('5', '#1f4e9c', 'M5 × 50  ISO 4762 8.8   × 1   (바퀴 축 볼트)',
+    ('5', '#1f4e9c', 'M5 × 55  ISO 4762 8.8   × 1   (바퀴 축 볼트)',
      '머리가 플랜지 포켓(Ø9.5 × 7) 안에서 육각 허브의 Ø20 턱을 누름 → 허브 플랜지를 붙이기 전에 끼움'),
     ('6', '#1f4e9c', 'M5 세레이션 플랜지 휠 너트 (1/8 RC용)   × 1',
-     '림 웹을 육각 끝면에 눌러 바퀴를 고정.  모델에서는 볼트 끝이 너트 안 3.5 mm에서 끝남\n'
-     '(너트 높이 6, 볼트가 너트를 다 지나지 못함) → 실제 휠 웹 두께 확인 후 M5 × 55 검토'),
+     '림 웹을 육각 끝면에 눌러 바퀴를 고정.  너트 높이 6 전체 물림, 볼트 끝이 너트 밖으로 2.5 mm\n'
+     '(타이어 바깥면보다 2.5 mm 안쪽).  10-31 M5 × 50 → 55 (전에는 3.5 mm만 물림)'),
 ]
 tx.text(0.0, 0.985, '나사·핀  (바퀴 한쪽 기준 — 로봇 전체는 × 2)', fontsize=18, weight='bold', va='top')
 y = 0.90

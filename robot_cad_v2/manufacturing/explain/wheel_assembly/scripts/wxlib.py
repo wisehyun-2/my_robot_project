@@ -21,7 +21,7 @@ ORDER = list(HOME)
 NAMES = dict(SHANK='정강이 (PETG, 아래쪽만)', MOTOR='AKE60-8 모터', RING='SUS304 클램프 링 2 t',
              S25='① M2.5 × 8 저두 × 6', INS='황동 인서트 M3 × 6', FLANGE='허브 플랜지 (PETG)',
              PINS='③ 평행핀 Ø3 × 10 × 3', WASH='평와셔 M3 × 6', S316='② M3 × 14 (12.9) × 6',
-             BOLT='⑤ M5 × 50 축 볼트', HEX='육각 허브 (PETG)', WHEEL='RC 바퀴 Ø150 × 60', NUT='⑥ M5 플랜지 너트',
+             BOLT='⑤ M5 × 55 축 볼트', HEX='육각 허브 (PETG)', WHEEL='RC 바퀴 Ø150 × 60', NUT='⑥ M5 플랜지 너트',
              S38='④ M3 × 8 × 6')
 # moves: (group, target) with target 0 (final place) or another group's name (ride on that group's current offset)
 STEPS = [
@@ -41,7 +41,7 @@ STEPS = [
          moves=[[('PINS', 0)], [('FLANGE', 0), ('INS', 0)], [('WASH', 0)], [('S316', 0)]], spin=['S316'],
          view=(0.8, -0.65, 0.4)),
     dict(key='s4', title='5단계  M5 축 볼트 → 육각 허브 (작업대)',
-         text='⑤ M5 × 50 볼트를 육각 허브의 플랜지 쪽(Ø20 턱)에서 끼운다. 머리는 나중에 허브 플랜지 포켓 안에 들어간다.',
+         text='⑤ M5 × 55 볼트를 육각 허브의 플랜지 쪽(Ø20 턱)에서 끼운다. 머리는 나중에 허브 플랜지 포켓 안에 들어간다.',
          moves=[[('BOLT', 'HEX')]], bench=['HEX', 'BOLT'], view=(0.7, 0.65, 0.4)),
     dict(key='s5', title='6단계  바퀴 → 17 mm 육각, ⑥ 너트 (작업대)',
          text='바퀴를 육각에 끼우고 ⑥ M5 세레이션 너트로 림 웹을 육각 끝면에 조인다 (볼트 머리는 육각 렌치로 잡는다).',
