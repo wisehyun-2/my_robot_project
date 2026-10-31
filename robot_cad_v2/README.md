@@ -18,7 +18,7 @@
 - 질량 8.924 → **9.179 kg**(체결 부품 +0.257 kg, mjpower-ss 쪽 −0.003, 축 볼트 +0.001). 모터 재검증(MuJoCo) 9.21 / 14.21 kg
   모두 회복, 최대 토크 12.5의 83 % 이하(7절).
 - 2D 단면도: `manufacturing/explain/wheel_output_stack.png`(바퀴 출력부 전체, 치수·나사·하중 경로), 조립 그림·영상:
-  `manufacturing/explain/wheel_assembly/`, `manufacturing/explain/assembly/`(무릎·hip·몸통).
+  `manufacturing/explain/assembly/`(`wheel/` 바퀴, `knee/`·`hip/`·`torso/`).
 
 2026-10-28 개정:
 - 링크 옆 처짐을 **PETG만으로** 1 mm 이하로 맞추려고 허벅지·정강이를 다리 바깥쪽 빈 공간으로 넓혔다(6절).

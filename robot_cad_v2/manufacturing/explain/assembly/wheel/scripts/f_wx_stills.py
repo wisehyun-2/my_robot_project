@@ -3,7 +3,7 @@ Writes <WORK>/raw/*.png (raw Fusion captures) + raw/stills.json (cameras, label 
 import importlib
 import math
 import sys
-SP = r'C:\Users\User\Desktop\myrobot\my_robot_project\robot_cad_v2\manufacturing\explain\wheel_assembly\scripts'
+SP = r'C:\Users\User\Desktop\myrobot\my_robot_project\robot_cad_v2\manufacturing\explain\assembly\wheel\scripts'
 FUS = r'C:\Users\User\Desktop\myrobot\my_robot_project\robot_cad_v2\fusion'
 
 
