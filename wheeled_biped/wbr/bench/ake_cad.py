@@ -14,6 +14,7 @@ built differently (build_cad_model):
 
     python -m wbr.bench.ake_cad                      # both cases -> results/ake_cad/
     python -m wbr.bench.ake_cad --only robot --quick
+    python -m wbr.bench.ake_cad --cad ../robot_cad_v3/calc/mass_properties.json --out results/ake_cad_v3   # v3 (6061 legs)
 """
 from __future__ import annotations
 
@@ -228,8 +229,10 @@ def main(argv=None):
     ap.add_argument("--quick", action="store_true")
     ap.add_argument("--out", type=Path, default=OUT_DIR)
     ap.add_argument("--static", action="store_true", help="only the model facts (masses, standing torques)")
+    ap.add_argument("--cad", type=Path, default=CAD_JSON,
+                    help="mass_properties.json of the CAD robot (default robot_cad_v2; v3: robot_cad_v3/calc/...)")
     args = ap.parse_args(argv)
-    cases = [c for c in CASES if not args.only or c.tag in args.only]
+    cases = [dataclasses.replace(c, cad_json=str(args.cad)) for c in CASES if not args.only or c.tag in args.only]
     args.out.mkdir(parents=True, exist_ok=True)
     stat = {c.tag: static_report(dataclasses.replace(c)) for c in cases}
     (args.out / "static.json").write_text(json.dumps(stat, indent=1), encoding="utf-8")

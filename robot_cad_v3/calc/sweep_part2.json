@@ -1,0 +1,761 @@
+{
+ "rows": [
+  {
+   "L0": 310.0,
+   "hip": -80.0,
+   "real": [],
+   "groups": {
+    "knee driver / cup / thigh cables vs torso": [
+     1.8500000000000227,
+     "femur_L:1+FX ISO 10642 M3x8 cover:71",
+     "torso:1+FX ISO 7380 M3x6 shell:28"
+    ],
+    "tyre / rim / hub vs torso": [
+     13.114674748350827,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "torso:1+shell_rear_L:1"
+    ],
+    "tyre / rim / hub vs thigh, knee cup": [
+     27.551134277920426,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "femur_L:1+cup_knee_L:1"
+    ],
+    "tyre / rim / hub vs thigh cables": [
+     36.5261624051148,
+     "wheel_R:1+tyre M365 8.5x2 solid (202 x 54):7",
+     "femur_R:1+harness_knee_to_wheel_R_2:1"
+    ],
+    "thigh vs torso shell / shell screws": [
+     2.356064242335197,
+     "femur_L:1+thigh_cover_L:1",
+     "torso:1+FX ISO 7380 M3x6 shell:28"
+    ],
+    "shank parts vs torso": [
+     60.492868170622316,
+     "tibia_L:1+shank_L:1",
+     "torso:1+shell_mid_L:1"
+    ]
+   },
+   "loops": {
+    "hip_to_knee_L": [
+     8.538725938473656,
+     "femur_L:1+thigh_L:1",
+     true,
+     66.95819939122647
+    ],
+    "knee_to_wheel_L": [
+     6.49157775045185,
+     "tibia_L:1+shank_L:1",
+     true,
+     74.49767693406463
+    ],
+    "hip_to_knee_R": [
+     9.601482267527384,
+     "femur_R:1+thigh_R:1",
+     true,
+     66.95819939122647
+    ],
+    "knee_to_wheel_R": [
+     6.49157775045185,
+     "tibia_R:1+shank_R:1",
+     true,
+     74.49767693406463
+    ]
+   }
+  },
+  {
+   "L0": 310.0,
+   "hip": -60.0,
+   "real": [],
+   "groups": {
+    "knee driver / cup / thigh cables vs torso": [
+     3.500000000000014,
+     "femur_L:1+FX ISO 10642 M3x8 cover:68",
+     "torso:1+shell_mid_L:1"
+    ],
+    "tyre / rim / hub vs torso": [
+     41.078354357732174,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "torso:1+shell_rear_L:1"
+    ],
+    "tyre / rim / hub vs thigh, knee cup": [
+     27.551134277920376,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "femur_L:1+cup_knee_L:1"
+    ],
+    "tyre / rim / hub vs thigh cables": [
+     36.5261624051148,
+     "wheel_R:1+tyre M365 8.5x2 solid (202 x 54):7",
+     "femur_R:1+harness_knee_to_wheel_R_2:1"
+    ],
+    "thigh vs torso shell / shell screws": [
+     3.5000000000000497,
+     "femur_L:1+thigh_cover_L:1",
+     "torso:1+shell_mid_L:1"
+    ],
+    "shank parts vs torso": [
+     69.40507112580674,
+     "tibia_L:1+shank_L:1",
+     "torso:1+shell_mid_L:1"
+    ]
+   },
+   "loops": {
+    "hip_to_knee_L": [
+     9.46057426510656,
+     "femur_L:1+thigh_L:1",
+     true,
+     85.9175261273797
+    ],
+    "knee_to_wheel_L": [
+     7.5671982330347,
+     "tibia_L:1+shank_L:1",
+     true,
+     74.49767693406463
+    ],
+    "hip_to_knee_R": [
+     10.276306703490823,
+     "femur_R:1+thigh_R:1",
+     true,
+     85.9175261273797
+    ],
+    "knee_to_wheel_R": [
+     7.5671982330347,
+     "tibia_R:1+shank_R:1",
+     true,
+     74.49767693406463
+    ]
+   }
+  },
+  {
+   "L0": 310.0,
+   "hip": -30.0,
+   "real": [],
+   "groups": {
+    "knee driver / cup / thigh cables vs torso": [
+     3.500000000000014,
+     "femur_L:1+FX ISO 10642 M3x8 cover:68",
+     "torso:1+shell_mid_L:1"
+    ],
+    "tyre / rim / hub vs torso": [
+     1000000000.0,
+     "",
+     ""
+    ],
+    "tyre / rim / hub vs thigh, knee cup": [
+     27.551134277920404,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "femur_L:1+cup_knee_L:1"
+    ],
+    "tyre / rim / hub vs thigh cables": [
+     36.52616240511483,
+     "wheel_R:1+tyre M365 8.5x2 solid (202 x 54):7",
+     "femur_R:1+harness_knee_to_wheel_R_2:1"
+    ],
+    "thigh vs torso shell / shell screws": [
+     3.5000000000000497,
+     "femur_L:1+thigh_cover_L:1",
+     "torso:1+shell_mid_L:1"
+    ],
+    "shank parts vs torso": [
+     1000000000.0,
+     "",
+     ""
+    ]
+   },
+   "loops": {
+    "hip_to_knee_L": [
+     9.46052050658255,
+     "femur_L:1+thigh_L:1",
+     true,
+     109.66323794133412
+    ],
+    "knee_to_wheel_L": [
+     6.588966453093974,
+     "tibia_L:1+shank_L:1",
+     true,
+     74.49767693406466
+    ],
+    "hip_to_knee_R": [
+     10.276277306987273,
+     "femur_R:1+thigh_R:1",
+     true,
+     109.66323794133412
+    ],
+    "knee_to_wheel_R": [
+     6.588966453093974,
+     "tibia_R:1+shank_R:1",
+     true,
+     74.49767693406466
+    ]
+   }
+  },
+  {
+   "L0": 310.0,
+   "hip": 0.0,
+   "real": [],
+   "groups": {
+    "knee driver / cup / thigh cables vs torso": [
+     3.500000000000014,
+     "femur_L:1+FX ISO 10642 M3x8 cover:68",
+     "torso:1+shell_mid_L:1"
+    ],
+    "tyre / rim / hub vs torso": [
+     1000000000.0,
+     "",
+     ""
+    ],
+    "tyre / rim / hub vs thigh, knee cup": [
+     27.551134277920344,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "femur_L:1+cup_knee_L:1"
+    ],
+    "tyre / rim / hub vs thigh cables": [
+     1000000000.0,
+     "",
+     ""
+    ],
+    "thigh vs torso shell / shell screws": [
+     3.5000000000000497,
+     "femur_L:1+thigh_cover_L:1",
+     "torso:1+shell_mid_L:1"
+    ],
+    "shank parts vs torso": [
+     1000000000.0,
+     "",
+     ""
+    ]
+   },
+   "loops": {
+    "hip_to_knee_L": [
+     9.459012045126803,
+     "femur_L:1+thigh_L:1",
+     true,
+     126.16160345109056
+    ],
+    "knee_to_wheel_L": [
+     5.730964498206623,
+     "tibia_L:1+shank_L:1",
+     true,
+     74.49767693406464
+    ],
+    "hip_to_knee_R": [
+     10.275451849342732,
+     "femur_R:1+thigh_R:1",
+     true,
+     126.16160345109056
+    ],
+    "knee_to_wheel_R": [
+     5.730964498206623,
+     "tibia_R:1+shank_R:1",
+     true,
+     74.49767693406464
+    ]
+   }
+  },
+  {
+   "L0": 310.0,
+   "hip": 30.0,
+   "real": [],
+   "groups": {
+    "knee driver / cup / thigh cables vs torso": [
+     2.055746511865751,
+     "femur_L:1+FX ISO 10642 M3x8 cover:70",
+     "torso:1+FX ISO 7380 M3x6 shell:29"
+    ],
+    "tyre / rim / hub vs torso": [
+     1000000000.0,
+     "",
+     ""
+    ],
+    "tyre / rim / hub vs thigh, knee cup": [
+     27.55113427792038,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "femur_L:1+cup_knee_L:1"
+    ],
+    "tyre / rim / hub vs thigh cables": [
+     36.52616240511481,
+     "wheel_R:1+tyre M365 8.5x2 solid (202 x 54):7",
+     "femur_R:1+harness_knee_to_wheel_R_2:1"
+    ],
+    "thigh vs torso shell / shell screws": [
+     1.8500000000000583,
+     "femur_L:1+thigh_cover_L:1",
+     "torso:1+FX ISO 7380 M3x6 shell:29"
+    ],
+    "shank parts vs torso": [
+     59.01687883621368,
+     "tibia_R:1+shank_R:1",
+     "torso:1+shell_mid_R:1"
+    ]
+   },
+   "loops": {
+    "hip_to_knee_L": [
+     5.050000000000061,
+     "femur_L:1+thigh_L:1",
+     true,
+     134.20684824438214
+    ],
+    "knee_to_wheel_L": [
+     5.4533601786515415,
+     "tibia_L:1+shank_L:1",
+     true,
+     74.49767693406461
+    ],
+    "hip_to_knee_R": [
+     6.450000000000067,
+     "femur_R:1+thigh_R:1",
+     true,
+     134.20684824438214
+    ],
+    "knee_to_wheel_R": [
+     5.4533601786515415,
+     "tibia_R:1+shank_R:1",
+     true,
+     74.49767693406461
+    ]
+   }
+  },
+  {
+   "L0": 310.0,
+   "hip": 60.0,
+   "real": [],
+   "groups": {
+    "knee driver / cup / thigh cables vs torso": [
+     1.8500000000000227,
+     "femur_L:1+FX ISO 10642 M3x8 cover:71",
+     "torso:1+FX ISO 7380 M3x6 shell:29"
+    ],
+    "tyre / rim / hub vs torso": [
+     84.6842786146636,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "torso:1+shell_front_L:1"
+    ],
+    "tyre / rim / hub vs thigh, knee cup": [
+     27.551134277920397,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "femur_L:1+cup_knee_L:1"
+    ],
+    "tyre / rim / hub vs thigh cables": [
+     36.52616240511483,
+     "wheel_R:1+tyre M365 8.5x2 solid (202 x 54):7",
+     "femur_R:1+harness_knee_to_wheel_R_2:1"
+    ],
+    "thigh vs torso shell / shell screws": [
+     1.8500000000000583,
+     "femur_L:1+thigh_cover_L:1",
+     "torso:1+FX ISO 7380 M3x6 shell:29"
+    ],
+    "shank parts vs torso": [
+     79.14036649629936,
+     "tibia_L:1+shank_L:1",
+     "torso:1+shell_mid_L:1"
+    ]
+   },
+   "loops": {
+    "hip_to_knee_L": [
+     5.050000000000026,
+     "femur_L:1+thigh_L:1",
+     true,
+     133.22510607802593
+    ],
+    "knee_to_wheel_L": [
+     5.831443416989703,
+     "tibia_L:1+shank_L:1",
+     true,
+     74.49767693406466
+    ],
+    "hip_to_knee_R": [
+     6.450000000000031,
+     "femur_R:1+thigh_R:1",
+     true,
+     133.22510607802593
+    ],
+    "knee_to_wheel_R": [
+     5.831443416989703,
+     "tibia_R:1+shank_R:1",
+     true,
+     74.49767693406466
+    ]
+   }
+  },
+  {
+   "L0": 335.0,
+   "hip": -80.0,
+   "real": [],
+   "groups": {
+    "knee driver / cup / thigh cables vs torso": [
+     3.4999999999999787,
+     "femur_L:1+FX ISO 10642 M3x8 cover:68",
+     "torso:1+shell_mid_L:1"
+    ],
+    "tyre / rim / hub vs torso": [
+     28.789778425448745,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "torso:1+shell_rear_L:1"
+    ],
+    "tyre / rim / hub vs thigh, knee cup": [
+     27.551134277920156,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "femur_L:1+cup_knee_L:1"
+    ],
+    "tyre / rim / hub vs thigh cables": [
+     62.40482184214666,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "femur_L:1+harness_knee_to_wheel_L_0:1"
+    ],
+    "thigh vs torso shell / shell screws": [
+     1.8500000000000583,
+     "femur_L:1+thigh_cover_L:1",
+     "torso:1+FX ISO 7380 M3x6 shell:28"
+    ],
+    "shank parts vs torso": [
+     1000000000.0,
+     "",
+     ""
+    ]
+   },
+   "loops": {
+    "hip_to_knee_L": [
+     5.652521670515251,
+     "femur_L:1+thigh_L:1",
+     true,
+     55.96967564629395
+    ],
+    "knee_to_wheel_L": [
+     7.144785321662637,
+     "tibia_L:1+shank_L:1",
+     true,
+     100.27705893857753
+    ],
+    "hip_to_knee_R": [
+     6.974371881325081,
+     "femur_R:1+thigh_R:1",
+     true,
+     55.96967564629395
+    ],
+    "knee_to_wheel_R": [
+     7.144785321662637,
+     "tibia_R:1+shank_R:1",
+     true,
+     100.27705893857753
+    ]
+   }
+  },
+  {
+   "L0": 335.0,
+   "hip": -60.0,
+   "real": [],
+   "groups": {
+    "knee driver / cup / thigh cables vs torso": [
+     3.500000000000014,
+     "femur_L:1+FX ISO 10642 M3x8 cover:68",
+     "torso:1+shell_mid_L:1"
+    ],
+    "tyre / rim / hub vs torso": [
+     60.701594365092355,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "torso:1+shell_rear_L:1"
+    ],
+    "tyre / rim / hub vs thigh, knee cup": [
+     27.551134277920546,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "femur_L:1+cup_knee_L:1"
+    ],
+    "tyre / rim / hub vs thigh cables": [
+     62.404821842146916,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "femur_L:1+harness_knee_to_wheel_L_0:1"
+    ],
+    "thigh vs torso shell / shell screws": [
+     3.5000000000000497,
+     "femur_L:1+thigh_cover_L:1",
+     "torso:1+shell_mid_L:1"
+    ],
+    "shank parts vs torso": [
+     62.04098490226701,
+     "tibia_L:1+shank_L:1",
+     "torso:1+shell_mid_L:1"
+    ]
+   },
+   "loops": {
+    "hip_to_knee_L": [
+     9.46057591355375,
+     "femur_L:1+thigh_L:1",
+     true,
+     75.9085156834004
+    ],
+    "knee_to_wheel_L": [
+     7.335338415964047,
+     "tibia_L:1+shank_L:1",
+     true,
+     100.2770589385776
+    ],
+    "hip_to_knee_R": [
+     10.276307604879866,
+     "femur_R:1+thigh_R:1",
+     true,
+     75.9085156834004
+    ],
+    "knee_to_wheel_R": [
+     7.335338415964047,
+     "tibia_R:1+shank_R:1",
+     true,
+     100.2770589385776
+    ]
+   }
+  },
+  {
+   "L0": 335.0,
+   "hip": -30.0,
+   "real": [],
+   "groups": {
+    "knee driver / cup / thigh cables vs torso": [
+     3.500000000000014,
+     "femur_L:1+FX ISO 10642 M3x8 cover:68",
+     "torso:1+shell_mid_L:1"
+    ],
+    "tyre / rim / hub vs torso": [
+     1000000000.0,
+     "",
+     ""
+    ],
+    "tyre / rim / hub vs thigh, knee cup": [
+     27.551134277920305,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "femur_L:1+cup_knee_L:1"
+    ],
+    "tyre / rim / hub vs thigh cables": [
+     62.404821842146774,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "femur_L:1+harness_knee_to_wheel_L_0:1"
+    ],
+    "thigh vs torso shell / shell screws": [
+     3.5000000000000497,
+     "femur_L:1+thigh_cover_L:1",
+     "torso:1+shell_mid_L:1"
+    ],
+    "shank parts vs torso": [
+     1000000000.0,
+     "",
+     ""
+    ]
+   },
+   "loops": {
+    "hip_to_knee_L": [
+     9.46057264957667,
+     "femur_L:1+thigh_L:1",
+     true,
+     101.8477773434807
+    ],
+    "knee_to_wheel_L": [
+     6.221551921861632,
+     "tibia_L:1+shank_L:1",
+     true,
+     100.27705893857748
+    ],
+    "hip_to_knee_R": [
+     10.276305820099976,
+     "femur_R:1+thigh_R:1",
+     true,
+     101.8477773434807
+    ],
+    "knee_to_wheel_R": [
+     6.221551921861632,
+     "tibia_R:1+shank_R:1",
+     true,
+     100.27705893857748
+    ]
+   }
+  },
+  {
+   "L0": 335.0,
+   "hip": 0.0,
+   "real": [],
+   "groups": {
+    "knee driver / cup / thigh cables vs torso": [
+     3.500000000000014,
+     "femur_L:1+FX ISO 10642 M3x8 cover:68",
+     "torso:1+shell_mid_L:1"
+    ],
+    "tyre / rim / hub vs torso": [
+     1000000000.0,
+     "",
+     ""
+    ],
+    "tyre / rim / hub vs thigh, knee cup": [
+     27.551134277920376,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "femur_L:1+cup_knee_L:1"
+    ],
+    "tyre / rim / hub vs thigh cables": [
+     1000000000.0,
+     "",
+     ""
+    ],
+    "thigh vs torso shell / shell screws": [
+     3.5000000000000497,
+     "femur_L:1+thigh_cover_L:1",
+     "torso:1+shell_mid_L:1"
+    ],
+    "shank parts vs torso": [
+     1000000000.0,
+     "",
+     ""
+    ]
+   },
+   "loops": {
+    "hip_to_knee_L": [
+     9.459926493439589,
+     "femur_L:1+thigh_L:1",
+     true,
+     121.1333634381727
+    ],
+    "knee_to_wheel_L": [
+     5.55728371018748,
+     "tibia_L:1+shank_L:1",
+     true,
+     100.27705893857755
+    ],
+    "hip_to_knee_R": [
+     10.275952388737252,
+     "femur_R:1+thigh_R:1",
+     true,
+     121.1333634381727
+    ],
+    "knee_to_wheel_R": [
+     5.55728371018748,
+     "tibia_R:1+shank_R:1",
+     true,
+     100.27705893857755
+    ]
+   }
+  },
+  {
+   "L0": 335.0,
+   "hip": 30.0,
+   "real": [],
+   "groups": {
+    "knee driver / cup / thigh cables vs torso": [
+     2.082723179001581,
+     "femur_L:1+FX ISO 10642 M3x8 cover:70",
+     "torso:1+FX ISO 7380 M3x6 shell:29"
+    ],
+    "tyre / rim / hub vs torso": [
+     1000000000.0,
+     "",
+     ""
+    ],
+    "tyre / rim / hub vs thigh, knee cup": [
+     27.55113427792033,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "femur_L:1+cup_knee_L:1"
+    ],
+    "tyre / rim / hub vs thigh cables": [
+     62.40482184214685,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "femur_L:1+harness_knee_to_wheel_L_0:1"
+    ],
+    "thigh vs torso shell / shell screws": [
+     1.8500000000000227,
+     "femur_L:1+thigh_cover_L:1",
+     "torso:1+FX ISO 7380 M3x6 shell:29"
+    ],
+    "shank parts vs torso": [
+     55.6276679384128,
+     "tibia_R:1+shank_R:1",
+     "torso:1+shell_mid_R:1"
+    ]
+   },
+   "loops": {
+    "hip_to_knee_L": [
+     5.2226928330628155,
+     "femur_L:1+thigh_L:1",
+     true,
+     132.32838287185544
+    ],
+    "knee_to_wheel_L": [
+     5.517094256412087,
+     "tibia_L:1+shank_L:1",
+     true,
+     100.27705893857757
+    ],
+    "hip_to_knee_R": [
+     6.599177205676456,
+     "femur_R:1+thigh_R:1",
+     true,
+     132.32838287185544
+    ],
+    "knee_to_wheel_R": [
+     5.517094256412087,
+     "tibia_R:1+shank_R:1",
+     true,
+     100.27705893857757
+    ]
+   }
+  },
+  {
+   "L0": 335.0,
+   "hip": 60.0,
+   "real": [],
+   "groups": {
+    "knee driver / cup / thigh cables vs torso": [
+     3.500000000000014,
+     "femur_L:1+FX ISO 10642 M3x8 cover:68",
+     "torso:1+shell_mid_L:1"
+    ],
+    "tyre / rim / hub vs torso": [
+     109.00483243822316,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "torso:1+shell_front_L:1"
+    ],
+    "tyre / rim / hub vs thigh, knee cup": [
+     27.55113427792037,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "femur_L:1+cup_knee_L:1"
+    ],
+    "tyre / rim / hub vs thigh cables": [
+     62.40482184214685,
+     "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):6",
+     "femur_L:1+harness_knee_to_wheel_L_0:1"
+    ],
+    "thigh vs torso shell / shell screws": [
+     1.8500000000000583,
+     "femur_L:1+thigh_cover_L:1",
+     "torso:1+FX ISO 7380 M3x6 shell:29"
+    ],
+    "shank parts vs torso": [
+     75.22263241233405,
+     "tibia_L:1+shank_L:1",
+     "torso:1+shell_mid_L:1"
+    ]
+   },
+   "loops": {
+    "hip_to_knee_L": [
+     5.050000000000026,
+     "femur_L:1+thigh_L:1",
+     true,
+     134.62982204767047
+    ],
+    "knee_to_wheel_L": [
+     6.11609008838935,
+     "tibia_L:1+shank_L:1",
+     true,
+     100.27705893857758
+    ],
+    "hip_to_knee_R": [
+     6.449999999999996,
+     "femur_R:1+thigh_R:1",
+     true,
+     134.62982204767047
+    ],
+    "knee_to_wheel_R": [
+     6.11609008838935,
+     "tibia_R:1+shank_R:1",
+     true,
+     100.27705893857758
+    ]
+   }
+  }
+ ],
+ "seconds": 75.47317838668823
+}
