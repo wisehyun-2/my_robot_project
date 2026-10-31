@@ -44,7 +44,6 @@ PRINT_NOTE = {
     'electronics_deck': 'PETG 30 %',
     'shell_': 'PETG 진회색 25 %, 바깥 면을 위로(서포트 필요), 앞·hip·뒤 × 좌우 6조각',
     'saddle_': 'PETG 파랑 25 % (hip 위 안장)',
-    'deco_': 'PETG 얇은 장식판(색: 이름·그림 참조), 순간접착제로 붙임',
     'splice_tabs': 'PETG 100 %, 셸 조각 이음판(M3 + 너트)',
 }
 MACHINED = {
@@ -125,7 +124,7 @@ def set_visible(prefixes, on):
             o.isLightBulbOn = on
 
 
-SHELL = ('shell_', 'saddle_', 'deco_', 'splice_tabs')
+SHELL = ('shell_', 'saddle_', 'splice_tabs')
 
 
 def snap(name, eye, target, **kw):

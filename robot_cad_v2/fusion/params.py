@@ -242,7 +242,7 @@ PRINT = {
     'hub_flange': (99.0, 1.0), 'hex_hub': (99.0, 1.0),          # 100 %
     'cup_': (1.6, 0.30), 'cable_clips': (1.6, 0.40),
     'top_plate': (1.6, 0.25), 'battery_tray': (1.6, 0.30), 'electronics_deck': (1.6, 0.30),
-    'shell_': (1.6, 0.25), 'saddle_': (1.6, 0.25), 'deco_': (1.6, 1.0),
+    'shell_': (1.6, 0.25), 'saddle_': (1.6, 0.25),
     'splice_tabs': (1.6, 1.0),
 }
 PETG_RHO = 1270.0

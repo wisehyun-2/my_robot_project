@@ -15,9 +15,6 @@
 | 3D 프린트 | cup_knee_R | PETG 30 %, 바닥(덮개 면)을 바닥에, 서포트는 커넥터 창만 | 1 |  |
 | 3D 프린트 | cup_wheel_L | PETG 30 %, 바닥(덮개 면)을 바닥에, 서포트는 커넥터 창만 | 1 |  |
 | 3D 프린트 | cup_wheel_R | PETG 30 %, 바닥(덮개 면)을 바닥에, 서포트는 커넥터 창만 | 1 |  |
-| 3D 프린트 | deco_lines_white | PETG 얇은 장식판(색: 이름·그림 참조), 순간접착제로 붙임 | 1 |  |
-| 3D 프린트 | deco_rear_panel | PETG 얇은 장식판(색: 이름·그림 참조), 순간접착제로 붙임 | 1 |  |
-| 3D 프린트 | deco_stripes_blue | PETG 얇은 장식판(색: 이름·그림 참조), 순간접착제로 붙임 | 1 |  |
 | 3D 프린트 | electronics_deck | PETG 30 % | 1 |  |
 | 3D 프린트 | hex_hub_L | PETG 100 %, 플랜지 면을 바닥에(육각 위) | 1 |  |
 | 3D 프린트 | hex_hub_R | PETG 100 %, 플랜지 면을 바닥에(육각 위) | 1 |  |

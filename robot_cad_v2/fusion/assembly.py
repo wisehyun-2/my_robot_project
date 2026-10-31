@@ -202,9 +202,6 @@ def build_shell():
     for name, body in SH.pieces(h).items():
         add_part(t, name, body, 'PETG print', 'blue' if name.startswith('saddle') else 'shell grey')
     add_part(t, 'splice_tabs', SH.splice_tabs(), 'PETG print', 'dark grey')
-    add_part(t, 'deco_stripes_blue', SH.stripes_blue(), 'PETG print', 'blue')
-    add_part(t, 'deco_lines_white', SH.lines_white(), 'PETG print', 'white')
-    add_part(t, 'deco_rear_panel', SH.rear_panel(), 'PETG print', 'dark grey')
 
 
 def build_leg(s, parts):

@@ -8,10 +8,9 @@ the bottom); the rear (user's sketch) is an upper slope from the top down to a s
 from the face back to the bottom, cutting the whole width.  Plan view: chamfered vertical corners at both ends; the
 hip section's tapered ends run the full height (10-31: no top / bottom edge chamfers, so the saddle's front and back
 faces go straight up to the top and to the rear upper slope).
-Colours: body dark grey; blue = hip saddles, the rear band with its side dashes; white = the line along the top of
-the vertical rear face (wrapping onto the right side only) and the right side ticks.  10-31 (user): the top stripes, the
-face panel, the camera, the left white line and the hip drums (ring, light ring, arc) are gone; the shell side wall
-fills the old drum seat.
+Colours: body dark grey, blue hip saddles.  10-31 (user): no glued-on decor any more (stripes, rear band, white
+lines, face panel, camera, rear knob panel) and no hip drums (ring, light ring, arc); the shell side wall fills the
+old drum seat.  Openings: payload plate, hip bosses, cable grommets, side / chin vents, rear perforation, switch.
 
 The shell carries no load: the hip section hangs on the hip plates (M3), the front / rear sections are joined to it
 by inner splice tabs (M3 + nuts); the payload plate sits on the rails through an opening in the top.
@@ -144,11 +143,7 @@ def _splice_holes(B, sx, sy, where):
     return out
 
 
-# rear vertical face (x = -X, z REAR_Z_BOT .. REAR_Z_TOP above the hip axis), top to bottom: white line, knob panel
-# (switch beside it), blue band, two rows of perforation
-REAR_LINE_Z = P.REAR_Z_TOP - 4.0
-REAR_PANEL_Z, REAR_PANEL_H, REAR_PANEL_W = 50.0, 36.0, 140.0
-REAR_BAND_Z = 18.0
+# rear vertical face (x = -X, z REAR_Z_BOT .. REAR_Z_TOP above the hip axis): two rows of perforation, rocker switch
 REAR_HOLES_Z = (2.0, -12.0)
 
 
@@ -210,58 +205,3 @@ def splice_tabs():
             C.cut(tab, hb)
         out = C.union(out, tab)
     return out
-
-
-# ----------------------------------------------------------------------------- glued-on trim (0.6 mm)
-TRIM = 0.6
-
-
-def _bar(B, a, b, n, width):
-    """Flat bar from a to b lying on a surface with outward normal n."""
-    d = C.sub(b, a)
-    c = C.add(C.mul(C.add(a, b), 0.5), C.mul(C.unit(n), TRIM / 2))
-    return B.box(c, d, C.cross(n, d), C.norm(d), width, TRIM)
-
-
-def _wrap_band(B, z, hgt, x_side_end, dashes, sides=(-1, 1)):
-    """Band at height z around the rear: rear face, then on the given sides the corner chamfer and the side to
-    x_side_end, then dashes."""
-    c = P.PLAN_CORNER
-    out = _bar(B, (-X, -(YE - c), z), (-X, YE - c, z), (-1, 0, 0), hgt)
-    for sy in sides:
-        out = C.union(out, _bar(B, (-X, sy * (YE - c), z), (-X + c, sy * YE, z), (-1, sy, 0), hgt))
-        out = C.union(out, _bar(B, (-X + c, sy * YE, z), (x_side_end, sy * YE, z), (0, sy, 0), hgt))
-        x = x_side_end + 5.0
-        for _k in range(dashes):
-            out = C.union(out, _bar(B, (x, sy * YE, z), (x + 7.0, sy * YE, z), (0, sy, 0), hgt))
-            x += 11.0
-    return out
-
-
-def stripes_blue():
-    """The rear band with its side dashes (10-31: the three-bar stripes on the top and the upper rear slope are
-    gone)."""
-    return _wrap_band(C.Builder(), ZH + REAR_BAND_Z, 6.0, -140.0, 3)
-
-
-def lines_white():
-    """White line along the top of the vertical rear face (round the right corner onto the right side) and two
-    slanted ticks on the right side (10-31: nothing on the left side)."""
-    B = C.Builder()
-    out = _wrap_band(B, ZH + REAR_LINE_Z, 3.0, -150.0, 0, sides=(-1,))
-    for sy in (-1,):
-        for x in (-115.0, 115.0):
-            a = (x - 4.0, sy * YE, ZH + 116.0)
-            b = (x + 4.0, sy * YE, ZH + 128.0)
-            out = C.union(out, _bar(B, a, b, (0, sy, 0), 3.0))
-    return out
-
-
-def rear_panel():
-    """Raised dark panel on the vertical rear face with two round knobs (TITA's rear)."""
-    B = C.Builder()
-    zc = ZH + REAR_PANEL_Z
-    p = B.rbox((-X - 0.6, 0.0, zc), (0, 1, 0), (0, 0, 1), REAR_PANEL_W, REAR_PANEL_H, 1.2, 6.0)
-    for y in (-52.0, 52.0):
-        C.union(p, B.xcyl(y, zc, -X - 5.0, -X - 1.0, 7.0))
-    return p

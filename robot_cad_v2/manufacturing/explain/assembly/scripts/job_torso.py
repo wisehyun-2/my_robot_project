@@ -1,5 +1,5 @@
 """Torso: hip units (hip plate + motor + driver, from job_hip), spine bars, rails, electronics deck, battery tray,
-battery, payload plate, TITA-like shell (hip sections, front / rear pieces on splice tabs) and the glued decor."""
+battery, payload plate, TITA-like shell (hip sections, front / rear pieces on splice tabs; no glued decor since 10-31)."""
 import axlib as X
 
 
@@ -26,9 +26,8 @@ def config(M):
         ('SHMID_L', 'torso:1+shell_mid_L', None, None), ('SHMID_L', 'torso:1+saddle_L', None, None),
         ('SHMID_R', 'torso:1+shell_mid_R', None, None), ('SHMID_R', 'torso:1+saddle_R', None, None),
         ('SHFR', 'torso:1+shell_front_', None, None),
-        ('SHRE', 'torso:1+shell_rear_', None, None), ('SHRE', 'torso:1+deco_rear_panel', None, None),
-        ('TABS', 'torso:1+splice_tabs', None, None),
-        ('DECO', 'torso:1+deco_stripes_blue', None, None), ('DECO', 'torso:1+deco_lines_white', None, None)]
+        ('SHRE', 'torso:1+shell_rear_', None, None),
+        ('TABS', 'torso:1+splice_tabs', None, None)]
     F = []
     for s, k in ((1, 'L'), (-1, 'R')):
         e_in = (0.0, -s, 0.0)                         # from the outer face towards the robot centre
@@ -68,7 +67,7 @@ def config(M):
                 S_M4R=(0, -260, 0, 60), TRAY=(0, 0, 200, 0), BATT=(0, 0, 300, 0), TOP=(0, 0, 400, 0),
                 TBOLT=(0, 0, 400, 40), TNUT=(0, 0, 0, 70), SHMID_L=(0, 260, 300, 0), SHMID_R=(0, -260, 300, 0),
                 S_SHL=(0, 0, 0, 110), S_SHR=(0, 0, 0, 110), TABS=(0, 0, 520, 0), SHFR=(320, 0, 60, 0),
-                SHRE=(-320, 0, 60, 0), S_TAB=(0, 0, 0, 70), TABNUT=(0, 0, 0, 40), DECO=(0, 0, 650, 0))
+                SHRE=(-320, 0, 60, 0), S_TAB=(0, 0, 0, 70), TABNUT=(0, 0, 0, 40))
     deck_all = ['DECK', 'DINS', 'RPI', 'STAND', 'HAT', 'MJ', 'MJS', 'FAN']
     steps = [
         dict(key='s1', title='1단계  전장 데크 준비 (작업대)',
@@ -105,9 +104,6 @@ def config(M):
              text='이음판 12장을 이음매 안쪽에 대고 셸 앞·뒤 조각을 끼운 뒤,\n⑥ M3 × 8 버튼 볼트 24개를 바깥에서 넣어 안쪽 M3 너트로 조인다.',
              moves=[[('TABS', 0)], [('SHFR', 0), ('SHRE', 0)], [('S_TAB', 0)], [('TABNUT', 0)]],
              spin=['S_TAB', 'TABNUT'], view=(0.75, 0.8, 0.6)),
-        dict(key='s9', title='9단계  장식판 (순간접착)',
-             text='뒤쪽 파란 띠와 흰 선 장식판을 셸에 순간접착제로 붙인다 (하중 없음).',
-             moves=[[('DECO', 0)]], view=(-0.85, -0.7, 0.55)),               # rear band, right side line (10-31)
     ]
     tgt = (0.0, 0.0, ZH + 30.0)
     cuts = [dict(key='cut1', remove=[((0, 0, 0), (-1, 0, 0)), ((0, 0, 0), (0, -1, 0))], view=(1.0, 1.0, 0.65),
@@ -139,7 +135,7 @@ def config(M):
                    TRAY='배터리 트레이 (PETG)', BATT='배터리 24 V 15 Ah', TOP='윗판 (PETG)', TBOLT='④ M4 × 25 × 8',
                    TNUT='M4 와셔 + 나일론 너트 × 8', SHMID_L='셸 hip 부분 (왼쪽)', SHMID_R='셸 hip 부분 (오른쪽)',
                    S_SHL='⑤ M3 × 6 버튼 × 6', S_SHR='⑤ M3 × 6 버튼 × 6', TABS='셸 이음판 × 12', SHFR='셸 앞 조각',
-                   SHRE='셸 뒤 조각', S_TAB='⑥ M3 × 8 버튼 × 24', TABNUT='M3 너트 × 24', DECO='장식판 (파란 띠·흰 선)'),
+                   SHRE='셸 뒤 조각', S_TAB='⑥ M3 × 8 버튼 × 24', TABNUT='M3 너트 × 24'),
         captions=dict(DINS='황동 인서트 M2.5 × 8 → 데크 보스', RPI='Raspberry Pi 4B → 데크', STAND='M2.5 × 11 스탠드오프 × 4',
                       HAT='pi3hat r4.5 → 스탠드오프 위', MJ='mjpower-ss + XT90 변환 → 데크', MJS='M2.5 × 6 저두 × 4 (mjpower-ss)',
                       FAN='팬 30 × 30 (양면 폼테이프)', TUBES='척추 봉 × 2 + 위 레일 × 2 → 왼쪽 hip 판',
@@ -149,16 +145,15 @@ def config(M):
                       TRAY='배터리 트레이 → 척추 봉', BATT='배터리 → 트레이 (벨크로 스트랩 2개)', TOP='윗판 → 위 레일',
                       TBOLT='④ M4 × 25 × 8 (윗판 → 레일 관통)', TNUT='평와셔 + 나일론 너트 M4 × 8 (레일 밑)',
                       SHMID_L='셸 hip 부분 (좌·우) → hip 판', S_SHL='⑤ M3 × 6 버튼 × 12 → hip 판 탭', TABS='셸 이음판 × 12',
-                      SHFR='셸 앞·뒤 조각', S_TAB='⑥ M3 × 8 버튼 × 24', TABNUT='M3 너트 × 24 (이음판 안쪽)',
-                      DECO='장식판 (순간접착)'),
+                      SHFR='셸 앞·뒤 조각', S_TAB='⑥ M3 × 8 버튼 × 24', TABNUT='M3 너트 × 24 (이음판 안쪽)'),
         short=['전장 데크 (작업대)', '봉·레일 → 왼쪽 hip', '데크 → hip 판', '오른쪽 hip 유닛', '트레이 + 배터리',
-               '윗판 + ④ M4 × 25', '셸 hip 부분 + ⑤', '셸 앞·뒤 + ⑥', '장식판'],
+               '윗판 + ④ M4 × 25', '셸 hip 부분 + ⑤', '셸 앞·뒤 + ⑥'],
         legend=['① M5 × 12 접시 × 4', '② M4 × 12 접시 × 4', '③ M3 × 8 × 4 (데크)', '④ M4 × 25 × 8 + 와셔·나일론 너트',
                 '⑤ M3 × 6 버튼 × 12 (셸)', '⑥ M3 × 8 버튼 + 너트 × 24'],
         major=['HIPL', 'HIPR', 'TUBES', 'RAILS', 'DECK', 'TRAY', 'BATT', 'TOP', 'SHMID_L', 'SHMID_R', 'SHFR', 'SHRE'],
-        done_labels=['SHMID_L', 'SHFR', 'SHRE', 'TOP', 'DECO'],
+        done_labels=['SHMID_L', 'SHFR', 'SHRE', 'TOP'],
         overview_labels=['HIPL', 'HIPR', 'TUBES', 'RAILS', 'DECK', 'RPI', 'MJ', 'TRAY', 'BATT', 'TOP', 'SHMID_L', 'SHMID_R',
-                         'SHFR', 'SHRE', 'TABS', 'DECO'],
+                         'SHFR', 'SHRE', 'TABS'],
         overview=('몸통 분해도',
                   '모든 부품이 떨어진 상태 — 왼쪽 hip 유닛을 기준으로 봉·레일은 오른쪽에서, 데크는 아래에서, 트레이·배터리·윗판은 위에서,\n'
                   '셸은 옆·앞·뒤에서 들어온다.  다리는 hip 영상, 배선은 생략.'),
