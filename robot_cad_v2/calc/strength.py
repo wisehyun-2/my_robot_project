@@ -39,6 +39,7 @@ E_CF = 120000.0                                    # pultruded carbon rod (optio
 AS_M3, AS_M25 = 5.03, 3.39                         # stress areas mm2
 PROOF = {'8.8': 600.0, '12.9': 970.0}
 INSERT_M3_PULL = 1000.0                            # heat-set M3 in PETG, order of magnitude (supplier tests)
+LG_INSERT_D = 4.0                                  # legs.INSERT_M3 hole: the insert bears on this diameter
 
 F_STATIC = 60.0
 F_DES, F_CHK = 5 * F_STATIC, 10 * F_STATIC
@@ -334,6 +335,28 @@ def main():
                      % (pw, ts, tp), res))
         if tag == '검토':
             verdict.append(('림 → 플랜지 인서트 인발·와셔 지압(검토)', '%.0f N / 약 1000, %.0f MPa / 50' % (fb, pw), res))
+    # 10-31: shear across the rim / flange face = torque share + the wheel load on half the screws, friction and the
+    # register ignored (conservative); the M3 is fully threaded, so the shear plane cuts the thread (minor dia 2.387)
+    f_t, f_r = T_CHK / (6 * 18.0), F_CHK / 3
+    f_s = f_t + f_r
+    tau, tau_y = f_s / (math.pi / 4 * 2.387 ** 2), 0.58 * 640.0
+    b_rim, b_ins = f_s / (3.0 * ts), f_s / (LG_INSERT_D * 5.7)
+    res = ok(max(tau / tau_y, b_rim / C_PETG, b_ins / C_PETG), 1.0)
+    rows.append(('림 → 플랜지 전단, 토크 25 N·m + 바퀴 하중 600 N(검토)',
+                 'M3 × 14 8.8 하나에 %.0f + %.0f = %.0f N (마찰·등록 턱 무시, 하중은 나사 3개)' % (f_t, f_r, f_s),
+                 '나사 골지름 전단 %.0f MPa (8.8 전단 항복 %.0f), 림 구멍 지압 %.1f, 인서트 바깥 지압 %.1f MPa (50)'
+                 % (tau, tau_y, b_rim, b_ins), res))
+    verdict.append(('림 → 플랜지 전단(검토, 토크 + 바퀴 하중)', '나사 %.0f / %.0f MPa, 지압 ≤ %.0f / 50' % (tau, tau_y, max(b_rim, b_ins)),
+                    res))
+    reg = F_CHK / (2 * P.RIM_REG[0] * P.RIM_REG[1])
+    rows.append(('Ø%.0f × %.0f 등록 턱 지압, 바퀴 하중 600 N(검토)' % (2 * P.RIM_REG[0], P.RIM_REG[1]),
+                 '림 홈 Ø%.1f(반경 틈 %.1f < 나사 구멍 0.2): 등록 턱이 먼저 닿음' % (2 * (P.RIM_REG[0] + P.RIM_REG_GAP[0]),
+                                                                      P.RIM_REG_GAP[0]),
+                 '%.1f MPa (50)' % reg, ok(reg, C_PETG)))
+    f_pre = 500.0 / (0.2 * 3.0)                    # 0.5 N m, T = K F d with K 0.2
+    rows.append(('림 체결 마찰, M3 0.5 N·m로 조임', '나사 하나 약 %.0f N, 6개 %.1f kN' % (f_pre, 6 * f_pre / 1000),
+                 '마찰(μ 0.3) 토크 %.0f N·m, 옆 힘 %.1f kN — 설계 12.5 N·m·300 N에서 미끄러지지 않음, 와셔 지압 %.0f MPa'
+                 % (0.3 * 6 * f_pre * 0.018, 0.3 * 6 * f_pre / 1000, f_pre / 30.4), '참고'))
     # rim hub + web as a plate tilted by M about a diameter: the radial moment per unit length at radius r is at most
     # M / (pi r) (cos distribution, the hub shear's share ignored -> conservative), sigma = 6 m / t^2.  Critical at
     # the hub flange's edge (r 23), where the plate leaves its support.
@@ -388,6 +411,14 @@ def main():
                '돌기 끝(둘 다 Ø%.0f)을 넘어 끼운다: 안지름 Ø%.0f → %.1f %% 늘림(M365 한 조각 림과 같은 방식, 뜨거운 물에 데움).'
                % (first[0], first[2], first[1], P.RIM_HUB_T, P.RIM_SCREW_SEAT, P.RIM_WEB_T, P.RIM_FLANGE_D,
                   P.TYRE_BORE_D, 100 * (P.RIM_FLANGE_D / P.TYRE_BORE_D - 1)))
+    tip = P.RIM_SCREW_SEAT + 0.5 - 14.0 + 6.0          # flange face -> insert hole floor (legs.hub_flange: 6.0 deep)
+    out.append('\n림 나사 길이(10-31 사용자 질문): M3 × 14가 와셔 자리 %g mm + 와셔 0.5에서 플랜지 면 너머 %.1f mm까지 들어가 인서트'
+               '(5.7)에 %.1f mm 물리고, 끝이 인서트 구멍(Ø4 × 6) 바닥에서 **%.1f mm** 남는다(와셔 자리 8 mm일 때 0.5 — 나사 길이 공차 '
+               '±0.35, 출력 공차, 인서트를 녹여 넣을 때 바닥에 밀려 쌓이는 PETG를 합치면 나사가 바닥에 먼저 닿아 와셔를 덜 누를 수 '
+               '있었다).  물림 %.1f mm는 지름의 1.5배라 황동 나사산이 약 3 kN을 버텨 나사(8.8 보증 3.0 kN)와 비슷하고, 이 연결에서 '
+               '먼저 한계에 닿는 것은 인서트가 PETG에서 빠지는 쪽(약 1 kN, 물림과 무관)이다 — 조임 토크 0.5 N·m 정도.'
+               % (P.RIM_SCREW_SEAT, 14.0 - P.RIM_SCREW_SEAT - 0.5, 14.0 - P.RIM_SCREW_SEAT - 0.6, tip,
+                  14.0 - P.RIM_SCREW_SEAT - 0.6))
     tbl = []
     for W in (45.0, 54.0, 60.0, 76.0):
         dd = d - P.TYRE_W / 2 + W / 2

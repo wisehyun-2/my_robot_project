@@ -187,9 +187,14 @@ RIM_LUGS = (24, 8.0, 4.5, 26.5)  # lugs on the seat ring into the tyre's bore ca
 RIM_HUB_T, RIM_HUB_R = 10.0, 32.0   # rim hub thickness from the flange face, out to this radius (the 4.75 mm disc of
                             # the first rim was 81 MPa at the design load at the flange edge r 23, strength.py)
 RIM_WEB_T = 6.0             # web thickness at the seat ring (straight taper from RIM_HUB_T at RIM_HUB_R), no holes
-RIM_SCREW_SEAT = 8.0        # flange face -> washer seat of the 6 x M3 x 14 (washer 0.5, 5.5 mm into the flange inserts)
+RIM_SCREW_SEAT = 9.0        # flange face -> washer seat of the 6 x M3 x 14 (washer 0.5, 4.5 mm reach past the flange face:
+                            # 4.4 mm in the 5.7 inserts, tip 1.5 mm above the Ø4 x 6 hole floor -- 10-31: 8 left 0.5 mm,
+                            # less than screw length (js15 +-0.35) + print + melted-in PETG under a heat-set insert)
 RIM_REG = (5.5, 3.0)        # centre register: Ø11 x 3 spigot on the hub flange (inside the output screw counterbores,
-                            # 0.75 mm clear) into a Ø11.4 x 3.2 recess, so the rim's flange face prints flat on the bed
+                            # 0.75 mm clear), so the rim's flange face prints flat on the bed
+RIM_REG_GAP = (0.1, 0.2)    # rim recess clearance (radial, depth): Ø11.2 x 3.2 -- the radial gap is half the rim screw
+                            # holes' (Ø3.4 on M3: 0.2), so the register takes the wheel load before the screws (printed
+                            # holes come out ~0.1-0.2 small: near a snug fit)
 HUB_BOSS_D = 28.0           # through the Ø30 plate hole
 
 

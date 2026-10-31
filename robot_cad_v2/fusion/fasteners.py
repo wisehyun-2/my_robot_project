@@ -143,7 +143,7 @@ def specs():
         'FX ISO 4762 M3x14 rim': (sc(3, 14), 'Steel', 'steel', (
             '바퀴', '육각 홈붙이 볼트 ISO 4762 8.8', 'M3 × 14',
             '림 → 허브 플랜지 인서트(와셔 위, 림 허브 %.0f mm 체결, 인서트 %.1f mm 물림)'
-            % (P.RIM_SCREW_SEAT, 14 - P.RIM_SCREW_SEAT - WASHER[3][2])), 12),
+            % (P.RIM_SCREW_SEAT, 14 - P.RIM_SCREW_SEAT - WASHER[3][2] - 0.1)), 12),
         'FX insert M3x5.7 hub': (lambda: insert(3, 5.7, LG.INSERT_M3), 'Brass', 'brass', (
             '바퀴', '열압입 인서트 황동', 'M3 × 5.7 (구멍 Ø4.0 × 6)', '허브 플랜지'), 12),
         'FX DIN 7984 M2.5x6 board': (sc(2.5, 6, 'low'), 'Steel', 'steel', (

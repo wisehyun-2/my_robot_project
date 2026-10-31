@@ -5,12 +5,13 @@ HEADER;
  */
 
 FILE_DESCRIPTION(
-/* description */ (''),
+/* description */ ('PETG 25 %, M4 \X2\C5F4C555C785\X0\ \X2\C778C11CD2B8\X0\'),
+
 /* implementation_level */ '2;1');
 
 FILE_NAME(
 /* name */ 'top_plate.step',
-/* time_stamp */ '2026-10-31T17:04:54+09:00',
+/* time_stamp */ '2026-10-31T18:16:41+09:00',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20.2',
@@ -2528,7 +2529,7 @@ SOLID_ANGLE_UNIT()
 #2466=PRODUCT_DEFINITION_SHAPE('',$,#2469);
 #2467=SHAPE_REPRESENTATION('',(#1437),#2459);
 #2468=PRODUCT_DEFINITION_CONTEXT('part definition',#2473,'design');
-#2469=PRODUCT_DEFINITION('2026-10-31-17-04-54-197','top_plate',#2470,#2468);
+#2469=PRODUCT_DEFINITION('2026-10-31-18-16-41-752','top_plate',#2470,#2468);
 #2470=PRODUCT_DEFINITION_FORMATION('',$,#2475);
 #2471=PRODUCT_RELATED_PRODUCT_CATEGORY('top_plate','top_plate',(#2475));
 #2472=APPLICATION_PROTOCOL_DEFINITION('international standard',
@@ -2536,7 +2537,8 @@ SOLID_ANGLE_UNIT()
 #2473=APPLICATION_CONTEXT(
 'Core Data for Automotive Mechanical Design Process');
 #2474=PRODUCT_CONTEXT('part definition',#2473,'mechanical');
-#2475=PRODUCT('2026-10-31-17-04-54-197','top_plate',$,(#2474));
+#2475=PRODUCT('2026-10-31-18-16-41-752','top_plate',
+'PETG 25 %, M4 \X2\C5F4C555C785\X0\ \X2\C778C11CD2B8\X0\',(#2474));
 #2476=PRESENTATION_STYLE_ASSIGNMENT((#2478));
 #2477=PRESENTATION_STYLE_ASSIGNMENT((#2479));
 #2478=SURFACE_STYLE_USAGE(.BOTH.,#2480);

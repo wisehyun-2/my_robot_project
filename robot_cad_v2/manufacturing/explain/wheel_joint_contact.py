@@ -1,7 +1,7 @@
 """Wheel joint half section: what touches and what does not, to scale from fusion/params.py and the hub / rim levels of
 fusion/legs.py.  Static side: the AKE Ø42 pilot in the shank pocket (stator front and motor can stand clear).  Turning
 side (10-31 rev 2 wheel): the hub flange boss on the motor output face, the one-piece rim's 10 mm hub face to face on
-the flange (Ø11 x 3 register spigot in a Ø11.4 x 3.2 recess, 6 x M3 x 14 into heat-set inserts).  Explanatory figure,
+the flange (Ø11 x 3 register spigot in a Ø11.2 x 3.2 recess, 6 x M3 x 14 into heat-set inserts).  Explanatory figure,
 not a manufacturing drawing; wheel_joint_section.py adds the output screws, washers and dowel pins.
 
     python wheel_joint_contact.py    # -> wheel_joint_contact.png next to this script
@@ -39,7 +39,7 @@ far = P.WHEEL_PLATE_T - P.POCKET; mface = -P.POCKET; rec = far - P.RING_T - P.CB
 OD, ID = P.RING_STATOR; RP = P.AKE_PCD_RING / 2
 OUT = a(A['out']); F1, F0 = ar(LV['f1']), ar(LV['f0']); HUB0 = ar(LV['f0'] - P.RIM_HUB_T)
 FL_R, BOSS_R, SPIG_R, SPIG_L = 23.0, P.HUB_BOSS_D / 2, 5.9, 1.4      # legs.hub_flange
-REG_R, REG_L = P.RIM_REG; REC_R, REC_L = REG_R + 0.2, REG_L + 0.2  # flange spigot / rim recess
+REG_R, REG_L = P.RIM_REG; REC_R, REC_L = REG_R + P.RIM_REG_GAP[0], REG_L + P.RIM_REG_GAP[1]  # flange spigot / rim recess
 W_OD, W_ID, W_T = FX.WASHER[3]; DK, K = FX.SHCS[3][:2]
 RH, RIM_L, INS_L = 18.0, 14, 5.7
 RSEAT = ar(LV['f0'] - P.RIM_SCREW_SEAT); RTIP = RSEAT + W_T - RIM_L
@@ -71,7 +71,7 @@ ax.add_patch(Rectangle((rec, ID / 2), P.RING_T, (OD - ID) / 2, fc=g['ring'], ec=
 ax.add_patch(Rectangle((rec, RP - 1.4), P.RING_T, 2.8, fc='white', ec='none'))
 ax.add_patch(Rectangle((-3.2, RP - 1.25), rec + P.RING_T + 3.2, 2.5, fc=g['screw'], ec='k', lw=0.6))
 ax.add_patch(Rectangle((rec + P.RING_T, RP - 2.25), 1.5, 4.5, fc=g['screw'], ec='k', lw=0.6))
-# one-piece rim (partly): hub face on the flange, Ø11.4 x 3.2 recess, rim screw counterbore / hole
+# one-piece rim (partly): hub face on the flange, Ø11.2 x 3.2 recess, rim screw counterbore / hole
 poly([(F0, 0), (F0, RCUT)] + [(F0 + (HUB0 - F0) * k / 6, RCUT + (0.6 if k % 2 else -0.6)) for k in range(1, 6)]
      + [(HUB0, RCUT), (HUB0, 0)], g['rim'])                                     # break line at RCUT
 rect(F0, F0 + REC_L, 0, REC_R, 'white', lw=0.6)

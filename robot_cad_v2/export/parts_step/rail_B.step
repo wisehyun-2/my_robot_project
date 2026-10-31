@@ -5,12 +5,15 @@ HEADER;
  */
 
 FILE_DESCRIPTION(
-/* description */ (''),
+/* description */ (
+'6061-T6 \X2\AC01BD09\X0\ 15 \X\D7 15(\X2\D1B5C9DC\X0\), \X2\AE38C774\X0\ 
+328 mm, \X2\C591\X0\ \X2\B05D\X0\ M4 \X2\D0ED\X0\ \X2\AE4AC774\X0\ 9, 
+\X\D84.4 \X2\AD00D1B5\X0\ 4\X2\ACF3\X0\'),
 /* implementation_level */ '2;1');
 
 FILE_NAME(
 /* name */ 'rail_B.step',
-/* time_stamp */ '2026-10-31T17:03:49+09:00',
+/* time_stamp */ '2026-10-31T18:15:36+09:00',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20.2',
@@ -487,7 +490,7 @@ SOLID_ANGLE_UNIT()
 #435=PRODUCT_DEFINITION_SHAPE('',$,#438);
 #436=SHAPE_REPRESENTATION('',(#262),#428);
 #437=PRODUCT_DEFINITION_CONTEXT('part definition',#442,'design');
-#438=PRODUCT_DEFINITION('2026-10-31-17-03-49-335','rail_B',#439,#437);
+#438=PRODUCT_DEFINITION('2026-10-31-18-15-36-629','rail_B',#439,#437);
 #439=PRODUCT_DEFINITION_FORMATION('',$,#444);
 #440=PRODUCT_RELATED_PRODUCT_CATEGORY('rail_B','rail_B',(#444));
 #441=APPLICATION_PROTOCOL_DEFINITION('international standard',
@@ -495,7 +498,10 @@ SOLID_ANGLE_UNIT()
 #442=APPLICATION_CONTEXT(
 'Core Data for Automotive Mechanical Design Process');
 #443=PRODUCT_CONTEXT('part definition',#442,'mechanical');
-#444=PRODUCT('2026-10-31-17-03-49-335','rail_B',$,(#443));
+#444=PRODUCT('2026-10-31-18-15-36-629','rail_B',
+'6061-T6 \X2\AC01BD09\X0\ 15 \X\D7 15(\X2\D1B5C9DC\X0\), \X2\AE38C774\X0\ 
+328 mm, \X2\C591\X0\ \X2\B05D\X0\ M4 \X2\D0ED\X0\ \X2\AE4AC774\X0\ 9, 
+\X\D84.4 \X2\AD00D1B5\X0\ 4\X2\ACF3\X0\',(#443));
 #445=PRESENTATION_STYLE_ASSIGNMENT((#447));
 #446=PRESENTATION_STYLE_ASSIGNMENT((#448));
 #447=SURFACE_STYLE_USAGE(.BOTH.,#449);

@@ -233,7 +233,7 @@ def hub_flange(s):
 
 def rim(s):
     """One-piece printed rim for the M365 8.5 x 2 solid tyre (10-31 rev 2, rim_out merged): a RIM_HUB_T hub on the
-    hub flange (6 x M3 x 14 + DIN 125 washers into the flange inserts, Ø11 centre register) tapering to a RIM_WEB_T
+    hub flange (6 x M3 x 14 + DIN 125 washers into the flange inserts, Ø11 centre register in a Ø11.2 recess) tapering to a RIM_WEB_T
     web that is also the motor-side bead flange, the Ø141 seat ring with RIM_LUGS lugs keyed into the tyre's bore
     cavities (torque by the lugs, not by friction), and the open-side bead flange the tyre is stretched over.
     Prints on the flat flange face; only the open-side flange's 4.5 mm ledge needs support."""
@@ -273,7 +273,8 @@ def rim(s):
         C.cut(cut, B.ycyl(W[0], W[1], ye - sg * (lh + 1.0), ye + sg * 0.5, rs + lh + 1.0, rs - 0.5))
         C.cut(lugs, cut)
     C.union(body, lugs)
-    C.cut(body, B.ycyl(W[0], W[1], f0 - P.RIM_REG[1] - 0.2, f0 + 1, P.RIM_REG[0] + 0.2))   # register recess
+    C.cut(body, B.ycyl(W[0], W[1], f0 - P.RIM_REG[1] - P.RIM_REG_GAP[1], f0 + 1,
+                       P.RIM_REG[0] + P.RIM_REG_GAP[0]))                    # register recess
     for a in HUB_SCREWS:
         x, z = 18 * math.cos(a), W[1] + 18 * math.sin(a)
         C.cut(body, B.ycyl(x, z, f0 - P.RIM_HUB_T - 1, f0 + 1, M3_CLEAR / 2))

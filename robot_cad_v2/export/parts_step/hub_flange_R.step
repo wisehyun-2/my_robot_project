@@ -5,12 +5,13 @@ HEADER;
  */
 
 FILE_DESCRIPTION(
-/* description */ (''),
+/* description */ ('PETG 100 %, \X2\BAA8D130\X0\ \X2\CABD\X0\ \X2\BA74C744\X0\ 
+\X2\BC14B2E5C5D0\X0\'),
 /* implementation_level */ '2;1');
 
 FILE_NAME(
 /* name */ 'hub_flange_R.step',
-/* time_stamp */ '2026-10-31T17:03:45+09:00',
+/* time_stamp */ '2026-10-31T18:15:32+09:00',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20.2',
@@ -1192,7 +1193,7 @@ SOLID_ANGLE_UNIT()
 #1136=PRODUCT_DEFINITION_SHAPE('',$,#1139);
 #1137=SHAPE_REPRESENTATION('',(#643),#1129);
 #1138=PRODUCT_DEFINITION_CONTEXT('part definition',#1143,'design');
-#1139=PRODUCT_DEFINITION('2026-10-31-17-03-45-678','hub_flange_R',#1140,
+#1139=PRODUCT_DEFINITION('2026-10-31-18-15-32-118','hub_flange_R',#1140,
 #1138);
 #1140=PRODUCT_DEFINITION_FORMATION('',$,#1145);
 #1141=PRODUCT_RELATED_PRODUCT_CATEGORY('hub_flange_R','hub_flange_R',(#1145));
@@ -1201,7 +1202,9 @@ SOLID_ANGLE_UNIT()
 #1143=APPLICATION_CONTEXT(
 'Core Data for Automotive Mechanical Design Process');
 #1144=PRODUCT_CONTEXT('part definition',#1143,'mechanical');
-#1145=PRODUCT('2026-10-31-17-03-45-678','hub_flange_R',$,(#1144));
+#1145=PRODUCT('2026-10-31-18-15-32-118','hub_flange_R',
+'PETG 100 %, \X2\BAA8D130\X0\ \X2\CABD\X0\ \X2\BA74C744\X0\ \X2\BC14B2E5C5D0\X0\',
+(#1144));
 #1146=PRESENTATION_STYLE_ASSIGNMENT((#1148));
 #1147=PRESENTATION_STYLE_ASSIGNMENT((#1149));
 #1148=SURFACE_STYLE_USAGE(.BOTH.,#1150);

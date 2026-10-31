@@ -57,7 +57,7 @@ RO = P.R_WHEEL                                   # 101
 # hub flange (legs.hub_flange)
 FL_R, BOSS_R, SPIG_R, SPIG_L = 23.0, P.HUB_BOSS_D / 2, 5.9, 1.4   # Ø46 disc, Ø28 boss, Ø11.8 x 1.4 spigot
 REG_R, REG_L = P.RIM_REG                         # Ø11 x 3 register spigot on the flange face
-REC_R, REC_L = REG_R + 0.2, REG_L + 0.2          # legs.rim: Ø11.4 x 3.2 recess in the rim hub
+REC_R, REC_L = REG_R + P.RIM_REG_GAP[0], REG_L + P.RIM_REG_GAP[1]   # legs.rim: Ø11.2 x 3.2 recess in the rim hub
 W_OD, W_ID, W_T = FX.WASHER[3]                   # DIN 125 M3: Ø7 / Ø3.2 x 0.5
 DK, K = FX.SHCS[3][:2]                           # ISO 4762 M3 head Ø5.5 x 3
 RQ, RP = P.AKE_PCD_OUT / 2, P.AKE_PCD_RING / 2   # output M3 r 10, stator M2.5 r 18.25
@@ -83,8 +83,8 @@ SEAT_R = F0 - P.RIM_SCREW_SEAT                   # 188.5 rim washer seat (counte
 HB_R = SEAT_R - W_T                              # 188.0 rim screw head bearing face
 HEAD_R = HB_R - K                                # 185.0 rim screw head end
 TIP_R = HB_R + RIM_L                             # 202.0
-ENG_R = TIP_R - F0                               # 5.5 into the flange inserts
-PROUD = HUB0 - HEAD_R                            # 1.5 rim screw heads stand proud of the rim hub face
+ENG_R = TIP_R - F0                               # 4.5 past the flange face (4.4 in the inserts)
+PROUD = HUB0 - HEAD_R                            # 2.5 rim screw heads stand proud of the rim hub face
 NL, LUG_W, LUG_H, LUG_L = P.RIM_LUGS             # 24 lugs 8 wide x 4.5 high x 26.5 long, 45 deg ends
 NC, CAV_W, CAV_D, CAV_L = P.TYRE_CAVITY          # 24 tyre bore cavities 9 x 10 deep x 27.5
 R_BEAD, R_FULL = RB + P.TYRE_BEAD_H, P.TYRE_FLARE_R            # 75.5, 85
@@ -184,7 +184,7 @@ def draw_parts(ax, detail=False):
             poly(tyre_pts(), g['tyre'], s)
         # one-piece printed rim: hub 10 (r <= 32) tapering to the 6 mm web, fillet, seat ring, lug, bead flanges
         poly(rim_pts(R_CLIP if detail else None), g['rim'], s)
-        rect(F0 - REC_L, F0, 0, REC_R, 'white', s, z=1.2, lw=0.6)                 # Ø11.4 x 3.2 register recess
+        rect(F0 - REC_L, F0, 0, REC_R, 'white', s, z=1.2, lw=0.6)                 # Ø11.2 x 3.2 register recess
         # rim screws (r 18; 6 x, both halves): counterbore Ø7.6 to the washer seat, Ø3.4 hole, flange insert
         pocket(HUB0, SEAT_R, RH - RIM_CB_R, RH + RIM_CB_R, s)
         rect(SEAT_R, F0, RH - LG.M3_CLEAR / 2, RH + LG.M3_CLEAR / 2, 'white', s, z=1.2, lw=0.6)

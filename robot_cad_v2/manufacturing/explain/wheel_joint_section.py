@@ -1,6 +1,6 @@
 """Wheel joint section with the M3 output screws + washers (upper half) and the Ø3 dowel pins (lower half), and how the
 one-piece printed rim (10-31 rev 2) sits on the hub flange: Ø11 x 3 register spigot on the flange into the rim's
-Ø11.4 x 3.2 recess, 6 x M3 x 14 8.8 + DIN 125 washers into the flange's heat-set inserts.  Drawn to scale from
+Ø11.2 x 3.2 recess, 6 x M3 x 14 8.8 + DIN 125 washers into the flange's heat-set inserts.  Drawn to scale from
 fusion/params.py and the hub / rim levels of fusion/legs.py (explanatory figure, not a manufacturing drawing).
 
     python wheel_joint_section.py            # -> wheel_joint_pins_washers.png next to this script
@@ -41,7 +41,7 @@ BEAR = ar(LV['out'] - P.HUB_SCREW_SEAT)              # 10.0 washer seat of the o
 LS = P.HUB_SCREW_L; ENG = LS - P.HUB_SCREW_SEAT - W_T
 HEAD_GAP = F0 - (BEAR + W_T + K)                     # 2.0 output screw head end -> rim hub face
 OD, ID = P.RING_STATOR; RP = P.AKE_PCD_RING / 2; RO = P.AKE_PCD_OUT / 2
-REG_R, REG_L = P.RIM_REG; REC_R, REC_L = REG_R + 0.2, REG_L + 0.2   # legs.hub_flange spigot / legs.rim recess
+REG_R, REG_L = P.RIM_REG; REC_R, REC_L = REG_R + P.RIM_REG_GAP[0], REG_L + P.RIM_REG_GAP[1]   # legs.hub_flange spigot / legs.rim recess
 RH, RIM_L, INS_L = 18.0, 14, 5.7                     # legs.HUB_SCREWS radius, 'FX ISO 4762 M3x14 rim', insert length
 RSEAT = ar(LV['f0'] - P.RIM_SCREW_SEAT)              # 23.5 rim washer seat
 RTIP = RSEAT + W_T - RIM_L                           # 10.0
@@ -71,7 +71,7 @@ def sym(pts):                                        # upper-half outline from t
     return pts + [(x, -r) for x, r in reversed(pts)]
 # output carrier (spins), Ø12 x 1.5 recess
 poly(sym([(-14, 13.5), (OUT, 13.5), (OUT, 6), (OUT - 1.5, 6), (OUT - 1.5, 0)]) + [(-14, -13.5)], g['out'])
-# one-piece rim (partly): 10 mm hub face to face on the flange, Ø11.4 x 3.2 register recess
+# one-piece rim (partly): 10 mm hub face to face on the flange, Ø11.2 x 3.2 register recess
 poly(sym([(F0, 0), (F0, RCUT)] + zig((F0, RCUT), (HUB0, RCUT)) + [(HUB0, RCUT), (HUB0, 0)]), g['rim'])
 poly(sym([(F0, 0), (F0, REC_R), (F0 + REC_L, REC_R), (F0 + REC_L, 0)]), 'white', lw=0.6)
 # hub flange: Ø11.8 x 1.4 spigot, Ø28 boss, Ø46 disc, Ø11 x 3 register spigot into the rim
