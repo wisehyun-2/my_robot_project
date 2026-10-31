@@ -15,9 +15,12 @@ FR, FB = 'C:/Windows/Fonts/malgun.ttf', 'C:/Windows/Fonts/malgunbd.ttf'
 W, H = 1920, 1080
 RED, GREEN, INK, GREY = '#c0392b', '#2e7d32', '#222222', '#8a929a'
 SHORT = ['모터 → 정강이 포켓', 'SUS 링 + ① M2.5 × 8', '인서트 → 허브 플랜지', '허브 플랜지 → 출력부 (③ ②)',
-         '⑤ M5 볼트 → 육각 허브', '바퀴 + ⑥ 너트', '육각 허브 → 플랜지 (④)']
-LEGEND = ['① M2.5 × 8 저두 × 6', '② M3 × 14 (12.9) × 6 + 와셔', '③ 평행핀 Ø3 × 10 × 3', '④ M3 × 8 × 6 + 인서트',
-          '⑤ M5 × 55', '⑥ M5 플랜지 너트']
+         '타이어 → 한 조각 림', '림 + 타이어 → 플랜지 (④)']          # one per wxlib.STEPS (10-31 rev 2: M365 tyre)
+N = len(SHORT)
+LEGEND = ['① M2.5 × 8 저두 × 6', '② M3 × 14 (12.9) × 6 + 와셔', '③ 평행핀 Ø3 × 10 × 3',
+          '④ M3 × 14 (8.8) × 6 + 와셔 + 인서트']
+CUTS = (('08_cut1.png', '단면 ① — ② M3 × 14 · ④ M3 × 14 · 림 돌기 ↔ 타이어 구멍 · A/B/C 중심 맞춤'),
+        ('09_cut2.png', '단면 ② — ③ 평행핀 · ① M2.5 × 8 + SUS 링'))
 
 
 def font(sz, bold=False):
@@ -51,7 +54,7 @@ def panel(dr, x0, step, steps):
     dr.text((x, 74), '왼쪽 다리 · Fusion 모델', font=font(20), fill=GREY)
     y = 122
     for i, name in enumerate(SHORT, 1):
-        on, done = i == step, (i < step or step >= 8)
+        on, done = i == step, (i < step or step > N)
         fill = RED if on else ('#9aa5b1' if done else 'white')
         dr.rounded_rectangle([x, y, x + 40, y + 40], 8, fill=fill, outline='#9aa5b1', width=2)
         f = font(22, True)
@@ -62,7 +65,7 @@ def panel(dr, x0, step, steps):
     y += 14
     dr.line([x, y, W - 28, y], fill='#cfd3d8', width=2)
     y += 18
-    if 1 <= step <= 7:
+    if 1 <= step <= N:
         title, text = steps[step]
         for ln in wrap(dr, title.split('  ', 1)[-1], font(24, True), W - x - 30):
             dr.text((x, y), ln, font=font(24, True), fill=RED)
@@ -77,8 +80,8 @@ def panel(dr, x0, step, steps):
             dr.text((x, y), ln, font=font(21), fill='#333')
             y += 31
     else:
-        for ln in wrap(dr, '무게: 타이어 → 17 mm 육각 → 육각 허브 → ④ + Ø20 턱 → 허브 플랜지 → ② + ③ + Ø11.8 스피곳 → '
-                           'AKE 출력부 → 고정자 → ① + Ø42 파일럿 → 정강이', font(21), W - x - 30):
+        for ln in wrap(dr, '무게: 타이어 → 안장 링 + 돌기 24개 → 한 조각 림 → ④ + Ø11 등록 턱 → 허브 플랜지 → ② + ③ + '
+                           'Ø11.8 스피곳 → AKE 출력부 → 고정자 → ① + Ø42 파일럿 → 정강이', font(21), W - x - 30):
             dr.text((x, y), ln, font=font(21), fill='#333')
             y += 31
     y = H - 30 - 30 * len(LEGEND) - 40
@@ -119,14 +122,13 @@ def main():
         name = 'v%04d.png' % k
         cv.save(out / name)
         items.append((name, fr['hold'] / fps))
-    for k, (fn, cap) in enumerate((('09_cut1.png', '단면 ① — ② M3 × 14 · ④ M3 × 8 · ⑤ M5 볼트 · A/B/C 중심 맞춤'),
-                                   ('10_cut2.png', '단면 ② — ③ 평행핀 · ① M2.5 × 8 + SUS 링'))):
+    for k, (fn, cap) in enumerate(CUTS):
         im = Image.open(ann / fn).convert('RGB')
         s = min(rw / im.width, (H - 64) / im.height)
         im = im.resize((round(im.width * s), round(im.height * s)), Image.LANCZOS)
         cv = Image.new('RGB', (W, H), 'white')
         cv.paste(im, ((rw - im.width) // 2, 0))
-        panel(ImageDraw.Draw(cv), rw, 9, steps)
+        panel(ImageDraw.Draw(cv), rw, N + 2, steps)
         caption(cv, cap, rw)
         name = 'v%04d.png' % (len(man['frames']) + k)
         cv.save(out / name)

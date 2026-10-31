@@ -1,4 +1,4 @@
-"""Video frames of the wheel output assembly: overview -> 7 steps (parts slide along the axis, screws turn in) ->
+"""Video frames of the wheel output assembly: overview -> the wxlib.STEPS (parts slide along the axis, screws turn in) ->
 finished joint orbit.  Writes <WORK>/frames/fNNNN.png + frames/manifest.json (hold counts, step, caption).
 Cameras come from <WORK>/raw/stills.json so the frames match the stills."""
 import importlib
@@ -63,7 +63,9 @@ def run(_context: str):
     # overview
     off = dict(W.HOME)
     W.place(G, off, visible=allg)
-    W.set_cam(cams['overview'])
+    for _ in range(2):                           # the first camera set after the scratch doc opens lands far off
+        W.set_cam(cams['overview'])
+        adsk.doEvents()
     frame(0, '바퀴 출력부 — 분해 상태', hold=int(2.5 * FPS))
     for k, st in enumerate(W.states(), 1):
         vis = set(st['vis'])
@@ -90,8 +92,9 @@ def run(_context: str):
         go_cam(cams[st['key'] + '_after'], k, st['title'] + ' — 완료')
         man[-1]['hold'] = int(1.0 * FPS)
     # finished joint + orbit about the vertical through the target
+    n_done = len(W.STEPS) + 1
     W.place(G, off, visible=allg)
-    go_cam(cams['done'], 8, '조립 완료')
+    go_cam(cams['done'], n_done, '조립 완료')
     man[-1]['hold'] = int(1.0 * FPS)
     c0 = cams['done']
     tx, ty, tz = c0['target']
@@ -102,7 +105,7 @@ def run(_context: str):
         dx, dz = ex - tx, ez - tz
         cd = dict(c0, eye=[tx + dx * math.cos(a) - dz * math.sin(a), ey, tz + dx * math.sin(a) + dz * math.cos(a)])
         W.set_cam(cd)
-        frame(8, '조립 완료')
+        frame(n_done, '조립 완료')
     man[-1]['hold'] = int(0.8 * FPS)
     W.set_cam(c0)
     with open(os.path.join(out, 'manifest.json'), 'w', encoding='utf-8') as f:
