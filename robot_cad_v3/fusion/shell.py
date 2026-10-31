@@ -147,6 +147,22 @@ def _splice_holes(B, sx, sy, where):
 REAR_HOLES_Z = (2.0, -12.0)
 
 
+def corner_posts(h):
+    """10-31 (user): the saddle takes everything outside the end width above SADDLE_Z, so the hip section's top face
+    stood on the 1.4 mm taper wall sliver at its four corners (|x| XT, |y| YE).  Solid SHELL_POST square posts there,
+    from 15 mm below SADDLE_Z up to the outer surface (the rear ones end under the upper rear slope)."""
+    B = C.Builder()
+    a = P.SHELL_POST
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            x0, x1 = sorted((sx * XT, sx * (XT - a)))
+            y0, y1 = sorted((sy * YE, sy * (YE - a)))
+            post = B.abox(x0, x1, y0, y1, ZH + P.SADDLE_Z - 15.0, ZH + T + 1.0)
+            C.inter(post, outer_solid())
+            C.union(h, post)
+    return h
+
+
 def openings(h):
     B = C.Builder()
     lx, ly, t = P.TOP_PLATE

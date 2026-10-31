@@ -197,6 +197,7 @@ def build_shell():
     tmp.component.name = 'shell_tmp'
     h = SH.hollow(tmp.component)
     tmp.deleteMe()
+    SH.corner_posts(h)
     SH.openings(h)
     for name, body in SH.pieces(h).items():
         add_part(t, name, body, 'PETG print', 'blue' if name.startswith('saddle') else 'shell grey')

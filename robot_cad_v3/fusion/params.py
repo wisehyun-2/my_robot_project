@@ -249,6 +249,8 @@ REAR_TOP_X, REAR_Z_TOP = 73.0, 81.0
 REAR_BOT_X, REAR_Z_BOT = 34.0, -25.0
 PLAN_CORNER = 30.0          # vertical corner chamfers of the rear end (plan view; the front ones went 10-31)
 SADDLE_Z = 95.0             # blue 'saddle' = hip-section shell above this height outside the end width
+SHELL_POST = 4.0            # 10-31 (user): solid 4 x 4 corner posts in shell_mid (above SADDLE_Z only the 1.4 mm wall
+                            # sliver at the taper corner held the top face up)
 SWITCH_Y, SWITCH_Z = 88.0, 45.0            # rocker switch on the vertical rear face (inside the corner chamfers)
 DECK_T_FLOOR = 2.4
 SHELL_T = 1.4
