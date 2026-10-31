@@ -214,6 +214,10 @@ RIM_REG_GAP = (0.1, 0.2)    # rim recess clearance (radial, depth): Ø11.2 x 3.2
                             # holes' (Ø3.4 on M3: 0.2), so the register takes the wheel load before the screws (printed
                             # holes come out ~0.1-0.2 small: near a snug fit)
 HUB_BOSS_D = 28.0           # through the Ø30 plate hole
+HUB_SPIGOT = (5.9, 1.3)     # wheel hub flange: Ø11.8 spigot into the AKE output's Ø12 x 1.5 recess (radius, height).
+                            # 10-31: 1.4 -> 1.3 so the tip stays 0.2 off the recess floor (like RIM_REG_GAP): printed height
+                            # +-0.1 and the untoleranced recess depth must not let the tip seat before the flange face, or the
+                            # output screws clamp a tilted flange; the dowels locate it, the spigot only guides
 
 
 def tyre_centre_y():

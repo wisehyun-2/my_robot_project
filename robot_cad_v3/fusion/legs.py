@@ -299,7 +299,7 @@ def hub_flange(s):
     fr = LY.frames('wheel', s)
     y_out = lv['out']
     body = B.ycyl(W[0], W[1], lv['f1'] - 0.5, y_out, P.HUB_BOSS_D / 2)
-    C.union(body, B.ycyl(W[0], W[1], y_out, y_out + 1.4, 5.9))
+    C.union(body, B.ycyl(W[0], W[1], y_out, y_out + P.HUB_SPIGOT[1], P.HUB_SPIGOT[0]))   # 0.2 off the recess floor
     C.union(body, B.ycyl(W[0], W[1], lv['f0'], lv['f1'], 23.0))
     bear = y_out - P.HUB_SCREW_SEAT                # washer seat: the M3 x 14 heads stop 2.0 short of the rim hub face
     for p in LY.motor_points(fr['motor'], P.AKE_PCD_OUT / 2, P.AKE_OUT_M3, P.AKE['out']):
