@@ -207,3 +207,4 @@ v3run.load()['finalize'].exports()              # export/: f3d, 조립 STEP, 부
 | `export/` | `WheelBiped_v3.f3d`, `WheelBiped_v3_assembly.step`, `parts_step/`, `parts_stl/` (셸·덮개 STEP은 가공 견적용) |
 | `images/` | 그림 26장(v2 24장과 같은 시점 + 25·26 덮개 벗긴 링크) |
 | `BOM.md`, `BOM.csv` | 부품표(모델에서 생성) |
+| `manufacturing/explain/` | 바퀴 출력부 단면도 `wheel_output_stack.png`(+ `.py`), 바퀴 조립 그림·영상 `assembly/wheel/`(v2 explain 양식, 6061 정강이·클램프 링 없음) |
