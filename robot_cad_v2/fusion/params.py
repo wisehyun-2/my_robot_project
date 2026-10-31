@@ -210,7 +210,7 @@ FRONT_BOT_X = 105.0         # ... and the face slopes back to the bottom at x 10
 # -REAR_BOT_X; the sketch's ratios: face ≈ 0.48 of the height, slopes ≈ 22 / 12 deg from horizontal.
 REAR_TOP_X, REAR_Z_TOP = 73.0, 81.0
 REAR_BOT_X, REAR_Z_BOT = 34.0, -25.0
-PLAN_CORNER = 30.0          # vertical corner chamfers of the front / rear ends (plan view)
+PLAN_CORNER = 30.0          # vertical corner chamfers of the rear end (plan view; the front ones went 10-31)
 SADDLE_Z = 95.0             # blue 'saddle' = hip-section shell above this height outside the end width
 SWITCH_Y, SWITCH_Z = 88.0, 45.0            # rocker switch on the vertical rear face (inside the corner chamfers)
 DECK_T_FLOOR = 2.4

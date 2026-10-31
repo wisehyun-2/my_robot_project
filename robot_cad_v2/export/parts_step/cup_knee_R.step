@@ -13,7 +13,7 @@ FILE_DESCRIPTION(
 
 FILE_NAME(
 /* name */ 'cup_knee_R.step',
-/* time_stamp */ '2026-10-31T12:42:25+09:00',
+/* time_stamp */ '2026-10-31T13:38:48+09:00',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20.2',
@@ -2496,7 +2496,7 @@ SOLID_ANGLE_UNIT()
 #2430=PRODUCT_DEFINITION_SHAPE('',$,#2433);
 #2431=SHAPE_REPRESENTATION('',(#1435),#2423);
 #2432=PRODUCT_DEFINITION_CONTEXT('part definition',#2437,'design');
-#2433=PRODUCT_DEFINITION('2026-10-31-12-42-25-567','cup_knee_R',#2434,#2432);
+#2433=PRODUCT_DEFINITION('2026-10-31-13-38-48-526','cup_knee_R',#2434,#2432);
 #2434=PRODUCT_DEFINITION_FORMATION('',$,#2439);
 #2435=PRODUCT_RELATED_PRODUCT_CATEGORY('cup_knee_R','cup_knee_R',(#2439));
 #2436=APPLICATION_PROTOCOL_DEFINITION('international standard',
@@ -2504,7 +2504,7 @@ SOLID_ANGLE_UNIT()
 #2437=APPLICATION_CONTEXT(
 'Core Data for Automotive Mechanical Design Process');
 #2438=PRODUCT_CONTEXT('part definition',#2437,'mechanical');
-#2439=PRODUCT('2026-10-31-12-42-25-567','cup_knee_R',
+#2439=PRODUCT('2026-10-31-13-38-48-526','cup_knee_R',
 'PETG 30 %, \X2\BC14B2E5\X0\(\X2\B36EAC1C\X0\ \X2\BA74\X0\)\X2\C744\X0\ 
 \X2\BC14B2E5C5D0\X0\, \X2\C11CD3ECD2B8B294\X0\ \X2\CEE4B125D130\X0\ \X2\CC3DB9CC\X0\',
 (#2438));

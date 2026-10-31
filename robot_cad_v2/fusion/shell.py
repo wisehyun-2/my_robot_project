@@ -5,9 +5,10 @@ Shape: a hip section of full width (|y| <= YW) around the hip plates and narrowe
 (TORSO_Y_END) that the knee drivers and tyres swing past; length 2 x TORSO_X with the hip axis at mid-length
 (TITA: length ≈ 1.4 x width).  Side view: raked front face (a short top-front chamfer, then a long slope back to
 the bottom); the rear (user's sketch) is an upper slope from the top down to a short vertical face and a lower slope
-from the face back to the bottom, cutting the whole width.  Plan view: chamfered vertical corners at both ends; the
-hip section's tapered ends run the full height (10-31: no top / bottom edge chamfers, so the saddle's front and back
-faces go straight up to the top and to the rear upper slope).
+from the face back to the bottom, cutting the whole width.  Plan view: chamfered vertical corners at the rear end only
+(10-31: the front ones met the top chamfer and the raked face in one point, a triangular facet); the hip section's
+tapered ends run the full height (10-31: no top / bottom edge chamfers, so the saddle's front and back faces go
+straight up to the top and to the rear upper slope).
 Colours: body dark grey, blue hip saddles.  10-31 (user): no glued-on decor any more (stripes, rear band, white
 lines, face panel, camera, rear knob panel) and no hip drums (ring, light ring, arc); the shell side wall fills the
 old drum seat.  Openings: payload plate, hip bosses, cable grommets, side / chin vents, rear perforation, switch.
@@ -52,9 +53,8 @@ def slope_point(which, x, y):
 
 
 def end_plan():
-    c = P.PLAN_CORNER
-    return [(-X, -(YE - c)), (-X + c, -YE), (X - c, -YE), (X, -(YE - c)), (X, YE - c), (X - c, YE), (-X + c, YE),
-            (-X, YE - c)]
+    c = P.PLAN_CORNER                                        # rear corners only (10-31)
+    return [(-X, -(YE - c)), (-X + c, -YE), (X, -YE), (X, YE), (-X + c, YE), (-X, YE - c)]
 
 
 def mid_side_profile():
