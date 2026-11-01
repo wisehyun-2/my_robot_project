@@ -6,8 +6,9 @@
 연신 11 %, HDT 60 °C). 모터·드라이버·컵·hip 판·척추 봉·레일·몸통·셸·허브·림·타이어와 관절 면 위치는 v3 그대로다 — hip 판·봉·레일은
 이번 요청 범위 밖이라 아직 6061이다. 바뀐 것과 근거만 적고, 나머지는 `../robot_cad_v3/README.md`를 본다.
 
-Fusion: 새 문서(저장하지 않음, `wbv4` 속성)에 빌드했다 — `WheelBiped_v2`·`WheelBiped_v3` 허브 문서는 건드리지 않았다.
-`export/WheelBiped_v4.f3d`에 같은 모델(회전 조인트 6개)이 있다. 허브에 올리려면 따로 저장해야 한다.
+Fusion: 새 문서(`wbv4` 속성)에 빌드했다 — `WheelBiped_v2`·`WheelBiped_v3` 허브 문서는 건드리지 않았다.
+`export/WheelBiped_v4.f3d`에 같은 모델(회전 조인트 6개)이 있고, 11-01 이 f3d를 그대로 허브 **`WheelBiped_v4`**(`Default Project` 최상위,
+버전 1 = git `93a2aa2`, 10.05 kg)로 저장했다.
 
 ## 0. 결과 한눈에
 
