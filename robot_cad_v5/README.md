@@ -13,8 +13,10 @@
 
 Fusion: 새 문서(`wbv5` 속성)에 빌드했다. 허브의 `WheelBiped_v2~v4` 문서는 건드리지 않았다.
 `export/WheelBiped_v5.f3d`에 같은 모델(직접 모델링, 조인트 없음)이 있다.
-허브 **`WheelBiped_v5`** 버전 1(`Default Project` 최상위)은 배선을 넣었던 git `5a01c18`의 f3d다(10.61 kg).
-배선을 뺀 지금 모델은 아직 허브에 올리지 않았다.
+허브 **`WheelBiped_v5`**(`Default Project` 최상위)에는 두 버전이 있다.
+- 버전 1: 배선을 넣었던 git `5a01c18`의 f3d(10.61 kg).
+- **버전 2**(11-01, 최신): 버전 1 문서에서 선·플러그·XT60·XT90만 지운 배선 없는 모델이다(git `0e8be1a`와 같다).
+  저장 전에 세 가지를 확인했다: 바퀴 고정자가 y ±216.7에 있고, 기본 자세 실제 간섭이 0건이고, 10.43 kg이다.
 
 ![로봇](images/05_robot_iso.png) ![다리 안쪽 앞](images/03_leg_iso_inboard_front.png)
 
@@ -129,7 +131,6 @@ v5run.export()         # export/WheelBiped_v5.f3d
 - **새 부품 체결 부품 형상, BOM**: hub 인서트 플랜지 M3 × 6 + 열압입 인서트, 캡 M2.5 × 3 + 인서트, 61807. BOM도 함께 만든다.
 - **조인트, 부품 STEP·STL**: v4 `finalize.joints()`, `exports()`에 해당한다.
 - **MuJoCo 모터 재검증**: `check.save_mass_json`은 v4의 안쪽 타이어 중심(`P.tyre_centre_y()`)을 쓰므로 바깥쪽 값(267.5)으로 고친 뒤 쓴다.
-- **허브 갱신**: 배선을 뺀 모델로 `WheelBiped_v5` 새 버전 저장.
 
 ## 6. 파일
 
