@@ -5,11 +5,14 @@ fasteners are built by the v4 code; this module only swaps the links.
 Run each step in its own MCP script (put this folder on sys.path, import v5run):
     v5run.build()            # makes a NEW document (attribute wbv5 / tag): v4 robot without harness, v4 links and
                              # output clamp rings removed, v5 legs added
-    v5run.turn()             # wheel groups outboard - its own script: in the build script the new parts' bounding
-                             # boxes are stale and the per-part decision goes wrong (idempotent: run it twice, 0)
+    v5run.harness()          # v4 torso cables + the v5 leg cables (harness_v5), plugs, XT60 / XT90 / switch
+    v5run.turn()             # wheel groups outboard - last and in its own script: in the build script the new parts'
+                             # bounding boxes are stale and the per-part decision goes wrong, and adding parts to a
+                             # link (cadlib.IdentityParent) resets turned children (idempotent: a second run turns 0)
     v5run.report()           # v5 leg parts: volume, mass, lumps / shells
     v5run.rib_check()        # every rib joined to its walls (point sampling), voids
-    v5run.interference()     # 6 poses
+    v5run.chords()           # loop anchor distances over the pose grid (sizes harness_v5.*_LOOP_L)
+    v5run.interference()     # 6 poses: interference without the nominal loops + each pose's loops measured
     v5run.images()           # ../images (legs, robot, truss sections)
     v5run.robot_mass()       # v4 print densities (PETG parts) + tyre 721 g, robot mass / COM
     v5run.export()           # ../export/WheelBiped_v5.f3d
@@ -45,12 +48,16 @@ def load():
     sys.modules.pop('v4run', None)
     import v4run
     M = v4run.load()
-    sys.modules.pop('legs_v5', None)
+    for n in ('legs_v5', 'harness_v5'):
+        sys.modules.pop(n, None)
     import legs_v5
-    M['legs_v5'], M['v4run'] = legs_v5, v4run
+    import harness_v5
+    M['legs_v5'], M['harness_v5'], M['v4run'] = legs_v5, harness_v5, v4run
+    M['poses'].HN = harness_v5                    # the v4 pose tools (loops, measure_loops, show_pose) use v5 cables
     for k in ('params', 'cadlib', 'legs'):
         assert M[k].__file__.lower().startswith(V4.lower()), (k, M[k].__file__)
-    assert legs_v5.__file__.lower().startswith(HERE.lower()), legs_v5.__file__
+    for m in (legs_v5, harness_v5):
+        assert m.__file__.lower().startswith(HERE.lower()), m.__file__
     _pa12(M['cadlib'])
     return M
 
@@ -92,6 +99,8 @@ def _centre(o):
 
 
 ORIG_INBOARD = ('clamp ring stator', 'FX DIN 7984 M2.5x8 stator')   # tibia parts that sat inboard of the shank
+NOT_TURNED = ('shank_', 'kneebearing_', 'harness_', 'XT30U plug', 'JST PHR-3')   # v5 parts: built in place
+REPLACE = ('AKE60-8_KV80_stator',)
 STATOR = ('AKE60-8_KV80_stator', 'clamp ring stator', 'FX DIN 7984 M2.5x8 stator', 'magnet spacer')
 
 
@@ -110,7 +119,7 @@ def turn_wheels(M):
         cand = [(o, False) for o in tib.childOccurrences] + [(o, True) for o in whl.childOccurrences]
         for o, in_wheel in cand:
             name = o.component.name
-            if name.startswith(('shank_', 'kneebearing_')):
+            if name.startswith(NOT_TURNED):
                 continue
             c = _centre(o)
             if not in_wheel and math.hypot(c[0], c[2] - P.R_WHEEL) >= 70.0:
@@ -123,7 +132,13 @@ def turn_wheels(M):
             m.transformBy(R)
             if not in_wheel and not name.startswith(STATOR):
                 m.transformBy(Rc)
-            o.transform2 = m
+            if name.startswith(REPLACE):
+                # the AKE60 STEP component loses a transform2 change at the next recompute (e.g. any occurrence
+                # deleted, 11-01): a new instance at the turned place instead (links at the nominal pose = identity)
+                C.instance(whl if in_wheel else tib, o.component, m)
+                o.deleteMe()
+            else:
+                o.transform2 = m
             n += 1
     return n
 
@@ -160,8 +175,67 @@ def build():
 
 
 def turn():
+    """Wheel groups outboard (at the nominal pose: the decisions use world bounding boxes)."""
     doc()
-    return turn_wheels(load())
+    M = load()
+    M['poses'].reset()
+    return turn_wheels(M)
+
+
+HARNESS_PARTS = ('xt30_plug', 'jst_ph3_plug', 'xt60_pair', 'xt90_xt60_adapter', 'rocker_switch')
+
+
+def harness():
+    """v4 assembly.build_harness with harness_v5's cables (re-runnable: the previous harness and its plugs go first).
+    Returns the cables whose loops came out stretched."""
+    doc()
+    M = load()
+    C, A, V, HV = M['cadlib'], M['assembly'], M['vendor'], M['harness_v5']
+    masters = {k: getattr(V, k)() for k in HARNESS_PARTS}
+    names = {c.name for c in masters.values()}
+    for o in list(C.design().rootComponent.allOccurrences):
+        ctx = o.assemblyContext
+        if ctx is None or ctx.component.name == '_library':
+            continue
+        if o.component.name.startswith('harness_') or o.component.name in names:
+            o.deleteMe()
+    parts = {'xt30': masters['xt30_plug'], 'ph3': masters['jst_ph3_plug'], 'xt60': masters['xt60_pair'],
+             'xt90': masters['xt90_xt60_adapter'], 'switch': masters['rocker_switch']}
+    L = A.links()
+    B = C.Builder()
+    stretched = []
+    tc, xt60, xt90 = HV.torso_cables()
+    for cab in HV.cables(1) + HV.cables(-1) + tc:
+        for i, rn in enumerate(cab['runs']):
+            if rn[0] == 'loop':
+                _, la, a, ta, lb, b, tb, length = rn
+                pts, ok = HV.loop_points(a, ta, b, tb, length)
+                if not ok:
+                    stretched.append(cab['name'])
+                A._add_wires(L[la], 'harness_%s_loop' % cab['name'], HV.wires_along(B, pts, HV.BUNDLE, HV.Y_SIDE),
+                             HV.BUNDLE_LOOKS)
+            else:
+                link, pts, wires, looks, pref = rn
+                A._add_wires(L[link], 'harness_%s_%d' % (cab['name'], i), HV.wires_along(B, HV.smooth(pts), wires, pref),
+                             looks)
+        for (kind, f, link) in cab['plugs']:
+            A.place(L[link], parts[kind], f)
+    P = M['params']
+    A.place(L['torso'], parts['xt60'], C.frame(C.add(xt60, (0, 0, -16.0)), (1, 0, 0), (0, 1, 0), (0, 0, 1)))
+    A.place(L['torso'], parts['xt90'], C.frame(xt90, (1, 0, 0), (0, 0, -1), (0, 1, 0)))
+    A.place(L['torso'], parts['switch'], C.frame((-P.TORSO_X, P.SWITCH_Y, P.Z_HIP + P.SWITCH_Z), (0, 1, 0), (0, 0, -1),
+                                                 (-1, 0, 0)))
+    return dict(stretched=stretched)
+
+
+GRID = dict(L0s=(200.0, 240.0, 280.0, 310.0, 335.0), hips=(-80.0, -60.0, -30.0, 0.0, 30.0, 60.0))
+
+
+def chords():
+    """(min, max) anchor distance of every loop over GRID ((distance, L0, hip))."""
+    doc()
+    M = load()
+    return M['poses'].chord_table(GRID['L0s'], GRID['hips'])
 
 
 def v5_occs(C):
@@ -187,8 +261,9 @@ def report():
 
 def rib_check(step_y=3.0):
     """Sample every Warren rib's centre line (1 mm along it, every step_y in y across the cavity) in freshly built
-    left links: a point inside the outer shape but outside the part is a gap.  Returns per link: lumps, shells, voids,
-    rib ends not joined to a wall, and the gaps that are not the designed holes (axis powder holes, conduit bore)."""
+    left links: a point inside the outer shape but outside the part is a gap (the ribs have no holes, so any gap is a
+    fault).  Returns per link: lumps, shells (1 = every cell reaches an escape hole), voids, rib ends not joined to a
+    wall, gaps."""
     M = load()
     C, LV = M['cadlib'], M['legs_v5']
     B = C.Builder(side=1)
@@ -200,15 +275,11 @@ def rib_check(step_y=3.0):
         if link == 'thigh':
             body, outer = LV.thigh(1)['main'], LV.thigh_shape(B)
             y0, y1 = LV.Y_TF + LV.WALL + 0.5, LV.SPAR[1] - LV.WALL - 0.5
-            tun, bore_y = ((LV.Y_TF + LV.Y_TO) / 2, (LV.SPAR[0] + LV.SPAR[1]) / 2), (LV.Y_TF + LV.Y_TO) / 2
-            hfun = LV.th_half
         else:
             body, outer = LV.shank(1)['main'], LV.shank_shape(B)
             y0, y1 = LV.Y_SI + LV.WALL + 0.5, LV.Y_SH - LV.WALL - 0.5
-            tun, bore_y = (LV.Y_MSH,), LV.Y_MSH
-            hfun = LV.sh_half
         nys = int((y1 - y0) / step_y)
-        ys = sorted(set([round(y0 + (y1 - y0) * j / nys, 2) for j in range(nys + 1)] + list(tun)))
+        ys = [round(y0 + (y1 - y0) * j / nys, 2) for j in range(nys + 1)]
         voids = [sh for sh in body.shells if sh.isVoid]
         loose, other = [], []
         nodes = LV.rib_nodes(link)
@@ -227,28 +298,42 @@ def rib_check(step_y=3.0):
                     if e[2] and not e[3]:
                         loose.append((i, y, round(e[0], 1)))
                 for s_, t_, ino, sol in pts:
-                    if not ino or sol:
-                        continue
-                    powder = abs(t_) < 5.5 and min(abs(y - v) for v in tun) <= 4.0
-                    bore = abs(y - bore_y) <= 6.5 and abs(abs(t_) - (hfun(s_) - LV.DUCT_D)) <= 6.5 and t_ < 0
-                    if not (powder or bore):
+                    if ino and not sol:
                         other.append((i, y, round(s_, 1), round(t_, 1)))
         res[link] = dict(lumps=body.lumps.count, shells=body.shells.count, voids=len(voids), y_levels=len(ys),
-                         loose_rib_ends=loose, other_gaps=other[:20], n_other=len(other))
+                         loose_rib_ends=loose, gaps=other[:20], n_gaps=len(other),
+                         escapes=sum(len(f) for _s, _d, f in LV.cell_escapes(link)))
     return res
 
 
-def interference():
+def interference(poses=POSES, loops=True):
+    """Per pose: (L0, hip, mating, real, real pairs, loops {cable: (min distance mm, nearest part, not stretched,
+    anchor distance)}).  The nominal loop bodies ride on one link, so they are left out of the interference and each
+    pose's loops are built and measured separately (poses.measure_loops)."""
     doc()
     M = load()
-    K, PO = M['check'], M['poses']
+    K, PO, C = M['check'], M['poses'], M['cadlib']
     short = lambda n: n.split('/')[-1][:38]
+    root = C.design().rootComponent
+    nominal = [o for o in root.allOccurrences if o.component.name.endswith('_loop')]
     out = []
-    for L0, hip in POSES:
-        PO.apply(PO.transforms(L0, hip))
-        mating, real = K.classify(K.interference())
-        out.append((L0, hip, len(mating), len(real), sorted({(short(a), short(b)) for a, b, v in real})[:12]))
-    PO.reset()
+    try:
+        for o in nominal:
+            o.isLightBulbOn = False
+        for L0, hip in poses:
+            T = PO.transforms(L0, hip)
+            PO.apply(T)
+            leaves = [o for o in K.leaves() if not o.component.name.endswith('_loop')]
+            mating, real = K.classify(K.interference(leaves))
+            lps = {}
+            if loops:
+                lps = {k: (round(v[0], 1), v[1].split('/')[-1][:30], v[2], round(v[3], 1))
+                       for k, v in PO.measure_loops(T, leaves).items()}
+            out.append((L0, hip, len(mating), len(real), sorted({(short(a), short(b)) for a, b, v in real})[:12], lps))
+    finally:
+        PO.reset()
+        for o in nominal:
+            o.isLightBulbOn = True
     return out
 
 
@@ -268,6 +353,7 @@ def show(torso=True, right=True):
 def snap(name, eye, target, fit=True):
     import view
     os.makedirs(IMG, exist_ok=True)
+    adsk.core.Application.get().userInterface.activeSelections.clear()   # a face picked in the window shows up
     return view.snap(os.path.join(IMG, name + '.png'), eye, target, fit=fit)
 
 
@@ -293,6 +379,10 @@ def images():
     out.append(snap('05_robot_iso', (1500, 1150, 900), (0, 0, 290)))
     out.append(snap('06_robot_front', (1700, 0, 330), (0, 0, 290)))
     out.append(snap('07_robot_side', (0, 1900, 330), (0, 0, 290)))
+    out.append(snap('11_robot_back_cables', (-1500, 900, 700), (0, 60, 300)))
+    show(torso=False, right=False)
+    out.append(snap('12_leg_cables_back_inboard', (-620, -260, 480), (10, 215, 230)))
+    show()
     root = C.design().rootComponent
     occ = root.occurrences.addNewComponent(adsk.core.Matrix3D.create())
     occ.component.name = '_section'

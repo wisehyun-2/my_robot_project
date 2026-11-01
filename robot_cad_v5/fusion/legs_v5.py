@@ -11,9 +11,9 @@ Skeleton:
     from the thigh: widening alone could not do it);
   * shank: deep at the knee (90), tapering straight to the wheel housing; the head pad (outboard layer inside the fork,
     clear of the tyre) is the shank outline within r 70 of the knee;
-  * closed PA12 boxes (WALL) braced by Warren ribs (RIB) joined to every wall, every cell open to the next through a
-    round hole in each rib on the link axis (MJF powder escape); printed-in square cable conduit on the back edge;
-    6061 turned hub inserts in the hip / knee bosses, SUS clamp rings under the stator screws (v4).
+  * closed PA12 boxes (WALL) braced by plain Warren ribs (RIB, no holes - user 11-01) joined to every wall; each
+    cell they close off gets its own powder escape hole in a face that meets another part (cell_escapes); no cable
+    holes (user 11-01): the cables run outside along the flat back faces (harness_v5); 6061 turned hub inserts in the hip / knee bosses, SUS clamp rings under the stator screws (v4).
 Form (user 11-01: printable; faces that can be flat stay flat - no needless shallow steps, recesses or cuts; round only
 where it has to be): every link is a straight prism of the tangent hull of two joint circles - flat side and edge
 faces, straight flanks, round only around the joints (and the fork crotch, which relieves the stress); the caps sit
@@ -52,10 +52,8 @@ SPOOL_R = (18.0, 26.0)                           # tube around the Ø28 access b
 SPOOL_END = 12.0                                 # the insert flange and the cap / bearing seat (this long from a face)
 INSERT_FL = (24.0, 6.0)                          # 6061 hub insert flange radius, thickness (inside the link head)
 INSERT_BOLT_R = 20.0
-DUCT_D = 12.0                                    # cables run this far in from the back face (v3 / v4)
-POWDER_D = 8.0                                   # round powder hole through every rib on the link axis (mid-depth:
-                                                 # the ribs keep their joints with every wall)
-ESCAPE_D = 6.0                                   # MJF powder escape holes (hidden faces)
+ESCAPE_D = 6.0                                   # MJF powder escape hole, one per truss cell (hidden faces)
+ESCAPE_IN = WALL + 4.0                           # its centre this far in from the edge wall (1 mm clear of it)
 Y_MSH = (Y_SI + Y_SO) / 2                        # wheel group turn plane
 
 
@@ -217,42 +215,33 @@ def rib_nodes(link):
             for i in range(n_ribs + 1)]
 
 
-def axis_tunnel(B, g, s0, s1, y):
-    """Round powder hole through the ribs along the link axis (cut from the ribs only)."""
-    return B.cyl(x3(at(g, s0, 0.0), y), x3(at(g, s1, 0.0), y), POWDER_D / 2)
-
-
-def edge_box(B, g, s0, s1, hfun, depth, size_n, y_c, size_y, back=True):
-    """Straight box along the back (or front) flank s0..s1, its centre line depth in from that face."""
-    sg = 1.0 if back else -1.0
-    p0, p1 = at(g, s0, sg * (hfun(s0) - depth), g['nb']), at(g, s1, sg * (hfun(s1) - depth), g['nb'])
-    d = (p1[0] - p0[0], p1[1] - p0[1])
-    Ld = math.hypot(*d)
-    d = (d[0] / Ld, d[1] / Ld)
-    return B.box(((p0[0] + p1[0]) / 2, y_c, (p0[1] + p1[1]) / 2), (d[0], 0, d[1]), (-d[1], 0, d[0]),
-                 Ld, size_n, size_y)
-
-
-def wall_hole(B, g, s_at, hfun, y_c, size_s, size_y, back=True, depth=None):
-    """Rounded opening (stadium, ends along y) through the back (or front) edge wall at s_at (cable entry / exit)."""
-    depth = depth or (WALL + 2.0)
-    sg = 1.0 if back else -1.0
-    p_in, p_out = at(g, s_at, sg * (hfun(s_at) - depth), g['nb']), at(g, s_at, sg * (hfun(s_at) + 1.0), g['nb'])
-    r = size_s / 2
-    out = None
-    for yy in (y_c - (size_y / 2 - r), y_c + (size_y / 2 - r)):
-        out = C.union(out, B.cyl(x3(p_in, yy), x3(p_out, yy), r))
-    c = ((p_in[0] + p_out[0]) / 2, (p_in[1] + p_out[1]) / 2)
-    L = math.hypot(p_out[0] - p_in[0], p_out[1] - p_in[1])
-    nb = g['nb'] if back else (-g['nb'][0], -g['nb'][1])
-    C.union(out, B.box((c[0], y_c, c[1]), (g['u'][0], 0, g['u'][1]), (nb[0], 0, nb[1]), size_s, L, size_y - size_s))
+def cell_escapes(link):
+    """One powder escape per cell closed off by the ribs: (s, side (+1 front / -1 back), [y faces]).  A Warren cell
+    between two ribs is a triangle with its apex on one wall and its base on the other: the hole sits mid-base (s of
+    the apex), ESCAPE_IN off that wall, far from both rib junctions; the end cells get theirs 10.5 / 12.6 off the end
+    ribs.  Thigh cells that lie wholly below the crotch are split by the fork slot into a tine part (hole in the inner
+    face y Y_TF) and a spar part (hole in the spar's inner face y SPAR[0], facing the shank pad); the shank's go in its
+    inner face y Y_SI (facing the thigh)."""
+    nodes = rib_nodes(link)
+    n = len(nodes) - 1
+    side = lambda i: 1.0 if i % 2 == 0 else -1.0
+    cells = [(nodes[1][0] - 10.5, side(1), 0.0)]
+    cells += [(nodes[k][0], side(k - 1), nodes[k - 1][0]) for k in range(1, n)]
+    cells.append((nodes[n - 1][0] + 12.6, side(n - 1), nodes[n - 1][0]))
+    out = []
+    for s_at, sd, s_min in cells:
+        if link == 'thigh':
+            faces = [Y_TF] + ([SPAR[0]] if s_min > CROTCH[0] - WALL else [])
+        else:
+            faces = [Y_SI]
+        out.append((s_at, sd, faces))
     return out
 
 
-def escape(B, g, s_at, hfun, y_face):
-    """MJF powder escape hole through a flat y wall that faces another part (y_face, material at +y), near the front
-    flank, into a truss cell."""
-    p = at(g, s_at, -(hfun(s_at) - WALL - 4.0), g['nb'])
+def escape(B, g, s_at, hfun, y_face, sd):
+    """MJF powder escape hole through a flat y wall that faces another part (y_face, material at +y), ESCAPE_IN off the
+    front (sd +1) or back (sd -1) wall."""
+    p = at(g, s_at, sd * (hfun(s_at) - ESCAPE_IN))
     return B.ycyl(p[0], p[1], y_face - 1.0, y_face + WALL + 1.0, ESCAPE_D / 2)
 
 
@@ -337,27 +326,15 @@ def thigh(s=1):
     B = C.Builder(side=s)
     g = geo('thigh')
     H, K, L = g['a'], g['b'], g['L']
-    yd, ysp = (Y_TF + Y_TO) / 2, (SPAR[0] + SPAR[1]) / 2
     body = thigh_shape(B)
     outer = C.TBM.copy(body)
     s_r0, s_r1 = RIB_SPAN['thigh']
     ribs, nodes = truss(B, g, C.TBM.copy(outer), RIBS['thigh'], s_r0, s_r1, th_half, Y_TF, SPAR[1])
     C.cut(body, thigh_shape(B, WALL))
-    for yy in (yd, ysp):                              # powder: every truss cell open to its neighbours
-        C.cut(ribs, axis_tunnel(B, g, s_r0 - 10, s_r1 + 10, yy))
-    C.union(body, ribs)                               # the ribs run into the conduit wall (one solid)
-    # printed-in square conduit 12 x 12 on the duct line, from the floor to the tine's top wall (no slivers; its top
-    # face = the cavity's top below the crotch, so no pocket closes between it and the crotch wall); its ends clear of
-    # the end ribs' crossings of the duct line (s 52.9 .. 57.6 and 122.5 .. 128): an end face that cut a rib would
-    # close a wedge against the back wall
-    tube = edge_box(B, g, 42.0, 120.0, th_half, DUCT_D, 18.0, (Y_TF + 0.5 + Y_TO - WALL) / 2, Y_TO - WALL - Y_TF - 0.5)
-    C.inter(tube, C.TBM.copy(outer))
-    C.union(body, tube)
-    C.cut(body, edge_box(B, g, 44.0, 118.0, th_half, DUCT_D, 12.0, yd, 12.0))     # bore closed at both ends
-    for st_ in (47.0, 112.0):                         # entry / exit windows clear of the ribs' back junctions
-        C.cut(body, wall_hole(B, g, st_, th_half, yd, 12.0, 18.0, depth=DUCT_D + 2.0))
-    for st_, y_face in ((R_HIP + 10.0, Y_TF), (L - P.HOUSING_R - 8.0, Y_TF), (L - 40.0, SPAR[0])):
-        C.cut(body, escape(B, g, st_, th_half, y_face))
+    C.union(body, ribs)
+    for s_at, sd, faces in cell_escapes('thigh'):
+        for y_face in faces:
+            C.cut(body, escape(B, g, s_at, th_half, y_face, sd))
     hub_pocket(B, s, body, H, Y_TF, SPAR[1], wide_out=True)
     LG._motor_seat(B, s, body, 'knee', K, Y_TO - P.KNEE_PLATE_T, Y_TO, Y_TI - 1)
     LG._cup_inserts(B, s, body, 'knee', Y_TI)
@@ -376,25 +353,15 @@ def shank(s=1):
     B = C.Builder(side=s)
     g = geo('tibia')
     K, W, L = g['a'], g['b'], g['L']
-    yd = (Y_SI + Y_SO) / 2
     body = shank_shape(B)
     outer = C.TBM.copy(body)
     s_r0, s_r1 = RIB_SPAN['tibia']
     ribs, nodes = truss(B, g, C.TBM.copy(outer), RIBS['tibia'], s_r0, s_r1, sh_half, Y_SI, Y_SH)
     C.cut(body, shank_shape(B, WALL))
-    C.cut(ribs, axis_tunnel(B, g, s_r0 - 10, s_r1 + 10, yd))
     C.union(body, ribs)
-    tube = edge_box(B, g, 55.0, 131.0, sh_half, DUCT_D, 18.0, yd, Y_SO - Y_SI - 1.0)
-    C.inter(tube, C.TBM.copy(outer))
-    C.union(body, tube)
-    C.cut(body, edge_box(B, g, 58.0, 129.0, sh_half, DUCT_D, 12.0, yd, 12.0))     # bore closed at both ends
-    C.cut(body, wall_hole(B, g, 65.0, sh_half, yd, 12.0, 18.0, depth=DUCT_D + 2.0))
-    # exit towards the inboard wheel driver: round hole through the inner face into the bore, past the last rib's
-    # crossing of the duct line
-    ex = at(g, 123.0, sh_half(123.0) - DUCT_D, g['nb'])
-    C.cut(body, B.ycyl(ex[0], ex[1], Y_SI - 1.0, yd + 6.0, 6.0))
-    for st_ in (40.0, 120.0):
-        C.cut(body, escape(B, g, st_, sh_half, Y_SI))
+    for s_at, sd, faces in cell_escapes('tibia'):
+        for y_face in faces:
+            C.cut(body, escape(B, g, s_at, sh_half, y_face, sd))
     C.cut(body, B.ycyl(W[0], W[1], Y_SI - 1, Y_SH + 1, P.HOUSING_R))             # wheel housing goes in here
     C.union(body, wheel_housing(B, s))
     hub_pocket(B, s, body, K, Y_SI, Y_SH, wide_out=True)
