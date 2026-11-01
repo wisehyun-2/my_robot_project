@@ -1,18 +1,17 @@
 """robot_cad_v5 = the v4 robot (robot_cad_v4/fusion, git 681ad00) with the wheels turned outboard and MJF PA12 legs
 (legs_v5.py, concept A "monolith", chosen by the user 11-01).  The torso, hip plates, motors, cups, wheels and
-fasteners are built by the v4 code; this module only swaps the links.
+fasteners are built by the v4 code; this module only swaps the links.  No wiring in the model (user 11-01: all cables
+removed; the external leg route that was tried is harness_v5.py in git 5a01c18); the back-panel rocker switch stays.
 
 Run each step in its own MCP script (put this folder on sys.path, import v5run):
     v5run.build()            # makes a NEW document (attribute wbv5 / tag): v4 robot without harness, v4 links and
-                             # output clamp rings removed, v5 legs added
-    v5run.harness()          # v4 torso cables + the v5 leg cables (harness_v5), plugs, XT60 / XT90 / switch
+                             # output clamp rings removed, v5 legs added, back-panel switch
     v5run.turn()             # wheel groups outboard - last and in its own script: in the build script the new parts'
                              # bounding boxes are stale and the per-part decision goes wrong, and adding parts to a
                              # link (cadlib.IdentityParent) resets turned children (idempotent: a second run turns 0)
     v5run.report()           # v5 leg parts: volume, mass, lumps / shells
-    v5run.rib_check()        # every rib joined to its walls (point sampling), voids
-    v5run.chords()           # loop anchor distances over the pose grid (sizes harness_v5.*_LOOP_L)
-    v5run.interference()     # 6 poses: interference without the nominal loops + each pose's loops measured
+    v5run.rib_check()        # every rib joined to its walls (point sampling), voids, escape holes
+    v5run.interference()     # 6 poses
     v5run.images()           # ../images (legs, robot, truss sections)
     v5run.robot_mass()       # v4 print densities (PETG parts) + tyre 721 g, robot mass / COM
     v5run.export()           # ../export/WheelBiped_v5.f3d
@@ -48,16 +47,12 @@ def load():
     sys.modules.pop('v4run', None)
     import v4run
     M = v4run.load()
-    for n in ('legs_v5', 'harness_v5'):
-        sys.modules.pop(n, None)
+    sys.modules.pop('legs_v5', None)
     import legs_v5
-    import harness_v5
-    M['legs_v5'], M['harness_v5'], M['v4run'] = legs_v5, harness_v5, v4run
-    M['poses'].HN = harness_v5                    # the v4 pose tools (loops, measure_loops, show_pose) use v5 cables
+    M['legs_v5'], M['v4run'] = legs_v5, v4run
     for k in ('params', 'cadlib', 'legs'):
         assert M[k].__file__.lower().startswith(V4.lower()), (k, M[k].__file__)
-    for m in (legs_v5, harness_v5):
-        assert m.__file__.lower().startswith(HERE.lower()), m.__file__
+    assert legs_v5.__file__.lower().startswith(HERE.lower()), legs_v5.__file__
     _pa12(M['cadlib'])
     return M
 
@@ -99,7 +94,7 @@ def _centre(o):
 
 
 ORIG_INBOARD = ('clamp ring stator', 'FX DIN 7984 M2.5x8 stator')   # tibia parts that sat inboard of the shank
-NOT_TURNED = ('shank_', 'kneebearing_', 'harness_', 'XT30U plug', 'JST PHR-3')   # v5 parts: built in place
+NOT_TURNED = ('shank_', 'kneebearing_')          # v5 parts: built in place
 REPLACE = ('AKE60-8_KV80_stator',)
 STATOR = ('AKE60-8_KV80_stator', 'clamp ring stator', 'FX DIN 7984 M2.5x8 stator', 'magnet spacer')
 
@@ -146,7 +141,7 @@ def turn_wheels(M):
 def build():
     _new_doc()
     M = load()
-    M['v4run'].build(with_harness=False)          # the harness follows the v4 links: re-route it for v5 later
+    M['v4run'].build(with_harness=False)          # no wiring in v5 (user 11-01)
     C, LV = M['cadlib'], M['legs_v5']             # (v4run.build reloaded the v4 modules in place)
     _pa12(C)
     M['finalize'].show_all()
@@ -170,6 +165,9 @@ def build():
             comp = C.new_part(C.root_occ(link + k), name)
             for role, body in parts.items():
                 C.add_body(comp, body, '%s %s' % (name, role), MAT[role], LOOK[role])
+    P = M['params']                                # the back-panel rocker switch (v4 places it with the harness)
+    M['assembly'].place(C.root_occ('torso'), M['vendor'].rocker_switch(),
+                        C.frame((-P.TORSO_X, P.SWITCH_Y, P.Z_HIP + P.SWITCH_Z), (0, 1, 0), (0, 0, -1), (-1, 0, 0)))
     C.design().rootComponent.partNumber = 'WheelBiped_v5'
     return dict(dropped=dropped)
 
@@ -180,62 +178,6 @@ def turn():
     M = load()
     M['poses'].reset()
     return turn_wheels(M)
-
-
-HARNESS_PARTS = ('xt30_plug', 'jst_ph3_plug', 'xt60_pair', 'xt90_xt60_adapter', 'rocker_switch')
-
-
-def harness():
-    """v4 assembly.build_harness with harness_v5's cables (re-runnable: the previous harness and its plugs go first).
-    Returns the cables whose loops came out stretched."""
-    doc()
-    M = load()
-    C, A, V, HV = M['cadlib'], M['assembly'], M['vendor'], M['harness_v5']
-    masters = {k: getattr(V, k)() for k in HARNESS_PARTS}
-    names = {c.name for c in masters.values()}
-    for o in list(C.design().rootComponent.allOccurrences):
-        ctx = o.assemblyContext
-        if ctx is None or ctx.component.name == '_library':
-            continue
-        if o.component.name.startswith('harness_') or o.component.name in names:
-            o.deleteMe()
-    parts = {'xt30': masters['xt30_plug'], 'ph3': masters['jst_ph3_plug'], 'xt60': masters['xt60_pair'],
-             'xt90': masters['xt90_xt60_adapter'], 'switch': masters['rocker_switch']}
-    L = A.links()
-    B = C.Builder()
-    stretched = []
-    tc, xt60, xt90 = HV.torso_cables()
-    for cab in HV.cables(1) + HV.cables(-1) + tc:
-        for i, rn in enumerate(cab['runs']):
-            if rn[0] == 'loop':
-                _, la, a, ta, lb, b, tb, length = rn
-                pts, ok = HV.loop_points(a, ta, b, tb, length)
-                if not ok:
-                    stretched.append(cab['name'])
-                A._add_wires(L[la], 'harness_%s_loop' % cab['name'], HV.wires_along(B, pts, HV.BUNDLE, HV.Y_SIDE),
-                             HV.BUNDLE_LOOKS)
-            else:
-                link, pts, wires, looks, pref = rn
-                A._add_wires(L[link], 'harness_%s_%d' % (cab['name'], i), HV.wires_along(B, HV.smooth(pts), wires, pref),
-                             looks)
-        for (kind, f, link) in cab['plugs']:
-            A.place(L[link], parts[kind], f)
-    P = M['params']
-    A.place(L['torso'], parts['xt60'], C.frame(C.add(xt60, (0, 0, -16.0)), (1, 0, 0), (0, 1, 0), (0, 0, 1)))
-    A.place(L['torso'], parts['xt90'], C.frame(xt90, (1, 0, 0), (0, 0, -1), (0, 1, 0)))
-    A.place(L['torso'], parts['switch'], C.frame((-P.TORSO_X, P.SWITCH_Y, P.Z_HIP + P.SWITCH_Z), (0, 1, 0), (0, 0, -1),
-                                                 (-1, 0, 0)))
-    return dict(stretched=stretched)
-
-
-GRID = dict(L0s=(200.0, 240.0, 280.0, 310.0, 335.0), hips=(-80.0, -60.0, -30.0, 0.0, 30.0, 60.0))
-
-
-def chords():
-    """(min, max) anchor distance of every loop over GRID ((distance, L0, hip))."""
-    doc()
-    M = load()
-    return M['poses'].chord_table(GRID['L0s'], GRID['hips'])
 
 
 def v5_occs(C):
@@ -306,34 +248,20 @@ def rib_check(step_y=3.0):
     return res
 
 
-def interference(poses=POSES, loops=True):
-    """Per pose: (L0, hip, mating, real, real pairs, loops {cable: (min distance mm, nearest part, not stretched,
-    anchor distance)}).  The nominal loop bodies ride on one link, so they are left out of the interference and each
-    pose's loops are built and measured separately (poses.measure_loops)."""
+def interference(poses=POSES):
+    """Per pose: (L0, hip, mating, real, real pairs)."""
     doc()
     M = load()
-    K, PO, C = M['check'], M['poses'], M['cadlib']
+    K, PO = M['check'], M['poses']
     short = lambda n: n.split('/')[-1][:38]
-    root = C.design().rootComponent
-    nominal = [o for o in root.allOccurrences if o.component.name.endswith('_loop')]
     out = []
     try:
-        for o in nominal:
-            o.isLightBulbOn = False
         for L0, hip in poses:
-            T = PO.transforms(L0, hip)
-            PO.apply(T)
-            leaves = [o for o in K.leaves() if not o.component.name.endswith('_loop')]
-            mating, real = K.classify(K.interference(leaves))
-            lps = {}
-            if loops:
-                lps = {k: (round(v[0], 1), v[1].split('/')[-1][:30], v[2], round(v[3], 1))
-                       for k, v in PO.measure_loops(T, leaves).items()}
-            out.append((L0, hip, len(mating), len(real), sorted({(short(a), short(b)) for a, b, v in real})[:12], lps))
+            PO.apply(PO.transforms(L0, hip))
+            mating, real = K.classify(K.interference())
+            out.append((L0, hip, len(mating), len(real), sorted({(short(a), short(b)) for a, b, v in real})[:12]))
     finally:
         PO.reset()
-        for o in nominal:
-            o.isLightBulbOn = True
     return out
 
 
@@ -358,8 +286,8 @@ def snap(name, eye, target, fit=True):
 
 
 def images():
-    """Leg views (left leg alone), robot views and truss sections (left links cut above the rib holes: the ribs read
-    as continuous bands, the holes show in the rib walls of the oblique views)."""
+    """Leg views (left leg alone), robot views and truss sections (left links cut at y 199 / 229.5, looking from
+    outboard: the plain ribs and the escape holes in the floor)."""
     doc()
     M = load()
     C, LV = M['cadlib'], M['legs_v5']
@@ -379,10 +307,6 @@ def images():
     out.append(snap('05_robot_iso', (1500, 1150, 900), (0, 0, 290)))
     out.append(snap('06_robot_front', (1700, 0, 330), (0, 0, 290)))
     out.append(snap('07_robot_side', (0, 1900, 330), (0, 0, 290)))
-    out.append(snap('11_robot_back_cables', (-1500, 900, 700), (0, 60, 300)))
-    show(torso=False, right=False)
-    out.append(snap('12_leg_cables_back_inboard', (-620, -260, 480), (10, 215, 230)))
-    show()
     root = C.design().rootComponent
     occ = root.occurrences.addNewComponent(adsk.core.Matrix3D.create())
     occ.component.name = '_section'

@@ -13,7 +13,7 @@ Skeleton:
     clear of the tyre) is the shank outline within r 70 of the knee;
   * closed PA12 boxes (WALL) braced by plain Warren ribs (RIB, no holes - user 11-01) joined to every wall; each
     cell they close off gets its own powder escape hole in a face that meets another part (cell_escapes); no cable
-    holes (user 11-01): the cables run outside along the flat back faces (harness_v5); 6061 turned hub inserts in the hip / knee bosses, SUS clamp rings under the stator screws (v4).
+    holes (user 11-01; no wiring in the model); 6061 turned hub inserts in the hip / knee bosses, SUS clamp rings under the stator screws (v4).
 Form (user 11-01: printable; faces that can be flat stay flat - no needless shallow steps, recesses or cuts; round only
 where it has to be): every link is a straight prism of the tangent hull of two joint circles - flat side and edge
 faces, straight flanks, round only around the joints (and the fork crotch, which relieves the stress); the caps sit
