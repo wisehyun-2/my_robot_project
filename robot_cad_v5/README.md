@@ -12,7 +12,9 @@
 이 폴더의 코드는 링크와 다리 배선을 바꾸고 바퀴를 돌리는 일만 한다. 나머지는 `../robot_cad_v4/README.md`를 본다.
 
 Fusion: 새 문서(`wbv5` 속성)에 빌드했다. 허브의 `WheelBiped_v2~v4` 문서는 건드리지 않았다.
-`export/WheelBiped_v5.f3d`에 같은 모델(직접 모델링, 조인트 없음)이 있다. 허브에는 아직 저장하지 않았다.
+`export/WheelBiped_v5.f3d`에 같은 모델(직접 모델링, 조인트 없음)이 있다.
+11-01 이 f3d를 그대로 허브 **`WheelBiped_v5`**(`Default Project` 최상위, 버전 1 = git `5a01c18`, 10.61 kg)로 저장했다.
+저장 전에 불러온 모델에서 두 가지를 확인했다: 바퀴 고정자가 돌린 위치(y ±216.7)에 있고, 기본 자세 실제 간섭이 0건이다.
 
 ![로봇](images/05_robot_iso.png) ![뒤에서 본 배선](images/11_robot_back_cables.png)
 
@@ -147,7 +149,6 @@ v5run.export()         # export/WheelBiped_v5.f3d
 - **새 부품 체결 부품 형상, BOM**: hub 인서트 플랜지 M3 × 6 + 열압입 인서트, 캡 M2.5 × 3 + 인서트, 61807, 케이블타이 마운트. BOM도 함께 만든다.
 - **조인트, 부품 STEP·STL**: v4 `finalize.joints()`, `exports()`에 해당한다.
 - **MuJoCo 모터 재검증**: `check.save_mass_json`은 v4의 안쪽 타이어 중심(`P.tyre_centre_y()`)을 쓰므로 바깥쪽 값(267.5)으로 고친 뒤 쓴다.
-- **허브 저장.**
 
 ## 6. 파일
 
