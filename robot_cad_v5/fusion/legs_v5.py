@@ -1,4 +1,5 @@
-"""v5 legs: MJF PA12 thigh / shank for the outboard-wheel robot (concept A "monolith", chosen by the user 11-01).
+"""v5 legs: printed thigh / shank for the outboard-wheel robot (concept A "monolith", chosen by the user 11-01; MJF PA12
+until 11-02, then PETG FDM - the user prints the links on an own printer).
 
 Skeleton:
   * wheel outboard: the wheel group turned 180 deg about the vertical line through the axle in the shank mid-plane
@@ -6,18 +7,27 @@ Skeleton:
     notch lies on the shank again and the plugs keep their v4 angle to it;
   * thigh = fork: one deep box from the hip, then two tines - the inner one with the knee motor (v4 printed seat) and
     an outer spar outboard of the shank head - split by a slot with a half-round crotch; a 61807 bearing in the shank
-    head runs on a knee cap bolted to the spar, so the knee is held on both sides and the thigh works as a 99 mm deep
+    head runs on a knee cap bolted to the spar, so the knee is held on both sides and the thigh works as a 108 mm deep
     box (PA12 E 1.7 GPa is 1.6 x softer than the v4 SLA resin and the outboard wheel puts the contact 94 mm further
-    from the thigh: widening alone could not do it);
+    from the thigh: widening alone could not do it); the slot is 9 mm wider than the shank head needs (plan A, 11-01)
+    so the shank can be fitted with its hub insert on;
   * shank: deep at the knee (90), tapering straight to the wheel housing; the head pad (outboard layer inside the fork,
     clear of the tyre) is the shank outline within r 70 of the knee;
-  * closed PA12 boxes (WALL) braced by plain Warren ribs (RIB, no holes - user 11-01) joined to every wall; each
-    cell they close off gets its own powder escape hole in a face that meets another part (cell_escapes); no cable
-    holes (user 11-01; no wiring in the model); 6061 turned hub inserts in the hip / knee bosses, SUS clamp rings under the stator screws (v4).
+  * closed PA12 boxes (WALL) braced by plain Warren ribs (RIB, no holes - user 11-01) joined to every wall; the cells
+    they close off stay closed voids (11-02, user: no small holes - the per-cell Ø6 powder escapes went; the links are
+    to be printed on the user's own printer, an MJF print would keep its unsintered powder inside); no cable holes
+    (user 11-01; no wiring in the model); 6061 turned hub inserts in the hip / knee bosses, SUS clamp rings under the stator screws (v4);
+  * 11-02 (user): the knee gap (knee plate face -> shank inner face) is KNEE_GAP 4.0 (was 1.5): the wheel group turns
+    about a plane WHEEL_SHIFT / 2 further out, so the whole turned wheel group sits 2.5 further outboard (tyre centre
+    y 270, robot 594 wide) and the shank keeps a flat 30 mm base layer;
+  * 11-02 (user, PETG): the hub inserts are no longer held by heat-set inserts in tension - 6 x ISO 10642 M3 x 16 12.9
+    go from the insert flange through a 6 mm PETG wall into a 6061 backing ring (hub_ring) dropped in through the
+    Ø44 access bore, so the wall is only clamped (compression); the knee cap tube fits the spar hole (Ø35, ream).
 Form (user 11-01: printable; faces that can be flat stay flat - no needless shallow steps, recesses or cuts; round only
 where it has to be): every link is a straight prism of the tangent hull of two joint circles - flat side and edge
-faces, straight flanks, round only around the joints (and the fork crotch, which relieves the stress); the caps sit
-flush.  Geometry in robot coordinates of side s (Builder(side=s)); the right leg is the mirror image.
+faces, straight flanks, round only around the joints (and the fork crotch, which relieves the stress); the knee cap
+sits flush, the hip access bore is left open (11-02, user: the hip cap only covered it).  Geometry in robot
+coordinates of side s (Builder(side=s)); the right leg is the mirror image.
 """
 import math
 
@@ -30,14 +40,25 @@ import params as P
 Y_TI, Y_TO = P.Y_FEMUR_IN, P.Y_FEMUR_OUT        # 174 .. 204 knee housing (knee motor seat at 195 .. 204)
 Y_TF = 178.0                                     # thigh inner face: clear of the knee cup's register lip (y 174 ..
                                                  # 177.1), so the thigh stays deep at the knee; the housing stands 4 proud
-SPAR = (252.0, 277.0)                            # outer spar, outboard of the shank head pad (1.5 gap)
-CROTCH = (84.0, 24.0)                            # fork slot y Y_TO .. SPAR[0], half-round end: crotch at s 84 on the
-                                                 # slot centre line, s 108 at the slot's faces
+WHEEL_SHIFT = 2.5                                # the turned wheel group sits this much further outboard (11-02)
+Y_SI4, Y_SO4 = P.Y_TIBIA_IN, P.Y_TIBIA_OUT       # 205.5 .. 235.5 v4 shank layer: the wheel group is built there
+Y_MSH = (Y_SI4 + Y_SO4) / 2 + WHEEL_SHIFT / 2    # 221.75 wheel group turn plane
+Y_SI, Y_SO = 2 * Y_MSH - Y_SO4, 2 * Y_MSH - Y_SI4   # 208 .. 238 shank base layer (the wheel housing flush in it, the
+KNEE_GAP = Y_SI - Y_TO                           # driver cup's lip on its inner end); 4.0 gap to the knee plate
+PAD_T = 15.0                                     # shank head pad (inside the fork) on the base layer
+Y_SH = Y_SO + PAD_T                              # 253 shank head pad outboard face
+SPAR = (Y_SH + 10.5, Y_SH + 35.5)                # outer spar 263.5 .. 288.5, 10.5 outboard of the shank head pad (11-01,
+                                                 # user: plan A): the shank goes into the fork held 9.5 mm outboard,
+                                                 # clear of the knee plate with its insert boss, spigot and dowels
+                                                 # (12.5 proud of its inner face), then slides inboard onto the motor
+                                                 # output; robot 594 wide (tyre outer face 297)
+CROTCH_FACE = 108.0                              # the slot's faces end at s 108 (as before the widening)
+CROTCH = (CROTCH_FACE - (SPAR[0] - Y_TO) / 2, (SPAR[0] - Y_TO) / 2)   # half-round end of the slot y Y_TO .. SPAR[0]:
+                                                 # crotch at s 78.25 on the slot centre line, r 29.75 (the wider slot
+                                                 # contains the old one, so every old shank clearance stays)
 THIGH = [(0.0, 38.0), (P.L1, 30.0)]             # thigh outline: hip circle r 38 -> knee circle r 30 (the spar's end)
 R_HIP = 38.0
 R_BOSS = 28.0                                    # solid spar boss round the knee cap
-Y_SI, Y_SO = P.Y_TIBIA_IN, P.Y_TIBIA_OUT         # 205.5 .. 235.5 shank base layer
-Y_SH = 250.5                                     # shank head pad outboard face (inside the fork)
 SHANK = [(0.0, 45.0), (P.L2, 22.5)]             # shank outline: knee r 45 -> r 22.5 at the axle (inside the wheel
                                                  # housing; the flank stays < 28.3 inside the wheel cup's lip)
 PAD_R = 70.0                                     # head pad = the shank outline within r 70 of the knee (concentric: the
@@ -47,14 +68,18 @@ RIBS = {'thigh': 5, 'tibia': 6}                  # Warren ribs per link
 BRG = (35.0, 47.0, 7.0)                          # 61807 knee outer bearing d, D, B
 CAP_R = (14.5, 17.5, 23.0)                       # knee cap tube bore / tube OD (in the bearing) / flange
 CAP_T = 3.0
-CAP_BOLT_R = 20.5                                # 3 x M2.5 into inserts (knee and hip caps)
-SPOOL_R = (18.0, 26.0)                           # tube around the Ø28 access bore: r 18 through the box, r 26 at
-SPOOL_END = 12.0                                 # the insert flange and the cap / bearing seat (this long from a face)
-INSERT_FL = (24.0, 6.0)                          # 6061 hub insert flange radius, thickness (inside the link head)
-INSERT_BOLT_R = 20.0
-ESCAPE_D = 6.0                                   # MJF powder escape hole, one per truss cell (hidden faces)
-ESCAPE_IN = WALL + 4.0                           # its centre this far in from the edge wall (1 mm clear of it)
-Y_MSH = (Y_SI + Y_SO) / 2                        # wheel group turn plane
+CAP_BOLT_R = 20.5                                # 3 x M2.5 into inserts (knee cap; the hip cap went 11-02)
+CAP_FIT = 0.0                                    # spar hole radial play on the cap tube: a fit (Ø35 H7 / g6, print small
+                                                 # and ream; 11-02 - with 0.5 the 3 cap inserts carried the cap moment)
+SPOOL_R = 26.0                                   # tube through the box round the joint (Ø28 bore, Ø44 above the ring)
+INSERT_FL = (24.0, 6.0)                          # 6061 hub insert flange radius, thickness (in a pocket at the link face)
+WALL_J = 6.0                                     # PETG wall clamped between the insert flange and the backing ring
+RING = (14.5, 21.5, 6.0)                         # 6061 backing ring r in, r out, thickness (one part for hip and knee)
+BORE_R = 22.0                                    # access bore above the ring (ring drops in with 0.5 play; at the knee
+                                                 # the 61807 outer ring sits on the r 22 .. 23.5 shoulder, its inner
+                                                 # ring - on the knee cap - runs free over the bore)
+FLANGE_BOLT_R = 18.0                             # 6 x ISO 10642 M3 x 16 12.9: flange countersink -> PETG wall -> ring tap
+INSERT_CSK = 7.0                                 # countersink Ø7.0 x 90 deg in the flange (head flush), 2.5 to its edge
 
 
 def wheel_turn(s):
@@ -215,58 +240,44 @@ def rib_nodes(link):
             for i in range(n_ribs + 1)]
 
 
-def cell_escapes(link):
-    """One powder escape per cell closed off by the ribs: (s, side (+1 front / -1 back), [y faces]).  A Warren cell
-    between two ribs is a triangle with its apex on one wall and its base on the other: the hole sits mid-base (s of
-    the apex), ESCAPE_IN off that wall, far from both rib junctions; the end cells get theirs 10.5 / 12.6 off the end
-    ribs.  Thigh cells that lie wholly below the crotch are split by the fork slot into a tine part (hole in the inner
-    face y Y_TF) and a spar part (hole in the spar's inner face y SPAR[0], facing the shank pad); the shank's go in its
-    inner face y Y_SI (facing the thigh)."""
-    nodes = rib_nodes(link)
-    n = len(nodes) - 1
-    side = lambda i: 1.0 if i % 2 == 0 else -1.0
-    cells = [(nodes[1][0] - 10.5, side(1), 0.0)]
-    cells += [(nodes[k][0], side(k - 1), nodes[k - 1][0]) for k in range(1, n)]
-    cells.append((nodes[n - 1][0] + 12.6, side(n - 1), nodes[n - 1][0]))
-    out = []
-    for s_at, sd, s_min in cells:
-        if link == 'thigh':
-            faces = [Y_TF] + ([SPAR[0]] if s_min > CROTCH[0] - WALL else [])
-        else:
-            faces = [Y_SI]
-        out.append((s_at, sd, faces))
-    return out
-
-
-def escape(B, g, s_at, hfun, y_face, sd):
-    """MJF powder escape hole through a flat y wall that faces another part (y_face, material at +y), ESCAPE_IN off the
-    front (sd +1) or back (sd -1) wall."""
-    p = at(g, s_at, sd * (hfun(s_at) - ESCAPE_IN))
-    return B.ycyl(p[0], p[1], y_face - 1.0, y_face + WALL + 1.0, ESCAPE_D / 2)
-
-
 # ----------------------------------------------------------------------------- joint ends
-def hub_pocket(B, s, body, c, y_link_in, y_face_out, wide_out=False):
-    """PA12 side of a driven joint: spool tube through the box (r 18, r 26 for SPOOL_END at the inner face around the
-    6061 hub insert flange and, if wide_out, at the outer face around the cap / bearing seat), Ø28 access bore,
-    6 x M3 heat-set insert holes for the flange bolts."""
-    C.union(body, B.ycyl(c[0], c[1], y_link_in, y_face_out, SPOOL_R[0]))
-    C.union(body, B.ycyl(c[0], c[1], y_link_in, y_link_in + SPOOL_END, SPOOL_R[1]))
-    if wide_out:
-        C.union(body, B.ycyl(c[0], c[1], y_face_out - SPOOL_END, y_face_out, SPOOL_R[1]))
-    C.cut(body, B.ycyl(c[0], c[1], y_link_in - 1.0, y_link_in + INSERT_FL[1], INSERT_FL[0] + 0.15))
-    C.cut(body, B.ycyl(c[0], c[1], y_link_in - 1.0, y_face_out + 1.0, 14.0))
+def y_ring(y_link_in):
+    """Backing ring seat (the PETG wall's outboard face) of a joint whose link face is y_link_in."""
+    return y_link_in + INSERT_FL[1] + WALL_J
+
+
+def _flange_bolts(c, f):
     for k in range(6):
         a = math.radians(30 + 60 * k)
-        C.cut(body, B.ycyl(c[0] + INSERT_BOLT_R * math.cos(a), c[1] + INSERT_BOLT_R * math.sin(a),
-                           y_link_in + INSERT_FL[1] - 0.1, y_link_in + INSERT_FL[1] + 6.0, LG.INSERT_M3 / 2))
+        f(c[0] + FLANGE_BOLT_R * math.cos(a), c[1] + FLANGE_BOLT_R * math.sin(a))
+
+
+def hub_pocket(B, s, body, c, y_link_in, y_face_out):
+    """Printed side of a driven joint: SPOOL_R tube through the box, the 6061 insert flange's pocket in the link face,
+    the WALL_J wall it is clamped against (Ø28 hole, 6 x Ø3.4 for the flange bolts), then the Ø44 access bore to the
+    outer face that takes the backing ring (11-02: no heat-set inserts pulled by the joint moment)."""
+    C.union(body, B.ycyl(c[0], c[1], y_link_in, y_face_out, SPOOL_R))
+    C.cut(body, B.ycyl(c[0], c[1], y_link_in - 1.0, y_link_in + INSERT_FL[1], INSERT_FL[0] + 0.15))
+    C.cut(body, B.ycyl(c[0], c[1], y_link_in - 1.0, y_face_out + 1.0, 14.0))
+    yr = y_ring(y_link_in)
+    C.cut(body, B.ycyl(c[0], c[1], yr, y_face_out + 1.0, BORE_R))
+    _flange_bolts(c, lambda x, z: C.cut(body, B.ycyl(x, z, yr - WALL_J - 0.1, yr + 0.1, LG.M3_CLEAR / 2)))
     return body
+
+
+def hub_ring(B, c, y_link_in):
+    """6061 backing ring on the PETG wall (r RING, 6 x M3 tapped through: tap drill Ø2.5 modelled)."""
+    yr = y_ring(y_link_in)
+    ring = B.ycyl(c[0], c[1], yr, yr + RING[2], RING[1])
+    C.cut(ring, B.ycyl(c[0], c[1], yr - 1, yr + RING[2] + 1, RING[0]))
+    _flange_bolts(c, lambda x, z: C.cut(ring, B.ycyl(x, z, yr - 1, yr + RING[2] + 1, P.TAP_DRILL['M3'] / 2)))
+    return ring
 
 
 def hub_insert(B, s, joint, c, y_link_in):
     """6061 turned hub insert: Ø28 boss (+ Ø11.8 x 1.4 spigot) from the motor output to the link, flange inside the
     link head, 6 x M3 x 16 12.9 + washers on a floor BEARING_FACE from the output face (no clamp ring on metal),
-    3 x Ø3 dowels 7.5 deep, 6 x Ø3.4 flange bolt holes."""
+    3 x Ø3 dowels 7.5 deep, 6 x Ø3.4 flange bolt holes countersunk in its motor-side face (r 18)."""
     fr = LY.frames(joint, s)
     y_out = P.y_output(joint)
     yt = y_link_in + INSERT_FL[1]
@@ -282,10 +293,11 @@ def hub_insert(B, s, joint, c, y_link_in):
     for p in LY.motor_points(fr['motor'], P.AKE_PCD_OUT / 2, P.AKE_OUT_PIN, P.AKE['out']):
         q = LG.lc(p, s)
         C.cut(body, B.ycyl(q[0], q[2], y_out - 2, y_out + P.DOWEL_HOLE, 1.5))
-    for k in range(6):
-        a = math.radians(30 + 60 * k)
-        C.cut(body, B.ycyl(c[0] + INSERT_BOLT_R * math.cos(a), c[1] + INSERT_BOLT_R * math.sin(a),
-                           y_link_in - 1, yt + 1, LG.M3_CLEAR / 2))
+    csk = (INSERT_CSK - LG.M3_CLEAR) / 2                 # 90 deg countersink depth
+    def bolt(x, z):
+        C.cut(body, B.ycyl(x, z, y_link_in - 1, yt + 1, LG.M3_CLEAR / 2))
+        C.cut(body, B.ycyl(x, z, y_link_in - 0.5, y_link_in + csk, INSERT_CSK / 2 + 0.5, LG.M3_CLEAR / 2))
+    _flange_bolts(c, bolt)
     return body
 
 
@@ -308,12 +320,12 @@ def wheel_housing(B, s):
     """v4 printed wheel seat (9 mm plate, Ø42.05 pocket, clamp ring recess, lead groove) built for the inboard wheel
     and turned with the wheel group (plate now on the outer face), cup inserts turned and re-clocked with the cup."""
     W = (0.0, P.R_WHEEL)
-    h = B.ycyl(W[0], W[1], Y_SI, Y_SO, P.HOUSING_R)
-    LG._motor_seat(B, s, h, 'wheel', W, Y_SI + P.WHEEL_PLATE_T, Y_SI, Y_SO + 1)
+    h = B.ycyl(W[0], W[1], Y_SI4, Y_SO4, P.HOUSING_R)
+    LG._motor_seat(B, s, h, 'wheel', W, Y_SI4 + P.WHEEL_PLATE_T, Y_SI4, Y_SO4 + 1)
     C.transform(h, wheel_turn(s))
     for p in LG.cup_column_points('wheel', s):
         q = LG.lc(p, s)
-        tool = B.ycyl(q[0], q[2], Y_SO + 0.1, Y_SO - 5.0, LG.INSERT_M25 / 2)
+        tool = B.ycyl(q[0], q[2], Y_SO4 + 0.1, Y_SO4 - 5.0, LG.INSERT_M25 / 2)
         C.transform(tool, wheel_turn(s))
         C.transform(tool, wheel_clock(s))
         C.cut(h, tool)
@@ -322,7 +334,8 @@ def wheel_housing(B, s):
 
 # ----------------------------------------------------------------------------- links
 def thigh(s=1):
-    """dict of temporary bodies: main (PA12), insert (6061 hub), hipcap (PA12)."""
+    """dict of temporary bodies: main (printed), insert (6061 hub), ring (6061 backing ring).  The hip access bore
+    (Ø44 above the ring, for the ring and the hip output screws) stays open in the outer face: no hip cap (11-02)."""
     B = C.Builder(side=s)
     g = geo('thigh')
     H, K, L = g['a'], g['b'], g['L']
@@ -332,24 +345,17 @@ def thigh(s=1):
     ribs, nodes = truss(B, g, C.TBM.copy(outer), RIBS['thigh'], s_r0, s_r1, th_half, Y_TF, SPAR[1])
     C.cut(body, thigh_shape(B, WALL))
     C.union(body, ribs)
-    for s_at, sd, faces in cell_escapes('thigh'):
-        for y_face in faces:
-            C.cut(body, escape(B, g, s_at, th_half, y_face, sd))
-    hub_pocket(B, s, body, H, Y_TF, SPAR[1], wide_out=True)
+    hub_pocket(B, s, body, H, Y_TF, SPAR[1])
     LG._motor_seat(B, s, body, 'knee', K, Y_TO - P.KNEE_PLATE_T, Y_TO, Y_TI - 1)
     LG._cup_inserts(B, s, body, 'knee', Y_TI)
-    C.cut(body, B.ycyl(K[0], K[1], SPAR[0] - 1, SPAR[1] + 1, CAP_R[1] + 0.5))       # knee cap through the spar
-    for c in (H, K):
-        cap_seat(B, body, c)
-    out = dict(main=body, insert=hub_insert(B, s, 'hip', H, Y_TF))
-    hipcap = B.ycyl(H[0], H[1], SPAR[1] - CAP_T, SPAR[1], CAP_R[2])      # flush disc over the Ø28 access bore
-    C.cut(hipcap, _cap_bolts(B, H, SPAR[1] - CAP_T - 1, SPAR[1] + 1, LG.M25_CLEAR))
-    out['hipcap'] = hipcap
-    return out
+    C.cut(body, B.ycyl(K[0], K[1], SPAR[0] - 1, SPAR[1] + 1, CAP_R[1] + CAP_FIT))   # knee cap through the spar
+    cap_seat(B, body, K)
+    return dict(main=body, insert=hub_insert(B, s, 'hip', H, Y_TF), ring=hub_ring(B, H, Y_TF))
 
 
 def shank(s=1):
-    """dict of temporary bodies: main (PA12), insert (6061 hub)."""
+    """dict of temporary bodies: main (printed), insert (6061 hub), ring (6061 backing ring).  The 61807 sits on the
+    r 22 .. 23.5 shoulder of its seat over the Ø44 access bore (the ring goes in before the bearing)."""
     B = C.Builder(side=s)
     g = geo('tibia')
     K, W, L = g['a'], g['b'], g['L']
@@ -359,14 +365,11 @@ def shank(s=1):
     ribs, nodes = truss(B, g, C.TBM.copy(outer), RIBS['tibia'], s_r0, s_r1, sh_half, Y_SI, Y_SH)
     C.cut(body, shank_shape(B, WALL))
     C.union(body, ribs)
-    for s_at, sd, faces in cell_escapes('tibia'):
-        for y_face in faces:
-            C.cut(body, escape(B, g, s_at, sh_half, y_face, sd))
     C.cut(body, B.ycyl(W[0], W[1], Y_SI - 1, Y_SH + 1, P.HOUSING_R))             # wheel housing goes in here
     C.union(body, wheel_housing(B, s))
-    hub_pocket(B, s, body, K, Y_SI, Y_SH, wide_out=True)
+    hub_pocket(B, s, body, K, Y_SI, Y_SH)
     C.cut(body, B.ycyl(K[0], K[1], Y_SH - BRG[2], Y_SH + 1, BRG[1] / 2))         # 61807 seat in the pad's outer face
-    return dict(main=body, insert=hub_insert(B, s, 'knee', K, Y_SI))
+    return dict(main=body, insert=hub_insert(B, s, 'knee', K, Y_SI), ring=hub_ring(B, K, Y_SI))
 
 
 def knee_parts(s=1):

@@ -6,7 +6,8 @@ Shape: a hip section of full width (|y| <= YW) around the hip plates and narrowe
 (TITA: length ≈ 1.4 x width).  Side view: raked front face (a short top-front chamfer, then a long slope back to
 the bottom); the rear (user's sketch) is an upper slope from the top down to a short vertical face and a lower slope
 from the face back to the bottom, cutting the whole width.  Plan view: chamfered vertical corners at the rear end only
-(10-31: the front ones met the top chamfer and the raked face in one point, a triangular facet); the hip section's
+(10-31: the front ones met the top chamfer and the raked face in one point, a triangular facet; v5 rounds them instead,
+REAR_ROUND, user 11-02); the hip section's
 tapered ends run the full height (10-31: no top / bottom edge chamfers, so the saddle's front and back faces go
 straight up to the top and to the rear upper slope).
 Colours: body dark grey, blue hip saddles.  10-31 (user): no glued-on decor any more (stripes, rear band, white
@@ -52,9 +53,28 @@ def slope_point(which, x, y):
     return C.add(C.add(p, C.mul(d, (x - p[0]) / d[0])), (0.0, y, 0.0))
 
 
+REAR_ROUND = False      # v5 (user 11-02): rear plan corners rounded, r PLAN_CORNER, instead of the 45 deg chamfers;
+                        # set by v4run.build(rear_round=True) after its module reload
+
+
 def end_plan():
-    c = P.PLAN_CORNER                                        # rear corners only (10-31)
+    c = 0.0 if REAR_ROUND else P.PLAN_CORNER                 # rear corners only (10-31)
+    if not c:
+        return [(-X, -YE), (X, -YE), (X, YE), (-X, YE)]
     return [(-X, -(YE - c)), (-X + c, -YE), (X, -YE), (X, YE), (-X + c, YE), (-X, YE - c)]
+
+
+def _rear_round_cut(B, z0, z1):
+    """Outside of the rounded rear plan corners: radius PLAN_CORNER, tangent where the chamfers began (rear face
+    |y| YE - PLAN_CORNER, sides x -X + PLAN_CORNER), so the switch, perforation and side vents stay on flat faces."""
+    r = P.PLAN_CORNER
+    out = None
+    for sy in (-1, 1):
+        y0, y1 = sorted((sy * (YE - r), sy * (YE + 1.0)))
+        box = B.abox(-X - 1.0, -X + r, y0, y1, z0, z1)
+        C.cut(box, B.zcyl(-X + r, sy * (YE - r), z0 - 1.0, z1 + 1.0, r))
+        out = C.union(out, box)
+    return out
 
 
 def mid_side_profile():
@@ -71,6 +91,8 @@ def outer_solid():
     z0, z1 = ZH + BOT - 1, ZH + T + 1
     end = B.prism(end_side_profile(), -YE, YE, plane='xz')
     C.inter(end, B.prism(end_plan(), z0, z1, plane='xy'))
+    if REAR_ROUND:
+        C.cut(end, _rear_round_cut(B, z0, z1))
     mid = B.prism(mid_side_profile(), -YW, YW, plane='xz')
     C.inter(mid, B.prism(mid_plan(), z0, z1, plane='xy'))
     s = C.union(end, mid)

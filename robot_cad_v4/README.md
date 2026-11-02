@@ -160,7 +160,7 @@ v4run.load()['finalize'].exports()              # export/: f3d, 조립 STEP, 부
 
 | 경로 | 내용 |
 |---|---|
-| `fusion/` | v3 스크립트 복사본 + v4 변경(`params.py` "v4 SLA resin links", `legs.py` 트러스 상자(11-02 구멍 없음)·v2 관절부, `assembly.py` SLA 재질·클램프 링·`place_switch`, `vendor.py` 클램프 링, `fasteners.py` 접착 인서트·덮개 나사 제거, `harness.py` hip 고리 평면(11-02부터 빌드에 안 씀), `gaps.py`, `poses.py`, `finalize.py`(`truss_images`), `cadlib.py` SLA 재질, `v4run.py`) |
+| `fusion/` | v3 스크립트 복사본 + v4 변경(`params.py` "v4 SLA resin links", `legs.py` 트러스 상자(11-02 구멍 없음)·v2 관절부, `assembly.py` SLA 재질·클램프 링·`place_switch`, `vendor.py` 클램프 링, `fasteners.py` 접착 인서트·덮개 나사 제거, `harness.py` hip 고리 평면(11-02부터 빌드에 안 씀), `gaps.py`, `poses.py`, `finalize.py`(`truss_images`), `cadlib.py` SLA 재질, `shell.py` `REAR_ROUND`(v5용 뒤 세로 모서리 R30, v4 빌드는 끔), `v4run.py`) |
 | `calc/` | `strength_v4.py`→`strength_v4.md`, `mass_properties.json`, `sweep_part1/2.json`, `gaps.json` |
 | `export/` | `WheelBiped_v4.f3d`, `WheelBiped_v4_assembly.step`, `parts_step/`, `parts_stl/` (허벅지·정강이 STL이 출력용) |
 | `images/` | 그림 16장(v3와 같은 시점) + 25·26 링크 바깥 + 27·28 트러스 단면 (11-02 다시 찍음, 배선 없음) |
