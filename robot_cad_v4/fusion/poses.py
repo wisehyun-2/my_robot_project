@@ -58,8 +58,15 @@ def show_all():
                 c.isLightBulbOn = True
 
 
+def has_harness():
+    """The model was built with the harness (v4run.build(with_harness=True)); since 11-02 it is not."""
+    return any(o.component.name.startswith('harness_') for o in C.design().rootComponent.allOccurrences)
+
+
 def loops():
-    """[(cable name, link_a, a, ta, link_b, b, tb, length)] of both sides."""
+    """[(cable name, link_a, a, ta, link_b, b, tb, length)] of both sides - none without the harness."""
+    if not has_harness():
+        return []
     out = []
     for s in (1, -1):
         for cab in HN.cables(s):
@@ -153,6 +160,8 @@ def measure_groups(leaves, thresh=30.0):
         best = (1e9, '', '')
         A = [x for x in info if sel_a(x[0], x[1])]
         Bs = [x for x in info if sel_b(x[0], x[1])]
+        if not A or not Bs:                       # e.g. the thigh cables without the harness (11-02)
+            continue
         for (oa, la, ba) in A:
             side = la[-1]
             for (ob, lb, bb) in Bs:
@@ -200,8 +209,8 @@ def measure_loops(T, leaves, scratch=None, thresh=30.0):
 
 
 def show_pose(L0, hip, spin=0.0):
-    """Move the links to a pose and draw the pose's cable loops in a root component 'pose_loops' (the nominal
-    loops are hidden).  clear_pose() undoes it."""
+    """Move the links to a pose and draw the pose's cable loops (if the model has the harness) in a root component
+    'pose_loops' (the nominal loops are hidden).  clear_pose() undoes it."""
     root = C.design().rootComponent
     clear_pose()
     T = transforms(L0, hip, spin)

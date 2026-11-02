@@ -24,7 +24,9 @@ def load(names=None):
     return out
 
 
-def build(with_harness=True):
+def build(with_harness=False):
+    """No wiring in the model by default (user 11-02); with_harness=True adds the v3 / v4 harness (harness.py) - the
+    links have no cable openings any more, so it would run through closed walls."""
     M = load()
     A, V = M['assembly'], M['vendor']
     A.reset()
@@ -34,6 +36,7 @@ def build(with_harness=True):
     A.build_leg(1, parts)
     A.build_leg(-1, parts)
     st = A.build_harness(parts) if with_harness else []
+    A.place_switch(parts)
     n, bad = M['fasteners'].build_all()            # every screw / insert / nut as geometry (10-30)
     if bad:
         raise RuntimeError('fastener counts differ from fasteners.specs(): %r' % bad)

@@ -124,8 +124,8 @@ CAN_CLEAR_R = 37.0          # spinning can r 34.5 + 2.5: printed housing r 37 ..
 # (0.45 MPa).  The beam is a closed box, SLA_WALL all round (the closed section carries the twist that made the v2 PETG
 # links soft), braced by a Warren truss of SLA_RIB walls running between the two edge walls across the full width: the
 # ribs cut the face plates into triangles (a 3 mm plate 50 wide would buckle near the check stress on its own), carry
-# the shear and stop the box from distorting.  The ribs are pierced along the cable line (SLA_CHANNEL) so every cell
-# drains and the leg cables run inside the box from window to window (v3 duct line, no groove / clips / cover).
+# the shear and stop the box from distorting.  User 11-02: no rib channels, cable windows or drain holes and no wiring
+# - every cell is a closed void, taken as empty (user: assume no resin is left inside).
 HEAD_R = 30.0               # link head around a driven boss (v2)
 FEMUR_WIDE_OUT, FEMUR_WIDE_END = 250.0, 55.0    # v2 outboard widening: outer face y, ends this far before the knee
 TIBIA_WIDE_OUT, TIBIA_WIDE_END = 260.5, 50.0    # (the shank head sits outboard of the thigh there) / the axle
@@ -135,11 +135,8 @@ SLA_WALL = 3.0              # box walls (strength_v4: tip 0.87 / 0.94 mm, 28 MPa
 SLA_RIB = 2.0               # truss ribs
 SLA_RIBS = {'femur': 3, 'tibia': 3}             # diagonals per link (Warren, alternating, edge to edge)
 SPOOL_R = 18.0              # driven boss tube (Ø28 access bore, 4 mm wall) through the box to the outer face
-SLA_CHANNEL = 14.0          # square channel through the ribs on the duct line (cables + resin drain between the cells)
-SLA_DRAIN_D = 4.0           # drain / vent holes at both ends of the front edge wall (plug after curing if wanted)
 SLA_RHO = 1.20
-DUCT_DEPTH = 12.0           # leg cables run inside the boxes this far in from the back face (v2: 12 x 8 edge groove)
-DUCT_WINDOW = (12.0, 16.0)  # cable windows through the back wall: along the link x across y (an XT30 plug goes through)
+DUCT_DEPTH = 12.0           # optional harness only (harness.py): cable line this far in from the back face
 BEARING_FACE = 11.2         # motor output face -> washer seat of the hip / knee M3 x 16 (washer 0.5, 4.3 mm engagement)
 DOWEL_HOLE = 7.5            # hip / knee boss dowel holes, deep from the output face (10-31, user; was 7.0): the Ø3 x 10
                             # pins pressed to the bottom stand 2.5 proud (2.15 .. 2.75 with the pin length ±0.25), so

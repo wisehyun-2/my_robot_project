@@ -165,9 +165,7 @@ def build():
             comp = C.new_part(C.root_occ(link + k), name)
             for role, body in parts.items():
                 C.add_body(comp, body, '%s %s' % (name, role), MAT[role], LOOK[role])
-    P = M['params']                                # the back-panel rocker switch (v4 places it with the harness)
-    M['assembly'].place(C.root_occ('torso'), M['vendor'].rocker_switch(),
-                        C.frame((-P.TORSO_X, P.SWITCH_Y, P.Z_HIP + P.SWITCH_Z), (0, 1, 0), (0, 0, -1), (-1, 0, 0)))
+    # (the back-panel rocker switch: v4run.build places it, 11-02)
     C.design().rootComponent.partNumber = 'WheelBiped_v5'
     return dict(dropped=dropped)
 

@@ -9,9 +9,8 @@ driven boss, beam band, motor housing disc, widened outboard (_wide) - but hollo
 braced by a Warren truss of SLA_RIB ribs from edge wall to edge wall across the full width (_ribs).  The driven boss
 continues as a spool tube through the box to the outer face (v3), so the joint moment enters both face plates.  The
 joint ends are the v2 printed design: 9 mm motor plate, Ø42.05 pocket, SUS clamp rings under the stator and output
-screw heads, inserts (bonded) for the driver cup screws.  The leg cables run inside the box (v3 duct line): in through
-a window in the back wall, along a channel cut through the ribs, out through the second window; the channel also links
-every truss cell for draining the resin, with two drain holes in the front edge wall.
+screw heads, inserts (bonded) for the driver cup screws.  User 11-02: no cable windows, no channels through the ribs,
+no drain holes and no wiring in the model - every truss cell is a closed void, taken as empty (no resin left inside).
 """
 import math
 
@@ -153,10 +152,10 @@ def edge_normal(a, b, side_n):
 # side of the beam edge facing the knee wedge (behind the knee): thigh lower-back edge, shank upper-back edge
 FEMUR_EDGE = -1
 TIBIA_EDGE = -1
-GROOVE_DEPTH = 8.0                    # v2 edge groove: harness anchors outside the links still refer to its line
-FEMUR_GROOVE = (42.0, P.L1 - 50.0)
-TIBIA_GROOVE = (60.0, P.L2 - 52.0)
-DUCT_IN = 8.0                         # cables enter / leave the box this far inside the old groove ends
+GROOVE_DEPTH = 8.0                    # v2 edge groove / v3 duct line: only the optional harness (harness.py,
+FEMUR_GROOVE = (42.0, P.L1 - 50.0)    # v4run.build(with_harness=True)) still refers to them - the links have no
+TIBIA_GROOVE = (60.0, P.L2 - 52.0)    # cable openings since 11-02
+DUCT_IN = 8.0                         # cables entered / left the box this far inside the old groove ends
 DUCT_S = {'femur': (FEMUR_GROOVE[0] + DUCT_IN, FEMUR_GROOVE[1] - DUCT_IN),
           'tibia': (TIBIA_GROOVE[0] + DUCT_IN, TIBIA_GROOVE[1] - DUCT_IN)}
 
@@ -207,12 +206,11 @@ def _cavity(B, link):
 
 
 def _ribs(B, link, outer):
-    """Warren truss ribs (SLA_RIB thick, full width) clipped to the outer link, with the cable / drain channel cut
-    through them along the duct line and a smaller drain channel along the front edge."""
-    a, b, half = _link_geo(link)
+    """Warren truss ribs (SLA_RIB thick, full width) clipped to the outer link, without holes (11-02)."""
+    a, b, _half = _link_geo(link)
     u, _L = _axes(a, b)
     n = (-u[1], u[0])
-    yi, yo, wo, _end, _yc = link_levels(link)
+    yi, _yo, wo, _end, _yc = link_levels(link)
     nodes = truss_nodes(link)
     ribs = None
     for (s0, n0), (s1, n1) in zip(nodes, nodes[1:]):
@@ -224,37 +222,11 @@ def _ribs(B, link, outer):
         r = B.box(mid, (d[0], 0, d[1]), (0, 1, 0), Ld + 4 * P.SLA_WALL, wo - yi + 2.0, P.SLA_RIB)
         ribs = C.union(ribs, r)
     C.inter(ribs, outer)
-    nb = edge_normal(a, b, FEMUR_EDGE if link == 'femur' else TIBIA_EDGE)
-    sA, sB = nodes[0][0] - 10.0, nodes[-1][0] + 10.0
-    ch, w = P.SLA_CHANNEL, P.SLA_WALL
-    for depth, size, sign in ((ch, ch, 1), (8.0, 8.0, -1)):     # back channel (cables), front drain channel
-        t = half - w - depth / 2
-        cx, cz = _at(a, u, (nb[0] * sign, nb[1] * sign), (sA + sB) / 2, t)
-        C.cut(ribs, B.box((cx, duct_y(link), cz), (u[0], 0, u[1]), (nb[0], 0, nb[1]), sB - sA, depth + 0.02, size))
     return ribs
 
 
-def _openings(B, body, link):
-    """Cable windows through the back wall at DUCT_S (on the duct line) and Ø SLA_DRAIN_D drain holes through the
-    front edge wall near both ends of the cavity."""
-    a, b, half = _link_geo(link)
-    u, _L = _axes(a, b)
-    nb = edge_normal(a, b, FEMUR_EDGE if link == 'femur' else TIBIA_EDGE)
-    w = P.SLA_WALL
-    yd = duct_y(link)
-    for st in DUCT_S[link]:
-        x, z = _at(a, u, nb, st, half - w / 2)
-        C.cut(body, B.box((x, yd, z), (u[0], 0, u[1]), (nb[0], 0, nb[1]), P.DUCT_WINDOW[0], w + 2.0, P.DUCT_WINDOW[1]))
-    nodes = truss_nodes(link)
-    for st in (nodes[0][0] + 8.0, nodes[-1][0] - 8.0):
-        p0 = _at(a, u, nb, st, -half - 1.0)
-        p1 = _at(a, u, nb, st, -half + w + 1.0)
-        C.cut(body, B.cyl((p0[0], yd, p0[1]), (p1[0], yd, p1[1]), P.SLA_DRAIN_D / 2))
-    return body
-
-
 def _hollow_link(B, link):
-    """Outer v2 link outline (head, beam, housing, widened band) -> closed box with truss ribs and openings."""
+    """Outer v2 link outline (head, beam, housing, widened band) -> closed box with truss ribs, no openings."""
     a, b, half = _link_geo(link)
     yi, yo, wo, end, _yc = link_levels(link)
     body = B.ycyl(a[0], a[1], yi, yo, P.HEAD_R)
@@ -270,7 +242,6 @@ def _hollow_link(B, link):
     ribs = _ribs(B, link, C.TBM.copy(body))
     C.cut(body, _cavity(B, link))
     C.union(body, ribs)
-    _openings(B, body, link)
     return body
 
 

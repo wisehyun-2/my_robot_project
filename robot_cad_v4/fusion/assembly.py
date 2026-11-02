@@ -138,12 +138,16 @@ def build_harness(parts):
                            looks)
         for (kind, f, link) in cab['plugs']:
             place(L[link], parts[kind], f)
-    # no cable clips -- the leg cables run inside the link boxes (legs.DUCT_S windows, v3 / v4)
+    # no cable clips -- the leg cables ran inside the link boxes (v3 / v4 before 11-02)
     place(L['torso'], parts['xt60'], C.frame(C.add(xt60, (0, 0, -16.0)), (1, 0, 0), (0, 1, 0), (0, 0, 1)))
     place(L['torso'], parts['xt90'], C.frame(xt90, (1, 0, 0), (0, 0, -1), (0, 1, 0)))
-    place(L['torso'], parts['switch'], C.frame((-P.TORSO_X, P.SWITCH_Y, P.Z_HIP + P.SWITCH_Z), (0, 1, 0), (0, 0, -1),
-                                               (-1, 0, 0)))
     return stretched
+
+
+def place_switch(parts):
+    """Back-panel rocker switch (built with or without the harness)."""
+    place(links()['torso'], parts['switch'], C.frame((-P.TORSO_X, P.SWITCH_Y, P.Z_HIP + P.SWITCH_Z), (0, 1, 0),
+                                                     (0, 0, -1), (-1, 0, 0)))
 
 
 def _plug_link(f):

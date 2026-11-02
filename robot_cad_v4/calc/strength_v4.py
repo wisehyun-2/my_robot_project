@@ -40,8 +40,8 @@ LEN = {n: math.hypot(b[0] - a[0], b[1] - a[1]) for n, a, b in LINKS3}
 H = {'thigh': P.FEMUR_H, 'shank': P.TIBIA_H}
 BASE = {'thigh': (P.Y_FEMUR_IN, P.Y_FEMUR_OUT), 'shank': (P.Y_TIBIA_IN, P.Y_TIBIA_OUT)}
 WIDE = {'thigh': (P.FEMUR_WIDE_OUT, P.FEMUR_WIDE_END), 'shank': (P.TIBIA_WIDE_OUT, P.TIBIA_WIDE_END)}
-# Fusion build 11-01 (one side, the part alone): volume cm3 -> SLA_RHO
-LINK_VOL_V4 = (251.1, 220.6)
+# Fusion build 11-02 (one side, the part alone, no cable / drain openings): volume cm3 -> SLA_RHO
+LINK_VOL_V4 = (254.3, 223.7)
 LINK_MASS_V3, LINK_MASS_V2 = (377.4, 394.3), (424.0, 381.0)
 out = []
 
@@ -276,8 +276,8 @@ def main():
                '한다(+10 mm면 약 8.7 mm, 자세 스윕 다시 필요).'
                % (P.SLA_WALL, P.SLA_RIB, res['thigh']['d_v2'], res['shank']['d_v2'], d, vm, S_SLA_T, 100 * tw / d))
     m_v4 = [v * P.SLA_RHO for v in LINK_VOL_V4]
-    out.append('- Fusion 실측(한쪽, 관절부 포함): 허벅지 %.1f cm³ = **%.0f g**, 정강이 %.1f cm³ = **%.0f g** — v3 6061 %.0f / %.0f g, v2 PETG '
-               '%.0f / %.0f g.  레진은 링크 4개 %.0f cm³(SLA 견적은 보통 레진 부피·높이로 정해진다).'
+    out.append('- Fusion 실측(한쪽, 관절부 포함, 11-02 구멍 없앤 뒤): 허벅지 %.1f cm³ = **%.0f g**, 정강이 %.1f cm³ = **%.0f g** — v3 '
+               '6061 %.0f / %.0f g, v2 PETG %.0f / %.0f g.  레진은 링크 4개 %.0f cm³(SLA 견적은 보통 레진 부피·높이로 정해진다).'
                % (LINK_VOL_V4[0], m_v4[0], LINK_VOL_V4[1], m_v4[1], LINK_MASS_V3[0], LINK_MASS_V3[1], LINK_MASS_V2[0],
                   LINK_MASS_V2[1], 2 * sum(LINK_VOL_V4)))
 
@@ -350,13 +350,12 @@ def main():
 
     # ------------------------------------------------------------------ 4. print notes
     h('4. 출력 메모')
-    out.append('- 한 덩어리 출력(덮개 없음).  속 빈 상자는 레진이 고이므로 배선 창 2곳(%.0f × %.0f) + 앞 모서리 Ø%.0f 배수 구멍 2곳으로 '
-               '빼고 세척한다.  리브마다 배선 채널(%.0f × %.0f)과 앞 배수 채널(8 × 8)이 뚫려 있어 모든 칸이 이어진다(Fusion: 셸 1개 = '
-               '갇힌 빈 공간 없음).' % (P.DUCT_WINDOW[0], P.DUCT_WINDOW[1], P.SLA_DRAIN_D, P.SLA_CHANNEL, P.SLA_CHANNEL))
+    out.append('- 한 덩어리 출력(덮개 없음).  11-02부터 배선 창·리브 채널·배수 구멍이 없어 칸 4개가 모두 닫혀 있다(Fusion: 링크마다 '
+               '셸 5개 = 바깥 1 + 닫힌 빈 공간 4).  질량·강도는 **칸 안에 레진이 남지 않는다고 가정**했다(사용자 11-02).  출력 '
+               '업체가 배수 구멍을 요구하면 그 자리를 정해야 한다.')
     out.append('- Ø42.05 모터 포켓·Ø3 다웰 구멍은 출력 오차(±0.1~0.2)가 있으니 실물에 맞춰 사포·리머로 맞춘다.  M2.5 인서트는 열압입이 '
                '안 되므로(열경화 수지) 에폭시로 붙인다.')
-    out.append('- 배선은 덮개가 없으니 출력 뒤 창으로 밀어 넣는다: 16 AWG 2가닥 + CAN을 커넥터 달기 전에 넣거나, XT30 플러그는 창 '
-               '%.0f × %.0f로 통과한다.' % P.DUCT_WINDOW)
+    out.append('- 모델에 배선이 없다(사용자 11-02).  링크 안으로 선을 넣을 길이 없으므로 다리 선은 링크 바깥으로 둘러야 한다.')
 
     # ------------------------------------------------------------------ 5. options
     h('5. 더 단단하게 / 더 싸게 하려면 (결정할 것)')

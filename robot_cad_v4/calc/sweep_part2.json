@@ -6,28 +6,23 @@
   "groups": {
    "knee driver / cup / thigh cables vs torso": [
     4.459820624195527,
-    "femur_L:1+clamp ring output Ø27 t2.0 SUS304:2",
+    "femur_L:1+clamp ring output Ø27 t2.0 SUS304:6",
     "torso:1+hip_plate_L:1"
    ],
    "tyre / rim / hub vs torso": [
     13.114674748350827,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
+    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):4",
     "torso:1+shell_rear_L:1"
    ],
    "tyre / rim / hub vs thigh, knee cup": [
     27.551134277920426,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
+    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):4",
     "femur_L:1+cup_knee_L:1"
-   ],
-   "tyre / rim / hub vs thigh cables": [
-    36.5261624051148,
-    "wheel_R:1+tyre M365 8.5x2 solid (202 x 54):3",
-    "femur_R:1+harness_knee_to_wheel_R_2:1"
    ],
    "thigh vs torso shell / shell screws": [
     1.8500000000000227,
     "femur_L:1+thigh_L:1",
-    "torso:1+FX ISO 7380 M3x6 shell:4"
+    "torso:1+FX ISO 7380 M3x6 shell:16"
    ],
    "shank parts vs torso": [
     58.83797321106994,
@@ -35,32 +30,7 @@
     "torso:1+shell_mid_L:1"
    ]
   },
-  "loops": {
-   "hip_to_knee_L": [
-    8.538725938473654,
-    "femur_L:1+thigh_L:1",
-    true,
-    66.95819939122647
-   ],
-   "knee_to_wheel_L": [
-    6.49157775045185,
-    "tibia_L:1+shank_L:1",
-    true,
-    74.49767693406463
-   ],
-   "hip_to_knee_R": [
-    9.601482267527384,
-    "femur_R:1+thigh_R:1",
-    true,
-    66.95819939122647
-   ],
-   "knee_to_wheel_R": [
-    6.49157775045185,
-    "tibia_R:1+shank_R:1",
-    true,
-    74.49767693406463
-   ]
-  }
+  "loops": {}
  },
  {
   "L0": 310,
@@ -69,23 +39,18 @@
   "groups": {
    "knee driver / cup / thigh cables vs torso": [
     4.459820624195521,
-    "femur_L:1+clamp ring output Ø27 t2.0 SUS304:2",
+    "femur_L:1+clamp ring output Ø27 t2.0 SUS304:6",
     "torso:1+hip_plate_L:1"
    ],
    "tyre / rim / hub vs torso": [
     41.078354357732174,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
+    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):4",
     "torso:1+shell_rear_L:1"
    ],
    "tyre / rim / hub vs thigh, knee cup": [
     27.551134277920376,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
+    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):4",
     "femur_L:1+cup_knee_L:1"
-   ],
-   "tyre / rim / hub vs thigh cables": [
-    36.5261624051148,
-    "wheel_R:1+tyre M365 8.5x2 solid (202 x 54):3",
-    "femur_R:1+harness_knee_to_wheel_R_2:1"
    ],
    "thigh vs torso shell / shell screws": [
     2.0000000000000284,
@@ -98,32 +63,7 @@
     "torso:1+shell_mid_L:1"
    ]
   },
-  "loops": {
-   "hip_to_knee_L": [
-    9.460574265106548,
-    "femur_L:1+thigh_L:1",
-    true,
-    85.9175261273797
-   ],
-   "knee_to_wheel_L": [
-    7.5671982330347,
-    "tibia_L:1+shank_L:1",
-    true,
-    74.49767693406463
-   ],
-   "hip_to_knee_R": [
-    10.276306703490812,
-    "femur_R:1+thigh_R:1",
-    true,
-    85.9175261273797
-   ],
-   "knee_to_wheel_R": [
-    7.5671982330347,
-    "tibia_R:1+shank_R:1",
-    true,
-    74.49767693406463
-   ]
-  }
+  "loops": {}
  },
  {
   "L0": 310,
@@ -132,7 +72,7 @@
   "groups": {
    "knee driver / cup / thigh cables vs torso": [
     4.459820624195536,
-    "femur_L:1+clamp ring output Ø27 t2.0 SUS304:2",
+    "femur_L:1+clamp ring output Ø27 t2.0 SUS304:6",
     "torso:1+hip_plate_L:1"
    ],
    "tyre / rim / hub vs torso": [
@@ -142,13 +82,8 @@
    ],
    "tyre / rim / hub vs thigh, knee cup": [
     27.551134277920404,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
+    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):4",
     "femur_L:1+cup_knee_L:1"
-   ],
-   "tyre / rim / hub vs thigh cables": [
-    36.52616240511483,
-    "wheel_R:1+tyre M365 8.5x2 solid (202 x 54):3",
-    "femur_R:1+harness_knee_to_wheel_R_2:1"
    ],
    "thigh vs torso shell / shell screws": [
     2.0000000000000284,
@@ -161,32 +96,7 @@
     "torso:1+shell_mid_L:1"
    ]
   },
-  "loops": {
-   "hip_to_knee_L": [
-    9.460520506582547,
-    "femur_L:1+thigh_L:1",
-    true,
-    109.66323794133412
-   ],
-   "knee_to_wheel_L": [
-    6.588966453093974,
-    "tibia_L:1+shank_L:1",
-    true,
-    74.49767693406466
-   ],
-   "hip_to_knee_R": [
-    10.276277306987268,
-    "femur_R:1+thigh_R:1",
-    true,
-    109.66323794133412
-   ],
-   "knee_to_wheel_R": [
-    6.588966453093974,
-    "tibia_R:1+shank_R:1",
-    true,
-    74.49767693406466
-   ]
-  }
+  "loops": {}
  },
  {
   "L0": 310,
@@ -195,7 +105,7 @@
   "groups": {
    "knee driver / cup / thigh cables vs torso": [
     4.459820624195534,
-    "femur_L:1+clamp ring output Ø27 t2.0 SUS304:2",
+    "femur_L:1+clamp ring output Ø27 t2.0 SUS304:6",
     "torso:1+hip_plate_L:1"
    ],
    "tyre / rim / hub vs torso": [
@@ -205,13 +115,8 @@
    ],
    "tyre / rim / hub vs thigh, knee cup": [
     27.551134277920344,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
+    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):4",
     "femur_L:1+cup_knee_L:1"
-   ],
-   "tyre / rim / hub vs thigh cables": [
-    1000000000.0,
-    "",
-    ""
    ],
    "thigh vs torso shell / shell screws": [
     2.0000000000000284,
@@ -224,32 +129,7 @@
     ""
    ]
   },
-  "loops": {
-   "hip_to_knee_L": [
-    8.994945303142051,
-    "femur_L:1+thigh_L:1",
-    true,
-    126.16160345109056
-   ],
-   "knee_to_wheel_L": [
-    5.730964498206623,
-    "tibia_L:1+shank_L:1",
-    true,
-    74.49767693406464
-   ],
-   "hip_to_knee_R": [
-    10.028763740219704,
-    "femur_R:1+thigh_R:1",
-    true,
-    126.16160345109056
-   ],
-   "knee_to_wheel_R": [
-    5.730964498206623,
-    "tibia_R:1+shank_R:1",
-    true,
-    74.49767693406464
-   ]
-  }
+  "loops": {}
  },
  {
   "L0": 310,
@@ -258,7 +138,7 @@
   "groups": {
    "knee driver / cup / thigh cables vs torso": [
     4.459820624195499,
-    "femur_L:1+clamp ring output Ø27 t2.0 SUS304:2",
+    "femur_L:1+clamp ring output Ø27 t2.0 SUS304:6",
     "torso:1+hip_plate_L:1"
    ],
    "tyre / rim / hub vs torso": [
@@ -268,18 +148,13 @@
    ],
    "tyre / rim / hub vs thigh, knee cup": [
     27.55113427792038,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
+    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):4",
     "femur_L:1+cup_knee_L:1"
-   ],
-   "tyre / rim / hub vs thigh cables": [
-    36.52616240511481,
-    "wheel_R:1+tyre M365 8.5x2 solid (202 x 54):3",
-    "femur_R:1+harness_knee_to_wheel_R_2:1"
    ],
    "thigh vs torso shell / shell screws": [
     1.8500000000000227,
     "femur_L:1+thigh_L:1",
-    "torso:1+FX ISO 7380 M3x6 shell:5"
+    "torso:1+FX ISO 7380 M3x6 shell:17"
    ],
    "shank parts vs torso": [
     57.38154858489218,
@@ -287,32 +162,7 @@
     "torso:1+shell_mid_R:1"
    ]
   },
-  "loops": {
-   "hip_to_knee_L": [
-    5.050000000000026,
-    "femur_L:1+thigh_L:1",
-    true,
-    134.20684824438214
-   ],
-   "knee_to_wheel_L": [
-    5.4533601786515415,
-    "tibia_L:1+shank_L:1",
-    true,
-    74.49767693406461
-   ],
-   "hip_to_knee_R": [
-    6.450000000000031,
-    "femur_R:1+thigh_R:1",
-    true,
-    134.20684824438214
-   ],
-   "knee_to_wheel_R": [
-    5.4533601786515415,
-    "tibia_R:1+shank_R:1",
-    true,
-    74.49767693406461
-   ]
-  }
+  "loops": {}
  },
  {
   "L0": 310,
@@ -321,28 +171,23 @@
   "groups": {
    "knee driver / cup / thigh cables vs torso": [
     4.459820624195527,
-    "femur_L:1+clamp ring output Ø27 t2.0 SUS304:2",
+    "femur_L:1+clamp ring output Ø27 t2.0 SUS304:6",
     "torso:1+hip_plate_L:1"
    ],
    "tyre / rim / hub vs torso": [
     84.6842786146636,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
+    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):4",
     "torso:1+shell_front_L:1"
    ],
    "tyre / rim / hub vs thigh, knee cup": [
     27.551134277920397,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
+    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):4",
     "femur_L:1+cup_knee_L:1"
-   ],
-   "tyre / rim / hub vs thigh cables": [
-    36.52616240511483,
-    "wheel_R:1+tyre M365 8.5x2 solid (202 x 54):3",
-    "femur_R:1+harness_knee_to_wheel_R_2:1"
    ],
    "thigh vs torso shell / shell screws": [
     1.8500000000000227,
     "femur_L:1+thigh_L:1",
-    "torso:1+FX ISO 7380 M3x6 shell:5"
+    "torso:1+FX ISO 7380 M3x6 shell:17"
    ],
    "shank parts vs torso": [
     77.38095346914713,
@@ -350,32 +195,7 @@
     "torso:1+shell_mid_L:1"
    ]
   },
-  "loops": {
-   "hip_to_knee_L": [
-    5.050000000000026,
-    "femur_L:1+thigh_L:1",
-    true,
-    133.22510607802593
-   ],
-   "knee_to_wheel_L": [
-    5.831443416989703,
-    "tibia_L:1+shank_L:1",
-    true,
-    74.49767693406466
-   ],
-   "hip_to_knee_R": [
-    6.450000000000031,
-    "femur_R:1+thigh_R:1",
-    true,
-    133.22510607802593
-   ],
-   "knee_to_wheel_R": [
-    5.831443416989703,
-    "tibia_R:1+shank_R:1",
-    true,
-    74.49767693406466
-   ]
-  }
+  "loops": {}
  },
  {
   "L0": 335,
@@ -384,28 +204,23 @@
   "groups": {
    "knee driver / cup / thigh cables vs torso": [
     4.459820624195512,
-    "femur_R:1+clamp ring output Ø27 t2.0 SUS304:4",
+    "femur_R:1+clamp ring output Ø27 t2.0 SUS304:8",
     "torso:1+hip_plate_R:1"
    ],
    "tyre / rim / hub vs torso": [
     28.789778425448745,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
+    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):4",
     "torso:1+shell_rear_L:1"
    ],
    "tyre / rim / hub vs thigh, knee cup": [
     27.551134277920156,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
+    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):4",
     "femur_L:1+cup_knee_L:1"
-   ],
-   "tyre / rim / hub vs thigh cables": [
-    62.40482184214666,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
-    "femur_L:1+harness_knee_to_wheel_L_0:1"
    ],
    "thigh vs torso shell / shell screws": [
     1.8500000000000227,
     "femur_L:1+thigh_L:1",
-    "torso:1+FX ISO 7380 M3x6 shell:4"
+    "torso:1+FX ISO 7380 M3x6 shell:16"
    ],
    "shank parts vs torso": [
     1000000000.0,
@@ -413,32 +228,7 @@
     ""
    ]
   },
-  "loops": {
-   "hip_to_knee_L": [
-    5.652521670515251,
-    "femur_L:1+thigh_L:1",
-    true,
-    55.96967564629395
-   ],
-   "knee_to_wheel_L": [
-    7.144785321662637,
-    "tibia_L:1+shank_L:1",
-    true,
-    100.27705893857753
-   ],
-   "hip_to_knee_R": [
-    6.974371881325081,
-    "femur_R:1+thigh_R:1",
-    true,
-    55.96967564629395
-   ],
-   "knee_to_wheel_R": [
-    7.144785321662637,
-    "tibia_R:1+shank_R:1",
-    true,
-    100.27705893857753
-   ]
-  }
+  "loops": {}
  },
  {
   "L0": 335,
@@ -447,23 +237,18 @@
   "groups": {
    "knee driver / cup / thigh cables vs torso": [
     4.459820624195485,
-    "femur_L:1+clamp ring output Ø27 t2.0 SUS304:2",
+    "femur_L:1+clamp ring output Ø27 t2.0 SUS304:6",
     "torso:1+hip_plate_L:1"
    ],
    "tyre / rim / hub vs torso": [
     60.701594365092355,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
+    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):4",
     "torso:1+shell_rear_L:1"
    ],
    "tyre / rim / hub vs thigh, knee cup": [
     27.551134277920546,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
+    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):4",
     "femur_L:1+cup_knee_L:1"
-   ],
-   "tyre / rim / hub vs thigh cables": [
-    62.404821842146916,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
-    "femur_L:1+harness_knee_to_wheel_L_0:1"
    ],
    "thigh vs torso shell / shell screws": [
     2.0000000000000284,
@@ -476,32 +261,7 @@
     "torso:1+shell_mid_R:1"
    ]
   },
-  "loops": {
-   "hip_to_knee_L": [
-    9.46057591355374,
-    "femur_L:1+thigh_L:1",
-    true,
-    75.9085156834004
-   ],
-   "knee_to_wheel_L": [
-    7.335338415964047,
-    "tibia_L:1+shank_L:1",
-    true,
-    100.2770589385776
-   ],
-   "hip_to_knee_R": [
-    10.27630760487985,
-    "femur_R:1+thigh_R:1",
-    true,
-    75.9085156834004
-   ],
-   "knee_to_wheel_R": [
-    7.335338415964047,
-    "tibia_R:1+shank_R:1",
-    true,
-    100.2770589385776
-   ]
-  }
+  "loops": {}
  },
  {
   "L0": 335,
@@ -510,7 +270,7 @@
   "groups": {
    "knee driver / cup / thigh cables vs torso": [
     4.459820624195557,
-    "femur_L:1+clamp ring output Ø27 t2.0 SUS304:2",
+    "femur_L:1+clamp ring output Ø27 t2.0 SUS304:6",
     "torso:1+hip_plate_L:1"
    ],
    "tyre / rim / hub vs torso": [
@@ -520,13 +280,8 @@
    ],
    "tyre / rim / hub vs thigh, knee cup": [
     27.551134277920305,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
+    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):4",
     "femur_L:1+cup_knee_L:1"
-   ],
-   "tyre / rim / hub vs thigh cables": [
-    62.404821842146774,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
-    "femur_L:1+harness_knee_to_wheel_L_0:1"
    ],
    "thigh vs torso shell / shell screws": [
     2.0000000000000284,
@@ -539,32 +294,7 @@
     ""
    ]
   },
-  "loops": {
-   "hip_to_knee_L": [
-    9.460572649576678,
-    "femur_L:1+thigh_L:1",
-    true,
-    101.8477773434807
-   ],
-   "knee_to_wheel_L": [
-    6.221551921861632,
-    "tibia_L:1+shank_L:1",
-    true,
-    100.27705893857748
-   ],
-   "hip_to_knee_R": [
-    10.276305820099982,
-    "femur_R:1+thigh_R:1",
-    true,
-    101.8477773434807
-   ],
-   "knee_to_wheel_R": [
-    6.221551921861632,
-    "tibia_R:1+shank_R:1",
-    true,
-    100.27705893857748
-   ]
-  }
+  "loops": {}
  },
  {
   "L0": 335,
@@ -573,7 +303,7 @@
   "groups": {
    "knee driver / cup / thigh cables vs torso": [
     4.459820624195512,
-    "femur_R:1+clamp ring output Ø27 t2.0 SUS304:4",
+    "femur_R:1+clamp ring output Ø27 t2.0 SUS304:8",
     "torso:1+hip_plate_R:1"
    ],
    "tyre / rim / hub vs torso": [
@@ -583,13 +313,8 @@
    ],
    "tyre / rim / hub vs thigh, knee cup": [
     27.551134277920376,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
+    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):4",
     "femur_L:1+cup_knee_L:1"
-   ],
-   "tyre / rim / hub vs thigh cables": [
-    1000000000.0,
-    "",
-    ""
    ],
    "thigh vs torso shell / shell screws": [
     2.0000000000000284,
@@ -602,32 +327,7 @@
     ""
    ]
   },
-  "loops": {
-   "hip_to_knee_L": [
-    9.459926493439589,
-    "femur_L:1+thigh_L:1",
-    true,
-    121.1333634381727
-   ],
-   "knee_to_wheel_L": [
-    5.55728371018748,
-    "tibia_L:1+shank_L:1",
-    true,
-    100.27705893857755
-   ],
-   "hip_to_knee_R": [
-    10.27595238873725,
-    "femur_R:1+thigh_R:1",
-    true,
-    121.1333634381727
-   ],
-   "knee_to_wheel_R": [
-    5.55728371018748,
-    "tibia_R:1+shank_R:1",
-    true,
-    100.27705893857755
-   ]
-  }
+  "loops": {}
  },
  {
   "L0": 335,
@@ -636,7 +336,7 @@
   "groups": {
    "knee driver / cup / thigh cables vs torso": [
     4.459820624195523,
-    "femur_L:1+clamp ring output Ø27 t2.0 SUS304:2",
+    "femur_L:1+clamp ring output Ø27 t2.0 SUS304:6",
     "torso:1+hip_plate_L:1"
    ],
    "tyre / rim / hub vs torso": [
@@ -646,18 +346,13 @@
    ],
    "tyre / rim / hub vs thigh, knee cup": [
     27.55113427792033,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
+    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):4",
     "femur_L:1+cup_knee_L:1"
-   ],
-   "tyre / rim / hub vs thigh cables": [
-    62.40482184214685,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
-    "femur_L:1+harness_knee_to_wheel_L_0:1"
    ],
    "thigh vs torso shell / shell screws": [
     1.8500000000000227,
     "femur_L:1+thigh_L:1",
-    "torso:1+FX ISO 7380 M3x6 shell:5"
+    "torso:1+FX ISO 7380 M3x6 shell:17"
    ],
    "shank parts vs torso": [
     54.04442776172666,
@@ -665,32 +360,7 @@
     "torso:1+shell_mid_R:1"
    ]
   },
-  "loops": {
-   "hip_to_knee_L": [
-    5.050000000000026,
-    "femur_L:1+thigh_L:1",
-    true,
-    132.32838287185544
-   ],
-   "knee_to_wheel_L": [
-    5.517094256412087,
-    "tibia_L:1+shank_L:1",
-    true,
-    100.27705893857757
-   ],
-   "hip_to_knee_R": [
-    6.450000000000031,
-    "femur_R:1+thigh_R:1",
-    true,
-    132.32838287185544
-   ],
-   "knee_to_wheel_R": [
-    5.517094256412087,
-    "tibia_R:1+shank_R:1",
-    true,
-    100.27705893857757
-   ]
-  }
+  "loops": {}
  },
  {
   "L0": 335,
@@ -699,28 +369,23 @@
   "groups": {
    "knee driver / cup / thigh cables vs torso": [
     4.459820624195511,
-    "femur_R:1+clamp ring output Ø27 t2.0 SUS304:4",
+    "femur_R:1+clamp ring output Ø27 t2.0 SUS304:8",
     "torso:1+hip_plate_R:1"
    ],
    "tyre / rim / hub vs torso": [
     109.00483243822316,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
+    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):4",
     "torso:1+shell_front_L:1"
    ],
    "tyre / rim / hub vs thigh, knee cup": [
     27.55113427792037,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
+    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):4",
     "femur_L:1+cup_knee_L:1"
-   ],
-   "tyre / rim / hub vs thigh cables": [
-    62.40482184214685,
-    "wheel_L:1+tyre M365 8.5x2 solid (202 x 54):2",
-    "femur_L:1+harness_knee_to_wheel_L_0:1"
    ],
    "thigh vs torso shell / shell screws": [
     1.8500000000000227,
     "femur_L:1+thigh_L:1",
-    "torso:1+FX ISO 7380 M3x6 shell:5"
+    "torso:1+FX ISO 7380 M3x6 shell:17"
    ],
    "shank parts vs torso": [
     73.46321938518182,
@@ -728,31 +393,6 @@
     "torso:1+shell_mid_L:1"
    ]
   },
-  "loops": {
-   "hip_to_knee_L": [
-    5.050000000000026,
-    "femur_L:1+thigh_L:1",
-    true,
-    134.62982204767047
-   ],
-   "knee_to_wheel_L": [
-    6.11609008838935,
-    "tibia_L:1+shank_L:1",
-    true,
-    100.27705893857758
-   ],
-   "hip_to_knee_R": [
-    6.450000000000031,
-    "femur_R:1+thigh_R:1",
-    true,
-    134.62982204767047
-   ],
-   "knee_to_wheel_R": [
-    6.11609008838935,
-    "tibia_R:1+shank_R:1",
-    true,
-    100.27705893857758
-   ]
-  }
+  "loops": {}
  }
 ]

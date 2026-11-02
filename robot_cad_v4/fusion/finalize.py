@@ -3,6 +3,7 @@
 Run each step in its own MCP script after v4run.load() (a failed script rolls the whole step back):
     finalize.set_part_numbers()
     finalize.images()        # direct design, poses set with poses.apply
+    finalize.link_images(); finalize.truss_images()   # v4 links outside / cut (27, 28)
     finalize.bom()           # ../BOM.csv, ../BOM.md (parts and fasteners counted in the model)
     finalize.joints()        # switches the design to parametric (assembly.reset() switches back for a rebuild)
     finalize.exports()       # ../export: f3d (with the joints), assembly STEP, designed parts STEP + STL
@@ -30,10 +31,10 @@ EXP = os.path.join(BASE, 'export')
 
 # designed parts: component name prefix -> (material / process, how to make it)
 PRINT_NOTE = {
-    'thigh': 'SLA 유사ABS 검정 레진, 한 덩어리(속 빈 상자 + 트러스 리브 — 레진 빼기: 배선 창 2 + 앞 모서리 Ø%.0f 구멍 2, '
-             '세척·2차 경화 후 막아도 됨), 서포트는 바깥 면에만; 인서트 M2.5 3개 에폭시 접착' % P.SLA_DRAIN_D,
-    'shank': 'SLA 유사ABS 검정 레진, 한 덩어리(속 빈 상자 + 트러스 리브 — 레진 빼기: 배선 창 2 + 앞 모서리 Ø%.0f 구멍 2, '
-             '세척·2차 경화 후 막아도 됨), 서포트는 바깥 면에만; 인서트 M2.5 3개 에폭시 접착' % P.SLA_DRAIN_D,
+    'thigh': 'SLA 유사ABS 검정 레진, 한 덩어리(닫힌 상자 + 트러스 리브, 구멍·배선 창 없음 — 닫힌 칸 4개, 속은 비었다고 '
+             '가정), 서포트는 바깥 면에만; 인서트 M2.5 3개 에폭시 접착',
+    'shank': 'SLA 유사ABS 검정 레진, 한 덩어리(닫힌 상자 + 트러스 리브, 구멍·배선 창 없음 — 닫힌 칸 4개, 속은 비었다고 '
+             '가정), 서포트는 바깥 면에만; 인서트 M2.5 3개 에폭시 접착',
     'hub_flange': 'PETG 100 %, 모터 쪽 면을 바닥에',
     'rim_': 'PETG 벽 6겹(2.4 mm) · 채움 40 %, 한 조각 — 허브 쪽 평면을 바닥에(돌기 양 끝 45°), 열린 쪽 플랜지 밑 '
             '4.5 mm 턱만 서포트',
@@ -220,6 +221,33 @@ def link_images():
     return out
 
 
+def truss_images(cuts=(('27_thigh_left_truss_cut', 'femur', 200.0), ('28_shank_left_truss_cut', 'tibia', 232.0))):
+    """v4: the left links rebuilt alone, cut at robot y (the outboard part removed) and seen from outboard - the
+    closed truss cells (no channels, windows or drain holes since 11-02)."""
+    import legs as LG
+    root = C.design().rootComponent
+    occ = root.occurrences.addNewComponent(adsk.core.Matrix3D.create())
+    occ.component.name = '_section'
+    out = []
+    try:
+        for o in root.occurrences:
+            o.isLightBulbOn = o.component.name == '_section'
+        B = C.Builder(side=1)
+        for name, link, y in cuts:
+            body = LG.femur(1) if link == 'femur' else LG.tibia(1)
+            C.cut(body, B.abox(-400.0, 400.0, y, 400.0, -400.0, 800.0))
+            b = C.add_body(occ.component, body, 'section', None, 'black')
+            a, c, _h = LG._link_geo(link)
+            mid = ((a[0] + c[0]) / 2, y, (a[1] + c[1]) / 2)
+            out.append(snap(name, (mid[0], 1600.0, mid[2]), mid))
+            b.deleteMe()
+    finally:
+        occ.deleteMe()
+        show_all()
+    view.look((1100, 800, 750), (0, 0, 290))
+    return out
+
+
 # ----------------------------------------------------------------------------- BOM
 WIRE_CLASS = ((3.5, '12 AWG 배터리·변환기 리드', '배터리·변환기에 포함'),
               (2.5, '16 AWG 실리콘선', '전원 데이지 체인, P5 → pi3hat'),
@@ -288,7 +316,7 @@ def bom():
         w = csv.writer(f)
         w.writerow(('구분', '품목', '규격·설명', '수량', '위치·비고'))
         w.writerows(rows)
-    md = ['# WheelBiped v3 BOM (`finalize.bom()`이 모델에서 생성)\n',
+    md = ['# WheelBiped v4 BOM (`finalize.bom()`이 모델에서 생성)\n',
           '| 구분 | 품목 | 규격·설명 | 수량 | 위치·비고 |', '|---|---|---|---|---|']
     md += ['| %s | %s | %s | %s | %s |' % r for r in rows]
     with open(os.path.join(BASE, 'BOM.md'), 'w', encoding='utf-8') as f:
@@ -348,18 +376,19 @@ def joints():
 
 
 def drive_check(angle_deg=20.0):
-    """Turn every joint by angle_deg and back; returns how far a child part moved with each link (mm)."""
+    """Turn every joint by angle_deg and back; returns how far the moved link's origin went and how far it is from
+    the start afterwards (mm).  The link transform, not a bounding box (those stay stale inside one script, 11-02)."""
     root = C.design().rootComponent
     res = {}
     for j in root.asBuiltJoints:
         link = j.occurrenceTwo
-        kid = link.childOccurrences.item(0)
-        p0 = kid.boundingBox.minPoint.copy()
+        p0 = link.transform2.translation.copy()
         j.jointMotion.rotationValue = math.radians(angle_deg)
-        p1 = kid.boundingBox.minPoint.copy()
+        p1 = link.transform2.translation.copy()
         j.jointMotion.rotationValue = 0.0
-        p2 = kid.boundingBox.minPoint
-        res[j.name] = (round(p0.distanceTo(p1) * 10, 1), round(p0.distanceTo(p2) * 10, 3))
+        p2 = link.transform2.translation
+        res[j.name] = (round(p0.asPoint().distanceTo(p1.asPoint()) * 10, 1),
+                       round(p0.asPoint().distanceTo(p2.asPoint()) * 10, 3))
     return res
 
 

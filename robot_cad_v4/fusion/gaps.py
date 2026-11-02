@@ -69,14 +69,17 @@ def encoder_rows(k):
             if (o.boundingBox.minPoint.x + o.boundingBox.maxPoint.x) * (1 if k == 'L' else -1) < 0:
                 continue
             best = min(best, dist(o, st))
-        rows.append(('%s %s: PH-3·XT30 플러그 – 모터' % (k, joint), best, '≥ 1.5'))
+        if best < 1e9:                              # the plugs come with the harness (none since 11-02)
+            rows.append(('%s %s: PH-3·XT30 플러그 – 모터' % (k, joint), best, '≥ 1.5'))
     return rows
 
 
 def cable_rows():
-    """Every harness wire against every motor stator (rotor can and cap) it comes near."""
+    """Every harness wire against every motor stator (rotor can and cap) it comes near (none without the harness)."""
     root = C.design().rootComponent
     wires = [o for o in root.allOccurrences if o.component.name.startswith('harness_')]
+    if not wires:
+        return []
     stators = [o for o in root.allOccurrences if o.component.name.startswith('AKE60-8_KV80_stator')]
     best = (1e9, '', '')
     for st in stators:
