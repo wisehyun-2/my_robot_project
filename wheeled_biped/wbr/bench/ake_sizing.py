@@ -278,10 +278,13 @@ def available(case: Case, kind: str, tau: float, w: float) -> float:
 
 
 def make_plan(p4, case: Case, model_dir: str, params_json: Path, slope: float = 0.0):
-    cfg = p4.Plan4Config(model_dir=model_dir, params_json=str(params_json), latency_ms=2.0, noise=True, seed=case.seed,
-                         slope_deg=slope, friction_comp_Nm=0.8 * case.motor("hip").backdrive,
-                         friction_comp_wheel_Nm=0.8 * case.motor("wheel").backdrive,
-                         **(getattr(case, "plan_overrides", None) or {}))     # CAD cases: outer-loop gains scaled to the robot
+    kw = dict(model_dir=model_dir, params_json=str(params_json), latency_ms=2.0, noise=True, seed=case.seed,
+              slope_deg=slope, friction_comp_Nm=0.8 * case.motor("hip").backdrive,
+              friction_comp_wheel_Nm=0.8 * case.motor("wheel").backdrive)
+    # CAD cases: outer-loop gains scaled to the robot (ake_cad); the staged tests (TEST/) also set lqi_kwargs, the
+    # latency and the disturbances here - an override replaces the default above
+    kw.update(getattr(case, "plan_overrides", None) or {})
+    cfg = p4.Plan4Config(**kw)
     plan = p4.Plan4UpkieLQI6(cfg)
     sm = plan.sim.servo_model
     servo_torque = sm.torque
