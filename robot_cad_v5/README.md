@@ -50,6 +50,7 @@ Fusion 허브 **`WheelBiped_v5`**(`Default Project` 최상위). `export/WheelBip
 | 크기 | 폭 529 × 높이 561 mm | **폭 594**(타이어 바깥면) × 높이 561 mm |
 | 간섭(6자세, 체결 부품 포함) | 0건 | **0건**(결합 4건 = 바퀴 드라이버 헤더의 종단 저항·캡) |
 | 실제 단면 검사(관절마다 5° 간격 72장) | — | 겹침 없음(구매품 커넥터 ↔ 보드뿐), 움직이는 부품 사이 최소 틈 **1.0 mm**(Ø28 보스 ↔ Ø30 구멍, 설계값) |
+| 모터 재검증(MuJoCo) | 9.93 / 14.93 kg 모두 회복 판정 | **10.97 / 15.97 kg 모두 28개 회복**(요·다리 길이 게인을 이 로봇 크기로 환산; upkie 게인 그대로면 15.97 kg이 15° 내리막 정지에서 무릎이 뒤로 꺾인다 — 6절, 11-05) |
 
 간섭 6자세: L0 310·200·240·335 mm, hip 0·−60·+60·−80°(`v5run.POSES`).
 
@@ -125,6 +126,8 @@ v5run.rib_check()      # 리브 중심선을 1 mm × y 3 mm 간격으로 짚어 
 v5run.interference()   # 6자세 간섭
 v5run.images()         # images/01~10
 v5run.robot_mass()     # PETG 출력 밀도 + 타이어 721 g 적용 후 질량·무게중심
+v5run.save_mass_json() # calc/mass_properties.json (MuJoCo 재검증용, 바깥쪽 타이어 중심 y 270; 문서를 바꾸지 않아 읽기 전용
+                       # 스크립트로 돌릴 수 있다. relegs()·reshell() 뒤에는 apply_print=True)
 v5run.export()         # export/WheelBiped_v5.f3d
 v5run.exports()        # export/WheelBiped_v5_assembly.step, parts_step/*.step, parts_stl/*.stl
 v5run.sections()       # manufacturing/explain/sections_v5.json.gz (관절 단면, 5° 간격)
@@ -135,6 +138,8 @@ v5run.sections()       # manufacturing/explain/sections_v5.json.gz (관절 단�
   (`manufacturing/step/`)과 2D 도면 PDF(`manufacturing/drawings/`). gmsh 은선 제거, 전체 약 4분.
 - `python manufacturing/explain/real_sections.py`: 실제 단면도 3장(shapely 필요).
 - `python calc/strength_v5.py` → `calc/strength_v5.md`.
+- 모터 재검증: `wheeled_biped`에서
+  `python -m wbr.bench.ake_cad --cad ../robot_cad_v5/calc/mass_properties.json --out results/ake_cad_v5`(6절).
 
 - `turn()`을 따로, 마지막에 돌리는 이유: 빌드 스크립트 안에서는 새 부품의 외곽 상자가 낡아 판단이 틀리고, 링크에 부품을 넣으면
   (`cadlib.IdentityParent`) 돌려 둔 자식 부품 위치가 풀린다. `turn()`은 여러 번 돌려도 된다.
@@ -156,16 +161,73 @@ v5run.sections()       # manufacturing/explain/sections_v5.json.gz (관절 단�
 - **30자세 전체 간섭 스윕·간격 측정**: 지금은 6자세 + 관절 단면 검사. v4의 `poses.sweep`, `gaps.measure`에 해당한다.
 - **새 체결 부품 형상, BOM**: ⑥ ISO 10642 M3 × 16 12.9 × 6 (관절마다), ⑦ 캡 DIN 7984 M2.5 × 8 × 3 + 인서트, 61807, 받침 링.
 - **조인트**: v4 `finalize.joints()`에 해당한다.
-- **MuJoCo 모터 재검증**: `check.save_mass_json`은 v4의 안쪽 타이어 중심(`P.tyre_centre_y()`)을 쓰므로 바깥쪽 값(y 270)으로 고친 뒤
-  10.93 kg 모델로 돌린다.
+- **MuJoCo 재검증에서 나온 결정 사항**(6절): 무릎 완전 신장을 막는 기구 멈춤 또는 MCU 관절 한계 보호를 넣을지. 요·다리 길이
+  게인은 환산값을 쓰기로 했다(11-05 사용자) — 시뮬 벤치에는 들어갔고, **실기 MCU 설정에도 같은 값을 넣어야 한다.**
 
-## 6. 파일
+## 6. 모터 재검증 (MuJoCo, 11-05)
+
+`v5run.save_mass_json()`이 허브 버전 7의 링크별 질량·무게중심·관성을 `calc/mass_properties.json`에 쓴다(바깥쪽 타이어 중심 y 270,
+Fusion 문서는 바꾸지 않는다). `wheeled_biped/results/ake_cad_v5/`가 그 값으로 돌린 결과다(시나리오 28개 × 로봇만 / 짐 5 kg,
+Plan 4 LQI6, 잡음 + 2 ms 지연, 시드 0). 이번부터 `ake_cad`는 **좌우 치수도 CAD 값**을 쓴다(링크 무게중심 y, 타이어 중심, MCU 트랙
+0.54 m; 전에는 upkie 좌우 배치라 접지 간격이 305 mm였다 — `--lateral upkie`로 예전 방식). MuJoCo 링크는 강체다.
+
+| 항목 | Fusion | MuJoCo 모델 |
+|---|---|---|
+| 전체 질량 | 10.931 kg | 10.965 kg(질량 없는 보조 몸체 34개 × 1 g) |
+| 무게중심(바퀴축 기준 앞, 높이) | +13.3, 327.0 mm | +13.3, 326.7 mm |
+| 관성 I_xx / I_yy / I_zz | 0.690 / 0.341 / 0.428 kg m² | 0.692 / 0.342 / 0.429 kg m²(+0.3 ~ 0.4 %) |
+| 한쪽 링크 묶음 질량 | 허벅지 쪽 1.023, 정강이 쪽 0.762, 바퀴 1.056 kg | 같음 |
+| 제어기 플랜트 ↔ MuJoCo 선형화(L0 310) | — | 불안정 극 6.458 / 8.692 rad/s, 오차 0.004 % / 0.009 %, 입력 행렬 0.03 % |
+
+v4보다 다리 묶음이 1.03 kg 무거워(2.56 → 3.59 kg) 평형 다리각이 −2.87° → −3.85°, 균형 게인이 9 ~ 14 % 바뀐다(게인은 이 모델에서
+다시 계산된다).
+
+### 바깥 루프 게인 (11-05 사용자: 환산값 적용)
+
+Plan 4의 요 PI와 다리 길이 PD는 5.3 kg upkie에서 맞춘 값이다. `ake_cad`는 이제 이 둘을 CAD 로봇 크기로 환산해 쓴다
+(`ake_cad.outer_loop_gains`; `--outer-gains upkie`가 예전 값). Plan 4 기본값과 균형 제어기(LQI6)는 그대로다.
+
+| 루프 | upkie 값 | 환산 기준 | v5 로봇만 | v5 짐 5 kg |
+|---|---|---|---|---|
+| 요 PI kp, ki | 0.4, 0.8 | 요 제어 대상 이득 W / (2 R I_zz)의 비(upkie 25.1 → v5 6.3 / 5.9) | 1.60, 3.21 | 1.70, 3.40 |
+| 다리 길이 PD kp, kd | 800 N/m, 40 N s/m | 몸통 묶음 질량 비(upkie 2.79 kg → 5.25 / 10.25 kg), 다리 길이 모드 23.9 rad/s 유지 | 1504, 75 | 2936, 147 |
+
+| 경우 | 게인 | 회복 못 한 시나리오 | 최대 토크 hip / knee / 바퀴 [N·m] | 무릎 정지 최대 | 가장 긴 다리 |
+|---|---|---|---|---|---|
+| v4 로봇만 (11-02) | upkie | 없음 | 10.62 / 7.77 / 7.06 | 3.87 | — |
+| v5 로봇만 | upkie | 없음 | 11.73 / 8.52 / 7.63 | 4.25 | — |
+| **v5 로봇만** | **환산** | **없음** | **11.67 / 8.54 / 7.63** | **4.24** | 339 mm(높이 전 범위 명령) |
+| v4 짐 5 kg (11-02) | upkie | 없음으로 판정됐으나 아래와 같은 꺾임이 있었다 | 12.50 / 10.69 / 12.50 | 7.00 | 350 mm |
+| v5 짐 5 kg | upkie | 15° 내리막 0.5 m/s 뒤 정지(무릎 꺾임) | 12.50 / 11.59 / 12.50 | 7.40 | 350 mm |
+| **v5 짐 5 kg** | **환산** | **없음** | **12.50 / 11.32 / 12.50** | **7.41** | 338 mm(높이 전 범위 명령) |
+
+`results/ake_cad_v5/`에는 환산 게인 결과가 들어 있다. 판정도 바뀌었다: 무릎이 완전 신장 반대쪽에서 끝나면 "회복 못 함"이고
+(`ake_sizing.knee_flipped`), 요약 표에 가장 긴 다리 길이가 나온다.
+
+- **upkie 게인에서는 짐 5 kg, 15° 내리막 정지에서 무릎이 뒤로 꺾였다.** 정지 명령 0.6 s 뒤 다리가 완전 신장(350 mm)에 닿고 무릎이
+  반대쪽으로 넘어가 −72°가 된다. 넘어지지는 않지만 제어기는 무릎이 앞에 있다고 보므로 몸통이 약 5° 기운 채 선다. v4 짐 5 kg도 같은
+  시각에 꺾였는데 판정 창(정지 뒤 2 s) 안에서는 피치가 3° 밑이라 "회복"으로 나왔었다. 짐 없음, 오르막, 제자리, 10° 이하 경사에서는
+  꺾이지 않았다. 원인은 다리 길이 PD가 이 무게에는 무른 것이다(다리 길이 모드 17.4 rad/s, 짐 5 kg이면 12.5 rad/s로 빠른 불안정
+  극 12.1 rad/s와 겹침). 바퀴 토크의 반작용이 정강이에 걸려 15° 경사에서 다리가 2 cm 늘어난 채 서 있다가 제동 때 4 cm까지
+  늘어났다. 환산 게인에서는 같은 시나리오의 최대 다리 길이가 316 mm다.
+- **upkie 요 게인은 이 로봇에 약했다.** 1 rad/s 명령에 90 % 도달 1.28 s, 3 s 뒤에도 1.15 rad/s였고 짐 5 kg에서는 0.52 rad/s에서
+  멈췄다. 환산 게인에서는 0.41 s에 도달해 1.00 rad/s로 선다(짐 5 kg 0.82 s). 균형·밀기 결과는 게인에 따라 달라지지 않았다.
+- **제어기가 짐을 모를 때**(짐 5 kg 모델, 9개 시나리오: 정지, 10° 기울기, 밀기 0.5·1.0 W, 0.8 m/s, 요, 15° 경사 정지·오르막·
+  내리막): 바깥 루프만 짐 없는 값(1504, 75)이어도 모두 회복하고 꺾이지 않는다(가장 긴 다리 326 mm). 균형 제어기까지 짐을 모르면
+  넘어지거나 꺾이지는 않지만 몸통이 평지에서 +2.2°, 15° 경사에서 −3° 안팎 기운 채 선다. 무거운 짐을 실을 때는 제어기에 알려야
+  한다는 뜻이다.
+- 환산 게인으로도 실물 무릎이 완전 신장을 지나갈 수 있는지는 확인해야 한다. 기구 멈춤이나 MCU 관절 한계 보호가 없으면 더 큰
+  외란에서 같은 일이 생길 수 있다(MCU에는 관절 한계 FAULT가 아직 없다).
+- 짐 5 kg의 무릎 정지 토크 7.4 N·m는 AKE60 정격 5 N·m를 넘는다(v2부터 같은 항목).
+
+## 7. 파일
 
 | 경로 | 내용 |
 |---|---|
 | `fusion/legs_v5.py` | 다리 형상(허벅지·정강이·hub 인서트·받침 링·무릎 캡·61807), 바퀴 회전·이동 행렬 |
 | `fusion/v5run.py` | 빌드·다리만 다시 만들기(`relegs`)·셸만 다시 만들기(`reshell`)·바퀴 회전(`turn`)·이동(`shift`)·점검·그림·질량·내보내기·단면(`sections`) |
 | `calc/strength_v5.py`, `.md` | PETG 강도 손계산(v4 식, 갈래 두 상자, 관절부, 받침 링 체결, 61807 짝힘, 출력 메모) |
+| `calc/mass_properties.json` | 링크별 질량·무게중심·관성(허브 버전 7, `v5run.save_mass_json()`), MuJoCo 재검증 입력 |
 | `images/` | 01~04 다리, 05~07 로봇, 08~10 트러스 단면 |
 | `manufacturing/explain/` | **실제 단면도** `hip_section.png`, `knee_section.png`, `wheel_section.png`(`real_sections.py`, 데이터 `sections_v5.json.gz`, 공용 스타일 `stack_common.py`) |
 | `export/WheelBiped_v5.f3d` | Fusion 모델(직접 모델링, 조인트 없음, 배선 없음, 허브 버전 7) |

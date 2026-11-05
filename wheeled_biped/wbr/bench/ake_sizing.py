@@ -50,6 +50,30 @@ OUT_DIR = RESULTS_DIR / "ake_sizing"
 UPKIE_MASS = 5.33922            # Plan 4 model, the reference of the LQI6 tuning
 UPKIE_R = 0.056
 UPKIE_WHEEL_MARKERS = 0.002     # contact + wheel-centre marker bodies, counted in the 0.135 kg upkie wheel
+# References of the outer-loop tunings (Plan 4 model, models/upkie_plan4), used to scale them to another robot:
+UPKIE_BODY_MASS = 2.7945        # torso group m_b (plan4_params.json): the mass the leg-length PD carries
+UPKIE_YAW_GAIN = 25.14          # yaw plant gain W / (2 R Izz) [rad/s^2 per N m of yaw command]: tire centres 0.3048 m
+                                # apart, R 0.056 m, Izz 0.1082 kg m^2 (yaw_plant_gain(models/upkie_plan4/scene.xml))
+
+
+def yaw_plant_gain(xml_path) -> dict:
+    """Yaw plant of the differential wheel torque in the straight-leg keyframe: tau_yaw is split -+ tau_yaw / 2 on the
+    wheels, i.e. a yaw moment tau_yaw W / (2 R) on the yaw inertia Izz -> g = W / (2 R Izz)."""
+    m = mujoco.MjModel.from_xml_path(str(xml_path))
+    d = mujoco.MjData(m)
+    mujoco.mj_resetDataKeyframe(m, d, mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_KEY, "stand"))
+    mujoco.mj_forward(m, d)
+    mass = float(m.body_mass[1:].sum())
+    com = sum(m.body_mass[b] * d.xipos[b] for b in range(1, m.nbody)) / mass
+    Izz = 0.0
+    for b in range(1, m.nbody):
+        Rm = d.ximat[b].reshape(3, 3)
+        r = d.xipos[b] - com
+        Izz += float((Rm @ np.diag(m.body_inertia[b]) @ Rm.T)[2, 2] + m.body_mass[b] * (r[0] ** 2 + r[1] ** 2))
+    gl, gr = (mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, f"{s}_tire") for s in ("left", "right"))
+    W = float(abs(d.geom_xpos[gl][1] - d.geom_xpos[gr][1]))
+    R = float(m.geom_size[gl][0])
+    return dict(W=W, R=R, Izz=Izz, g=W / (2 * R * Izz))
 KNEE_REACH_DEG = 60.0           # tire clearance: smallest knee angle checked besides the Plan 4 leg lengths
 
 
@@ -235,15 +259,18 @@ def tire_clearance(diameter_mm: float, samples: int = 60) -> dict:
 @contextlib.contextmanager
 def patched_plan4(case: Case, root: Path):
     import wbr.plans.plan4_upkie_lqi6 as p4
-    saved = p4.MODELS_DIR, p4.WHEEL_RADIUS, p4.TAU_WHEEL_MAX, p4.TAU_LEG_MAX
+    saved = p4.MODELS_DIR, p4.WHEEL_RADIUS, p4.TAU_WHEEL_MAX, p4.TAU_LEG_MAX, p4.TRACK
     try:
         p4.MODELS_DIR, p4.WHEEL_RADIUS = root, case.radius
+        track = getattr(case, "track_m", None)        # CAD cases (ake_cad, lateral = "cad"): the CAD tyre centre distance
+        if track is not None:
+            p4.TRACK = track
         # one leg limit for hip and knee in Plan 4: the larger peak; each joint is clipped at its own motor in make_plan
         legs = max(case.motor("hip").peak, case.motor("knee").peak)
         p4.TAU_WHEEL_MAX, p4.TAU_LEG_MAX = (case.motor("wheel").peak, legs) if case.limits else (1e4, 1e4)
         yield p4
     finally:
-        p4.MODELS_DIR, p4.WHEEL_RADIUS, p4.TAU_WHEEL_MAX, p4.TAU_LEG_MAX = saved
+        p4.MODELS_DIR, p4.WHEEL_RADIUS, p4.TAU_WHEEL_MAX, p4.TAU_LEG_MAX, p4.TRACK = saved
 
 
 def available(case: Case, kind: str, tau: float, w: float) -> float:
@@ -253,7 +280,8 @@ def available(case: Case, kind: str, tau: float, w: float) -> float:
 def make_plan(p4, case: Case, model_dir: str, params_json: Path, slope: float = 0.0):
     cfg = p4.Plan4Config(model_dir=model_dir, params_json=str(params_json), latency_ms=2.0, noise=True, seed=case.seed,
                          slope_deg=slope, friction_comp_Nm=0.8 * case.motor("hip").backdrive,
-                         friction_comp_wheel_Nm=0.8 * case.motor("wheel").backdrive)
+                         friction_comp_wheel_Nm=0.8 * case.motor("wheel").backdrive,
+                         **(getattr(case, "plan_overrides", None) or {}))     # CAD cases: outer-loop gains scaled to the robot
     plan = p4.Plan4UpkieLQI6(cfg)
     sm = plan.sim.servo_model
     servo_torque = sm.torque
@@ -329,6 +357,20 @@ def fresh(plan, dh: float = 0.0, pitch: float = 0.0) -> None:
     plan.down, plan.down_why, plan.rec = False, "", []
 
 
+def knee_flipped(plan) -> bool:
+    """True when a knee ends on the other side of full extension than the designed posture: the leg went through the
+    singular straight pose and came back bent the other way.  The robot may keep standing like that (tilted: the
+    controller's plant has the knee on the designed side), so the pitch criterion alone can miss it (11-05: the 5 kg
+    case stopping on the 15 deg slope, pitch still below 3 deg when the 2 s window ended)."""
+    m, d = plan.sim.model, plan.sim.data
+    side = -plan.leg.g.knee_sign                        # sign of the knee angle (u-convention) in the designed posture
+    for name in ("left_knee", "right_knee"):
+        q = d.qpos[m.jnt_qposadr[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, name)]] * plan.signs[name]
+        if q * side < 0.0:
+            return True
+    return False
+
+
 def stats(plan, case: Case, t_from: float = 0.0, steady_from: float | None = None, v_window=None) -> dict:
     Rr = np.array(plan.rec)
     t = Rr[:, 0] - Rr[0, 0]
@@ -338,8 +380,13 @@ def stats(plan, case: Case, t_from: float = 0.0, steady_from: float | None = Non
     tau, w = Rr[sel, 1:7], Rr[sel, 7:13]
     pt = np.asarray(plan.log["pitch_true"])
     n = int(round(1.0 / plan.dt))
-    out = dict(alive=not plan.down, recovered=bool(not plan.down and np.max(np.abs(pt[-n:])) < math.radians(3)),
-               pitch_peak_deg=float(math.degrees(np.max(np.abs(pt)))))
+    flipped = knee_flipped(plan)
+    out = dict(alive=not plan.down,
+               recovered=bool(not plan.down and not flipped and np.max(np.abs(pt[-n:])) < math.radians(3)),
+               pitch_peak_deg=float(math.degrees(np.max(np.abs(pt)))), knee_flipped=flipped,
+               # longest mean leg length of the run and what is left to full extension (L1 + L2, singular)
+               leg_max_mm=float(1000 * np.max(plan.log["L0"])),
+               leg_margin_mm=float(1000 * (plan.leg.g.L0_max - np.max(plan.log["L0"]))))
     if plan.down:
         out["down_why"] = plan.down_why
     for kind, cols in (("hip", [0, 3]), ("knee", [1, 4]), ("wheel", [2, 5])):
@@ -436,8 +483,8 @@ def summary_markdown(results: Dict[str, dict]) -> str:
     lines += ["", "## Per wheel diameter", "",
               "| case | hip / knee / wheel motor | wheel [mm] | seed | V | mass [kg] | not recovered | wheel peak [N m] (scenario) | wheel RMS max | wheel sat % max | "
               "wheel speed max [rad/s] | v at 1.0 m/s cmd | hip peak (scenario) | hip RMS max | knee peak (scenario) | knee static max | knee RMS max | "
-              "tire off the floor max [ms] (scenario) | slip max [m/s] |",
-              "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+              "tire off the floor max [ms] (scenario) | slip max [m/s] | longest leg [mm] (scenario) |",
+              "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for t, r in ok.items():
         S, c = r["scen"], r["case"]
         bad = [n for n, s in S.items() if not s["recovered"]]
@@ -449,17 +496,22 @@ def summary_markdown(results: Dict[str, dict]) -> str:
         rec = {n: s for n, s in S.items() if s["recovered"]}             # a fall lifts the wheels anyway
         air, airs = _worst(rec, "wheel_air_ms") if rec else (None, "-")
         mot = " / ".join(c.get(f"{k}_motor", d) for k, d in (("hip", "AKE50-8"), ("knee", "AKE50-8"), ("wheel", "AKE60-8")))
+        legs = {n: s["leg_max_mm"] for n, s in S.items() if s.get("leg_max_mm") is not None}    # (results before 11-05: none)
+        leg = "-" if not legs else "%.0f (%s)" % (max(legs.values()), max(legs, key=legs.get))
         lines.append(f"| {t} | {mot} | {c['diameter_mm']:.0f} | {c['seed']} | {c['volt']:.1f} | {r['total_mass']:.3f} | {', '.join(bad) if bad else 'none'} | "
                      f"{fmt(wp)} ({wps}) | {fmt(_worst(S, 'wheel_rms')[0])} | {fmt(_worst(S, 'wheel_sat_pct')[0], 1)} | "
                      f"{fmt(_worst(S, 'wheel_speed_peak')[0], 1)} | {fmt(S['velocity_1.0'].get('v_mean') if 'velocity_1.0' in S else None)} | "
                      f"{fmt(hp)} ({hps}) | {fmt(_worst(S, 'hip_rms')[0])} | {fmt(kp)} ({kps}) | {fmt(ks)} | {fmt(_worst(S, 'knee_rms')[0])} | "
-                     f"{fmt(air, 0)}{f' ({airs})' if air else ''} | {fmt(_worst(rec, 'wheel_slip_max')[0] if rec else None)} |")
+                     f"{fmt(air, 0)}{f' ({airs})' if air else ''} | {fmt(_worst(rec, 'wheel_slip_max')[0] if rec else None)} | "
+                     f"{leg} |")
     fails = [(t, n, s) for t, r in ok.items() for n, s in r["scen"].items() if not s["recovered"]]
     if fails:
         lines += ["", "## Scenarios not recovered", "",
                   "| case | scenario | why | wheel peak / sat % / speed | knee peak / sat % | hip peak / sat % |", "|---|---|---|---|---|---|"]
         for t, n, s in fails:
-            lines.append(f"| {t} | {n} | {s.get('down_why') or 'pitch above 3 deg in the last second'} | "
+            why = s.get("down_why") or ("knee flipped through full extension" if s.get("knee_flipped")
+                                        else "pitch above 3 deg in the last second")
+            lines.append(f"| {t} | {n} | {why} | "
                          f"{fmt(s['wheel_peak'])} / {fmt(s['wheel_sat_pct'], 1)} / {fmt(s['wheel_speed_peak'], 1)} | "
                          f"{fmt(s['knee_peak'])} / {fmt(s['knee_sat_pct'], 1)} | {fmt(s['hip_peak'])} / {fmt(s['hip_sat_pct'], 1)} |")
     return "\n".join(lines) + "\n"

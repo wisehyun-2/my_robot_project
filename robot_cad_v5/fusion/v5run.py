@@ -439,6 +439,45 @@ def robot_mass():
     return txt
 
 
+def save_mass_json(path=None, apply_print=False):
+    """Per-link mass properties of the v5 robot (nominal pose, robot axes, mm / kg / kg mm^2) for
+    wbr/bench/ake_cad.py -> ../calc/mass_properties.json.  v4's check.save_mass_json writes the INBOARD tyre centre
+    (params.tyre_centre_y, 173.5); here the wheel group is turned about Y_MSH, so the tyre centre is the mirrored
+    value (270.0), checked against the tyre bodies of the model.  The hub file keeps the print densities and the tyre
+    mass of robot_mass(), so by default nothing is changed (a read-only script works); apply_print=True re-applies
+    them first (modifies the document, e.g. after relegs() / reshell())."""
+    import json
+    doc()
+    M = load()
+    C, P, K, LV = M['cadlib'], M['params'], M['check'], M['legs_v5']
+    if apply_print:
+        show()
+        K.apply_print_mass()
+    root = C.design().rootComponent
+    hidden = [o.fullPathName for o in root.allOccurrences if not o.isLightBulbOn and '_library' not in o.fullPathName]
+    assert not hidden, ('hidden occurrences are left out of the report: show() first', hidden[:5])
+    raw = sorted({o.component.name for o in K.leaves() for b in o.bRepBodies if b.isSolid
+                  and b.material.name == 'PETG print' and not o.component.name.startswith(('thigh_', 'shank_'))})
+    assert not raw, ('printed parts without their print density: apply_print=True', raw)
+    tyres = [o for o in K.leaves() if o.component.name.startswith('tyre M365')]
+    assert tyres and all(b.material.name.startswith('tyre ') for o in tyres for b in o.bRepBodies), 'tyre mass not applied'
+    txt, data, groups = K.report()
+    y_tyre = 2 * LV.Y_MSH - P.tyre_centre_y()
+    ty = [(m, c) for path, m, c, _i in groups['wheel_L'] if 'tyre M365' in path]
+    y_meas = sum(m * c[1] for m, c in ty) / sum(m for m, c in ty)
+    assert abs(y_meas - y_tyre) < 0.5, ('tyre centre', y_meas, y_tyre)
+    out = dict(units='mm, kg, kg mm^2 about the COM, robot axes (x fwd, y left, z up, floor origin)',
+               pose=dict(L0=P.L0, L1=P.L1, L2=P.L2, R_wheel=P.R_WHEEL, Z_hip=P.Z_HIP, phi_deg=math.degrees(P.PHI),
+                         knee=(P.KNEE_X, P.KNEE_Z), top_plate_z=P.Z_HIP + P.RAIL_Z + P.RAIL_S / 2 + P.TOP_PLATE[2],
+                         tyre_centre_y=y_tyre, tyre_centre_y_model=y_meas, wheel_offset=P.wheel_offset(),
+                         wheels='outboard'),
+               links={k: dict(mass=v['mass'], com=list(v['com']), inertia=v['inertia']) for k, v in data.items()})
+    path = path or os.path.join(BASE, 'calc', 'mass_properties.json')
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(out, f, indent=1)
+    return txt + '\ntyre centre y %.2f (model %.2f) -> %s' % (y_tyre, y_meas, path)
+
+
 def export():
     doc()
     M = load()

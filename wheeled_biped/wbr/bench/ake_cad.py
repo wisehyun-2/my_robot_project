@@ -8,13 +8,24 @@ built differently (build_cad_model):
 * upkie_description legs are stretched to the CAD lengths L1 = L2 = 175 mm (the knee stator and ankle bodies are
   moved along the hip->knee / knee->axle directions);
 * each body group (base / thigh / shank / wheel, grouped like upkie_params by the last joint on the path) gets the
-  CAD mass, COM (sagittal x, z; the lateral position stays upkie's) and inertia tensor on one carrier body, the other
-  bodies of the group become massless (1e-4 kg);
+  CAD mass, COM and inertia tensor on one carrier body, the other bodies of the group become massless (the compiler's
+  boundmass, 1 g each);
+* lateral geometry (11-05): with lateral = "cad" (default) the group COMs sit at the CAD y and the tires at the CAD
+  tyre centre (pose.tyre_centre_y: 173.5 inboard for v2-v4, 270 outboard for v5), and the MCU gets that track; the
+  joint axes are all along y, so the sagittal model is the same.  lateral = "upkie" keeps upkie's lateral positions
+  (tire centres 305 mm apart whatever the CAD says: the results up to 11-02 were made that way - yaw inertia 8 % low,
+  roll 4 %);
 * the payload is a 5 kg box (200 x 150 x 100 mm) on the top plate, its COM 50 mm above the plate.
 
     python -m wbr.bench.ake_cad                      # both cases -> results/ake_cad/
     python -m wbr.bench.ake_cad --only robot --quick
     python -m wbr.bench.ake_cad --cad ../robot_cad_v3/calc/mass_properties.json --out results/ake_cad_v3   # v3 (6061 legs)
+    python -m wbr.bench.ake_cad --cad ../robot_cad_v5/calc/mass_properties.json --out results/ake_cad_v5   # v5 (outboard wheels)
+    python -m wbr.bench.ake_cad --lateral upkie --outer-gains upkie ...  # the set-up of the results before 11-05
+
+Outer loops (11-05, user decision): the yaw PI and the leg-length PD are scaled from the upkie tuning to the CAD robot
+(outer_loop_gains; `--outer-gains upkie` keeps the Plan 4 defaults).  A scenario also counts as not recovered when a
+knee ends on the wrong side of full extension (ake_sizing.knee_flipped).
 """
 from __future__ import annotations
 
@@ -23,7 +34,7 @@ import dataclasses
 import json
 import math
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from multiprocessing import Pool
 from pathlib import Path
 
@@ -47,6 +58,11 @@ class CadCase(AS.Case):
     payload_kg: float = 0.0
     payload_size: tuple = (0.20, 0.15, 0.10)
     cad_json: str = str(CAD_JSON)
+    lateral: str = "cad"            # "cad": CAD lateral COMs / tyre centre / track; "upkie": upkie's (results before 11-05)
+    track_m: float | None = None    # set by build_cad_model (lateral = "cad"): tyre centre distance for the MCU
+    outer_gains: str = "scaled"     # "scaled": yaw PI and leg-length PD scaled from the upkie tuning to this robot
+                                    # (build_cad_model -> plan_overrides); "upkie": Plan 4 defaults (results before 11-05)
+    plan_overrides: dict = field(default_factory=dict)   # Plan4Config fields for ake_sizing.make_plan
 
 
 def _anchors(m, d):
@@ -87,6 +103,17 @@ def _stretch(spec, B, L1, L2):
     return float(np.linalg.norm((h - k)[[0, 2]])), float(np.linalg.norm((k - w)[[0, 2]]))
 
 
+def _place_tires(spec, B, y_tyre):
+    """Move the tire bodies (tire geom, contact / wheel-centre markers) along the wheel axis to y = +-y_tyre."""
+    m, d = _straight(spec)
+    for side, sgn in (("left", 1.0), ("right", -1.0)):
+        gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, f"{side}_tire")
+        dw = np.array([0.0, sgn * y_tyre - d.geom_xpos[gid][1], 0.0])
+        pid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, f"{side}_wheel_hub")       # parent of the tire body
+        body = B[f"{side}_wheel_tire"]
+        body.pos = (np.array(body.pos) + d.xmat[pid].reshape(3, 3).T @ dw).tolist()
+
+
 def _principal(I):
     """3x3 inertia -> (diag, quaternion of the principal frame)."""
     vals, vecs = np.linalg.eigh(I)
@@ -116,6 +143,12 @@ def build_cad_model(case: CadCase, mdir: Path):
     spec.meshdir = mesh_abs
     B = {b.name: b for b in spec.bodies}
     L1, L2 = _stretch(spec, B, pose["L1"] / 1000.0, pose["L2"] / 1000.0)
+    if case.lateral not in ("cad", "upkie"):
+        raise ValueError(f"lateral must be 'cad' or 'upkie', not {case.lateral!r}")
+    cad_lateral = case.lateral == "cad"
+    if cad_lateral:
+        _place_tires(spec, B, pose["tyre_centre_y"] / 1000.0)
+        case.track_m = 2.0 * pose["tyre_centre_y"] / 1000.0
 
     # CAD pose in MuJoCo: virtual leg vertical at L0, axle at x = 0, z = R (same as the CAD nominal pose)
     m = spec.compile()
@@ -132,10 +165,11 @@ def build_cad_model(case: CadCase, mdir: Path):
         cid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, carrier)
         mass = link["mass"]
         com_cad = np.array(link["com"]) / 1000.0
-        # sagittal COM relative to the hip midpoint as in the CAD; lateral position = upkie's group COM
+        # COM relative to the hip midpoint as in the CAD; lateral = "upkie" keeps upkie's lateral group COM
         cur = sum(m.body_mass[b] * d.xipos[b] for b in groups[grp]) / sum(m.body_mass[b] for b in groups[grp])
         com_w = hip_mid + (com_cad - cad_hip)
-        com_w[1] = cur[1]
+        if not cad_lateral:
+            com_w[1] = cur[1]
         Rb = d.xmat[cid].reshape(3, 3)
         I_w = np.array(link["inertia"]) * 1e-6                       # kg mm^2 -> kg m^2, robot axes = world axes
         diag, quat = _principal(Rb.T @ I_w @ Rb)
@@ -196,7 +230,28 @@ def build_cad_model(case: CadCase, mdir: Path):
     params.tau_hip_max = 16.0 * k_m
     params.to_json(mdir / "plan4_params.json")
     params.extra["cad_L1_L2"] = (L1, L2)
+    if case.outer_gains not in ("scaled", "upkie"):
+        raise ValueError(f"outer_gains must be 'scaled' or 'upkie', not {case.outer_gains!r}")
+    case.plan_overrides = outer_loop_gains(mdir / "scene.xml", params.m_b) if case.outer_gains == "scaled" else {}
     return params
+
+
+def outer_loop_gains(xml_path, m_b: float) -> dict:
+    """Plan 4's yaw PI and leg-length PD (tuned on the 5.3 kg upkie model) scaled to this robot so that the loops keep
+    their upkie bandwidth (11-05, user decision):
+      yaw   kp, ki x (upkie yaw plant gain) / (this robot's), plant gain = W / (2 R Izz) - a 10.9 kg robot on Ø202
+            wheels 0.54 m apart has 1/4 of upkie's, with the defaults a 1 rad/s command took 1.3 s to 90 % and stalled
+            at 0.5 rad/s with 5 kg on top;
+      leg   kp, kd x m_b / (upkie m_b): the leg-length mode sqrt(2 kp / m_b) stays at 23.9 rad/s, clear of the
+            balance poles.  With the defaults (17 rad/s, 12.5 with 5 kg) the wheel-torque reaction on the shank
+            stretched the leg by 2 cm on a 15 deg slope and through full extension when stopping downhill with 5 kg:
+            the knee flipped backward.
+    A payload case is scaled with its own mass / inertia, like its LQI gains (the controller knows the payload)."""
+    import wbr.plans.plan4_upkie_lqi6 as p4
+    base = p4.Plan4Config()
+    ky = AS.UPKIE_YAW_GAIN / AS.yaw_plant_gain(xml_path)["g"]
+    kl = m_b / AS.UPKIE_BODY_MASS
+    return dict(kp_yaw=base.kp_yaw * ky, ki_yaw=base.ki_yaw * ky, kp_leg=base.kp_leg * kl, kd_leg=base.kd_leg * kl)
 
 
 CASES = [CadCase("robot", hip_motor="AKE60-8", knee_motor="AKE60-8", wheel_motor="AKE60-8"),
@@ -218,9 +273,16 @@ def static_report(case: CadCase) -> dict:
     with tempfile.TemporaryDirectory() as tmp:
         p = build_cad_model(case, Path(tmp) / "model")
         m = mujoco.MjModel.from_xml_path(str(Path(tmp) / "model" / "scene.xml"))
+        d = mujoco.MjData(m)
+        mujoco.mj_resetDataKeyframe(m, d, mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_KEY, "stand"))
+        mujoco.mj_forward(m, d)
+        tire_track = float(abs(d.geom_xpos[m.geom("left_tire").id][1] - d.geom_xpos[m.geom("right_tire").id][1]))
     L1, L2 = p.extra["cad_L1_L2"]
+    leg = p.leg.at(p.L0)
     return dict(tag=case.tag, total_mass=float(m.body_subtreemass[1]), L1=L1, L2=L2, R=case.radius, m_b=p.m_b,
-                b_z=p.b_z, b_x=p.b_x, I_b=p.I_b, m_w=p.m_w, I_w=p.I_w, J_w=p.J_w)
+                b_z=p.b_z, b_x=p.b_x, I_b=p.I_b, m_w=p.m_w, I_w=p.I_w, J_w=p.J_w,
+                m_l=leg["m_l"], c=leg["c"], d=leg["d"], I_l=leg["I_l"], lateral=case.lateral, tire_track=tire_track,
+                mcu_track=case.track_m, outer_gains=case.outer_gains, plan_overrides=dict(case.plan_overrides))
 
 
 def main(argv=None):
@@ -231,8 +293,13 @@ def main(argv=None):
     ap.add_argument("--static", action="store_true", help="only the model facts (masses, standing torques)")
     ap.add_argument("--cad", type=Path, default=CAD_JSON,
                     help="mass_properties.json of the CAD robot (default robot_cad_v2; v3: robot_cad_v3/calc/...)")
+    ap.add_argument("--lateral", choices=("cad", "upkie"), default="cad",
+                    help="lateral COMs / tyre centre / track from the CAD (default) or upkie's (results before 11-05)")
+    ap.add_argument("--outer-gains", choices=("scaled", "upkie"), default="scaled",
+                    help="yaw PI / leg-length PD scaled to the robot (default) or the upkie tuning (results before 11-05)")
     args = ap.parse_args(argv)
-    cases = [dataclasses.replace(c, cad_json=str(args.cad)) for c in CASES if not args.only or c.tag in args.only]
+    cases = [dataclasses.replace(c, cad_json=str(args.cad), lateral=args.lateral, outer_gains=args.outer_gains) for c in CASES
+             if not args.only or c.tag in args.only]
     args.out.mkdir(parents=True, exist_ok=True)
     stat = {c.tag: static_report(dataclasses.replace(c)) for c in cases}
     (args.out / "static.json").write_text(json.dumps(stat, indent=1), encoding="utf-8")
