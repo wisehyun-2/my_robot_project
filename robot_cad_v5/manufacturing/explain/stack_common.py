@@ -17,6 +17,8 @@ sys.path.insert(0, str(V5 / 'fusion'))
 for _m in ('adsk', 'adsk.core', 'adsk.fusion'):
     sys.modules.setdefault(_m, mock.MagicMock())
 import params as P                               # noqa: E402
+import link_length as LL                         # noqa: E402
+LL.lengthen(P)                                   # v5: links 250 mm (user 11-07), before anything reads them at import
 import legs as LG                                # noqa: E402
 import layout as LY                              # noqa: E402
 import legs_v5 as LV                             # noqa: E402
@@ -34,8 +36,8 @@ plt.rcParams['axes.unicode_minus'] = False
 plt.rcParams['hatch.linewidth'] = 0.6
 A = P.AKE
 
-ROBOT_KG = 10.93                                  # robot_mass() 11-02 (hub version 6, PETG legs, PETG parts at print density, tyre 721 g)
-W_STATIC = ROBOT_KG * P.G / 2                    # 51 N per wheel
+ROBOT_KG = 11.597                                 # report 11-07 (hub version 10, links 250 mm, PETG legs, PETG parts at print density, tyre 721 g)
+W_STATIC = ROBOT_KG * P.G / 2                    # 57 N per wheel
 F_DES, F_CHK = 300.0, 600.0                      # 5 / 10 x 60 N static (brief, v4 strength_v4.py)
 FL_DES, FL_CHK = P.LATERAL * F_DES, P.LATERAL * F_CHK         # 150 / 300 N
 YTC_V4 = P.tyre_centre_y()                       # 173.5 inboard tyre (v4)

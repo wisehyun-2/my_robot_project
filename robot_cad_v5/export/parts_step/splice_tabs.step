@@ -10,7 +10,7 @@ FILE_DESCRIPTION(
 
 FILE_NAME(
 /* name */ 'splice_tabs.step',
-/* time_stamp */ '2026-11-02T22:12:03+09:00',
+/* time_stamp */ '2026-11-08T00:43:46+09:00',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20.2',
@@ -2839,7 +2839,7 @@ SOLID_ANGLE_UNIT()
 #2786=PRODUCT_DEFINITION_SHAPE('',$,#2789);
 #2787=SHAPE_REPRESENTATION('',(#1717),#2779);
 #2788=PRODUCT_DEFINITION_CONTEXT('part definition',#2793,'design');
-#2789=PRODUCT_DEFINITION('2026-11-02-22-12-03-240','splice_tabs',#2790,
+#2789=PRODUCT_DEFINITION('2026-11-08-00-43-46-598','splice_tabs',#2790,
 #2788);
 #2790=PRODUCT_DEFINITION_FORMATION('',$,#2795);
 #2791=PRODUCT_RELATED_PRODUCT_CATEGORY('splice_tabs','splice_tabs',(#2795));
@@ -2848,7 +2848,7 @@ SOLID_ANGLE_UNIT()
 #2793=APPLICATION_CONTEXT(
 'Core Data for Automotive Mechanical Design Process');
 #2794=PRODUCT_CONTEXT('part definition',#2793,'mechanical');
-#2795=PRODUCT('2026-11-02-22-12-03-240','splice_tabs',$,(#2794));
+#2795=PRODUCT('2026-11-08-00-43-46-598','splice_tabs',$,(#2794));
 #2796=PRESENTATION_STYLE_ASSIGNMENT((#2798));
 #2797=PRESENTATION_STYLE_ASSIGNMENT((#2799));
 #2798=SURFACE_STYLE_USAGE(.BOTH.,#2800);

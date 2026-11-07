@@ -5,12 +5,13 @@
     python part_drawings.py --png DIR        # also PNG previews
 
 Source: the Fusion export ../export/parts_step/<name>.step (robot frame, Fusion world axes (robot y, z, x); v5run.exports).
-  * v5 parts (new in v5, detailed sheets): thigh, shank (PETG FDM print since 11-02; L / R separate parts, the right one
-    drawn by its own STEP), the 6061 hub inserts (hip, knee), the 6061 backing ring (11-02, one part for hip / knee, L / R)
-    and the 6061 knee cap (no hip cap since 11-02).  Each is moved to its own
+  * v5 parts (new in v5, detailed sheets): thigh, shank (PETG FDM print since 11-02; L / R separate parts, the sheets draw
+    the right one = CAD +y, the left one has its own STEP), the 6061 hub inserts (hip, knee), the 6061 backing ring (11-02,
+    one part for hip / knee, L / R) and the 6061 knee cap (no hip cap since 11-02).  Each is moved to its own
     frame (links: origin = upper joint axis on the inner face, X towards the lower joint, Z outboard; round parts:
-    origin on the axis at the face named in the sheet, Z outboard, X = robot forward) and dimensioned from params /
-    legs_v5; the hole tables are read back from the geometry.
+    origin on the axis at the face named in the sheet, Z outboard, X = CAD +x, the knee side) and dimensioned from params /
+    legs_v5; the hole tables are read back from the geometry.  Part names follow the robot: front = rocker switch = CAD -x,
+    _L = CAD -y (user 11-08).
   * the other designed parts (v4 parts used unchanged: cups, hub flange, rim, shells, top plate, tray, deck, saddles,
     splice tabs, hip plate, spine bars, rails, stator clamp ring, magnet spacer): one sheet each, three hidden-line views
     along the robot axes with the overall sizes, material / process from the v4 notes.  The machined ones also have the
@@ -47,6 +48,8 @@ sys.path.insert(0, str(V5 / 'fusion'))
 for _m in ('adsk', 'adsk.core', 'adsk.fusion'):
     sys.modules.setdefault(_m, mock.MagicMock())
 import params as P  # noqa: E402
+import link_length as LL  # noqa: E402
+LL.lengthen(P)                # v5: links 250 mm (user 11-07), before anything reads them at import
 import legs as LG  # noqa: E402
 import legs_v5 as LV  # noqa: E402
 import hlr_gmsh as G  # noqa: E402
@@ -56,7 +59,7 @@ SRC = V5 / 'export' / 'parts_step'
 STEP_DIR = HERE / 'step'
 PDF_DIR = HERE / 'drawings'
 V2_DRAW = ROOT / 'robot_cad_v2' / 'manufacturing'
-DATE = '2026-11-02'
+DATE = '2026-11-08'
 PROJECT = 'WheelBiped v5'
 
 for f in (r'C:\Windows\Fonts\malgun.ttf', '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc'):
@@ -116,7 +119,7 @@ def signature():
 
 
 def same_rotated(hl, hr):
-    """An angle (deg) that turns the left part's Z holes onto the right part's, or None."""
+    """An angle (deg) that turns the Z holes of one side's part (hl) onto the other side's (hr), or None."""
     key = lambda h: (round(h['d'], 2), h['convex'], round(h['z0'], 2), round(h['z1'], 2))
     ref = [h for h in hl if math.hypot(h['cx'], h['cy']) > 0.5]
     if not ref:
@@ -140,15 +143,15 @@ def make_steps(name):
     stem, fr, _t, _n = DETAIL[name]
     sig = {}
     STEP_DIR.mkdir(exist_ok=True)
-    for side, s in (('L', 1), ('R', -1)):
+    for side, s in (('R', 1), ('L', -1)):         # s = sign of CAD y; the sheets draw the +y part, the robot's right
         G.load(SRC / ('%s_%s.step' % (stem, side)), fr(s))
         assert len(gmsh.model.getEntities(3)) == 1
         G.write_step(STEP_DIR / ('%s_%s.step' % (name, side)))
         sig[side] = signature()
     ang = None
-    if name not in ('thigh', 'shank') and abs(sig['L'][0] - sig['R'][0]) < 0.5:
-        ang = same_rotated(sig['L'][1], sig['R'][1])
-    return dict(vol=sig['L'][0], holes=sig['L'][1], shared=ang is not None, angle=ang)
+    if name not in ('thigh', 'shank') and abs(sig['R'][0] - sig['L'][0]) < 0.5:
+        ang = same_rotated(sig['R'][1], sig['L'][1])
+    return dict(vol=sig['R'][0], holes=sig['R'][1], shared=ang is not None, angle=ang)
 
 
 # ----------------------------------------------------------------------------- sheet (v3 link_drawings.Sheet)
@@ -408,7 +411,7 @@ def hole_rows(holes, z_name='Z', skip=lambda h: False):
 
 # ----------------------------------------------------------------------------- detailed v5 sheets
 def info_v5(name, scale, mass_g, shared, extra):
-    base = {'step': 'step/%s_L.step, %s_R.step' % (name, name), '척도': scale}
+    base = {'step': 'step/%s_R.step, %s_L.step' % (name, name), '척도': scale}
     base.update(extra)
     if '수량' not in base:
         base['수량'] = '2개 (왼쪽·오른쪽 같은 부품)' if shared else '왼쪽 1 + 오른쪽 1 (서로 다른 부품)'
@@ -419,7 +422,7 @@ def link_sheets(name, pdf, png_dir, res):
     """Thigh / shank: (1) outer and inner face views, (2) section through both joint axes + tables."""
     stem, _fr, title, number = DETAIL[name]
     thigh = name == 'thigh'
-    pathL = STEP_DIR / ('%s_L.step' % name)
+    path_drawn = STEP_DIR / ('%s_R.step' % name)
     L = P.L1 if thigh else P.L2
     r_a, r_b = (LV.THIGH if thigh else LV.SHANK)[0][1], (LV.THIGH if thigh else LV.SHANK)[1][1]
     y0 = LV.Y_TF if thigh else LV.Y_SI
@@ -432,7 +435,7 @@ def link_sheets(name, pdf, png_dir, res):
     # ---- sheet 1: face views
     S = Sheet()
     ox = 72.0
-    VA = View(S, pathL, (0, 0, 1), (1, 0, 0), (ox, 226.0), 1.0, label='바깥 면 쪽(+Z)에서 본 그림  1:1  (원점 = %s 축)' % j_up,
+    VA = View(S, path_drawn, (0, 0, 1), (1, 0, 0), (ox, 216.0), 1.0, label='바깥 면 쪽(+Z)에서 본 그림  1:1  (원점 = %s 축)' % j_up,
               label_dy=11)
     for V, z in ((VA, zf),):
         V.axis_line((-r_a - 6, 0, z), (L + 50, 0, z))
@@ -443,7 +446,7 @@ def link_sheets(name, pdf, png_dir, res):
     x_end = L + P.HOUSING_R
     S.dim(VA.pt((-r_a, 0, zf)), VA.pt((x_end, 0, zf)), top + 14, '%.0f' % (r_a + x_end))
     S.leader(VA.pt((-r_a * 0.707, r_a * 0.707, zf)), (VA.pt((-r_a, r_a, zf))[0] + 2, top + 3), 'R%.0f' % r_a, right=False)
-    VB = View(S, pathL, (0, 0, -1), (1, 0, 0), (ox, 112.0), 1.0,
+    VB = View(S, path_drawn, (0, 0, -1), (1, 0, 0), (ox, 106.0), 1.0,
               label='안쪽 면 쪽(-Z)에서 본 그림  1:1  (X축으로 뒤집어 봄: 위·아래가 바뀜)', label_dy=10)
     VB.axis_line((-r_a - 6, 0, 0), (L + 50, 0, 0))
     VB.axis_line((0, -r_a - 6, 0), (0, r_a + 6, 0))
@@ -451,17 +454,13 @@ def link_sheets(name, pdf, png_dir, res):
     if thigh:
         S.dim(VB.pt((L, -P.HOUSING_R, 0)), VB.pt((L, P.HOUSING_R, 0)), VB.box[1] + 8, 'Ø%.0f (컵 립 끼움)'
               % (2 * P.HOUSING_R), horizontal=False)
-    # right column: hole table
-    hr = hole_rows(res['holes'], skip=lambda h: h['d'] > 80 and not h['convex'])
-    yb = S.table(288.0, 280.0, [('구멍·원통', 44), ('Ø', 13), ('개', 6), ('위치 (X, Y) 또는 원', 34), ('Z', 25)], hr,
-                 title='Z 방향 구멍·원통 표 (원점 %s 축 · 안쪽 면, 왼쪽 부품)' % j_up, row_h=4.0, fs=FS_S - 0.6)
-    S.title_block('%s 왼쪽 (%s_L)' % (title, name), number + ' (1/2)', info_v5(name, '1:1', mass, False, extra))
+    S.title_block('%s 오른쪽 (%s_R)' % (title, name), number + ' (1/3)', info_v5(name, '1:1', mass, False, extra))
     finish(S, pdf, png_dir, name + '_1')
 
     # ---- sheet 2: section through both joint axes (Y = 0), Z levels, notes
     S = Sheet()
     cut = ('y', 0.0, (-60, L + 60, 0.0, 60, -10, zf + 10))
-    VS = View(S, pathL, (0, -1, 0), (1, 0, 0), (ox, 168.0), 1.0, hidden=False, cut=cut,
+    VS = View(S, path_drawn, (0, -1, 0), (1, 0, 0), (ox, 168.0), 1.0, hidden=False, cut=cut,
               label='단면 A-A  1:1  (Y = 0: 두 관절 축을 지나는 면, 아래 = 안쪽 면)', label_dy=9)
     zl = levels(name)
     xr = VS.box[1] + 6
@@ -470,11 +469,19 @@ def link_sheets(name, pdf, png_dir, res):
         S.dim(VS.pt((L + 52, 0, a_)), VS.pt((L + 52, 0, b_)), xr + 4 + 9 * (i % 2), '%.1f' % (b_ - a_), horizontal=False)
     S.dim(VS.pt((-r_a, 0, 0)), VS.pt((-r_a, 0, zf)), VS.box[0] - 8, '%.0f' % zf, horizontal=False)
     zrows = [['%.1f' % v, k] for k, v in sorted(zl.items(), key=lambda kv: kv[1])]
-    S.table(20.0, 128.0, [('Z', 14), ('면 (y = 로봇 왼쪽 다리 y)', 96)], zrows, title='두께 방향 면 높이 (Z, 안쪽 면 Z0, +Z = 바깥)',
+    S.table(20.0, 128.0, [('Z', 14), ('면 (y = 로봇 오른쪽 다리의 CAD y)', 96)], zrows, title='두께 방향 면 높이 (Z, 안쪽 면 Z0, +Z = 바깥)',
             row_h=4.0)
     S.notes(150.0, 128.0, link_notes(name), width=118)
-    S.title_block('%s 왼쪽 (%s_L)' % (title, name), number + ' (2/2)', info_v5(name, '1:1', mass, False, extra))
+    S.title_block('%s 오른쪽 (%s_R)' % (title, name), number + ' (2/3)', info_v5(name, '1:1', mass, False, extra))
     finish(S, pdf, png_dir, name + '_2')
+
+    # ---- sheet 3: hole table (its own sheet since the links are 250 mm: on sheet 1 it covered the lower joint)
+    S = Sheet()
+    hr = hole_rows(res['holes'], skip=lambda h: h['d'] > 80 and not h['convex'])
+    S.table(20.0, 278.0, [('구멍·원통', 90), ('Ø', 22), ('개', 12), ('위치 (X, Y) 또는 원', 180), ('Z', 50)], hr,
+            title='Z 방향 구멍·원통 표 (원점 %s 축 · 안쪽 면, 오른쪽 부품)' % j_up, row_h=5.0, fs=FS)
+    S.title_block('%s 오른쪽 (%s_R)' % (title, name), number + ' (3/3)', info_v5(name, '1:1', mass, False, extra))
+    finish(S, pdf, png_dir, name + '_3')
 
 
 def levels(name):
@@ -502,8 +509,8 @@ def levels(name):
 def link_notes(name):
     thigh = name == 'thigh'
     common = [
-        '단위 mm, 3각법.  형상의 원본은 STEP(step/%s_L.step · _R.step, 위 원점·축).  오른쪽 부품은 거울상에 가깝지만 모터 판의 '
-        '리드 홈·컵 인서트 각도가 다르므로 _R STEP으로 따로 출력한다.' % name,
+        '단위 mm, 3각법.  형상의 원본은 STEP(step/%s_R.step · _L.step, 위 원점·축).  왼쪽 부품은 거울상에 가깝지만 모터 판의 '
+        '리드 홈·컵 인서트 각도가 다르므로 _L STEP으로 따로 출력한다.' % name,
         '닫힌 상자 벽 %.1f, 와렌 리브 %.1f (구멍 없음).  리브가 나눈 칸은 닫힌 빈칸 — 배출 구멍 없음(11-02), FDM 출력 기준 '
         '(MJF로 뽑으면 칸 속 가루가 빠지지 않는다).' % (LV.WALL, LV.RIB),
         '열압입 인서트는 M2.5 × 4 (구멍 Ø3.6)만 — 컵 기둥 · 무릎 캡.  hub 인서트는 열압입 인서트 대신 PETG 벽 %.0f mm를 '
@@ -529,17 +536,17 @@ def link_notes(name):
 def round_sheet(name, pdf, png_dir, res):
     """Hub inserts, knee cap: end views (both faces) and the axial section, 2:1, hole table, notes."""
     stem, _fr, title, number = DETAIL[name]
-    pathL = STEP_DIR / ('%s_L.step' % name)
+    path_drawn = STEP_DIR / ('%s_R.step' % name)
     k = 2.0
     S = Sheet()
-    G.load(pathL)
+    G.load(path_drawn)
     bb = G.bbox()
     zmin, zmax, rmax = bb[2], bb[5], max(abs(bb[0]), abs(bb[3]), abs(bb[1]), abs(bb[4]))
-    V1 = View(S, pathL, (0, 0, -1), (1, 0, 0), (25.0 + k * rmax, 200.0), k, label='-Z 쪽에서 본 그림  2:1', label_dy=9)
-    V2 = View(S, pathL, (0, 0, 1), (1, 0, 0), (25.0 + k * rmax, 85.0), k, label='+Z 쪽에서 본 그림  2:1', label_dy=9)
+    V1 = View(S, path_drawn, (0, 0, -1), (1, 0, 0), (25.0 + k * rmax, 200.0), k, label='-Z 쪽에서 본 그림  2:1', label_dy=9)
+    V2 = View(S, path_drawn, (0, 0, 1), (1, 0, 0), (25.0 + k * rmax, 85.0), k, label='+Z 쪽에서 본 그림  2:1', label_dy=9)
     cut = ('y', 0.0, (-rmax - 5, rmax + 5, 0.0, rmax + 5, zmin - 5, zmax + 5))
     xs = 25.0 + 2 * k * rmax + 40.0
-    V3 = View(S, pathL, (0, -1, 0), (0, 0, 1), (xs - k * zmin, 200.0), k, hidden=True, cut=cut,
+    V3 = View(S, path_drawn, (0, -1, 0), (0, 0, 1), (xs - k * zmin, 200.0), k, hidden=True, cut=cut,
               label='단면 A-A  2:1  (Y = 0, 축을 지나는 면; 가로 = Z)', label_dy=12 + 7 * len(round_z_dims(name)))
     for V, z in ((V1, zmin), (V2, zmax)):
         V.axis_line((-rmax - 3, 0, z), (rmax + 3, 0, z))
@@ -591,7 +598,7 @@ def round_info(name, res, mass):
 
 def round_notes(name, res):
     rot = '' if not res['shared'] else (
-        '  오른쪽 다리도 같은 부품 — 오른쪽 STEP과 비교해 같은 모양(축 둘레로 %.0f° 돌려 끼움).' % res['angle'])
+        '  왼쪽 다리도 같은 부품 — 왼쪽 STEP과 비교해 같은 모양(축 둘레로 %.0f° 돌려 끼움).' % res['angle'])
     if name.startswith('hub_insert'):
         j = 'hip' if name.endswith('hip') else '무릎'
         return [
@@ -624,33 +631,33 @@ def round_notes(name, res):
 
 
 # ----------------------------------------------------------------------------- generic sheets (other parts)
-OTHER = {   # stem: (title, material, process, quantity, sides)
-    'cup_hip': ('hip 드라이버 컵', 'PETG', '3D 프린트 30 %, 바닥(덮개 면)을 바닥에, 서포트는 커넥터 창만', '왼 1 + 오른 1', 'LR'),
-    'cup_knee': ('무릎 드라이버 컵', 'PETG', '3D 프린트 30 %, 바닥을 바닥에, 서포트는 커넥터 창만', '왼 1 + 오른 1', 'LR'),
-    'cup_wheel': ('바퀴 드라이버 컵', 'PETG', '3D 프린트 30 %, 바닥을 바닥에, 서포트는 커넥터 창만', '왼 1 + 오른 1', 'LR'),
-    'hub_flange': ('바퀴 허브 플랜지', 'PETG', '3D 프린트 100 %, 모터 쪽 면을 바닥에, M3 × 5.7 인서트 6', '왼 1 + 오른 1', 'LR'),
-    'rim': ('바퀴 림 (한 조각)', 'PETG', '3D 프린트 벽 6겹 · 채움 40 %, 허브 쪽 평면을 바닥에', '왼 1 + 오른 1', 'LR'),
-    'shell_front': ('몸통 셸 앞', 'PETG 진회색', '3D 프린트 25 %, 바깥 면을 위로', '왼 1 + 오른 1', 'LR'),
-    'shell_mid': ('몸통 셸 가운데 (hip)', 'PETG 진회색', '3D 프린트 25 %, 바깥 면을 위로', '왼 1 + 오른 1', 'LR'),
-    'shell_rear': ('몸통 셸 뒤', 'PETG 진회색', '3D 프린트 25 %, 바깥 면을 위로', '왼 1 + 오른 1', 'LR'),
-    'saddle': ('hip 위 안장', 'PETG 파랑', '3D 프린트 25 %', '왼 1 + 오른 1', 'LR'),
+OTHER = {   # stem: (title, material, process, quantity, sides; the first side is the one drawn: CAD +y, +x)
+    'cup_hip': ('hip 드라이버 컵', 'PETG', '3D 프린트 30 %, 바닥(덮개 면)을 바닥에, 서포트는 커넥터 창만', '왼 1 + 오른 1', 'RL'),
+    'cup_knee': ('무릎 드라이버 컵', 'PETG', '3D 프린트 30 %, 바닥을 바닥에, 서포트는 커넥터 창만', '왼 1 + 오른 1', 'RL'),
+    'cup_wheel': ('바퀴 드라이버 컵', 'PETG', '3D 프린트 30 %, 바닥을 바닥에, 서포트는 커넥터 창만', '왼 1 + 오른 1', 'RL'),
+    'hub_flange': ('바퀴 허브 플랜지', 'PETG', '3D 프린트 100 %, 모터 쪽 면을 바닥에, M3 × 5.7 인서트 6', '왼 1 + 오른 1', 'RL'),
+    'rim': ('바퀴 림 (한 조각)', 'PETG', '3D 프린트 벽 6겹 · 채움 40 %, 허브 쪽 평면을 바닥에', '왼 1 + 오른 1', 'RL'),
+    'shell_front': ('몸통 셸 앞', 'PETG 진회색', '3D 프린트 25 %, 바깥 면을 위로', '왼 1 + 오른 1', 'RL'),
+    'shell_mid': ('몸통 셸 가운데 (hip)', 'PETG 진회색', '3D 프린트 25 %, 바깥 면을 위로', '왼 1 + 오른 1', 'RL'),
+    'shell_rear': ('몸통 셸 뒤', 'PETG 진회색', '3D 프린트 25 %, 바깥 면을 위로', '왼 1 + 오른 1', 'RL'),
+    'saddle': ('hip 위 안장', 'PETG 파랑', '3D 프린트 25 %', '왼 1 + 오른 1', 'RL'),
     'top_plate': ('위판 (짐 판)', 'PETG', '3D 프린트 25 %, M4 열압입 인서트', '1', ''),
     'battery_tray': ('배터리 받침', 'PETG', '3D 프린트 30 %, 리브를 위로', '1', ''),
     'electronics_deck': ('전장 데크', 'PETG', '3D 프린트 30 %', '1', ''),
     'splice_tabs': ('셸 이음판', 'PETG', '3D 프린트 100 %, M3 + 너트', '1 세트', ''),
-    'hip_plate': ('hip 판', 'AL6061-T6 판 10t 이상', '3축 MCT 양면 (v2 도면 WBv2-M01 참고)', '왼 1 + 오른 1', 'LR'),
-    'spine_tube': ('척추 봉', 'AL6061-T6 환봉 Ø16', '선반: 양 끝 면삭 + M5 탭', '2 (앞 · 뒤)', 'FB'),
-    'rail': ('위 레일', 'AL6061-T6 각봉 15 × 15', '양 끝 M4 탭, Ø4.4 관통 4', '2 (앞 · 뒤)', 'FB'),
+    'hip_plate': ('hip 판', 'AL6061-T6 판 10t 이상', '3축 MCT 양면 (v2 도면 WBv2-M01 참고)', '왼 1 + 오른 1', 'RL'),
+    'spine_tube': ('척추 봉', 'AL6061-T6 환봉 Ø16', '선반: 양 끝 면삭 + M5 탭', '2 (앞 · 뒤)', 'BF'),
+    'rail': ('위 레일', 'AL6061-T6 각봉 15 × 15', '양 끝 M4 탭, Ø4.4 관통 4', '2 (앞 · 뒤)', 'BF'),
     'clamp_ring_stator_D45_t2.0_SUS304': ('고정 링 (고정자)', 'SUS304 2t', '레이저 가공', '4 (무릎·바퀴 × 2)', ''),
     'magnet_spacer_D9x5.35_(6061)': ('자석 스페이서', 'AL6061 (비자성)', '선반', '6', ''),
 }
 V2_COPY = {'hip_plate': ('hip_plate_L', 'hip_plate_R'), 'spine_tube': ('spine_tube',), 'rail': ('rail',),
            'clamp_ring_stator_D45_t2.0_SUS304': ('clamp_ring_stator',), 'magnet_spacer_D9x5.35_(6061)': ('magnet_spacer',)}
-V4_CHANGED = {'shell_rear': 'v4 부품에서 뒤쪽 양옆 세로 모서리만 R30 라운드(v4는 45° 모따기, 사용자 11-02)'}
+V4_CHANGED = {'shell_front': 'v4 부품에서 스위치 쪽 양옆 세로 모서리만 R30 라운드(v4는 45° 모따기, 사용자 11-02)'}
 
 
 def other_sheet(stem, pdf, png_dir):
-    """Three hidden-line views along the robot axes (Fusion world: X = robot y, Y = robot z, Z = robot x), overall
+    """Three hidden-line views along the CAD axes (Fusion world: X = CAD y, Y = CAD z, Z = CAD x; the robot's front is -x), overall
     sizes, title block."""
     title, mat, proc, qty, sides = OTHER[stem]
     files = [stem + '_' + c for c in sides] if sides else [stem]
@@ -665,23 +672,25 @@ def other_sheet(stem, pdf, png_dir):
             k = v
             break
     S = Sheet()
-    # front: from robot +y (world +X), screen x = robot -x (world -Z), up = robot z (world Y)
+    # first view: from CAD +y (world +X), screen x = CAD -x (world -Z), up = CAD z (world Y)
     fx, fy = 30.0 + k * z1, 72.0 - k * y0
     VF = View(S, src, (1, 0, 0), (0, 0, -1), (fx, fy), k, label='+y(바깥)에서 본 그림', label_dy=7, mesh=(36, 6.0))
     VT = View(S, src, (0, 1, 0), (0, 0, -1), (fx, VF.box[3] + 18 + k * x1), k, label='위(+z)에서 본 그림', label_dy=7,
               mesh=(36, 6.0))
-    VS = View(S, src, (0, 0, -1), (-1, 0, 0), (VF.box[1] + 25 + k * x1, fy), k, label='뒤(-x)에서 본 그림', label_dy=7,
+    VS = View(S, src, (0, 0, -1), (-1, 0, 0), (VF.box[1] + 25 + k * x1, fy), k, label='앞(-x, 스위치 쪽)에서 본 그림', label_dy=7,
               mesh=(36, 6.0))
     S.dim((VF.box[0], VF.box[2]), (VF.box[1], VF.box[2]), VF.box[2] - 12, '%.1f (x)' % sz)
     S.dim((VF.box[0], VF.box[2]), (VF.box[0], VF.box[3]), VF.box[0] - 6, '%.1f (z)' % sy, horizontal=False)
     S.dim((VS.box[0], VS.box[2]), (VS.box[1], VS.box[2]), VS.box[2] - 12, '%.1f (y)' % sx)
-    notes = ['단위 mm, 3각법이 아닌 로봇 축 방향 그림(그림 이름 참고).  전체 크기만 적었다 — 형상의 원본은 STEP (export/parts_step/%s.step, '
-             '로봇 좌표).' % ', '.join(files),
+    notes = ['단위 mm, 3각법이 아닌 CAD 축 방향 그림(그림 이름 참고, 로봇 앞 = -x).  전체 크기만 적었다 — 형상의 원본은 STEP (export/parts_step/%s.step, '
+             'CAD 좌표).' % ', '.join(files),
              '부피 %.1f cm³.  %s(robot_cad_v4 코드로 만듦).' % (vol / 1000, V4_CHANGED.get(stem, 'v4와 같은 부품'))]
-    if sides == 'LR':
-        notes.append('오른쪽 부품은 거울상 — export/parts_step/%s_R.step으로 따로 만든다.' % stem)
+    if sides == 'RL':
+        notes.append('왼쪽 부품은 거울상 — export/parts_step/%s_L.step으로 따로 만든다.' % stem)
     if stem in V2_COPY:
         notes.append('치수·공차가 다 들어간 가공 도면: drawings/v2_%s.pdf (v2 도면, 같은 형상 확인).' % V2_COPY[stem][0])
+    if stem == 'hip_plate':
+        notes.append('v2 도면의 이름은 v2 기준이다: v2의 hip_plate_L이 이 로봇의 hip_plate_R(CAD +y), v2의 hip_plate_R이 hip_plate_L이다.')
     S.notes(25.0, 52.0, notes, width=110)
     S.title_block('%s (%s)' % (title, stem), 'WBv5-S%02d' % (list(OTHER).index(stem) + 1),
                   {'재질': mat, '수량': qty, '공정': proc, '척도': '1:%g' % (1 / k) if k < 1 else '1:1',
@@ -699,7 +708,8 @@ def copy_v2(stem):
             continue
         G.load(stp)
         v2 = G.volume()
-        name5 = stem + ('_' + src.split('_')[-1] if src.endswith(('_L', '_R')) else ('_F' if stem in ('spine_tube', 'rail') else ''))
+        # v2's _L is CAD +y, which this robot calls _R
+        name5 = stem + ({'L': '_R', 'R': '_L'}[src[-1]] if src.endswith(('_L', '_R')) else ('_F' if stem in ('spine_tube', 'rail') else ''))
         G.load(SRC / (name5 + '.step'))          # (the magnet spacer's export also holds the magnet: compare per solid)
         vols = [gmsh.model.occ.getMass(3, t) for _d, t in gmsh.model.getEntities(3)]
         v5 = min(vols, key=lambda v: abs(v - v2))

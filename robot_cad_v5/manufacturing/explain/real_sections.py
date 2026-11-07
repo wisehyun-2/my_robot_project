@@ -1,7 +1,7 @@
-"""Real 2D joint sections of WheelBiped v5 (left leg, nominal pose): hip, knee and wheel, cut from the Fusion model
+"""Real 2D joint sections of WheelBiped v5 (CAD +y leg = the robot's right, nominal pose): hip, knee and wheel, cut from the Fusion model
 (hub WheelBiped_v5) by fusion/v5run.sections() -> sections_v5.json.gz.  Every visible body near a joint axis is cut by
 planes through that axis; each figure shows two half planes (upper half at BETA_UP, lower half at BETA_DN, angles from
-robot +x towards +z), so the colours are the real modelled parts - nothing here is redrawn from parameters except the
+CAD +x towards +z), so the colours are the real modelled parts - nothing here is redrawn from parameters except the
 fasteners that are not in the model yet (purple, drawn with their standard length in the modelled holes).
 Same layout and colours as the earlier explain figures (overview, enlarged detail, fastener rows, fits, assembly order,
 loads), plus the result of a clearance check over every 5 deg half plane: overlaps between any two bodies and the
@@ -31,7 +31,7 @@ sys.path.insert(0, str(HERE.parents[1] / 'calc'))
 import strength_v5 as SV                         # noqa: E402  (loads, moments and bolt circle of the hand calculation)
 
 SRC = HERE / 'sections_v5.json.gz'
-GROUPS = {'torso': '몸통', 'femur_L': '허벅지 쪽', 'tibia_L': '정강이 쪽', 'wheel_L': '바퀴 쪽'}
+GROUPS = {'torso': '몸통', 'femur_R': '허벅지 쪽', 'tibia_R': '정강이 쪽', 'wheel_R': '바퀴 쪽'}
 
 
 # ----------------------------------------------------------------------------- section geometry
@@ -112,8 +112,8 @@ def check(recs, joint, gap=1.6):
 
 # ----------------------------------------------------------------------------- colours / names
 STYLE = [   # (key in 'component body', colour, hatch, name)
-    ('thigh_L main', g['thigh'], None, 'PETG 허벅지'), ('shank_L main', g['shank'], None, 'PETG 정강이'),
-    ('_L insert', g['al'], HATCH_AL, '6061 hub 인서트'), ('_L ring', '#7fa7d6', HATCH_AL, '6061 받침 링'),
+    ('thigh_R main', g['thigh'], None, 'PETG 허벅지'), ('shank_R main', g['shank'], None, 'PETG 정강이'),
+    ('_R insert', g['al'], HATCH_AL, '6061 hub 인서트'), ('_R ring', '#7fa7d6', HATCH_AL, '6061 받침 링'),
     ('kneecap', g['cap'], HATCH_AL, '6061 무릎 캡'), ('kneebearing', g['bearing'], None, '61807'),
     ('AKE60-8_KV80_stator', g['stator'], None, 'AKE60-8 고정자'), ('AKE60-8_KV80_output', g['out'], None, 'AKE 출력부'),
     ('FX DIN 125', g['washer'], None, '와셔'), ('FX ISO 8734', g['pin'], None, '평행핀'),
@@ -197,7 +197,7 @@ def panel(fig, rect_, H, view, title, ylabel=True):
     ax.axhline(0, color='k', lw=0.7, ls='-.', zorder=5)
     ax.set_title(title, fontsize=15, loc='left')
     ax.tick_params(labelsize=10)
-    ax.set_xlabel('로봇 y (왼쪽 다리, 바깥 +) [mm]', fontsize=11)
+    ax.set_xlabel('CAD y (로봇 오른쪽 다리, 바깥 +) [mm]', fontsize=11)
     if ylabel:
         ax.set_ylabel('축에서 거리 [mm]  (위 절반 +, 아래 절반 -)', fontsize=11)
     ax.grid(True, lw=0.25, alpha=0.5)
@@ -290,12 +290,12 @@ def fig_hip(recs):
     YR = LV.y_ring(TF)
     OUT = P.y_output('hip')
     fig = plt.figure(figsize=(24, 30))
-    fig.suptitle('v5 hip 관절 — 실제 모델 단면 (Fusion WheelBiped_v5 버전 6, 11-02 PETG 설계, 왼쪽 다리, mm)  '
+    fig.suptitle('v5 hip 관절 — 실제 모델 단면 (Fusion WheelBiped_v5 버전 11, 링크 25 cm, 오른쪽 다리, mm)  '
                  '위 절반: 출력 M3 자리 %d°, 아래 절반: ⑥ 플랜지 볼트 · 평행핀 자리 %d°' % (BU, BD),
                  fontsize=20, x=0.01, ha='left', y=0.995)
     ax = panel(fig, [0.04, 0.52, 0.55, 0.45], H, ((118, 296), (-100, 100)), '(a) 전체 — 몸통 hip 판부터 허벅지 바깥 면까지')
     flange_bolt(ax, TF)
-    for txt, key, xt, pick in (('PETG 허벅지 (닫힌 상자 벽 3.5, 리브 2.0)', 'thigh_L main', (215, 88), 'max'),
+    for txt, key, xt, pick in (('PETG 허벅지 (닫힌 상자 벽 3.5, 리브 2.0)', 'thigh_R main', (215, 88), 'max'),
                                ('6061 hip 판 (몸통)', 'hip_plate', (130, 92), 'max'),
                                ('AKE60-8 (hip)', 'AKE60-8_KV80_stator', (125, 60), None),
                                ('드라이버 컵 + moteus', 'cup_', (122, -80), None)):
@@ -347,7 +347,7 @@ def fig_hip(recs):
     chk, gaps, laps = check_lines(recs, 'hip')
     notes = ['• hip 출력면 옆 모멘트 설계 %.0f / 검토 %.0f N·m (타이어 중심 y %.0f, 팔 %.0f mm)'
              % (mh['설계'] / 1000, mh['검토'] / 1000, SV.YTC, SV.YTC - OUT),
-             '• ⑥ 볼트 하나 외력 설계 %.0f / 검토 %.0f N (+ 예압 1 kN, 보증 4879) — 통과; PETG 벽 압축 검토 약 38 MPa (50)'
+             '• ⑥ 볼트 하나 외력 설계 %.0f / 검토 %.0f N (+ 예압 1 kN, 보증 4879) — 링크 25 cm: 설계 통과, 검토 초과; PETG 벽 압축 검토 약 44 MPa (50)'
              % (fb['설계'], fb['검토']),
              '• ② 출력 M3 하나 설계 %.0f / 검토 %.0f N (보증 4879) — 검토 하중에서 초과: AKE60 출력부 한계(다리 설계 무관)'
              % (f2['설계'], f2['검토'])] + chk
@@ -374,13 +374,13 @@ def fig_knee(recs):
     YR = LV.y_ring(SI)
     OUT = P.y_output('knee')
     fig = plt.figure(figsize=(24, 30))
-    fig.suptitle('v5 무릎 관절 — 실제 모델 단면 (Fusion WheelBiped_v5 버전 6, 11-02 PETG 설계, 왼쪽 다리, mm)  '
+    fig.suptitle('v5 무릎 관절 — 실제 모델 단면 (Fusion WheelBiped_v5 버전 11, 링크 25 cm, 오른쪽 다리, mm)  '
                  '위 절반: 출력 M3 자리 %d° (허벅지 쪽), 아래 절반: ⑥ 플랜지 볼트 자리 %d° (정강이 쪽)' % (BU, BD),
                  fontsize=20, x=0.01, ha='left', y=0.995)
     ax = panel(fig, [0.04, 0.52, 0.55, 0.45], H, ((140, 296), (-100, 100)), '(a) 전체 — 드라이버 컵부터 바깥 막대까지')
     flange_bolt(ax, SI)
-    for txt, key, xt, pick in (('PETG 허벅지 (안쪽 갈래 · 바깥 막대)', 'thigh_L main', (150, 92), 'max'),
-                               ('PETG 정강이 (기본층 30 + 머리 패드 15)', 'shank_L main', (255, -88), 'min'),
+    for txt, key, xt, pick in (('PETG 허벅지 (안쪽 갈래 · 바깥 막대)', 'thigh_R main', (150, 92), 'max'),
+                               ('PETG 정강이 (기본층 30 + 머리 패드 15)', 'shank_R main', (255, -88), 'min'),
                                ('AKE60-8 (무릎)', 'AKE60-8_KV80_stator', (146, 60), None),
                                ('드라이버 컵 + moteus', 'cup_', (143, -75), None),
                                ('6061 무릎 캡 (관 Ø35이 61807 안륜에)', 'kneecap', (262, 60), None),
@@ -450,7 +450,7 @@ def fig_knee(recs):
     notes = ['• 무릎 출력면 옆 모멘트 설계 %.0f / 검토 %.0f N·m (모터가 다 받을 때); 61807이 짝힘으로 나눠 받음'
              % (mk['설계'] / 1000, mk['검토'] / 1000),
              '• ⑥ 볼트 하나 외력 설계 %.0f / 검토 %.0f N (+ 예압 1 kN, 보증 4879) — 통과' % (fb['설계'], fb['검토']),
-             '• 캡 구멍 면압 검토 약 22 MPa (50) — 통과; 61807 반경 하중 검토 2.25 kN (C0 3.35)'] + chk
+             '• 캡 구멍 면압 검토 약 26 MPa (50) — 통과; 61807 반경 하중 검토 2.64 kN (C0 3.35)'] + chk
     text_column(fig, [0.62, 0.02, 0.37, 0.58], rows, fits, steps, notes)
     legend_box(fig, [0.04, 0.005, 0.55, 0.075], ['PETG 허벅지', 'PETG 정강이', '6061 hub 인서트', '6061 받침 링', '6061 무릎 캡', '61807',
                     'AKE60-8 고정자', 'AKE 출력부', 'SUS 고정 링', '드라이버 컵 (PETG)', 'moteus r4.11', '나사', '와셔',
@@ -466,11 +466,11 @@ def fig_wheel(recs):
     SI, SO = LV.Y_SI, LV.Y_SO
     OUT = 2 * LV.Y_MSH - P.y_output('wheel')
     fig = plt.figure(figsize=(24, 30))
-    fig.suptitle('v5 바퀴 관절 — 실제 모델 단면 (Fusion WheelBiped_v5 버전 6, 11-02 바퀴 묶음 2.5 mm 바깥으로, 왼쪽 다리, mm)  '
+    fig.suptitle('v5 바퀴 관절 — 실제 모델 단면 (Fusion WheelBiped_v5 버전 11, 링크 25 cm, 11-02 바퀴 묶음 2.5 mm 바깥으로, 오른쪽 다리, mm)  '
                  '위 절반 %d°: 허브 M3 자리, 아래 절반 %d°: 림 M3 · 평행핀 자리' % (BU, BD),
                  fontsize=20, x=0.01, ha='left', y=0.995)
     ax = panel(fig, [0.04, 0.52, 0.55, 0.45], H, ((176, 302), (-108, 108)), '(a) 전체 — 드라이버 컵부터 타이어까지')
-    for txt, key, xt, pick in (('PETG 정강이 (바퀴 하우징, 안쪽 면 평평 y %.0f)' % SI, 'shank_L main', (180, 100), 'max'),
+    for txt, key, xt, pick in (('PETG 정강이 (바퀴 하우징, 안쪽 면 평평 y %.0f)' % SI, 'shank_R main', (180, 100), 'max'),
                                ('AKE60-8 (바퀴)', 'AKE60-8_KV80_stator', (182, 62), None),
                                ('드라이버 컵 + moteus', 'cup_', (180, -85), None),
                                ('PETG 허브 플랜지', 'hub_flange', (262, 30), None),

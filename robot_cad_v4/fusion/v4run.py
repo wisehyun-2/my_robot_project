@@ -24,13 +24,15 @@ def load(names=None):
     return out
 
 
-def build(with_harness=False, rear_round=False):
+def build(with_harness=False, rear_round=False, centre_imu=False):
     """No wiring in the model by default (user 11-02); with_harness=True adds the v3 / v4 harness (harness.py) - the
     links have no cable openings any more, so it would run through closed walls.  rear_round: the shell's rear plan
-    corners rounded instead of chamfered (v5, shell.REAR_ROUND)."""
+    corners rounded instead of chamfered (v5, shell.REAR_ROUND).  centre_imu: the electronics layout of v5 (torso.centre_imu)."""
     M = load()
     A, V = M['assembly'], M['vendor']
     M['shell'].REAR_ROUND = rear_round
+    if centre_imu:
+        M['torso'].centre_imu()
     A.reset()
     parts = V.build_all()
     A.build_torso(parts)

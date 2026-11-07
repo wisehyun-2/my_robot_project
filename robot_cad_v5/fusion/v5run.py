@@ -1,24 +1,34 @@
 """robot_cad_v5 = the v4 robot (robot_cad_v4/fusion, git 681ad00) with the wheels turned outboard and MJF PA12 legs
 (legs_v5.py, concept A "monolith", chosen by the user 11-01).  The torso, hip plates, motors, cups, wheels and
 fasteners are built by the v4 code; this module only swaps the links.  No wiring in the model (user 11-01: all cables
-removed; the external leg route that was tried is harness_v5.py in git 5a01c18); the back-panel rocker switch stays.
+removed; the external leg route that was tried is harness_v5.py in git 5a01c18); the rocker switch stays.
+The robot's front is the rocker switch side = CAD -x, so its left is CAD -y: see "part names" below (v4 names it the other way).
 
 Run each step in its own MCP script (put this folder on sys.path, import v5run):
     v5run.build()            # makes a NEW document (attribute wbv5 / tag): v4 robot without harness, v4 links and
-                             # output clamp rings removed, v5 legs added, back-panel switch
+                             # output clamp rings removed, parts named from the switch side, v5 legs added
+    v5run.rename_to_robot()  # hub file, once (11-08): an older version's part and joint names turned to the switch side
     v5run.turn()             # wheel groups outboard - last and in its own script: in the build script the new parts'
                              # bounding boxes are stale and the per-part decision goes wrong, and adding parts to a
                              # link (cadlib.IdentityParent) resets turned children (idempotent: a second run turns 0)
     v5run.relegs()           # instead of build(): in the opened hub file, only the leg parts rebuilt (then turn())
     v5run.shift()            # hub file only, once (11-02): the turned wheel groups 2.5 mm further out (legs_v5
                              # WHEEL_SHIFT; build() + turn() place them there directly) - before relegs()
-    v5run.reshell()          # hub file: only the shell pieces rebuilt (rear plan corners rounded, user 11-02; then
+    v5run.reshell()          # hub file: only the shell pieces rebuilt (plan corners on the switch side rounded, user 11-02; then
                              # turn(): the deletion reverts the AKE60 stators)
+    v5run.relayout()         # hub file: deck rebuilt, Pi / pi3hat / mjpower-ss / fan placed with the IMU on the centre line (11-07; then turn())
+    v5run.relink()           # hub file, once (11-07): links 175 -> 250 mm, every part moves with its joint (then relegs(), turn())
+    v5run.joints()           # last step of a model change: 6 as-built revolute joints (the design becomes parametric;
+                             # torso grounded, every nested part grounded to its parent). Rebuild steps above and
+                             # images() refuse a jointed design: v5run.unjoint() first (drops joints and timeline)
+    v5run.joint_check()      # every joint turned and back: the parts below it move as one rigid set about its axis
+    v5run.pose(L0, hip)      # a pose (with joints: joint values; Fusion rounds them to 0.1 deg), pose() = nominal
     v5run.report()          # v5 leg parts: volume, mass, lumps / shells
     v5run.rib_check()        # every rib joined to its walls (point sampling), closed cells (voids)
     v5run.interference()     # 6 poses
     v5run.images()           # ../images (legs, robot, truss sections)
     v5run.robot_mass()       # v4 print densities (PETG parts) + tyre 721 g, robot mass / COM
+    v5run.urdf_export()      # ../calc/urdf_data.json + ../export/links_stl (one STL per link) for wbr.models.build_v5 (URDF)
     v5run.export()           # ../export/WheelBiped_v5.f3d
     v5run.exports()          # ../export/WheelBiped_v5_assembly.step, parts_step/*.step, parts_stl/*.stl (then
                              # ../manufacturing/part_drawings.py for the 2D drawings)
@@ -28,27 +38,54 @@ Run each step in its own MCP script (put this folder on sys.path, import v5run):
 import importlib
 import math
 import os
+import re
 import sys
 
 import adsk.core
 import adsk.fusion
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+import link_length as LL  # noqa: E402
+
 BASE = os.path.dirname(HERE)
 V4 = os.path.join(os.path.dirname(BASE), 'robot_cad_v4', 'fusion')
 IMG = os.path.join(BASE, 'images')
 EXP = os.path.join(BASE, 'export')
 TAG = ('wbv5', 'tag', 'wbv5_robot')
-SIDES = ((1, 'L'), (-1, 'R'))
-LOOK = {'main': 'black satin', 'insert': 'alu', 'ring': 'alu', 'bearing': 'steel', 'cap': 'dark grey'}
+NAMES_TAG = ('wbv5', 'names', 'switch_side_front')   # on a design whose parts are named from the switch side
+SIDES = ((1, 'R'), (-1, 'L'))                        # (sign of CAD y, part suffix): the front is CAD -x, so +y is the robot's right
+LOOK ={'main': 'black satin', 'insert': 'alu', 'ring': 'alu', 'bearing': 'steel', 'cap': 'dark grey'}
 MAT = {'main': 'PETG print', 'insert': 'Al6061', 'ring': 'Al6061', 'bearing': 'Steel', 'cap': 'Al6061'}   # links PETG
                                                  # FDM since 11-02 (user; MJF PA12 before), printed solid (walls 3.5)
 V5_PARTS = ('thigh', 'shank', 'kneecap', 'kneebearing')
-POSES = ((310, 0), (200, 0), (240, -60), (240, 60), (335, 0), (200, -80))       # (L0 mm, hip deg)
+POSES = tuple((L0 * LL.SCALE, hip) for L0, hip in ((310, 0), (200, 0), (240, -60), (240, 60), (335, 0), (200, -80)))    # (L0 mm, hip deg):
+                                                 # the poses of the 175 mm link at the same knee angles
+
+
+def _v4_loader(v4run):
+    """v4run.load with the v5 link length: same modules and order, params lengthened before the modules that read them at import.  The
+    v4 files stay as they are, and v4run is dropped from sys.modules afterwards, so a v4 script in this Fusion session gets a plain one."""
+    def loader(names=None):
+        if v4run.PATH not in sys.path:
+            sys.path.insert(0, v4run.PATH)
+        out = {}
+        for n in v4run.MODS:
+            m = sys.modules.get(n)
+            if m is not None and v4run.PATH.lower() not in (getattr(m, '__file__', '') or '').lower():
+                del sys.modules[n]
+        for n in v4run.MODS:
+            if os.path.exists(os.path.join(v4run.PATH, n + '.py')):
+                out[n] = importlib.reload(importlib.import_module(n))
+                if n == 'params':
+                    LL.lengthen(out[n])
+        return out
+    return loader
 
 
 def load():
-    """v4 modules (v4run.load) + legs_v5; this folder and the v4 one first on sys.path, files checked."""
+    """v4 modules (v4run.load, v5 link length) + legs_v5; this folder and the v4 one first on sys.path, files checked."""
     for p in (HERE, V4):
         while p in sys.path:
             sys.path.remove(p)
@@ -56,6 +93,8 @@ def load():
     sys.path.insert(0, HERE)
     sys.modules.pop('v4run', None)
     import v4run
+    sys.modules.pop('v4run', None)
+    v4run.load = _v4_loader(v4run)
     M = v4run.load()
     sys.modules.pop('legs_v5', None)
     import legs_v5
@@ -64,6 +103,7 @@ def load():
         assert M[k].__file__.lower().startswith(V4.lower()), (k, M[k].__file__)
     assert legs_v5.__file__.lower().startswith(HERE.lower()), legs_v5.__file__
     _pa12(M['cadlib'])
+    M['torso'].centre_imu()                        # v5's electronics layout (11-07); v4 keeps the Pi on the -y side
     return M
 
 
@@ -91,6 +131,57 @@ def _new_doc():
     d = app.documents.add(adsk.core.DocumentTypes.FusionDesignDocumentType)
     adsk.fusion.Design.cast(app.activeProduct).attributes.add(*TAG)
     return d
+
+
+# ----------------------------------------------------------------------------- part names
+# The v4 code names parts as if +x were the front: +y = _L, +x = shell_front, rail_F, spine_tube_F.  This robot's front is the rocker switch
+# side = -x (user 11-07), so its left is -y, and every name that says a side or an end says the opposite one in the v4 code (user 11-08).  The
+# v4 files stay as they are: what they build is renamed here.  CAD coordinates do not change, only names.
+_OTHER = {'L': 'R', 'R': 'L', 'F': 'B', 'B': 'F', 'front': 'rear', 'rear': 'front'}
+
+
+def robot_name(v4_name):
+    """The name in this robot of a part, body or joint the v4 code calls v4_name: shell_front_L -> shell_rear_R, femur_L -> femur_R,
+    'thigh_L main' -> 'thigh_R main', rail_F -> rail_B.  Names that say neither stay."""
+    n = re.sub(r'_([LR])(?=$|[ _])', lambda m: '_' + _OTHER[m.group(1)], v4_name)
+    n = re.sub(r'^shell_(front|rear)(?=_)', lambda m: 'shell_' + _OTHER[m.group(1)], n)
+    return re.sub(r'^(rail|spine_tube)_([FB])(?=$| )', lambda m: m.group(1) + '_' + _OTHER[m.group(2)], n)
+
+
+def _rename(pairs):
+    """[(entity, new name)] through temporary names: the new name of one is usually the old name of another."""
+    pairs = [(e, n) for e, n in pairs if e.name != n]
+    for i, (e, _n) in enumerate(pairs):
+        e.name = '~rename%d' % i
+    for e, n in pairs:
+        e.name = n
+    return len(pairs)
+
+
+def _name_parts(comps):
+    """Components just built by the v4 code, and their bodies, get this robot's names."""
+    n = _rename([(c, robot_name(c.name)) for c in comps])
+    for c in comps:
+        _rename([(b, robot_name(b.name)) for b in c.bRepBodies])
+    return n
+
+
+def rename_to_robot():
+    """The whole document, once: components, bodies and joints named from the switch side.  Nothing moves.  Does nothing on a design that has
+    it (NAMES_TAG), so a second run cannot swap them back.  Returns the number of components renamed."""
+    d = adsk.fusion.Design.cast(doc().products.itemByProductType('DesignProductType'))
+    if d.attributes.itemByName(NAMES_TAG[0], NAMES_TAG[1]):
+        return 0
+    n = _name_parts(list(d.allComponents))
+    _rename([(j, robot_name(j.name)) for j in d.rootComponent.asBuiltJoints])
+    d.attributes.add(*NAMES_TAG)
+    return n
+
+
+def _need_names(C):
+    """SIDES pairs a suffix with a CAD side, so an older version (hub 10 or earlier, its f3d) would get the geometry of the other leg."""
+    if not C.design().attributes.itemByName(NAMES_TAG[0], NAMES_TAG[1]):
+        raise RuntimeError('parts still have the v4 names: run v5run.rename_to_robot() first')
 
 
 def f2r(p):
@@ -151,10 +242,12 @@ def turn_wheels(M):
 def build():
     _new_doc()
     M = load()
-    M['v4run'].build(with_harness=False, rear_round=True)   # no wiring (user 11-01), round rear shell corners (11-02)
+    M['v4run'].build(with_harness=False, rear_round=True, centre_imu=True)   # no wiring (user 11-01), round shell corners on the switch side
+                                                   # (11-02), the IMU on the centre line (11-07)
     C, LV = M['cadlib'], M['legs_v5']             # (v4run.build reloaded the v4 modules in place)
     _pa12(C)
     M['finalize'].show_all()
+    rename_to_robot()                              # before SIDES is used on the v4 parts
     dropped = []
     for s, k in SIDES:                             # v4 links out
         for link, name in (('femur_', 'thigh_'), ('tibia_', 'shank_')):
@@ -167,7 +260,7 @@ def build():
                 and o.assemblyContext.component.name != '_library':
             dropped.append(o.component.name)
             o.deleteMe()
-    _add_legs(C, LV)                               # (the back-panel rocker switch: v4run.build places it, 11-02)
+    _add_legs(C, LV)                               # (the rocker switch: v4run.build places it, 11-02)
     C.design().rootComponent.partNumber = 'WheelBiped_v5'
     return dict(dropped=dropped)
 
@@ -193,6 +286,7 @@ def relegs():
         d.attributes.add(*TAG)
     M = load()
     C, LV = M['cadlib'], M['legs_v5']
+    _need_direct(C, 'relegs')
     M['poses'].reset()
     M['finalize'].show_all()
     names = tuple('%s_%s' % (p, k) for p in V5_PARTS for _s, k in SIDES)
@@ -207,16 +301,80 @@ def relegs():
     return dict(dropped=dropped)
 
 
+def relink():
+    """Hub file migration, once (user 11-07): the links 175 -> 250 mm.  Every part keeps its place on its joint and only moves in a straight
+    line with that joint: the torso and the hip-end parts of the thigh go up by 2 dL cos PHI, the knee-end parts of the thigh and the shank
+    move dL along the shank, the wheel end and the wheels stay where they are.  No part near a joint is rebuilt or turned here.  Every moved
+    part is re-instanced at its new place: a transform2 set on a child is lost as soon as its link's own transform is set (IdentityParent,
+    poses.reset; measured 11-07: nearly all moved parts went back).  Refuses unless the knee motors are at the 175 mm place.
+    Route, each in its own script: unjoint(), relink(), relegs() (the printed links), turn(), joints()."""
+    doc()
+    M = load()
+    C, P, LV = M['cadlib'], M['params'], M['legs_v5']
+    _need_direct(C, 'relink')
+    M['poses'].reset()
+    M['finalize'].show_all()                       # (new instances copy their master's bulb)
+    dL = LV.STRETCH
+    sn, cs = math.sin(P.PHI), math.cos(P.PHI)
+    d_hip, d_knee = (0.0, 0.0, 2.0 * dL * cs), (dL * sn, 0.0, dL * cs)
+    H0 = (0.0, P.Z_HIP - d_hip[2])
+    K0 = (P.KNEE_X - d_knee[0], P.KNEE_Z - d_knee[2])
+    W0 = (0.0, P.R_WHEEL)
+
+    def dist(c, q):
+        return math.hypot(c[0] - q[0], c[2] - q[1])
+
+    def move(o, parent, d):
+        T = C.to_matrix3d(C.robot_to_fusion(C.translate(d)))
+        m = o.transform2.copy()
+        m.transformBy(T)
+        C.instance(parent, o.component, m)
+        o.deleteMe()
+
+    for s, k in SIDES:
+        st = [o for o in C.root_occ('femur_' + k).childOccurrences if o.component.name.startswith(REPLACE[0])]
+        assert len(st) == 1 and dist(_centre(st[0]), K0) < 30.0, ('knee motor not at the 175 mm place', k, [_centre(o) for o in st])
+    count = dict(torso=0, hip_end=0, knee_end=0, wheel_end=0)
+    far = []
+    t = C.root_occ('torso')
+    for o in list(t.childOccurrences):
+        move(o, t, d_hip)
+        count['torso'] += 1
+    for s, k in SIDES:
+        fem, tib = C.root_occ('femur_' + k), C.root_occ('tibia_' + k)
+        for o in list(fem.childOccurrences):
+            if o.component.name.startswith(V5_PARTS):
+                continue
+            c = _centre(o)
+            dh, dk = dist(c, H0), dist(c, K0)
+            far.append((round(min(dh, dk), 1), o.component.name))
+            move(o, fem, d_hip if dh < dk else d_knee)
+            count['hip_end' if dh < dk else 'knee_end'] += 1
+        for o in list(tib.childOccurrences):
+            if o.component.name.startswith(V5_PARTS):
+                continue
+            c = _centre(o)
+            dk, dw = dist(c, K0), dist(c, W0)
+            far.append((round(min(dk, dw), 1), o.component.name))
+            if dk < dw:
+                move(o, tib, d_knee)
+                count['knee_end'] += 1
+            else:
+                count['wheel_end'] += 1
+    return dict(count=count, d_hip=d_hip, d_knee=d_knee, farthest_from_a_joint=sorted(far, reverse=True)[:6])
+
+
 SHELL_PARTS = ('shell_', 'saddle_', 'splice_tabs')
 
 
 def reshell():
     """Rebuild only the torso shell pieces (front / mid / rear sections, saddles, splice tabs) in the v5 document - the
-    hub file - with the rear plan corners rounded (shell.REAR_ROUND, user 11-02: v4 keeps its 45 deg chamfers).  The
-    shell screws, grommets and nuts stay (nothing they sit on moves).  Run turn() afterwards in its own script."""
+    hub file - with the plan corners on the switch side rounded (shell.REAR_ROUND, the v4 code's rear, user 11-02: v4 keeps its 45 deg
+    chamfers).  The shell screws, grommets and nuts stay (nothing they sit on moves).  Run turn() afterwards in its own script."""
     doc()
     M = load()
     C, A = M['cadlib'], M['assembly']
+    _need_direct(C, 'reshell')
     M['poses'].reset()
     M['finalize'].show_all()
     M['shell'].REAR_ROUND = True
@@ -226,15 +384,204 @@ def reshell():
             dropped.append(o.component.name)
             o.deleteMe()
     A.build_shell()
+    _name_parts([o.component for o in C.root_occ('torso').childOccurrences if o.component.name.startswith(SHELL_PARTS)])
     return dict(dropped=sorted(dropped))
+
+
+ELECTRONICS = ('electronics_deck', 'raspberry_pi_4b', 'pi3hat_r4.5', 'standoff M2.5x11 M-F (pi3hat)', 'mjpower_ss', 'fan 30x30x7 5V',
+               'FX insert M2.5x4 deck', 'FX DIN 7984 M2.5x6 mjpower', 'FX pi3hat M2.5x5')
+
+
+def relayout():
+    """Hub file: the deck rebuilt and the Pi, hat, mjpower-ss, fan and their fasteners placed for torso.centre_imu() (11-07, user: the IMU
+    on the robot's centre line).  Direct design only: unjoint() first, then this, turn() in its own script, joints()."""
+    doc()
+    M = load()
+    C, A, F, TO = M['cadlib'], M['assembly'], M['fasteners'], M['torso']
+    _need_direct(C, 'relayout')
+    M['poses'].reset()
+    M['finalize'].show_all()
+    t = C.root_occ('torso')
+    masters, dropped = {}, []
+    for o in list(t.childOccurrences):
+        name = o.component.name
+        if name in ELECTRONICS:
+            masters[name] = o.component
+            dropped.append(name)
+            o.deleteMe()
+    assert sorted(masters) == sorted(ELECTRONICS), sorted(set(ELECTRONICS) - set(masters))
+    A.add_part(t, 'electronics_deck', TO.deck(), 'PETG print', 'dark grey')
+    A.place(t, masters['raspberry_pi_4b'], TO.rpi_frame())
+    A.place(t, masters['pi3hat_r4.5'], TO.pi3hat_frame())
+    pm = TO.rpi_frame()
+    for (x, y) in ((3.5, 3.5), (61.5, 3.5), (3.5, 52.5), (61.5, 52.5)):
+        A.place(t, masters['standoff M2.5x11 M-F (pi3hat)'], C.frame(C.apply(pm, (x, y, 1.4)), (1, 0, 0), (0, 1, 0), (0, 0, 1)))
+    A.place(t, masters['mjpower_ss'], TO.mjpower_frame())
+    A.place(t, masters['fan 30x30x7 5V'], TO.fan_frame())
+    n = 0
+    for rec in F.positions():
+        link, name, o, ez = rec[:4]
+        if name in masters:
+            assert link == 'torso', rec
+            C.instance(t, masters[name], C.part_matrix(F._frame(o, ez, rec[4] if len(rec) > 4 else None)))
+            n += 1
+    return dict(dropped=len(dropped), fasteners=n, imu=imu_pose())
 
 
 def turn():
     """Wheel groups outboard (at the nominal pose: the decisions use world bounding boxes)."""
     doc()
     M = load()
+    _need_direct(M['cadlib'], 'turn')
     M['poses'].reset()
     return turn_wheels(M)
+
+
+# ----------------------------------------------------------------------------- joints
+AXIS_SKETCHES = ('hip_axis', 'knee_axis', 'wheel_axis')       # finalize._axis_circle, in the femur / tibia components
+
+
+def _need_direct(C, what):
+    """Bodies can only be added to a direct design here (cadlib.add_body has no base feature) and a transform2 change
+    of a jointed link does not survive the next recompute."""
+    _need_names(C)
+    if C.design().designType != adsk.fusion.DesignTypes.DirectDesignType:
+        raise RuntimeError('%s: the design has joints (parametric) - run v5run.unjoint() first, joints() again last' % what)
+
+
+def _joint_map(C):
+    return {j.name: j for j in C.design().rootComponent.asBuiltJoints}
+
+
+def _drop_axis_sketches(C):
+    for link in ('femur_', 'tibia_'):
+        for _s, k in SIDES:
+            sks = C.root_occ(link + k).component.sketches
+            for sk in [sks.item(i) for i in range(sks.count) if sks.item(i).name in AXIS_SKETCHES]:
+                sk.deleteMe()
+
+
+def joints():
+    """Six as-built revolute joints hip / knee / wheel _L / _R (finalize.joints: the design becomes parametric, torso
+    grounded, every nested occurrence grounded to its parent).  Why the model needs this at all: femur_k, tibia_k and
+    wheel_k are unconnected siblings at the root, so without joints moving one leaves the others behind.  Run it last,
+    in its own script; does nothing when the joints exist.  Joint value 0 = the nominal pose."""
+    doc()
+    M = load()
+    C = M['cadlib']
+    _need_names(C)
+    root = C.design().rootComponent
+    if root.asBuiltJoints.count:
+        return [j.name for j in root.asBuiltJoints]
+    _drop_axis_sketches(C)
+    names = M['finalize'].joints()
+    root.isJointsFolderLightBulbOn = True          # (finalize hides them for its renders; here they are to be picked)
+    return names
+
+
+def unjoint():
+    """Back to a direct design for a rebuild step: the joints and the timeline are dropped.  The switch also makes the
+    turned wheel groups revert (126 parts, 11-07), so turn() must follow even with no rebuild.  Route: unjoint(), the
+    rebuild, turn() in its own script, joints() (checked 11-07: back on every saved part position)."""
+    doc()
+    M = load()
+    C = M['cadlib']
+    _nominal(M)
+    d = C.design()
+    if d.designType != adsk.fusion.DesignTypes.DirectDesignType:
+        d.designType = adsk.fusion.DesignTypes.DirectDesignType
+    _drop_axis_sketches(C)
+    return d.designType
+
+
+def _pose(M, L0, hip, spin=0.0):
+    """poses.transforms(L0, hip, spin) through the joints when the design has them: poses.apply on a jointed link does
+    not touch the joint values, and a recompute puts the link back.  Joint value = minus the turn about robot +y
+    (measured 11-07; same on both sides).  Fusion rounds rotationValue to 0.1 deg, so a joint pose can differ from
+    transforms() by up to 0.05 deg per joint (0.4 mm at the wheel): still a rigid leg, just a slightly different pose.
+    A joint pose also returns to 0 at design.computeAll() (not captured); analyzeInterference does not recompute (a
+    170 deg hip gave 20 real interferences through this path)."""
+    C, PO, P = M['cadlib'], M['poses'], M['params']
+    J = _joint_map(C)
+    if not J:
+        PO.apply(PO.transforms(L0, hip, spin))
+        return
+    phi0, phi = P.PHI, math.acos(L0 / (2 * P.L1))
+    h = math.radians(hip)
+    df, dt = phi + h - phi0, h - phi + phi0            # poses.transforms: femur turned by -df, tibia by -dt
+    for _s, k in SIDES:
+        J['hip_' + k].jointMotion.rotationValue = df
+        J['knee_' + k].jointMotion.rotationValue = dt - df
+        J['wheel_' + k].jointMotion.rotationValue = -math.radians(spin)
+
+
+def _nominal(M):
+    """The nominal pose; writes nothing when the joints are already at 0 (so a read-only script can still call it)."""
+    J = _joint_map(M['cadlib'])
+    if not J:
+        M['poses'].reset()
+        return
+    for j in J.values():
+        if abs(j.jointMotion.rotationValue) > 1e-9:
+            j.jointMotion.rotationValue = 0.0
+
+
+def pose(L0=None, hip=0.0, spin=0.0):
+    """Show a pose (leg length L0 mm, hip deg, wheel spin deg); pose() = the nominal pose."""
+    doc()
+    M = load()
+    if L0 is None:
+        _nominal(M)
+    else:
+        _pose(M, L0, hip, spin)
+
+
+def joint_check(angle_deg=20.0):
+    """Every joint turned by angle_deg and back.  Per joint: links that moved, the largest difference of rigid motion
+    between the occurrences below one link (0 = nothing left behind), how far a point on the axis moved (mm) and the
+    largest transform difference after turning back.  Hidden masters in _library must not move."""
+    doc()
+    M = load()
+    C, P = M['cadlib'], M['params']
+    root = C.design().rootComponent
+    _nominal(M)
+
+    def state():
+        return {o.fullPathName: o.transform2.copy() for o in root.allOccurrences}
+
+    def relative(after, before):
+        m = before.copy()
+        m.invert()
+        m.transformBy(after)
+        return m
+
+    def diff(a, b):
+        return max(abs(x - y) for x, y in zip(a.asArray(), b.asArray()))
+
+    axes = dict(hip=(0.0, P.Z_HIP), knee=(P.KNEE_X, P.KNEE_Z), wheel=(0.0, P.R_WHEEL))
+    res = {}
+    for j in root.asBuiltJoints:
+        a0 = state()
+        j.jointMotion.rotationValue = math.radians(angle_deg)
+        a1 = state()
+        x, z = axes[j.name.split('_')[0]]
+        p = C.rf((x, 0.0, z))
+        p = adsk.core.Point3D.create(p[0] * C.CM, p[1] * C.CM, p[2] * C.CM)
+        links, spread, shift = [], 0.0, 0.0
+        for g in {n.split('+')[0] for n in a0}:
+            names = [n for n in a0 if n.split('+')[0] == g]
+            R0 = relative(a1[names[0]], a0[names[0]])
+            spread = max(spread, max(diff(relative(a1[n], a0[n]), R0) for n in names))
+            if diff(R0, adsk.core.Matrix3D.create()) > 1e-6:
+                links.append(g)
+                q = p.copy()
+                q.transformBy(R0)
+                shift = max(shift, p.distanceTo(q) * 10.0)
+        j.jointMotion.rotationValue = 0.0
+        a2 = state()
+        res[j.name] = dict(moved=sorted(links), spread=round(spread, 6), axis_shift_mm=round(shift, 4),
+                           back=round(max(diff(a2[n], a0[n]) for n in a0), 6))
+    return res
 
 
 def wheel_group(C, P, k):
@@ -256,6 +603,7 @@ def shift(dy=None, stator_from=216.7):
     doc()
     M = load()
     C, P, LV = M['cadlib'], M['params'], M['legs_v5']
+    _need_direct(C, 'shift')
     M['poses'].reset()
     dy = LV.WHEEL_SHIFT if dy is None else dy
     moved = []
@@ -301,7 +649,7 @@ def report():
 
 def rib_check(step_y=3.0):
     """Sample every Warren rib's centre line (1 mm along it, every step_y in y across the cavity) in freshly built
-    left links: a point inside the outer shape but outside the part is a gap (the ribs have no holes, so any gap is a
+    +y links: a point inside the outer shape but outside the part is a gap (the ribs have no holes, so any gap is a
     fault).  Returns per link: lumps, shells (1 + the closed truss cells, 11-02: no escape holes), voids, rib ends
     not joined to a wall, gaps."""
     M = load()
@@ -349,61 +697,81 @@ def interference(poses=POSES):
     """Per pose: (L0, hip, mating, real, real pairs)."""
     doc()
     M = load()
-    K, PO = M['check'], M['poses']
+    K = M['check']
     short = lambda n: n.split('/')[-1][:38]
     out = []
     try:
         for L0, hip in poses:
-            PO.apply(PO.transforms(L0, hip))
+            _pose(M, L0, hip)
             mating, real = K.classify(K.interference())
             out.append((L0, hip, len(mating), len(real), sorted({(short(a), short(b)) for a, b, v in real})[:12]))
     finally:
-        PO.reset()
+        _nominal(M)
     return out
 
 
-def show(torso=True, right=True):
+def show(torso=True, both_legs=True):
+    """Everything on; both_legs=False keeps only the +y leg (the robot's right, the one the leg views look at)."""
     import cadlib as C
     root = C.design().rootComponent
     for o in root.occurrences:
         n = o.component.name
-        o.isLightBulbOn = n != '_library' and (torso or n != 'torso') and (right or not n.endswith('_R'))
+        o.isLightBulbOn = n != '_library' and (torso or n != 'torso') and (both_legs or not n.endswith('_L'))
     for o in root.allOccurrences:
         if o.assemblyContext is not None and o.component.name != '_library' \
                 and o.assemblyContext.component.name != '_library':
             o.isLightBulbOn = True
-    root.isJointsFolderLightBulbOn = False
+    root.isJointsFolderLightBulbOn = root.asBuiltJoints.count > 0
 
 
 def snap(name, eye, target, fit=True):
     import view
     os.makedirs(IMG, exist_ok=True)
-    adsk.core.Application.get().userInterface.activeSelections.clear()   # a face picked in the window shows up
-    return view.snap(os.path.join(IMG, name + '.png'), eye, target, fit=fit)
+    app = adsk.core.Application.get()
+    app.userInterface.activeSelections.clear()   # a face picked in the window shows up
+    view.look(eye, target, fit=fit)
+    vp = app.activeViewport
+    if fit:                                      # (fit alone cut into the tyre of the taller robot)
+        cam = vp.camera
+        cam.isFitView = False
+        e, t = cam.eye, cam.target
+        cam.eye = adsk.core.Point3D.create(t.x + (e.x - t.x) * 1.15, t.y + (e.y - t.y) * 1.15, t.z + (e.z - t.z) * 1.15)
+        vp.camera = cam
+        vp.refresh()
+        adsk.doEvents()
+    path = os.path.join(IMG, name + '.png')
+    vp.saveAsImageFile(path, 1600, 1200)
+    return path
 
 
 def images():
-    """Leg views (left leg alone), robot views and truss sections (left links cut at y 199 / 229.5, looking from
+    """Leg views (+y leg alone), robot views and truss sections (+y links cut at y 199 / 229.5, looking from
     outboard: the plain ribs and the closed cells)."""
     doc()
     M = load()
-    C, LV = M['cadlib'], M['legs_v5']
+    C, LV, P = M['cadlib'], M['legs_v5'], M['params']
+    _need_direct(C, 'images')                      # (adds a temporary section component with bodies)
     ui = adsk.core.Application.get().userInterface
     lc = adsk.core.ListControlDefinition.cast(ui.commandDefinitions.itemById('ViewLayoutGridOnCommand').controlDefinition)
     lc.listItems.item(lc.listItems.count - 1).isSelected = True          # grid off
     out = []
-    show(torso=False, right=False)
-    snap('_warm', (760, 1050, 560), (40, 235, 240))
+    up = (P.Z_HIP - 411.0) / 2.0                   # the views were set on the 175 mm robot (hip at z 411)
+
+    def lift(p):
+        return (p[0], p[1], p[2] + up)
+
+    show(torso=False, both_legs=False)
+    snap('_warm', lift((760, 1050, 560)), lift((40, 235, 240)))
     adsk.doEvents()
     for name, eye, tgt in (('01_leg_iso_outboard', (760, 1050, 560), (40, 235, 240)),
                            ('02_leg_side_outboard', (40, 1600, 250), (40, 235, 250)),
-                           ('03_leg_iso_inboard_front', (760, -320, 470), (40, 215, 240)),
-                           ('04_leg_back', (-760, 640, 470), (20, 225, 240))):
-        out.append(snap(name, eye, tgt))
+                           ('03_leg_iso_inboard_rear', (760, -320, 470), (40, 215, 240)),
+                           ('04_leg_front', (-760, 640, 470), (20, 225, 240))):
+        out.append(snap(name, lift(eye), lift(tgt)))
     show()
-    out.append(snap('05_robot_iso', (1500, 1150, 900), (0, 0, 290)))
-    out.append(snap('06_robot_front', (1700, 0, 330), (0, 0, 290)))
-    out.append(snap('07_robot_side', (0, 1900, 330), (0, 0, 290)))
+    out.append(snap('05_robot_iso', lift((1500, 1150, 900)), lift((0, 0, 290))))
+    out.append(snap('06_robot_rear', lift((1700, 0, 330)), lift((0, 0, 290))))
+    out.append(snap('07_robot_side', lift((0, 1900, 330)), lift((0, 0, 290))))
     root = C.design().rootComponent
     occ = root.occurrences.addNewComponent(adsk.core.Matrix3D.create())
     occ.component.name = '_section'
@@ -414,11 +782,11 @@ def images():
         for body, yc in ((LV.thigh(1)['main'], LV.Y_TO - LV.WALL - 1.5), (LV.shank(1)['main'], LV.Y_SO - LV.WALL - 2.5)):
             C.cut(body, B.abox(-400, 400, yc, 400, -400, 800))
             C.add_body(occ.component, body, 'section', None, 'white')
-        snap('_warm', (40, 1600, 250), (40, 235, 250))
+        snap('_warm', lift((40, 1600, 250)), lift((40, 235, 250)))
         adsk.doEvents()
-        out.append(snap('08_section', (40, 1600, 250), (40, 235, 250)))
-        out.append(snap('09_section_iso', (620, 1050, 780), (40, 205, 270)))
-        out.append(snap('10_section_thigh_zoom', (330, 640, 520), (25, 195, 330), fit=False))
+        out.append(snap('08_section', lift((40, 1600, 250)), lift((40, 235, 250))))
+        out.append(snap('09_section_iso', lift((620, 1050, 780)), lift((40, 205, 270))))
+        out.append(snap('10_section_thigh_zoom', (350, 640, 620), (45, 195, 430), fit=False))    # the thigh's middle
     finally:
         occ.deleteMe()
         show()
@@ -433,6 +801,7 @@ def robot_mass():
     density as is), then the mass report (run in a separate script from the build: stale physical properties)."""
     doc()
     M = load()
+    _nominal(M)
     show()
     M['check'].apply_print_mass()
     txt, data, _g = M['check'].report()
@@ -450,12 +819,16 @@ def save_mass_json(path=None, apply_print=False):
     doc()
     M = load()
     C, P, K, LV = M['cadlib'], M['params'], M['check'], M['legs_v5']
+    _need_names(C)
+    _nominal(M)                                    # (robot axes at the nominal pose; no write when already there)
     if apply_print:
         show()
         K.apply_print_mass()
     root = C.design().rootComponent
     hidden = [o.fullPathName for o in root.allOccurrences if not o.isLightBulbOn and '_library' not in o.fullPathName]
     assert not hidden, ('hidden occurrences are left out of the report: show() first', hidden[:5])
+    off = [o.fullPathName + ' | ' + b.name for o in K.leaves() for b in o.bRepBodies if not b.isLightBulbOn]
+    assert not off, ('hidden bodies are left out of the report too (11-07: shell_front_L, 132 g): turn them on', off[:5])
     raw = sorted({o.component.name for o in K.leaves() for b in o.bRepBodies if b.isSolid
                   and b.material.name == 'PETG print' and not o.component.name.startswith(('thigh_', 'shank_'))})
     assert not raw, ('printed parts without their print density: apply_print=True', raw)
@@ -463,10 +836,10 @@ def save_mass_json(path=None, apply_print=False):
     assert tyres and all(b.material.name.startswith('tyre ') for o in tyres for b in o.bRepBodies), 'tyre mass not applied'
     txt, data, groups = K.report()
     y_tyre = 2 * LV.Y_MSH - P.tyre_centre_y()
-    ty = [(m, c) for path, m, c, _i in groups['wheel_L'] if 'tyre M365' in path]
+    ty = [(m, c) for path, m, c, _i in groups['wheel_' + SIDES[0][1]] if 'tyre M365' in path]     # the +y wheel
     y_meas = sum(m * c[1] for m, c in ty) / sum(m for m, c in ty)
     assert abs(y_meas - y_tyre) < 0.5, ('tyre centre', y_meas, y_tyre)
-    out = dict(units='mm, kg, kg mm^2 about the COM, robot axes (x fwd, y left, z up, floor origin)',
+    out = dict(units="mm, kg, kg mm^2 about the COM, CAD axes (+x knee side, +y the _R parts, z up, floor origin; the robot's front is the rocker switch side = -x, wbr.models.build_v5 turns them)",
                pose=dict(L0=P.L0, L1=P.L1, L2=P.L2, R_wheel=P.R_WHEEL, Z_hip=P.Z_HIP, phi_deg=math.degrees(P.PHI),
                          knee=(P.KNEE_X, P.KNEE_Z), top_plate_z=P.Z_HIP + P.RAIL_Z + P.RAIL_S / 2 + P.TOP_PLATE[2],
                          tyre_centre_y=y_tyre, tyre_centre_y_model=y_meas, wheel_offset=P.wheel_offset(),
@@ -478,9 +851,95 @@ def save_mass_json(path=None, apply_print=False):
     return txt + '\ntyre centre y %.2f (model %.2f) -> %s' % (y_tyre, y_meas, path)
 
 
+# pi3hat r4.5 IMU footprints (references/pi3hat/hw/r4.5/pi3_hat.brd, mm from the board corner: x from the 40-pin header side
+# towards the CAN connectors, y from the XT30 side towards the Pi's USB end).  Board size 56.5 x 65, 1.6 thick.  The firmware
+# tries the BMI088 first, then the ICM-42688-P.
+IMU_BRD = {'BMI088': (36.0, 29.7), 'ICM42688': (35.0, 24.8)}
+IMU_ABOVE_PCB = 0.5         # chip centre above the PCB top face
+
+
+def imu_pose():
+    """The IMU in robot axes, measured from the pi3hat occurrence: position of both footprints and the raw IMU axes of
+    docs/reference.md (+x towards the CAN connectors / the Pi's HDMI, +y towards the Pi's USB, +z from the Pi to the hat)."""
+    doc()
+    M = load()
+    C = M['cadlib']
+    occ = [o for o in C.design().rootComponent.allOccurrences
+           if o.component.name.startswith('pi3hat') and '_library' not in o.fullPathName]
+    assert len(occ) == 1, occ
+    T = occ[0].transform2
+
+    def world(x_s, y_s, z_s):                       # STEP frame of the hat: x = board x - 28.25, y up from the PCB bottom, z = 32.5 - board y
+        p = adsk.core.Point3D.create(x_s / 10.0, y_s / 10.0, z_s / 10.0)
+        p.transformBy(T)
+        return f2r(p)
+
+    def vec(x_s, y_s, z_s):
+        a, b = world(0, 0, 0), world(x_s, y_s, z_s)
+        return [b[i] - a[i] for i in range(3)]
+
+    chips = {k: list(world(x - 28.25, 1.6 + IMU_ABOVE_PCB, 32.5 - y)) for k, (x, y) in IMU_BRD.items()}
+    return dict(chips=chips, axes=dict(x=vec(1, 0, 0), y=vec(0, 0, -1), z=vec(0, 1, 0)), board='pi3hat r4.5',
+                note='position mm from the floor origin, axes = raw IMU axes in CAD coordinates')
+
+
+def urdf_export(out=None):
+    """What the URDF of the v5 robot needs from the model: ../calc/urdf_data.json (joint axes, IMU pose) and one STL per link
+    (../export/links_stl, Fusion axes in mm, nominal pose).  Writes the document nothing; a body the user hid is
+    shown for the export and hidden again.  Then: wheeled_biped: python -m wbr.models.build_v5."""
+    import json
+    doc()
+    M = load()
+    C, P, LV = M['cadlib'], M['params'], M['legs_v5']
+    _need_names(C)
+    _nominal(M)
+    root = C.design().rootComponent
+    out = out or os.path.join(EXP, 'links_stl')
+    os.makedirs(out, exist_ok=True)
+    em = C.design().exportManager
+    hidden = []
+    for o in root.allOccurrences:
+        if '_library' in o.fullPathName:
+            continue
+        for b in o.bRepBodies:
+            if not b.isLightBulbOn:
+                b.isLightBulbOn = True
+                hidden.append(b)
+    done = []
+    try:
+        for occ in root.occurrences:
+            if occ.component.name == '_library':
+                continue
+            fn = os.path.join(out, occ.component.name + '.stl')
+            o = em.createSTLExportOptions(occ, fn)
+            o.isBinaryFormat = True
+            o.isOneFilePerBody = False
+            o.meshRefinement = adsk.fusion.MeshRefinementSettings.MeshRefinementLow
+            em.execute(o)
+            done.append(occ.component.name)
+    finally:
+        for b in hidden:
+            b.isLightBulbOn = False
+    J = {}
+    for j in root.asBuiltJoints:
+        v = j.geometry.primaryAxisVector
+        J[j.name] = dict(origin=list(f2r(j.geometry.origin)), axis=[v.z, v.x, v.y])
+    data = dict(units="mm, CAD axes (+x knee side, +y the _R parts, z up, floor origin; the robot's front is the rocker switch side = -x, wbr.models.build_v5 turns them), nominal pose",
+                imu=imu_pose(), joints=J,
+                joint_y=dict(hip=P.YW, knee=LV.Y_MSH - 13.75, wheel=2 * LV.Y_MSH - P.tyre_centre_y()),
+                tyre=dict(radius=P.R_WHEEL, width=P.TYRE_W, centre_y=2 * LV.Y_MSH - P.tyre_centre_y()),
+                links=done)
+    path = os.path.join(BASE, 'calc', 'urdf_data.json')
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=1)
+    return path, done, data['joint_y'], data['imu']
+
+
 def export():
     doc()
     M = load()
+    _need_names(M['cadlib'])
+    _nominal(M)
     show()
     for o in M['cadlib'].design().rootComponent.occurrences:
         if o.component.name == '_library':
@@ -505,7 +964,8 @@ def exports():
     doc()
     M = load()
     C, F = M['cadlib'], M['finalize']
-    M['poses'].reset()
+    _need_names(C)
+    _nominal(M)
     show()
     for o in C.design().rootComponent.occurrences:
         if o.component.name == '_library':
@@ -574,7 +1034,7 @@ SECTION_JOINTS = {'hip': (0.0, 'Z_HIP', (110.0, 300.0)), 'knee': ('KNEE_X', 'KNE
 
 
 def sections(path=None, angles=None, r_max=95.0):
-    """Real 2D sections of the left leg (nominal pose): every visible body near the hip / knee / wheel axis cut by
+    """Real 2D sections of the +y leg (nominal pose): every visible body near the hip / knee / wheel axis cut by
     planes through that axis (angle a in deg from robot +x towards +z; the plane holds the axis and that direction).
     Writes JSON records (joint, angle, component, occurrence path, body, edge polylines in (robot y, t) with t the
     distance from the axis along the plane, solid) for ../manufacturing/explain/real_sections.py (default path:
@@ -584,7 +1044,8 @@ def sections(path=None, angles=None, r_max=95.0):
     doc()
     M = load()
     P = M['params']
-    M['poses'].reset()
+    _need_names(M['cadlib'])
+    _nominal(M)
     path = path or os.path.join(BASE, 'manufacturing', 'explain', 'sections_v5.json.gz')
     angles = list(range(0, 180, 5)) if angles is None else angles
     design = M['cadlib'].design()

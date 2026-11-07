@@ -7,8 +7,8 @@ PETG): fork thigh and shank (closed boxes + Warren ribs, plan A spar), the 6061 
 
 Loads, load cases and formulas are those of robot_cad_v4/calc/strength_v4.py (= v3 strength.py): contact 60 N static
 per wheel, design 300 N, check 600 N (SF 2), lateral 0.5 x, motor torque 12.5 / 25 N m; stresses at the check load,
-deflections at the design load.  Geometry: fusion/legs_v5.py and the v4 params (no Fusion needed: a stub stands in for
-adsk, as in manufacturing/explain).  Part volumes: Fusion report() of 11-02 (hub WheelBiped_v5 version 6).
+deflections at the design load.  Geometry: fusion/legs_v5.py and the v4 params lengthened by fusion/link_length.py (no Fusion needed: a
+stub stands in for adsk, as in manufacturing/explain).  Part volumes: Fusion report() of 11-07 (links 250 mm, ribs 3.0 x 9 / 10).
 """
 import math
 import os
@@ -22,6 +22,8 @@ sys.path.insert(0, os.path.join(V5, 'fusion'))
 for _m in ('adsk', 'adsk.core', 'adsk.fusion'):
     sys.modules.setdefault(_m, mock.MagicMock())
 import params as P            # noqa: E402
+import link_length as LL      # noqa: E402
+LL.lengthen(P)                # before anything reads them at import (v5: links 250 mm, user 11-07)
 import legs_v5 as LV          # noqa: E402
 
 # ----------------------------------------------------------------------------- materials
@@ -49,11 +51,12 @@ PHI = P.PHI
 YTC = 2 * LV.Y_MSH - P.tyre_centre_y()                               # 270 outboard tyre centre plane
 LINKS3 = (('thigh', (0.0, P.Z_HIP), (P.KNEE_X, P.KNEE_Z)), ('shank', (P.KNEE_X, P.KNEE_Z), (0.0, P.R_WHEEL)))
 LEN = {n: math.hypot(b[0] - a[0], b[1] - a[1]) for n, a, b in LINKS3}
-# Fusion report() 11-02 (hub version 6), one side: volume cm3 of the thigh / shank PETG body and the closed cells
-# (outer shell - body: 1081.1 - 464.2, 532.8 - 256.6); 6061 backing ring 4.6 cm3 (12.3 g) per joint
-VOL = {'thigh': 464.2, 'shank': 256.6}
-CELLS = {'thigh': 1081.1 - 464.2, 'shank': 532.8 - 256.6}
-ROBOT_PETG = 10.928           # robot_mass() 11-02 with the PETG legs (model material PETG print, solid)
+# Fusion report() 11-07 (links 250 mm, ribs 3.0), one side: volume cm3 of the thigh / shank PETG body and the closed cells
+# (outer shell - body: 1945.8 - 651.6, 758.9 - 331.3); 6061 backing ring 4.6 cm3 (12.3 g) per joint
+VOL = {'thigh': 651.6, 'shank': 331.3}
+CELLS = {'thigh': 1945.8 - 651.6, 'shank': 758.9 - 331.3}
+ROBOT_PETG = 11.597           # report() 11-07 with the PETG legs (model material PETG print, solid)
+BASE_175 = dict(vm=18.4, end=(0.18, 1.90), contact=8.6, contact_sep=12.2, m_hip=185, b6=4428, b2=6170, b1=3381, mass=10.931)   # hub version 9, 175 mm links, ribs 2.0
 PRELOAD_M3 = 1000.0           # flange bolts ⑥ into the 6061 ring: low tightening (about 0.7 N m) on the PETG wall
 out = []
 
@@ -249,13 +252,13 @@ def ring_peak(F, width, t, base, E=E_PETG):
 
 def main():
     out.append('# v5 강도 손계산 — 링크를 PETG로 (`python calc/strength_v5.py`)\n')
-    out.append('사용자 결정: 11-01 허벅지·정강이를 MJF PA12 대신 **PETG(FDM)** 로 계산, 11-02 **PETG로 출력하기로 함**.  형상은 '
-               'v5 (`fusion/legs_v5.py`, 허브 버전 6): 바깥 막대 y %.1f ~ %.1f, 갈래 틈 %.1f, 허벅지 상자 폭 %.1f, 정강이 기본층 '
+    out.append('사용자 결정: 11-01 허벅지·정강이를 MJF PA12 대신 **PETG(FDM)** 로 계산, 11-02 **PETG로 출력하기로 함**, 11-07 **링크 25 cm + 리브 3.0**.  형상은 '
+               'v5 (`fusion/legs_v5.py`, 링크 %.0f mm): 바깥 막대 y %.1f ~ %.1f, 갈래 틈 %.1f, 허벅지 상자 폭 %.1f, 정강이 기본층 '
                'y %.0f ~ %.0f(무릎 판과 틈 %.1f), 바퀴는 바깥쪽(타이어 중심면 y %.1f, 11-02 바퀴 묶음 2.5 mm 바깥으로), hub 인서트는 '
                '6061 받침 링으로 PETG 벽을 끼워 고정(11-02).  하중·식은 v4(`robot_cad_v4/calc/strength_v4.py`)와 같다: 정지 %.0f N/바퀴, '
                '설계 %.0f N, 검토 %.0f N(안전계수 2), 옆 %.0f / %.0f N, 관절 토크 설계 12.5 / 검토 25 N·m.  응력은 검토 하중, 처짐은 '
                '설계 하중.\n'
-               % (LV.SPAR[0], LV.SPAR[1], LV.SPAR[0] - LV.Y_TO, LV.SPAR[1] - LV.Y_TF, LV.Y_SI, LV.Y_SO, LV.KNEE_GAP, YTC,
+               % (P.L1, LV.SPAR[0], LV.SPAR[1], LV.SPAR[0] - LV.Y_TO, LV.SPAR[1] - LV.Y_TF, LV.Y_SI, LV.Y_SO, LV.KNEE_GAP, YTC,
                   F_STATIC, F_DES, F_CHK, FL_DES, FL_CHK))
     out.append('재료: PETG — 탄성 %.0f MPa, 층 안 인장·굽힘 %.0f MPa, 지압 %.0f MPa(v2·v3 값), **층 사이(출력 높이 방향)는 0.6배인 '
                '%.0f MPa로 가정**(시험 출력으로 확인), 밀도 %.2f, HDT 약 %.0f °C.  링크는 안쪽 면을 바닥에 놓고(y가 출력 높이) '
@@ -290,11 +293,26 @@ def main():
            '면판 압축 / 좌굴 [MPa]', '판정'), rows)
     res, d, tw, sf, sb, vm = chosen[('PETG', True)]
     res2, d2, tw2, _sf2, _sb2, vm2 = chosen[('PETG', False)]
+    rib_now = LV.RIB
+    LV.RIB = 2.0
+    res_r2, d_r2, _t, _f, _b = legs3('PETG', True)
+    LV.RIB = rib_now
+    b_rib = 2 * LV.sh_half(sum(LV.RIB_SPAN['tibia']) / 2) - 2 * LV.WALL
+    tau_cr = lambda t: 5.35 * math.pi ** 2 * E_PETG / (12 * (1 - NU_PETG ** 2)) * (t / b_rib) ** 2
+    out.append('\n**링크 25 cm + 리브 %.1f (11-07)**: 관절 사이 거리를 %.0f mm 늘렸다.  관절 원과 그 안의 모터 자리, 갈래는 175 mm 링크 그대로고, 옆면은 관절 원에서 관절 원까지 한 직선이다.  '
+               '리브 간격을 유지해 허벅지 %d개, 정강이 %d개로 늘렸다.  링크 응력은 거의 그대로지만 옆 처짐은 길이만큼 늘고, **리브를 2.0 → %.1f로 두껍게 해도 '
+               '옆 처짐은 정강이 끝 %.2f → %.2f mm, 접지점 %.1f → %.1f mm로 거의 줄지 않는다**(옆 처짐은 면·옆 벽이 정한다).  리브가 좋아지는 곳은 리브 자체의 전단 좌굴이다(%.1f → %.1f MPa).\n'
+               % (LV.RIB, LV.STRETCH, LV.RIBS['thigh'], LV.RIBS['tibia'], LV.RIB, res_r2['shank']['d_v2'], res['shank']['d_v2'], d_r2, d, tau_cr(2.0), tau_cr(LV.RIB)))
+    table(('항목', '175 mm, 리브 2.0 (허브 버전 9)', '%.0f mm, 리브 %.1f' % (P.L1, LV.RIB)),
+          (('검토 응력 [MPa]', '%.1f' % BASE_175['vm'], '%.1f' % vm),
+           ('링크 끝 옆 처짐 허벅지 / 정강이 [mm]', '%.2f / %.2f' % BASE_175['end'], '%.2f / %.2f' % (res['thigh']['d_v2'], res['shank']['d_v2'])),
+           ('접지점 옆 변위, 갈래 함께 / 따로 [mm]', '%.1f / %.1f' % (BASE_175['contact'], BASE_175['contact_sep']), '%.1f / %.1f' % (d, d2)),
+           ('로봇 질량 [kg]', '%.3f' % BASE_175['mass'], '%.3f' % ROBOT_PETG)))
     out.append('\n- PETG(탄성 2000)는 MJF PA12(1700)보다 조금 단단해서 같은 형상이면 처짐이 약 15 % 작다.  강도는 비슷하다(45 / 48).')
     out.append('- **정강이 옆 처짐 %.2f mm가 v2부터 쓴 링크 하나 1 mm 기준을 넘는다**: 정강이는 무릎 패드(r 70) 밖에서 폭이 '
-               '%.0f mm뿐이다(v4 정강이는 바깥으로 %.0f까지 넓혔지만, v5는 그쪽에 타이어가 있다).  대신 허벅지가 폭 %.0f 상자라 '
-               '매우 단단해서(%.2f mm) 접지점 전체 옆 변위는 %.1f mm로 v4 · v2보다 작다.  링크 하나 기준을 지킬지, 접지점 변위로 '
-               '볼지는 결정할 것 — 지키려면 정강이 보를 키워야 한다(자세 스윕 다시 필요).'
+               '%.0f mm뿐이다(v4 정강이는 바깥으로 %.0f까지 넓혔지만, v5는 그쪽에 타이어가 있다).  허벅지는 폭 %.0f 상자라 단단하다(%.2f mm).  '
+               '접지점 전체 옆 변위는 %.1f mm로 v4(10.5) · v2(12.8) · 175 mm v5(8.6)보다 크다.  링크 하나 기준을 지킬지, 접지점 변위로 '
+               '볼지는 결정할 것 — 줄이려면 정강이 폭을 키워야 하는데 바깥에 타이어, 안쪽에 허벅지가 있다.'
                % (res['shank']['d_v2'], LV.Y_SO - LV.Y_SI, P.TIBIA_WIDE_OUT - P.Y_TIBIA_IN, LV.SPAR[1] - LV.Y_TF,
                   res['thigh']['d_v2'], d))
     out.append('- 갈래를 따로 굽는다고 보면 접지점 옆 변위 %.1f → %.1f mm, 검토 응력 %.0f → %.0f MPa — 실제는 그 사이다.  크로치 '
@@ -403,20 +421,19 @@ def main():
     mh, mk = M[('hip', '검토')], M[('knee', '검토')]
     h('3. 정리')
     out.append('- **링크 몸통(PETG 상자) 강도는 통과**: 검토 응력 %.0f MPa < %.0f, 면판 좌굴 여유 %.1f배.  처짐은 허벅지 %.2f mm로 '
-               '아주 단단하고 **정강이 %.2f mm는 v2의 링크 하나 1 mm 기준을 넘는다**(1절); 접지점 전체 옆 변위는 %.1f mm(갈래 따로 '
-               '굽으면 %.1f)로 v4(10.5) · v2(12.8)보다 작다.  정강이는 바깥에 타이어, 안쪽에 허벅지가 있어 폭 30을 못 넘고, 면 벽을 '
-               '7 mm로 두껍게 해도 1.30 mm(+106 g/개)라 1 mm는 이 폭으로 못 맞춘다 — **기준을 접지점 변위로 볼지 결정할 것**.'
+               '단단하고 **정강이 %.2f mm는 v2의 링크 하나 1 mm 기준을 넘는다**(1절); 접지점 전체 옆 변위는 %.1f mm(갈래 따로 '
+               '굽으면 %.1f)로 v4(10.5) · v2(12.8)보다 크다.  정강이는 바깥에 타이어, 안쪽에 허벅지가 있어 폭 30을 못 넘는다 — **기준을 접지점 변위로 볼지 결정할 것**.'
                % (vm, S_PETG, sb / sf, res['thigh']['d_v2'], res['shank']['d_v2'], d, d2))
-    out.append('- **⑥ hub 인서트 고정은 통과 (11-02 다시 설계)**: 열압입 인서트 대신 M3 × 16 12.9 6개가 플랜지 → PETG 벽 %.0f mm → '
+    out.append('- **⑥ hub 인서트 고정은 hip 검토 하중에서 보증을 넘는다 (링크 25 cm, 설계 하중은 통과)**: M3 × 16 12.9 6개가 플랜지 → PETG 벽 %.0f mm → '
                '6061 받침 링(Ø%.0f / Ø%.0f × %.0f, 링크 바깥 면 쪽 Ø%.0f 구멍으로 넣음)의 탭에 물린다.  PETG는 눌리기만 한다.  hip 검토 '
-               '하중에서 볼트 하나 %.1f kN(예압 1 kN 포함, 보증 4.9 kN), 벽 압축 %.0f MPa (50).  예전 인서트 방식은 인서트 하나 '
-               '3.1 kN 인발(한계 약 1 kN)이었다.  조임은 약 0.7 N·m + 나사 고정제, 처음 몇 주 다시 조인다(PETG 크리프).'
+               '하중에서 볼트 하나 %.1f kN(예압 1 kN 포함, 보증 4.9 kN, 175 mm에서 4.4 kN), 벽 압축 %.0f MPa (50).  hip이 높아져 옆 힘의 팔이 길어진 탓이고, 관절부를 바꾸지 않기로 해서(사용자 11-07) 그대로 두었다.  '
+               '조임은 약 0.7 N·m + 나사 고정제, 처음 몇 주 다시 조인다(PETG 크리프).'
                % (LV.WALL_J, 2 * LV.RING[1], 2 * LV.RING[0], LV.RING[2], 2 * LV.BORE_R,
                   (PRELOAD_M3 + bolt_circle_max(mh, 6, LV.FLANGE_BOLT_R)) / 1000,
                   mh * LV.RING[1] / (math.pi / 4 * (LV.RING[1] ** 4 - LV.RING[0] ** 4))
                   + 6 * PRELOAD_M3 / (math.pi * (LV.RING[1] ** 2 - LV.RING[0] ** 2) - 6 * math.pi / 4 * LV.LG.M3_CLEAR ** 2)))
-    out.append('- **hip 출력 ② M3 12.9는 검토 하중에서 보증을 넘는다**(%.0f N > %.0f, 바퀴를 바깥으로 돌려 hip 옆 모멘트가 %.0f N·m가 '
-               '됨, v4 %.0f).  ① M2.5 12.9도 경계, hip 판 웹은 한 단면이 다 받는다고 보면 %.0f MPa로 6061 항복을 넘는다.  링크 재료와 '
+    out.append('- **hip 출력 ② M3 12.9는 검토 하중에서 보증을 넘는다**(%.0f N > %.0f, 바깥 바퀴 + 긴 링크로 hip 옆 모멘트가 %.0f N·m가 '
+               '됨, 175 mm에서 185, 안쪽 바퀴였다면 %.0f).  ① M2.5 12.9도 넘고, hip 판 웹은 한 단면이 다 받는다고 보면 %.0f MPa로 6061 항복을 넘는다.  링크 재료와 '
                '무관한 바깥 바퀴 + AKE60 출력부(M3 6개, PCD 20)의 한계라 다리 설계로는 못 고친다(설계 하중에서는 통과).'
                % (bolt_circle_max(mh, 6, 10), AS_M3 * PROOF['12.9'], mh / 1000, M4[('hip', '검토')] / 1000, 289.0 * mh / 133000))
     out.append('- 바퀴 PETG 모터 판·고정링은 통과.  **무릎은 모터가 옆 모멘트를 다 받는다고 보면 검토 하중에서 PETG 판(리드 홈 '

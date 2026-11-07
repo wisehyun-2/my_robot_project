@@ -1,0 +1,129 @@
+{
+ "units": "mm, CAD axes (+x knee side, +y the _R parts, z up, floor origin; the robot's front is the rocker switch side = -x, wbr.models.build_v5 turns them), nominal pose",
+ "imu": {
+  "chips": {
+   "BMI088": [
+    0.49999999999999933,
+    2.4499999999999993,
+    508.35714285714283
+   ],
+   "ICM42688": [
+    -0.5000000000000004,
+    -2.449999999999999,
+    508.35714285714283
+   ]
+  },
+  "axes": {
+   "x": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "y": [
+    0.0,
+    1.0,
+    0.0
+   ],
+   "z": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "board": "pi3hat r4.5",
+  "note": "position mm from the floor origin, axes = raw IMU axes in CAD coordinates"
+ },
+ "joints": {
+  "hip_R": {
+   "origin": [
+    0.0,
+    0.0,
+    543.8571428571429
+   ],
+   "axis": [
+    0.0,
+    1.0,
+    0.0
+   ]
+  },
+  "knee_R": {
+   "origin": [
+    116.05769149479947,
+    0.0,
+    322.42857142857144
+   ],
+   "axis": [
+    0.0,
+    1.0,
+    0.0
+   ]
+  },
+  "wheel_R": {
+   "origin": [
+    0.0,
+    0.0,
+    101.00000000000001
+   ],
+   "axis": [
+    0.0,
+    1.0,
+    0.0
+   ]
+  },
+  "hip_L": {
+   "origin": [
+    0.0,
+    0.0,
+    543.8571428571429
+   ],
+   "axis": [
+    0.0,
+    1.0,
+    0.0
+   ]
+  },
+  "knee_L": {
+   "origin": [
+    116.05769149479947,
+    0.0,
+    322.42857142857144
+   ],
+   "axis": [
+    0.0,
+    1.0,
+    0.0
+   ]
+  },
+  "wheel_L": {
+   "origin": [
+    0.0,
+    0.0,
+    101.00000000000001
+   ],
+   "axis": [
+    0.0,
+    1.0,
+    0.0
+   ]
+  }
+ },
+ "joint_y": {
+  "hip": 172.0,
+  "knee": 208.0,
+  "wheel": 270.0
+ },
+ "tyre": {
+  "radius": 101.0,
+  "width": 54.0,
+  "centre_y": 270.0
+ },
+ "links": [
+  "torso",
+  "femur_R",
+  "tibia_R",
+  "wheel_R",
+  "femur_L",
+  "tibia_L",
+  "wheel_L"
+ ]
+}

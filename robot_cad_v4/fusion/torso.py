@@ -162,7 +162,7 @@ def deck():
             C.cut(d, B.ycyl(sx * 45, ZH - 42.0, sy * (y_in - 5), sy * (y_in + 1), 1.7))
     for x in (-40.0, 40.0):                                        # ribs underneath
         C.union(d, B.abox(x - 1.5, x + 1.5, -y_in + 4, y_in - 4, z0 - 6.0, z0 + 0.01))
-    for (x0, x1, y0, y1) in ((-32, 32, 104, 156), (-32, 32, -156, -104), (-18, 18, -86, -45), (-15, 15, 12, 58)):
+    for (x0, x1, y0, y1) in DECK_WINDOWS:
         # windows (lightening, cable pass-through) clear of the Pi and mjpower-ss bosses
         C.cut(d, B.abox(x0, x1, y0, y1, z0 - 7, z1 + 1))
     for (x, y) in rpi_holes_robot() + mjpower_holes_robot():
@@ -175,6 +175,20 @@ def deck():
 PI_Y0 = -98.0        # Raspberry Pi X = 0 edge (robot y); USB end at +y
 PI_X0 = 28.0         # Raspberry Pi Y = 0 edge (robot x): Pi Y runs towards -x
 BOSS = 5.0
+DECK_WINDOWS = ((-32, 32, 104, 156), (-32, 32, -156, -104), (-18, 18, -86, -45), (-15, 15, 12, 58))
+MJ_ALONG_X = False   # mjpower-ss long side along robot x (centre_imu)
+
+
+def centre_imu():
+    """v5 (11-07, user): the pi3hat IMU on the robot's centre line, at the hip midpoint in plan view.  The hat's two IMU footprints
+    (r4.5: BMI088 at board (36, 29.7), ICM-42688-P at (35, 24.8)) end up at x +-0.5, y +-2.45.  The Pi moves onto the middle of the deck,
+    the mjpower-ss goes to the -y side, turned so that its XT90 faces the rear and its outputs lie next to the hat's XT30.  Height and
+    orientation stay: hat side up, CAN / HDMI towards +x, USB towards +y (raw IMU axes = robot axes)."""
+    global PI_Y0, PI_X0, MJ_C, MJ_ALONG_X, DECK_WINDOWS
+    PI_Y0, PI_X0 = -27.25, 20.5
+    MJ_C = (0.0, -61.0)
+    MJ_ALONG_X = True
+    DECK_WINDOWS = ((-32, 32, 104, 156), (-32, 32, -156, -104), (-25.5, 10.5, -15.25, 25.75), (-25, 25, -74, -48))
 
 
 def rpi_frame():
@@ -201,6 +215,8 @@ MJ_C = (0.0, 35.0)   # mjpower-ss centre (robot x, y); board X -> robot -y (XT90
 
 def mjpower_frame():
     z = ZH + P.DECK_Z + BOSS
+    if MJ_ALONG_X:                                      # board X -> robot +x: outputs at the front, XT90 at the rear
+        return C.frame((MJ_C[0], MJ_C[1], z), (1, 0, 0), (0, 1, 0), (0, 0, 1))
     return C.frame((MJ_C[0], MJ_C[1], z), (0, -1, 0), (1, 0, 0), (0, 0, 1))
 
 

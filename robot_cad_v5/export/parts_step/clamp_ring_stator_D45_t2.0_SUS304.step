@@ -10,7 +10,7 @@ FILE_DESCRIPTION(
 
 FILE_NAME(
 /* name */ 'clamp_ring_stator_D45_t2.0_SUS304.step',
-/* time_stamp */ '2026-11-02T22:11:45+09:00',
+/* time_stamp */ '2026-11-08T00:43:43+09:00',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20.2',
@@ -416,7 +416,7 @@ SOLID_ANGLE_UNIT()
 #365=PRODUCT_DEFINITION_SHAPE('',$,#368);
 #366=SHAPE_REPRESENTATION('',(#216),#358);
 #367=PRODUCT_DEFINITION_CONTEXT('part definition',#372,'design');
-#368=PRODUCT_DEFINITION('2026-11-02-22-11-45-884',
+#368=PRODUCT_DEFINITION('2026-11-08-00-43-43-946',
 'clamp ring stator \X\D845 t2.0 SUS304',#369,#367);
 #369=PRODUCT_DEFINITION_FORMATION('',$,#374);
 #370=PRODUCT_RELATED_PRODUCT_CATEGORY(
@@ -427,7 +427,7 @@ SOLID_ANGLE_UNIT()
 #372=APPLICATION_CONTEXT(
 'Core Data for Automotive Mechanical Design Process');
 #373=PRODUCT_CONTEXT('part definition',#372,'mechanical');
-#374=PRODUCT('2026-11-02-22-11-45-884',
+#374=PRODUCT('2026-11-08-00-43-43-946',
 'clamp ring stator \X\D845 t2.0 SUS304',$,(#373));
 #375=PRESENTATION_STYLE_ASSIGNMENT((#376));
 #376=SURFACE_STYLE_USAGE(.BOTH.,#377);

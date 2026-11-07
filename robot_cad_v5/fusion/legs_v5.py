@@ -26,8 +26,8 @@ Skeleton:
 Form (user 11-01: printable; faces that can be flat stay flat - no needless shallow steps, recesses or cuts; round only
 where it has to be): every link is a straight prism of the tangent hull of two joint circles - flat side and edge
 faces, straight flanks, round only around the joints (and the fork crotch, which relieves the stress); the knee cap
-sits flush, the hip access bore is left open (11-02, user: the hip cap only covered it).  Geometry in robot
-coordinates of side s (Builder(side=s)); the right leg is the mirror image.
+sits flush, the hip access bore is left open (11-02, user: the hip cap only covered it).  Geometry in CAD
+coordinates of side s (Builder(side=s)); s = +1 is +y, the robot's right, and the -y leg is the mirror image.
 """
 import math
 
@@ -36,7 +36,7 @@ import layout as LY
 import legs as LG
 import params as P
 
-# ----------------------------------------------------------------------------- dimensions (left side y)
+# ----------------------------------------------------------------------------- dimensions (+y side)
 Y_TI, Y_TO = P.Y_FEMUR_IN, P.Y_FEMUR_OUT        # 174 .. 204 knee housing (knee motor seat at 195 .. 204)
 Y_TF = 178.0                                     # thigh inner face: clear of the knee cup's register lip (y 174 ..
                                                  # 177.1), so the thigh stays deep at the knee; the housing stands 4 proud
@@ -52,19 +52,25 @@ SPAR = (Y_SH + 10.5, Y_SH + 35.5)                # outer spar 263.5 .. 288.5, 10
                                                  # clear of the knee plate with its insert boss, spigot and dowels
                                                  # (12.5 proud of its inner face), then slides inboard onto the motor
                                                  # output; robot 594 wide (tyre outer face 297)
-CROTCH_FACE = 108.0                              # the slot's faces end at s 108 (as before the widening)
+# Longer links (user 11-07, 175 -> 250 mm): the joint circles, everything inside them and the fork stay as on the 175 mm link, only the
+# distance between the joints grows, so the motors are assembled as before.  The flanks stay one straight line from joint circle to joint
+# circle (user 11-07: a constant-depth piece between 175 mm ends left visible kinks in the flanks, rejected).
+BASE_LINK = 175.0
+STRETCH = P.L1 - BASE_LINK
+CROTCH_FACE = 108.0 + STRETCH                    # the slot's faces end 67 mm from the knee (as before the widening)
 CROTCH = (CROTCH_FACE - (SPAR[0] - Y_TO) / 2, (SPAR[0] - Y_TO) / 2)   # half-round end of the slot y Y_TO .. SPAR[0]:
-                                                 # crotch at s 78.25 on the slot centre line, r 29.75 (the wider slot
-                                                 # contains the old one, so every old shank clearance stays)
-THIGH = [(0.0, 38.0), (P.L1, 30.0)]             # thigh outline: hip circle r 38 -> knee circle r 30 (the spar's end)
+                                                 # crotch 96.75 from the knee on the slot centre line, r 29.75 (the wider
+                                                 # slot contains the old one, so every old shank clearance stays)
+THIGH = [(0.0, 38.0), (P.L1, 30.0)]              # thigh outline: hip circle r 38 -> knee circle r 30 (the spar's end)
 R_HIP = 38.0
 R_BOSS = 28.0                                    # solid spar boss round the knee cap
-SHANK = [(0.0, 45.0), (P.L2, 22.5)]             # shank outline: knee r 45 -> r 22.5 at the axle (inside the wheel
+SHANK = [(0.0, 45.0), (P.L2, 22.5)]              # shank outline: knee r 45 -> r 22.5 at the axle (inside the wheel
                                                  # housing; the flank stays < 28.3 inside the wheel cup's lip)
 PAD_R = 70.0                                     # head pad = the shank outline within r 70 of the knee (concentric: the
                                                  # same crotch / tyre clearance in every pose)
-WALL, RIB = 3.5, 2.0
-RIBS = {'thigh': 5, 'tibia': 6}                  # Warren ribs per link
+WALL, RIB = 3.5, 3.0                             # rib 2.0 -> 3.0 (user 11-07: thicker for strength)
+RIBS = {'thigh': 9, 'tibia': 10}                 # Warren ribs per link: about the 175 mm pitch (thigh 5, shank 6) on the longer span;
+                                                 # odd / even as before, so the last rib ends on the same side of each joint
 BRG = (35.0, 47.0, 7.0)                          # 61807 knee outer bearing d, D, B
 CAP_R = (14.5, 17.5, 23.0)                       # knee cap tube bore / tube OD (in the bearing) / flange
 CAP_T = 3.0
@@ -88,7 +94,7 @@ def wheel_turn(s):
 
 
 # the turn mirrors the driver / cup clocking in x: re-clock them about the wheel axis so the cup's notch lies on the
-# shank again and the plugs keep their v4 angle to the shank (52 deg off it, now towards the front)
+# shank again and the plugs keep their v4 angle to the shank (52 deg off it, now towards +x)
 WHEEL_CLOCK = 2 * math.atan2(P.KNEE_X, P.KNEE_Z - P.R_WHEEL)
 
 
@@ -105,7 +111,7 @@ def geo(link):
         nb = LG.edge_normal(a, b, LG.TIBIA_EDGE)
     (ux, uz), L = LG._axes(a, b)
     n = (-uz, ux)
-    assert abs(n[0] + nb[0]) < 1e-9 and abs(n[1] + nb[1]) < 1e-9     # +n = front, nb = back
+    assert abs(n[0] + nb[0]) < 1e-9 and abs(n[1] + nb[1]) < 1e-9     # +n = the +x side, nb = the -x side
     return dict(a=a, b=b, u=(ux, uz), n=n, nb=nb, L=L)
 
 
