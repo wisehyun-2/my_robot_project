@@ -102,6 +102,7 @@ class LQI6:
         # brake); without a hold-off the integrators ran for 20-40 ms on a 0.2 m/s error there
         self._freeze_hold_steps = int(round(freeze_hold_s / Ts))
         self._freeze_countdown = 0
+        self.hold_integrators = False    # set by the MCU over uneven ground: the robot must not chase the moving position reference there
         self._last_out = (0.0, 0.0)
         self.int_limit = int_limit
         self.reschedule_dL = reschedule_dL
@@ -124,6 +125,7 @@ class LQI6:
 
     def reset(self) -> None:
         self.shaping_on = True                 # review r1 n7: a reset restores the MCU's own shaping
+        self.hold_integrators = False
         self.v_ramp_rate, self.v_ref_tau, self.freeze_int_on_ramp = self._shaped
         self._last_out = (0.0, 0.0)
         self.nonfinite_steps = 0
@@ -253,7 +255,7 @@ class LQI6:
             accelerating = True                      # hold-off across the sign change of the reference acceleration
         att_ramping = accelerating or abs(self.v_filt - self.v_ramp) > self.freeze_tol
         frozen = (self.freeze_int_on_ramp and ramping) or \
-                 (self.freeze_int_on_accel_plain and not self.shaping_on and accelerating)
+                 (self.freeze_int_on_accel_plain and not self.shaping_on and accelerating) or self.hold_integrators
         if not frozen:
             self.z = float(np.clip(self.z + ev * self.Ts, -self.int_limit, self.int_limit))
         Pm = Gm = gM = None

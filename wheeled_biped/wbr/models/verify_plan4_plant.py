@@ -29,6 +29,7 @@ from wbr.controllers.lqi6.serial_leg import UPKIE_JOINT_SIGNS, SerialLeg, Serial
 from wbr.models.upkie_params import set_leg_posture
 
 KNEE_LOCK_ARMATURE = 1.0e3     # kg m^2 on the knee dofs: the knee cannot move (rigid virtual leg)
+SIGNS = UPKIE_JOINT_SIGNS      # joint signs of the model under test (--model)
 
 
 class MjPlanar:
@@ -36,6 +37,7 @@ class MjPlanar:
 
     def __init__(self, params: SerialPlantParams, xml_path: Path | None = None, stiff_contact: bool = True):
         self.p = params
+        self.signs = SIGNS
         self.m = mujoco.MjModel.from_xml_path(str(xml_path or MODELS_DIR / "upkie_plan4" / "scene.xml"))
         self.d = mujoco.MjData(self.m)
         m = self.m
@@ -75,7 +77,7 @@ class MjPlanar:
         """Equilibrium posture, optionally rigidly tilted about the axle by `tilt` (theta += tilt,
         pitch += tilt) and lowered by dz (settled contact penetration).  Resets the keyframe, i.e. ctrl."""
         th_eq = plant.theta_eq(L0)
-        set_leg_posture(self.m, self.d, self.leg, L0, th_eq, pitch=tilt, wheel_radius=self.p.R)
+        set_leg_posture(self.m, self.d, self.leg, L0, th_eq, pitch=tilt, wheel_radius=self.p.R, signs=SIGNS)
         self.d.qpos[2] += dz
         mujoco.mj_forward(self.m, self.d)
         return th_eq
@@ -113,7 +115,7 @@ class MjPlanar:
         pitch = math.atan2(-Rm[2, 0], Rm[0, 0])            # rotation about +y (positive = leaning forward)
         gyro = Rm @ d.qvel[3:6]                            # free joint angular velocity is body-local
         pitch_rate = float(gyro[1])
-        s = UPKIE_JOINT_SIGNS
+        s = SIGNS
         qh = d.qpos[self.qadr["left_hip"]] * s["left_hip"]
         qk = d.qpos[self.qadr["left_knee"]] * s["left_knee"]
         qdh = d.qvel[self.dof["left_hip"]] * s["left_hip"]
@@ -137,27 +139,25 @@ class MjPlanar:
         P = np.zeros((m.nv, 3))
         dof = self.dof
         # dx: base x, wheels roll
+        s = SIGNS
         P[0, 0] = 1.0
-        P[dof["left_wheel"], 0] = 1.0 / R
-        P[dof["right_wheel"], 0] = -1.0 / R
         # dtheta: hip moves on the circle, leg (and shank -> wheel joints) rotates, hip joints q_hip = theta + phi
         P[0, 1] = L0 * math.cos(th_eq)
         P[2, 1] = -L0 * math.sin(th_eq)
-        P[dof["left_hip"], 1] = -1.0
-        P[dof["right_hip"], 1] = +1.0
-        P[dof["left_wheel"], 1] = -1.0
-        P[dof["right_wheel"], 1] = +1.0
         # dphi: body rotates about -y about the hip (base origin h above the hip)
         P[0, 2] = -h
         P[4, 2] = -1.0
-        P[dof["left_hip"], 2] = -1.0
-        P[dof["right_hip"], 2] = +1.0
+        for side in ("left", "right"):
+            P[dof[f"{side}_wheel"], 0] = s[f"{side}_wheel"] / R     # dx: base x, wheels roll
+            P[dof[f"{side}_wheel"], 1] = -s[f"{side}_wheel"]
+            P[dof[f"{side}_hip"], 1] = s[f"{side}_hip"]
+            P[dof[f"{side}_hip"], 2] = s[f"{side}_hip"]
         return P
 
     def ctrl_from_inputs(self, T: float, Tp: float) -> np.ndarray:
         """Plant inputs -> actuator torques (knee locked: a hip torque is a pure hip joint torque)."""
         u = np.zeros(self.m.nu)
-        s = UPKIE_JOINT_SIGNS
+        s = SIGNS
         for side in ("left", "right"):
             u[self.aid[f"{side}_wheel"]] = 0.5 * T * s[f"{side}_wheel"]
             u[self.aid[f"{side}_hip"]] = 0.5 * Tp * s[f"{side}_hip"]
@@ -178,7 +178,7 @@ def check_L0(mp: MjPlanar, plant: SerialPlant, L0: float, response_T: float = 0.
     out["static_check_qacc"] = dict(base=np.abs(d.qacc[:6]).max(), hips=float(abs(d.qacc[mp.dof["left_hip"]])))
     out["static_torques"] = stat
     out["Tp_eq_plant"] = plant.Tp_eq(L0)
-    out["Tp_eq_mujoco"] = float(stat["left_hip"] * UPKIE_JOINT_SIGNS["left_hip"] + stat["right_hip"] * UPKIE_JOINT_SIGNS["right_hip"])
+    out["Tp_eq_mujoco"] = float(stat["left_hip"] * SIGNS["left_hip"] + stat["right_hip"] * SIGNS["right_hip"])
     mp.apply_static(stat)
     q0, v0 = d.qpos.copy(), d.qvel.copy()
     ctrl0 = d.ctrl.copy()
@@ -319,11 +319,18 @@ def main():
     ap.add_argument("--out", default=str(RESULTS_DIR / "plan4_model"),
                     help="output directory (default overwrites the repository's results/plan4_model)")
     ap.add_argument("--soft-contact", action="store_true", help="keep the model's soft contact impedance for the comparison")
+    ap.add_argument("--model", default="upkie_plan4", help="model directory under models/ (wheelbiped_v5: the v5 robot's own URDF model)")
     args = ap.parse_args()
     out_dir = Path(args.out); out_dir.mkdir(parents=True, exist_ok=True)
-    params = SerialPlantParams.from_json(MODELS_DIR / "upkie_plan4" / "plan4_params.json")
+    mdir = MODELS_DIR / args.model
+    if (mdir / "description.json").exists():    # a robot with its own model: its joint signs and parameter file
+        global SIGNS
+        SIGNS = json.loads((mdir / "description.json").read_text(encoding="utf-8"))["joint_signs"]
+        params = SerialPlantParams.from_json(mdir / "plant_params.json")
+    else:
+        params = SerialPlantParams.from_json(mdir / "plan4_params.json")
     plant = SerialPlant(params)
-    mp = MjPlanar(params, stiff_contact=not args.soft_contact)
+    mp = MjPlanar(params, mdir / "scene.xml", stiff_contact=not args.soft_contact)
     results = []
     for L0 in args.L0:
         r = check_L0(mp, plant, L0)

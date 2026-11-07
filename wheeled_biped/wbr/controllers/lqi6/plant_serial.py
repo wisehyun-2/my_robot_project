@@ -207,6 +207,17 @@ class SerialPlant:
                 hi = mid
         return 0.5 * (lo + hi)
 
+    def static_leg_force(self, L0: float, theta: float) -> float:
+        """Extension force per leg that holds the leg length at the lean theta (world): half of dV/dL0 at fixed theta,
+            0.5 g [(m_b + m_l dc/dL0) cos(theta) - m_l dd/dL0 sin(theta)].
+        The d term: the legs' COM moves along the leg's normal when the knee bends, so a leaning leg's weight pulls on its length."""
+        if not hasattr(self, "_leg_slopes"):
+            t = self.p.leg
+            self._leg_slopes = (np.asarray(t.L0), np.gradient(t.c, t.L0), np.gradient(t.d, t.L0), float(np.mean(t.m_l)))
+        grid, dc, dd, m_l = self._leg_slopes
+        return 0.5 * self.p.g * ((self.p.m_b + m_l * float(np.interp(L0, grid, dc))) * float(np.cos(theta))
+                                 - m_l * float(np.interp(L0, grid, dd)) * float(np.sin(theta)))
+
     def Tp_eq(self, L0: float | None = None) -> float:
         """Static hip torque at the equilibrium (body level): dV/dphi = m_b g b_x."""
         P = self.params(L0)

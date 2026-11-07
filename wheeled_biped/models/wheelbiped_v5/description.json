@@ -1,0 +1,62 @@
+{
+ "robot": "wheelbiped_v5",
+ "wheel_radius": 0.101,
+ "track": 0.54,
+ "tau_wheel_max": 12.5,
+ "tau_leg_max": 12.5,
+ "joint_signs": {
+  "left_hip": 1.0,
+  "left_knee": 1.0,
+  "left_wheel": 1.0,
+  "right_hip": 1.0,
+  "right_knee": 1.0,
+  "right_wheel": 1.0
+ },
+ "knee_sign": 1.0,
+ "front": "rocker switch side (CAD -x)",
+ "imu": {
+  "chip": "BMI088",
+  "position_in_base": [
+   -0.0004999999999999994,
+   -0.0024499999999999995,
+   -0.03550000000000009
+  ],
+  "R_base_to_imu": [
+   [
+    -1.0,
+    0.0,
+    0.0
+   ],
+   [
+    0.0,
+    -1.0,
+    0.0
+   ],
+   [
+    0.0,
+    0.0,
+    1.0
+   ]
+  ]
+ },
+ "payload_kg": 0.0,
+ "plan_overrides": {
+  "kp_yaw": 1.7643545854252776,
+  "ki_yaw": 10.580866017764114,
+  "kp_leg": 1502.8578652335,
+  "kd_leg": 75.1114921362,
+  "kp_split": 114.28571428571429,
+  "kd_split": 2.857142857142857,
+  "wheel_reaction_ff": true,
+  "roll_compliant": true,
+  "friction_comp_Nm": 0.096,
+  "friction_comp_wheel_Nm": 0.096,
+  "kp_roll_force": 576.8248120042151,
+  "ki_roll_force": 346.09488720252904,
+  "kd_roll_force": 71.93344714405505,
+  "roll_force_int_limit": 15.44730669,
+  "kp_leg_limit": 6011.431460934,
+  "kd_leg_limit": 112.66723820429999,
+  "kw_yaw": 8.821772927126387
+ }
+}

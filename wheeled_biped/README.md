@@ -25,6 +25,7 @@ python -m wbr.models.build_diablo_lite              # parametric MJCF + URDF (mo
 python -m wbr.viewer.live --plan 1 [--balancer pid|mpc]   # live MuJoCo window, arrow keys drive, P pushes, R resets
 python -m wbr.viewer.live --plan 2
 python -m wbr.viewer.live --plan 3
+python -m wbr.viewer.course_v5              # v5 robot over speed bumps under one wheel (6, 10, 14, 20 cm): Up/Down speed, Space stop, R restart, P/O push
 python -m wbr.bench.run_bench                       # full test battery -> results/bench/summary.md (+ json)
 python -m wbr.bench.plots                           # figures -> results/figures
 python -m wbr.bench.video --plan 2                  # demo video -> results/videos

@@ -57,8 +57,9 @@ def _planar_inertia(m: mujoco.MjModel, d: mujoco.MjData, bodies, about=None):
     return mass, com, float(I)
 
 
-def set_leg_posture(m, d, leg: SerialLeg, L0: float, theta_v: float, pitch: float = 0.0, wheel_radius: float = 0.05):
-    """Set both legs to IK(L0, theta_v) (u-convention -> upkie joint signs) and place the base so that
+def set_leg_posture(m, d, leg: SerialLeg, L0: float, theta_v: float, pitch: float = 0.0, wheel_radius: float = 0.05,
+                    signs: Dict[str, float] = UPKIE_JOINT_SIGNS):
+    """Set both legs to IK(L0, theta_v) (u-convention -> the model's joint signs) and place the base so that
     the axle is at x = 0, z = wheel_radius and the base is pitched by `pitch` (about +y)."""
     key = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_KEY, "stand")
     mujoco.mj_resetDataKeyframe(m, d, key)
@@ -66,7 +67,7 @@ def set_leg_posture(m, d, leg: SerialLeg, L0: float, theta_v: float, pitch: floa
     for side in ("left", "right"):
         for jn, q in ((f"{side}_hip", qh), (f"{side}_knee", qk)):
             j = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, jn)
-            d.qpos[m.jnt_qposadr[j]] = q * UPKIE_JOINT_SIGNS[jn]
+            d.qpos[m.jnt_qposadr[j]] = q * signs[jn]
     mujoco.mj_forward(m, d)
     base = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, "base")
     jl = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, "left_wheel")
@@ -84,7 +85,11 @@ def set_leg_posture(m, d, leg: SerialLeg, L0: float, theta_v: float, pitch: floa
     return qh, qk
 
 
-def build_params(xml_path: Path | None = None, grid=TABLE_GRID, verbose: bool = True) -> SerialPlantParams:
+def build_params(xml_path: Path | None = None, grid=TABLE_GRID, verbose: bool = True, signs: Dict[str, float] = UPKIE_JOINT_SIGNS,
+                 name: str = "upkie_serial", knee_sign: float = -1.0, L_stand: float = L_STAND, L_min: float = L_MIN,
+                 L_max: float = L_MAX) -> SerialPlantParams:
+    """The plant parameters computed on a MuJoCo model; signs: its joint signs (the v5 model's are all +1), knee_sign: the side of
+    its knees (SerialLegGeometry; upkie's are in front, the v5 model's behind); grid, L_stand, L_min, L_max: its leg lengths [m]."""
     xml_path = xml_path or MODELS_DIR / "upkie_plan4" / "scene.xml"
     m = mujoco.MjModel.from_xml_path(str(xml_path))
     d = mujoco.MjData(m)
@@ -102,7 +107,7 @@ def build_params(xml_path: Path | None = None, grid=TABLE_GRID, verbose: bool = 
     base = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, "base")
     hip_above_base = float(d.xpos[base][2] - hip[2])
     wheel_radius = float(m.geom_size[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, "left_tire")][0])
-    leg = SerialLeg(SerialLegGeometry(L1=L1, L2=L2, knee_sign=-1.0))
+    leg = SerialLeg(SerialLegGeometry(L1=L1, L2=L2, knee_sign=knee_sign))
 
     # body group (base level): COM from the hip, pitch inertia
     m_b, com_b, I_b = _planar_inertia(m, d, groups["base"])
@@ -125,16 +130,16 @@ def build_params(xml_path: Path | None = None, grid=TABLE_GRID, verbose: bool = 
     for L0 in grid:
         if L0 >= leg.g.L0_max - 1e-3:
             continue
-        set_leg_posture(m, d, leg, float(L0), 0.0, wheel_radius=wheel_radius)
+        set_leg_posture(m, d, leg, float(L0), 0.0, wheel_radius=wheel_radius, signs=signs)
         axle_w = 0.5 * (d.xanchor[jid("left_wheel")] + d.xanchor[jid("right_wheel")])
         m_l, com_l, I_l = _planar_inertia(m, d, leg_bodies)
         rows.append((float(L0), m_l, float(com_l[2] - axle_w[2]), float(com_l[0] - axle_w[0]), I_l))
     rows = np.array(rows)
     table = LegTable(L0=rows[:, 0], m_l=rows[:, 1], c=rows[:, 2], d=rows[:, 3], I_l=rows[:, 4])
     params = SerialPlantParams(R=wheel_radius, m_w=m_w, I_w=I_w, m_b=m_b, b_x=b_x, b_z=b_z, I_b=I_b, J_h=J_h, c_h=c_h,
-                               c_w=c_w, J_w=J_w, hip_above_base=hip_above_base, leg=table, L0=L_STAND, L_min=L_MIN, L_max=L_MAX,
-                               tau_wheel_max=1.7, tau_hip_max=16.0, name="upkie_serial",
-                               extra=dict(L1=L1, L2=L2, knee_sign=-1.0, total_mass=float(m.body_subtreemass[base]),
+                               c_w=c_w, J_w=J_w, hip_above_base=hip_above_base, leg=table, L0=L_stand, L_min=L_min, L_max=L_max,
+                               tau_wheel_max=1.7, tau_hip_max=16.0, name=name,
+                               extra=dict(L1=L1, L2=L2, knee_sign=knee_sign, total_mass=float(m.body_subtreemass[base]),
                                           hip_joint_z_straight=float(hip[2])))
     if verbose:
         print(f"L1={L1:.4f} L2={L2:.4f}  body m_b={m_b:.4f} b_x={b_x:+.4f} b_z={b_z:.4f} I_b={I_b:.5f}")

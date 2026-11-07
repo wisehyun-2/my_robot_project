@@ -21,11 +21,22 @@ built differently (build_cad_model):
     python -m wbr.bench.ake_cad --only robot --quick
     python -m wbr.bench.ake_cad --cad ../robot_cad_v3/calc/mass_properties.json --out results/ake_cad_v3   # v3 (6061 legs)
     python -m wbr.bench.ake_cad --cad ../robot_cad_v5/calc/mass_properties.json --out results/ake_cad_v5   # v5 (outboard wheels)
-    python -m wbr.bench.ake_cad --lateral upkie --outer-gains upkie ...  # the set-up of the results before 11-05
+    python -m wbr.bench.ake_cad --lateral upkie --outer-gains upkie --wheel-reaction off ...  # the set-up before 11-05
 
 Outer loops (11-05, user decision): the yaw PI and the leg-length PD are scaled from the upkie tuning to the CAD robot
 (outer_loop_gains; `--outer-gains upkie` keeps the Plan 4 defaults).  A scenario also counts as not recovered when a
 knee ends on the wrong side of full extension (ake_sizing.knee_flipped).
+
+Knee coupling (11-06, user decision): the knee also cancels the wheel motor's reaction on the shank
+(McuParams.wheel_reaction_ff; `--wheel-reaction off` = the results before 11-06).
+
+Bumps under one wheel (11-07): the legs yield and the IMU roll levels the body (McuParams.roll_compliant; `--roll leg-length`
+= the results before), and on a sharp step the wheels hold their speed difference (McuParams.kw_yaw; `--yaw-wheel off`).
+
+Own model (11-07): a CAD folder with calc/urdf_data.json (v5) no longer goes through the stretched upkie_description above.
+_build_from_urdf uses wbr.models.build_v5 and wbr.plans.plan_v5 instead: the robot's own URDF, IMU axes and chip position,
+the pi3hat filter and the MCU attitude filter (docs/robot_v5_model.md).  `--model upkie` = the old route on the same CAD;
+folders without that file (v2-v4) stay on the old route.
 """
 from __future__ import annotations
 
@@ -62,7 +73,20 @@ class CadCase(AS.Case):
     track_m: float | None = None    # set by build_cad_model (lateral = "cad"): tyre centre distance for the MCU
     outer_gains: str = "scaled"     # "scaled": yaw PI and leg-length PD scaled from the upkie tuning to this robot
                                     # (build_cad_model -> plan_overrides); "upkie": Plan 4 defaults (results before 11-05)
+    wheel_reaction_ff: bool = True  # knee cancels the wheel motor's reaction on the shank (False: results before 11-06)
+    roll_compliant: bool = True     # a leg pressed by a bump yields, the IMU roll levels the body (False: results before 11-07)
+    yaw_wheel_damping: bool = True  # the wheels hold their speed difference on a sharp bump (False: compliant roll results of 11-07)
     plan_overrides: dict = field(default_factory=dict)   # Plan4Config fields for ake_sizing.make_plan
+    model: str = "urdf"             # "urdf": the robot's own URDF when the CAD folder has urdf_data.json (v5; wbr.models.build_v5);
+                                    # "upkie": upkie_description stretched to the CAD lengths and masses (v2-v4, v5 before 11-07)
+    params_file: str = "plan4_params.json"      # plant parameters in the model folder, set by build_cad_model
+
+    def plan_classes(self):
+        """(config class, plan class) of a robot with its own URDF; None: Plan 4 with patched module constants."""
+        if self.params_file == "plan4_params.json":
+            return None
+        from wbr.plans.plan_v5 import PlanV5, PlanV5Config
+        return PlanV5Config, PlanV5
 
 
 def _anchors(m, d):
@@ -124,7 +148,24 @@ def _principal(I):
     return np.maximum(vals, 1e-9), q
 
 
+def _build_from_urdf(case: CadCase, mdir: Path, urdf_json: Path):
+    """The robot's own model: URDF from the Fusion model, no upkie file (wbr.models.build_v5)."""
+    from wbr.models import build_v5 as BV
+    params = BV.build(mdir, payload_kg=case.payload_kg, payload_size=case.payload_size, with_meshes=False, motor=case.motor("hip"),
+                      limits=case.limits, mass_json=Path(case.cad_json), urdf_json=urdf_json)
+    case.params_file = BV.PARAMS_FILE
+    case.diameter_mm = 2000.0 * params.R
+    case.track_m = json.loads((mdir / BV.DESCRIPTION_FILE).read_text(encoding="utf-8"))["track"]
+    params.extra["cad_L1_L2"] = (params.extra["L1"], params.extra["L2"])
+    case.plan_overrides = v5_gains(mdir / "scene.xml", params, wheel_reaction_ff=case.wheel_reaction_ff, roll_compliant=case.roll_compliant,
+                                   yaw_wheel_damping=case.yaw_wheel_damping, motor=case.motor("hip"))
+    return params
+
+
 def build_cad_model(case: CadCase, mdir: Path):
+    urdf_json = Path(case.cad_json).with_name("urdf_data.json")
+    if case.model == "urdf" and urdf_json.exists():
+        return _build_from_urdf(case, mdir, urdf_json)
     import wbr.models.build_upkie as bu
     from wbr.controllers.lqi6.serial_leg import SerialLeg, SerialLegGeometry
     from wbr.models.upkie_params import _group_bodies, build_params, set_leg_posture
@@ -160,8 +201,10 @@ def build_cad_model(case: CadCase, mdir: Path):
     hip_mid = 0.5 * (d.xanchor[jid("left_hip")] + d.xanchor[jid("right_hip")])
     cad_hip = np.array([0.0, 0.0, pose["Z_hip"] / 1000.0])
     names = {i: mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_BODY, i) for i in range(m.nbody)}
+    # this route keeps the CAD axes, left = +y; v5 names its parts from the rocker switch side, so its +y parts are _R
+    v5_names = cad["links"]["wheel_L"]["com"][1] < 0.0
     for grp, carrier in CARRIER.items():
-        link = cad["links"][CAD_LINK[grp]]
+        link = cad["links"][CAD_LINK[grp].translate(str.maketrans("LR", "RL")) if v5_names else CAD_LINK[grp]]
         cid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, carrier)
         mass = link["mass"]
         com_cad = np.array(link["com"]) / 1000.0
@@ -233,6 +276,12 @@ def build_cad_model(case: CadCase, mdir: Path):
     if case.outer_gains not in ("scaled", "upkie"):
         raise ValueError(f"outer_gains must be 'scaled' or 'upkie', not {case.outer_gains!r}")
     case.plan_overrides = outer_loop_gains(mdir / "scene.xml", params.m_b) if case.outer_gains == "scaled" else {}
+    case.plan_overrides["wheel_reaction_ff"] = case.wheel_reaction_ff
+    case.plan_overrides["roll_compliant"] = case.roll_compliant
+    case.plan_overrides.update(compliant_roll_gains(mdir / "scene.xml", params.m_b, case.plan_overrides.get("kp_leg", 800.0),
+                                                    case.plan_overrides.get("kd_leg", 40.0)))
+    if case.yaw_wheel_damping:
+        case.plan_overrides.update(yaw_wheel_damping_gains(case.plan_overrides))
     return params
 
 
@@ -252,6 +301,74 @@ def outer_loop_gains(xml_path, m_b: float) -> dict:
     ky = AS.UPKIE_YAW_GAIN / AS.yaw_plant_gain(xml_path)["g"]
     kl = m_b / AS.UPKIE_BODY_MASS
     return dict(kp_yaw=base.kp_yaw * ky, ki_yaw=base.ki_yaw * ky, kp_leg=base.kp_leg * kl, kd_leg=base.kd_leg * kl)
+
+
+# compliant roll (11-07): roll mode bandwidth and damping, tuned on v5 with one-wheel bumps (TEST 2-7, 2-8): 1600 N/rad and
+# 100 N s/rad per leg there.  Hip shaking under latency sets in at the same delay with or without it (11-07 sweep).
+ROLL_WN = 34.0                  # rad/s
+ROLL_ZETA = 1.06
+ROLL_KI_RATIO = 0.6             # 1/s: ki = ratio x kp takes a one-sided load off the roll in about 2 s
+
+
+def compliant_roll_gains(xml_path, m_b: float, kp_leg: float, kd_leg: float, wn: float = ROLL_WN) -> dict:
+    """Gains of McuParams.roll_compliant from the robot's roll plant (a payload case gets its own roll inertia).
+    Soft walls: 8 x and 3 x the leg-length gains, so that a full differential force presses about 3 mm into a wall."""
+    g = AS.roll_plant_gain(xml_path)["g"]
+    kp = wn ** 2 / g
+    return dict(kp_roll_force=kp, ki_roll_force=ROLL_KI_RATIO * kp, kd_roll_force=2.0 * ROLL_ZETA * wn / g,
+                roll_force_int_limit=0.3 * m_b * 9.81, kp_leg_limit=8.0 * kp_leg, kd_leg_limit=3.0 * kd_leg)
+
+
+# yaw on a sharp bump (11-07): tuned on v5 with one-wheel steps (TEST 2-11 to 2-13): 8 N m s/rad and 9.6 N m/rad there.
+YAW_KW_RATIO = 5.0              # kw_yaw = ratio x kp_yaw.  The same gain on the gyro (kp_yaw x 3) goes unstable with the legs
+YAW_KI_RATIO = 3.0              # ki_yaw x ratio: the heading comes back with (kp + kw) / ki = 1 s, x 1 leaves it 3 s.  x 4 is
+                                # faster but a wheel stuck at a 4 cm step at 0.2-0.4 m/s then takes the hips to their peak
+
+
+def yaw_wheel_damping_gains(overrides: dict) -> dict:
+    """McuParams.kw_yaw and the stiffer heading on top of the yaw PI of this case (a payload case keeps its own scale)."""
+    import wbr.plans.plan4_upkie_lqi6 as p4
+    base = p4.Plan4Config()
+    return dict(kw_yaw=YAW_KW_RATIO * overrides.get("kp_yaw", base.kp_yaw), ki_yaw=YAW_KI_RATIO * overrides.get("ki_yaw", base.ki_yaw))
+
+
+# The v5 robot's outer loops and LQR weights, set from its own plant (no reference to another robot).  The numbers came from the
+# design work on the bench robots and were checked on v5 (TEST/README.md); here they are bandwidths and torque scales.
+LEG_WN = 23.93                  # rad/s, leg-length mode sqrt(2 kp / m_b): clear of the balance poles
+LEG_ZETA = 0.598
+YAW_WC = 10.06                  # rad/s, g kp_yaw (g = yaw plant gain W / (2 R Izz))
+YAW_KI = 20.11                  # 1/s^2, g ki_yaw before YAW_KI_RATIO
+FRICTION_COMP_RATIO = 0.8       # stiction compensation / the motor's backdrive torque
+# Split PD (11-07, N m/rad and N m s/rad): a leg hit by a sharp step swings at its hip, and the damping term then takes the other hip to
+# its limit (60 / 3: 11 N m at 1 m/s; damping 2: 8 N m).  The stiffness only goes up: the split mode is close to neutral with the robot's
+# weight on it (peak split in a turn: 2.4 deg at 80, 3.4 at 60, 5.7 at 50, the legs run away at 30).
+SPLIT_KP = 80.0                 # at 175 mm links; scaled with the link length (the split mode's negative stiffness goes with weight x leg length)
+SPLIT_KD = 2.0
+SPLIT_LINK = 0.175
+LEG_WALL_SCALE = 0.5            # soft walls of the leg range against compliant_roll_gains: the knee peak on a 14-20 cm bump 8-12 -> 6-10 N m
+LQR_R_WHEEL = 0.116             # LQR torque weight of the wheels: this share of m g R
+LQR_R_HIP = 0.296               # LQR torque weight of the hips: this share of m g LQR_R_HIP_ARM
+LQR_R_HIP_ARM = 0.31            # m, fixed, not the leg length: the hips drive the torso, whose inertia does not grow with the links.  With L0 here the hip loop
+                                # got faster with longer links and a 13-14 Hz hip shake set in at 10 ms latency from 25 cm (8 of 28 scenarios recovered, 11-07)
+V5_ROLL_WN = 17.0               # rad/s, half of ROLL_WN: the printed links' lateral flex (a sway mode the rigid model lacks).  With a hinge standing in for it, 34 rad/s
+                                # shook the knees from 25 cm links (standing knee peak 10 N m, rms 4.1 -> 6.0); 17 rad/s does not (11-07)
+
+
+def v5_gains(xml_path, params, wheel_reaction_ff: bool = True, roll_compliant: bool = True, yaw_wheel_damping: bool = True, motor=None) -> dict:
+    """Plan overrides of a robot with its own model: yaw, leg length, roll and stiction compensation from its plant and motor."""
+    motor = motor or AS.AKE60_8
+    g = AS.yaw_plant_gain(xml_path)["g"]
+    m_b = params.m_b
+    kp_leg, kd_leg = 0.5 * m_b * LEG_WN ** 2, m_b * LEG_ZETA * LEG_WN
+    k_link = params.extra["L1"] / SPLIT_LINK
+    out = dict(kp_yaw=YAW_WC / g, ki_yaw=YAW_KI / g, kp_leg=kp_leg, kd_leg=kd_leg, kp_split=SPLIT_KP * k_link, kd_split=SPLIT_KD * k_link, wheel_reaction_ff=wheel_reaction_ff, roll_compliant=roll_compliant,
+               friction_comp_Nm=FRICTION_COMP_RATIO * motor.backdrive, friction_comp_wheel_Nm=FRICTION_COMP_RATIO * motor.backdrive)
+    out.update(compliant_roll_gains(xml_path, m_b, kp_leg, kd_leg, wn=V5_ROLL_WN))
+    out["kp_leg_limit"] *= LEG_WALL_SCALE
+    out["kd_leg_limit"] *= LEG_WALL_SCALE
+    if yaw_wheel_damping:
+        out.update(yaw_wheel_damping_gains(out))
+    return out
 
 
 CASES = [CadCase("robot", hip_motor="AKE60-8", knee_motor="AKE60-8", wheel_motor="AKE60-8"),
@@ -297,8 +414,18 @@ def main(argv=None):
                     help="lateral COMs / tyre centre / track from the CAD (default) or upkie's (results before 11-05)")
     ap.add_argument("--outer-gains", choices=("scaled", "upkie"), default="scaled",
                     help="yaw PI / leg-length PD scaled to the robot (default) or the upkie tuning (results before 11-05)")
+    ap.add_argument("--wheel-reaction", choices=("on", "off"), default="on",
+                    help="knee cancels the wheel motor's reaction on the shank (default) or not (results before 11-06)")
+    ap.add_argument("--roll", choices=("compliant", "leg-length"), default="compliant",
+                    help="legs yield to a bump, IMU roll levels the body (default), or a leg-length difference (results before 11-07)")
+    ap.add_argument("--model", choices=("urdf", "upkie"), default="urdf",
+                    help="the robot's own URDF when the CAD folder has one (default; v5) or upkie_description stretched to the CAD (v5 results before 11-07)")
+    ap.add_argument("--yaw-wheel", choices=("on", "off"), default="on",
+                    help="the wheels hold their speed difference on a sharp bump (default) or only the gyro PI (compliant roll results of 11-07)")
     args = ap.parse_args(argv)
-    cases = [dataclasses.replace(c, cad_json=str(args.cad), lateral=args.lateral, outer_gains=args.outer_gains) for c in CASES
+    cases = [dataclasses.replace(c, cad_json=str(args.cad), lateral=args.lateral, outer_gains=args.outer_gains,
+                                 wheel_reaction_ff=args.wheel_reaction == "on", roll_compliant=args.roll == "compliant",
+                                 yaw_wheel_damping=args.yaw_wheel == "on", model=args.model) for c in CASES
              if not args.only or c.tag in args.only]
     args.out.mkdir(parents=True, exist_ok=True)
     stat = {c.tag: static_report(dataclasses.replace(c)) for c in cases}

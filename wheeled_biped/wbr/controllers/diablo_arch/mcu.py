@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from typing import Callable, Dict, Optional
 
 import numpy as np
 
@@ -21,6 +21,7 @@ from wbr.common.rotations import quat_to_matrix, roll_pitch_yaw
 from wbr.common.servo import ServoCommand, torque_command
 from wbr.controllers.diablo_arch.host_link import HostLink, MotionCtrl, RobotMode
 from wbr.controllers.lqi6.fivebar import FiveBarLeg, LegGeometry
+from wbr.observers.body_attitude import BodyAttitude
 from wbr.observers.upkie_observers import BaseOrientation
 
 LEFT_JOINTS = ("left_hip", "left_crank", "left_wheel")
@@ -43,6 +44,21 @@ class McuParams:
     kp_yaw: float = 2.5                 # N m per rad/s of yaw rate error
     ki_yaw: float = 4.0                 # N m per rad
     yaw_int_limit: float = 0.5          # rad, clamp of the yaw-rate error integral (ki_yaw * limit = max steady torque)
+    kw_yaw: float = 0.0                 # N m per rad/s of (v_right - v_left) / track error (11-07; 0 = off).  A wheel stopped by
+                                        # a sharp step turned the robot before the gyro saw it (the leg splits first), and the
+                                        # gyro gain cannot go up: 3 x kp_yaw shakes the legs.  This term acts on the wheels' own
+                                        # speed, like a locked differential: the free wheel slows down at once and the stopped
+                                        # one gets the torque.  A wheel spinning on the step fools it: only the gyro sees that
+    yaw_ref_rate: float = 3.0           # rad/s^2, limits the yaw reference while kw_yaw is on: a step would reach the wheels at
+                                        # (kp_yaw + kw_yaw) x step (1 rad/s: 1.2 -> 5 N m, overshoot 50 %, legs split 5.7 deg)
+    attitude_tau: float = 0.0           # s; > 0: roll and pitch from the MCU's own complementary filter on the raw IMU sample, with the
+                                        # robot's acceleration (encoders, gyro, IMU position) taken out: wbr.observers.body_attitude.
+                                        # 0 keeps the attitude the IMU delivers
+    imu_position: Optional[np.ndarray] = None   # m, IMU position from the hip midpoint in the base frame (attitude_tau)
+    yaw_offset_tau: float = 0.0         # s; > 0 and the IMU sample has "bias_rps": yaw rate from the raw gyro (pi3hat rate - bias) minus
+                                        # its own offset, learned with this time constant while the wheels say the robot does not turn.
+                                        # The pi3hat's z bias state is pulled by a zero-yaw-rate pseudo measurement: after a 10 s turn at
+                                        # 1 rad/s its rate reads 0.13 rad/s low and the yaw loop keeps the robot turning at that rate
     kp_roll: float = 0.5                # m of leg-length difference per rad of roll error
     ki_roll: float = 0.3                # m per rad s
     kd_roll: float = 0.03
@@ -62,6 +78,7 @@ class McuParams:
     leg_rate: float = 0.25              # m/s leg length ramp
     leg_joint: str = "crank"            # name suffix of the second leg joint ("crank" five-bar, "knee" serial leg)
     F_ff_N: Optional[float] = None      # static leg force feed-forward per leg; None: 0.5 (mass_total - mass_wheels) g
+    leg_force: Optional[Callable[[float, float], float]] = None     # static force per leg from (L0, world lean), replaces F_ff_N / cos(lean)
     friction_comp_Nm: float = 0.0       # hip stiction compensation: +fc * tanh((Tp - Tp_ff) / width) in the direction the
                                         # balance law wants the virtual leg to move (not the sign of the total torque, which
                                         # includes the static holding torque)
@@ -86,6 +103,42 @@ class McuParams:
                                         # slope) is then not taken for an intended motion; comparing with the fixed Tp_ff
                                         # added a constant +-2 fc (0.16 N m) to the hip torque in those cases (Plan 4).
                                         # 0 keeps the comparison with Tp_ff / 0 (Plans 2-3)
+    wheel_reaction_ff: bool = False     # serial leg only: the knee also cancels the wheel motor's reaction on the shank
+                                        # (SerialLeg.wheel_reaction_ratio), which otherwise moves the leg length: forward
+                                        # wheel torque stretches a knee-forward leg.  Uses the commanded wheel torque, like
+                                        # the hip term that vmc_torques adds for Tp.  False keeps Plans 2-4 as they were
+    # compliant roll (11-07): the leg-length PD only holds the MEAN length, so a leg pressed by a bump under one wheel
+    # gets out of the way instead of pushing the body over (with one length PD per leg the body tilted by
+    # h / (track + kp_roll)); the body is levelled by a differential force from the IMU roll, and soft walls keep each leg
+    # inside its range because no length reference does that any more.  False keeps the leg-length-difference roll above
+    roll_compliant: bool = False
+    kp_roll_force: float = 0.0          # N per rad of roll error, +- on each leg
+    ki_roll_force: float = 0.0          # N per rad s
+    kd_roll_force: float = 0.0          # N s per rad, on the roll rate (no relative leg damping: a skyhook)
+    roll_force_limit: float = 0.0       # N, |differential force|: at the static leg force a wheel is just unloaded
+    roll_force_int_limit: float = 0.0   # N
+    roll_ref_rate: float = 0.5          # rad/s: the force loop has no leg-length reference to smooth a roll command step
+    kp_leg_limit: float = 0.0           # N/m, soft wall of one leg beyond L_max or below L_min - L_min_margin
+    kd_leg_limit: float = 0.0           # N s/m, only while going further out
+    L_min_margin: float = 0.02          # m: a bump under one wheel may shorten that leg below the commanded range
+    L_max_margin: float = 0.0           # m: ... and lengthen the other one above it (the straight knee is at L1 + L2)
+    mean_follows_range: bool = False    # compliant roll: when the leg-length difference needs it, the mean length goes down so that both legs stay in their range
+    # like a car's suspension (11-07): over a speed bump the height control holds the LONGER leg, so the leg on the bump folds without being pushed back
+    # and the body does not rise; with even legs this is the mean-length control.  uneven_blend: the leg difference over which it changes between the two
+    suspension: bool = False
+    suspension_blend: float = 0.005     # m
+    suspension_share: float = 0.0       # m; > 0: above this leg difference the longer leg starts to take part, so that the shorter one only reaches its end at the full difference
+    kd_leg_own: float = 0.0             # N s/m on each leg's own speed against the held length: a car's damper, it stops the wheel hopping
+    # slower over uneven ground (11-07): the speed command is limited while the legs differ in length.  > 0: the limit at uneven_d1
+    uneven_speed: float = 0.0           # m/s
+    uneven_d0: float = 0.01             # m, leg-length difference where the limit starts to come down from max_forward
+    uneven_d1: float = 0.04             # m, ... and reaches uneven_speed
+    uneven_hold: float = 0.5            # s, the limit stays this long after the legs are even again
+    uneven_rise: float = 1.0            # m/s^2, then it rises at this rate
+    uneven_brake: float = 0.0           # m/s^2, the speed reference's rate under the limit; 0: the law's normal rate
+    uneven_brake_tau: float = 0.0       # s, low-pass on the reference while it comes down (rounds the braking onset)
+    uneven_lean: float = 0.0            # lean of the virtual leg per (a / g) under the limit: a balancing robot has to lean back before it can brake
+    uneven_hold_int: bool = False       # no position / tilt integration while driving with uneven legs: a robot delayed by a bump would speed up again to catch its position reference
 
 
 @dataclass
@@ -120,6 +173,8 @@ class DiabloMcu:
         p = self.p
         self.imu = (BaseOrientation(p.imu_rotation_base_to_imu, p.imu_rotation_ars_to_world)
                     if (p.imu_rotation_base_to_imu is not None or p.imu_rotation_ars_to_world is not None) else None)
+        self.attitude = (BodyAttitude(p.attitude_tau, p.imu_position if p.imu_position is not None else np.zeros(3), p.dt)
+                         if p.attitude_tau > 0.0 else None)
         self.reset(RobotMode.STAND)
 
     # ---------------------------------------------------------------- state
@@ -132,6 +187,8 @@ class DiabloMcu:
         self.fault = False
         self.armed = armed
         self.roll_int = 0.0
+        self.roll_force_int = 0.0
+        self.roll_ref_limited = 0.0
         self.est_valid = False          # becomes True after the first estimate() (arm() needs a measurement)
         self.off_latched = False        # motors switched off after a host-link loss (disconnect_off_s)
         self.ever_connected = False
@@ -142,6 +199,13 @@ class DiabloMcu:
         self.v_ref = 0.0
         self.yaw_rate_ref = 0.0
         self.yaw_int = 0.0
+        self.yaw_ref_limited = 0.0
+        self.yaw_offset: Optional[float] = None     # offset of the raw yaw gyro (yaw_offset_tau)
+        self.v_limit = self.p.max_forward           # speed limit over uneven ground (uneven_speed)
+        self.v_limit_hold = 0.0
+        self.wheel_yaw_lp = 0.0
+        if self.attitude is not None:
+            self.attitude.reset()
         self.roll_ref = 0.0
         self.pitch_ref = 0.0
         self.position = 0.0
@@ -275,10 +339,26 @@ class DiabloMcu:
         else:
             R = quat_to_matrix(quat)
             gyro = gyro_raw
-        roll, pitch, _ = roll_pitch_yaw(R)
+        p = self.p
+        raw_yaw = p.yaw_offset_tau > 0.0 and "bias_rps" in obs["imu"]
+        if raw_yaw:                                 # the yaw axis without the board's bias state, offset learned below
+            bias = np.asarray(obs["imu"]["bias_rps"], dtype=float)
+            bias_z = float((self.imu.R_base_to_imu.T @ bias)[2] if self.imu is not None else bias[2])
+            if self.yaw_offset is None:
+                self.yaw_offset = -bias_z
+            gyro = np.array(gyro, dtype=float)
+            gyro[2] -= bias_z + self.yaw_offset
+        if self.attitude is not None:
+            f = np.asarray(obs["imu"]["linear_acceleration"], dtype=float)
+            up = self.attitude.update(gyro, self.imu.R_base_to_imu.T @ f if self.imu is not None else f, R[2, :])    # R[2, :]: the
+            roll, pitch = self.attitude.roll, self.attitude.pitch                                       # world's up in the base frame
+            yaw_rate = float(up @ gyro)
+        else:
+            roll, pitch, _ = roll_pitch_yaw(R)
+            yaw_rate = float((R @ gyro)[2])
         e.pitch, e.pitch_rate = pitch, float(gyro[1])
         e.roll, e.roll_rate = roll, float(gyro[0])
-        e.yaw_rate = float((R @ gyro)[2])          # world-frame yaw rate (review B11)
+        e.yaw_rate = yaw_rate                      # world-frame yaw rate (review B11)
         self.est_valid = True
         servo = self._filtered_servo(obs["servo"])
         self.servo_valid = servo
@@ -299,7 +379,23 @@ class DiabloMcu:
         e.L0_mean = 0.5 * (e.L0["left"] + e.L0["right"])
         self.position += e.v * self.p.dt
         e.position = self.position
+        if raw_yaw:
+            self._learn_yaw_offset(e)
+        if self.attitude is not None:               # the hip midpoint's velocity for the next sample
+            th, L = e.theta_v_mean, e.L0_mean
+            Ld = 0.5 * (e.L0_dot["left"] + e.L0_dot["right"])
+            thd = e.theta_v_dot_mean
+            self.attitude.set_hip_velocity(e.v + Ld * math.sin(th) + L * thd * math.cos(th), Ld * math.cos(th) - L * thd * math.sin(th), e.yaw_rate)
         return e
+
+    def _learn_yaw_offset(self, e: Estimate) -> None:
+        """The raw yaw gyro's offset is learned against the wheels while they show no turn (no yaw command, so no slip is expected).
+        It starts from the board's own bias, which a robot at rest has converged on."""
+        p = self.p
+        wheel_yaw = (e.v_wheel["right"] - e.v_wheel["left"]) / p.track
+        self.wheel_yaw_lp += (wheel_yaw - self.wheel_yaw_lp) * min(p.dt / 0.1, 1.0)
+        if self.yaw_rate_ref == 0.0 and abs(self.wheel_yaw_lp) < 0.1:
+            self.yaw_offset += (e.yaw_rate - self.wheel_yaw_lp) * p.dt / p.yaw_offset_tau
 
     # ------------------------------------------------------------- commands
     def apply_command(self, cmd: MotionCtrl, dt: float) -> None:
@@ -390,8 +486,10 @@ class DiabloMcu:
             # safe state (report 4.5): every joint torque-free, no leg force / feed-forward either
             balance = False
             self.yaw_int = 0.0
+            self.yaw_ref_limited = 0.0
             self.roll_int = 0.0
-            self.telemetry = {"mode": int(self.mode), "fault": self.fault, "armed": self.armed, "L_ref": self.L_ref.value,
+            self.roll_force_int = 0.0
+            self.telemetry ={"mode": int(self.mode), "fault": self.fault, "armed": self.armed, "L_ref": self.L_ref.value,
                               "v_ref": 0.0, "in_control": self.link.in_control, "tau_yaw": 0.0, "dL": 0.0, "T": 0.0, "Tp": 0.0,
                               "tau_split": 0.0, "d_theta": 0.0}
             self.law.compute(e, dict(v_ref=0.0, yaw_rate_ref=0.0, pitch_ref=0.0, L_ref=self.L_ref.value,
@@ -401,26 +499,56 @@ class DiabloMcu:
 
         # yaw (differential wheel torque / velocity) and roll (leg-length difference) terms --
         if balance:
-            yaw_err = self.yaw_rate_ref - e.yaw_rate
+            yaw_ref = self.yaw_rate_ref
+            if p.kw_yaw != 0.0:
+                self.yaw_ref_limited += clamp_abs(self.yaw_rate_ref - self.yaw_ref_limited, p.yaw_ref_rate * dt)
+                yaw_ref = self.yaw_ref_limited
+            yaw_err = yaw_ref - e.yaw_rate
             self.yaw_int = clamp_abs(self.yaw_int + yaw_err * dt, p.yaw_int_limit)
             tau_yaw = p.kp_yaw * yaw_err + p.ki_yaw * self.yaw_int
+            if p.kw_yaw != 0.0:
+                tau_yaw += p.kw_yaw * (yaw_ref - (e.v_wheel["right"] - e.v_wheel["left"]) / p.track)
         else:
             tau_yaw = 0.0
             self.yaw_int = 0.0
+            self.yaw_ref_limited = 0.0
         # roll: geometric feed-forward (leg-length difference ~ track * tan(roll)) + PI on the error (review B8)
-        roll_err = self.roll_ref - e.roll
-        self.roll_int = clamp_abs(self.roll_int + roll_err * dt, p.roll_int_limit / max(p.ki_roll, 1e-6))
-        dL = clamp_abs(p.track * math.tan(self.roll_ref) + p.kp_roll * roll_err + p.ki_roll * self.roll_int
-                       - p.kd_roll * e.roll_rate, 0.05)
+        compliant = p.roll_compliant and balance
+        F_roll = 0.0
+        leg_limit: Dict[str, float] = {}
+        if compliant:
+            self.roll_ref_limited += clamp_abs(self.roll_ref - self.roll_ref_limited, p.roll_ref_rate * dt)
+            roll_err = self.roll_ref_limited - e.roll
+            leg_limit = {s: self._leg_limit_force(e.L0[s], e.L0_dot[s]) for s in ("left", "right")}
+            F_wanted = p.kp_roll_force * roll_err + self.roll_force_int - p.kd_roll_force * e.roll_rate
+            F_roll = clamp_abs(F_wanted, p.roll_force_limit)
+            if F_roll == F_wanted and not any(leg_limit.values()):      # conditional integration: not against a limit
+                self.roll_force_int = clamp_abs(self.roll_force_int + p.ki_roll_force * roll_err * dt, p.roll_force_int_limit)
+            dL = 0.0
+        else:
+            self.roll_force_int = 0.0
+            self.roll_ref_limited = self.roll_ref
+            roll_err = self.roll_ref - e.roll
+            self.roll_int = clamp_abs(self.roll_int + roll_err * dt, p.roll_int_limit / max(p.ki_roll, 1e-6))
+            dL = clamp_abs(p.track * math.tan(self.roll_ref) + p.kp_roll * roll_err + p.ki_roll * self.roll_int
+                           - p.kd_roll * e.roll_rate, 0.05)
         L_ref_side = {"left": clamp(self.L_ref.value + 0.5 * dL, p.L_min, p.L_max),
                       "right": clamp(self.L_ref.value - 0.5 * dL, p.L_min, p.L_max)}
         v_ref = self.v_ref if balance else 0.0
+        limited = hold_int = False
+        if p.uneven_speed > 0.0 and balance:
+            limit = self._uneven_limit(abs(e.L0["left"] - e.L0["right"]), dt)
+            limited = abs(v_ref) > limit
+            hold_int = p.uneven_hold_int and limit < p.max_forward and abs(v_ref) > 0.02
+            v_ref = clamp_abs(v_ref, limit)
         self.telemetry = {"mode": int(self.mode), "fault": self.fault, "L_ref": self.L_ref.value, "v_ref": v_ref,
                           "in_control": self.link.in_control, "tau_yaw": tau_yaw, "dL": dL}
 
         # balance law --------------------------------------------------------------------
         refs = dict(v_ref=v_ref, yaw_rate_ref=self.yaw_rate_ref if balance else 0.0, pitch_ref=self.pitch_ref,
-                    L_ref=self.L_ref.value, L_ref_side=L_ref_side, balance=balance, tau_yaw=tau_yaw)
+                    L_ref=self.L_ref.value, L_ref_side=L_ref_side, balance=balance, tau_yaw=tau_yaw,
+                    v_brake=p.uneven_brake if limited else 0.0, v_lean=p.uneven_lean if limited else 0.0, v_brake_tau=p.uneven_brake_tau if limited else 0.0,
+                    hold_integrators=hold_int)
         law_out = self.law.compute(e, refs, self)
         ctrl = getattr(self.law, "ctrl", None)       # telemetry: the reference the balancer is actually tracking
         e.v_ref = float(getattr(ctrl, "v_filt", v_ref)) if ctrl is not None else float(v_ref)
@@ -453,14 +581,37 @@ class DiabloMcu:
         d_theta = e.theta_v_body["left"] - e.theta_v_body["right"]
         d_theta_dot = e.theta_v_dot["left"] - e.theta_v_dot["right"]
         tau_split = p.kp_split * d_theta + p.kd_split * d_theta_dot
+        L_mean_dot = 0.5 * (e.L0_dot["left"] + e.L0_dot["right"])
+        L_mean_ref = self.L_ref.value
+        L_held, L_held_dot = e.L0_mean, L_mean_dot
+        if compliant:
+            d = e.L0["left"] - e.L0["right"]
+            if p.suspension:                    # the longer leg (blend: no step in the force when the legs cross)
+                w = min(abs(d) / p.suspension_blend, 1.0)
+                L_held += 0.5 * abs(d) * w
+                L_held_dot += 0.5 * math.copysign(1.0, d) * (e.L0_dot["left"] - e.L0_dot["right"]) * w
+            if p.mean_follows_range:
+                spread = abs(d) if p.suspension else 0.5 * abs(d)     # how far below the held length the shorter leg is
+                low, high = p.L_min - p.L_min_margin, p.L_max + p.L_max_margin
+                if p.suspension and p.suspension_share > 0.0 and spread > p.suspension_share and high - low > p.suspension_share:
+                    L_mean_ref += (spread - p.suspension_share) * max(high - L_mean_ref, 0.0) / (high - low - p.suspension_share)
+                lo, hi = low + spread, high if p.suspension else high - spread
+                L_mean_ref = clamp(L_mean_ref, lo, hi) if lo <= hi else 0.5 * (lo + hi)
         out: Dict[str, ServoCommand] = {}
         for side, sign in (("left", -1.0), ("right", +1.0)):
-            F = p.kp_leg * (L_ref_side[side] - e.L0[side]) - p.kd_leg * e.L0_dot[side] + F_ff / max(math.cos(e.theta_v[side]), 0.5)
+            if compliant:                       # positive roll error: left leg longer, right leg shorter
+                F = p.kp_leg * (L_mean_ref - L_held) - p.kd_leg * L_held_dot - sign * F_roll + leg_limit[side] - p.kd_leg_own * (e.L0_dot[side] - L_held_dot)
+            else:
+                F = p.kp_leg * (L_ref_side[side] - e.L0[side]) - p.kd_leg * e.L0_dot[side]
+            F += p.leg_force(e.L0[side], e.theta_v[side]) if p.leg_force is not None else F_ff / max(math.cos(e.theta_v[side]), 0.5)
             Tp_side = 0.5 * Tp + sign * 0.5 * tau_split
             sv = self.servo_valid if self.servo_valid else obs["servo"]        # held sample on invalid data (r2 M1)
             tau_hip, tau_crank = self.leg.vmc_torques(F, Tp_side, sv[f"{side}_hip"]["position"],
                                                       sv[f"{side}_{p.leg_joint}"]["position"])
             tau_wheel = 0.5 * T + sign * 0.5 * tau_yaw
+            if p.wheel_reaction_ff and math.isfinite(tau_wheel):
+                tau_crank += clamp_abs(tau_wheel, p.tau_wheel_max) * self.leg.wheel_reaction_ratio(
+                    sv[f"{side}_hip"]["position"], sv[f"{side}_{p.leg_joint}"]["position"])
             for name, tau, lim in ((f"{side}_hip", tau_hip, p.tau_hip_max), (f"{side}_{p.leg_joint}", tau_crank, p.tau_hip_max),
                                    (f"{side}_wheel", tau_wheel, p.tau_wheel_max)):
                 if not math.isfinite(tau):          # never send NaN to the motors (review B13); and never silently:
@@ -469,5 +620,30 @@ class DiabloMcu:
                         self.fault = True
                         self.events.append((self.t, f"FAULT: non-finite torque command on {name}"))
                 out[name] = torque_command(clamp_abs(tau, lim), lim)
-        self.telemetry.update({"T": T, "Tp": Tp, "tau_split": tau_split, "d_theta": d_theta, "armed": self.armed})
+        self.telemetry.update({"T": T, "Tp": Tp, "tau_split": tau_split, "d_theta": d_theta, "armed": self.armed, "F_roll": F_roll})
         return out
+
+    def _uneven_limit(self, diff: float, dt: float) -> float:
+        """Speed limit from the leg-length difference: comes down at once, goes back up after uneven_hold."""
+        p = self.p
+        s = clamp((diff - p.uneven_d0) / max(p.uneven_d1 - p.uneven_d0, 1e-6), 0.0, 1.0)
+        now = p.max_forward + s * (p.uneven_speed - p.max_forward)
+        if now <= self.v_limit:
+            self.v_limit = now
+            self.v_limit_hold = p.uneven_hold
+        elif self.v_limit_hold > 0.0:
+            self.v_limit_hold -= dt
+        else:
+            self.v_limit = min(now, self.v_limit + p.uneven_rise * dt)
+        return self.v_limit
+
+    def _leg_limit_force(self, L: float, L_dot: float) -> float:
+        """Soft wall of one leg's range for the compliant roll: extension force beyond the range, damped only outwards."""
+        p = self.p
+        high = p.L_max + p.L_max_margin
+        if L > high:
+            return -p.kp_leg_limit * (L - high) - p.kd_leg_limit * max(L_dot, 0.0)
+        low = p.L_min - p.L_min_margin
+        if L < low:
+            return p.kp_leg_limit * (low - L) - p.kd_leg_limit * min(L_dot, 0.0)
+        return 0.0

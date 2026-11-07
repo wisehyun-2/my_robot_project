@@ -124,6 +124,18 @@ class SerialLeg:
         tau = self.jacobian(q_hip, q_knee).T @ F_cart
         return float(tau[0]), float(tau[1])
 
+    def wheel_reaction_ratio(self, q_hip: float, q_knee: float) -> float:
+        """Knee torque per N m of wheel motor torque that keeps the wheel motor's reaction on the shank out of the
+        leg length: tau_knee += ratio * tau_wheel.
+
+        The wheel motor applies tau_wheel on the wheel and -tau_wheel on the shank (both about +y).  With the virtual
+        leg angle held, the thigh and the shank turn apart from it by d(alpha) = (L2 cos(beta) / L0) d(q_knee) and
+        d(beta) = (L1 cos(alpha) / L0) d(q_knee), so the virtual work gives the torque on the knee coordinate
+            Q_knee = tau_knee - (L2 cos(beta) / L0) tau_hip - (L1 cos(alpha) / L0) tau_wheel.
+        The hip term is what ``vmc_torques`` already adds to tau_knee for Tp; this is the wheel term.  L1 = L2: 1/2."""
+        _, L0, theta_v = self.forward(q_hip, q_knee)
+        return self.g.L1 * math.cos(q_hip - theta_v) / max(L0, 1e-3)
+
     def within_limits(self, q_hip: float, q_knee: float, margin: float = 0.0) -> bool:
         lo, hi = self.g.q_hip_range
         klo, khi = self.g.q_knee_range

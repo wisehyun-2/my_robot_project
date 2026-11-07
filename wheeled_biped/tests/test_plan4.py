@@ -173,6 +173,22 @@ class SerialLegTests(unittest.TestCase):
         self.assertFalse(leg.within_limits(0.0, -2.6))
         self.assertFalse(leg.within_limits(-1.2, 0.5, margin=0.1))
 
+    def test_wheel_reaction_ratio_is_the_shank_share_of_the_knee_motion(self):
+        eps = 1e-5
+        for L1, L2 in ((0.175, 0.175), (0.168, 0.175), (0.20, 0.15)):
+            leg = SerialLeg(SerialLegGeometry(L1=L1, L2=L2, knee_sign=-1.0))
+            for L0 in (0.24, 0.30):
+                for th in (0.0, -0.06, 0.2):
+                    qa, qb = leg.inverse(L0 - eps, th), leg.inverse(L0 + eps, th)     # virtual leg angle held
+                    shank = (sum(qb) - sum(qa)) / (qb[1] - qa[1])                     # d(q_hip + q_knee) / d(q_knee)
+                    q = leg.inverse(L0, th)
+                    ratio = leg.wheel_reaction_ratio(*q)
+                    self.assertAlmostEqual(ratio, shank, places=6)
+                    # the shank and the thigh shares add up to one; vmc_torques gives the thigh share for Tp
+                    self.assertAlmostEqual(ratio + leg.vmc_torques(0.0, 1.0, *q)[1], 1.0, places=9)
+                    if L1 == L2:
+                        self.assertAlmostEqual(ratio, 0.5, places=9)
+
 
 # ----------------------------------------------------------------------------- MuJoCo joint signs
 class UpkieJointSignTests(unittest.TestCase):
@@ -517,6 +533,157 @@ class Plan4SmokeTests(unittest.TestCase):
         self.assertAlmostEqual(normal[0], -math.sin(math.radians(5.0)), places=6)     # floor rises with +x
         nominal = make_plan().sim.total_mass()
         self.assertAlmostEqual(make_plan(mass_scale=1.15).sim.total_mass(), 1.15 * nominal, places=6)
+
+
+class Plan4WheelReactionTests(unittest.TestCase):
+    """McuParams.wheel_reaction_ff: the knee cancels the wheel motor's reaction on the shank."""
+
+    def test_off_by_default_and_only_changes_the_knee(self):
+        off, on = make_plan(), make_plan()
+        self.assertFalse(off.mcu.p.wheel_reaction_ff)
+        for _ in range(400):                            # both closed loops identical up to here (no noise)
+            off.step(0.3)
+            on.step(0.3)
+        on.mcu.p.wheel_reaction_ff = True
+        a = off.mcu.tick(off._obs_to_mcu(off.observation))
+        b = on.mcu.tick(on._obs_to_mcu(on.observation))
+        for side in ("left", "right"):
+            self.assertGreater(abs(b[f"{side}_wheel"].feedforward_torque), 1e-3)
+            self.assertEqual(a[f"{side}_wheel"].feedforward_torque, b[f"{side}_wheel"].feedforward_torque)
+            self.assertEqual(a[f"{side}_hip"].feedforward_torque, b[f"{side}_hip"].feedforward_torque)
+            sv = on.mcu.servo_valid
+            ratio = on.leg.wheel_reaction_ratio(sv[f"{side}_hip"]["position"], sv[f"{side}_knee"]["position"])
+            self.assertAlmostEqual(b[f"{side}_knee"].feedforward_torque - a[f"{side}_knee"].feedforward_torque,
+                                   ratio * b[f"{side}_wheel"].feedforward_torque, places=9)
+
+    def test_keeps_the_leg_length_on_a_slope(self):
+        def leg_error(ff: bool) -> float:
+            plan = make_plan(slope_deg=10.0, wheel_reaction_ff=ff)     # uphill: the wheels hold with a positive torque
+            self.assertTrue(plan.run(3.0))
+            n = int(round(0.5 / plan.dt))
+            self.assertGreater(np.mean(plan.log["T"][-n:]), 0.1)
+            return float(np.mean(plan.log["L0"][-n:] - plan.log["L_ref"][-n:]))
+
+        off, on = leg_error(False), leg_error(True)
+        self.assertGreater(off, 0.0)                    # forward wheel torque stretches a knee-forward leg ...
+        self.assertLess(abs(on), 0.5 * off)             # ... and the compensation takes most of that away
+
+
+COMPLIANT = dict(roll_compliant=True, kp_roll_force=400.0, ki_roll_force=240.0, kd_roll_force=25.0, roll_force_int_limit=8.0,
+                 kp_leg_limit=6400.0, kd_leg_limit=120.0)
+
+
+class Plan4CompliantRollTests(unittest.TestCase):
+    """McuParams.roll_compliant: the legs have no spring against each other, the IMU roll levels the body."""
+
+    def _commanded_forces(self, plan, dq_knee: float) -> dict:
+        """Leg forces of one MCU tick with the left knee moved by +dq_knee and the right one by -dq_knee (no roll)."""
+        seen = {}
+        vmc = plan.leg.vmc_torques
+
+        def spy(F, Tp, q_hip, q_knee):
+            seen["right" if "left" in seen else "left"] = F
+            return vmc(F, Tp, q_hip, q_knee)
+
+        plan.leg.vmc_torques = spy
+        obs = copy.deepcopy(plan._obs_to_mcu(plan.observation))
+        obs["servo"]["left_knee"]["position"] += dq_knee
+        obs["servo"]["right_knee"]["position"] -= dq_knee
+        plan.mcu.tick(obs)
+        plan.leg.vmc_torques = vmc
+        return seen
+
+    def test_off_by_default(self):
+        self.assertFalse(make_plan().mcu.p.roll_compliant)
+
+    def test_legs_have_no_spring_against_each_other(self):
+        def split(**kw) -> float:
+            plan = make_plan(**kw)
+            for _ in range(50):
+                plan.step(0.0)
+            f = self._commanded_forces(plan, 0.05)
+            return f["left"] - f["right"]
+
+        self.assertGreater(abs(split()), 10.0)                      # leg-length roll: each leg pushes back on its own
+        self.assertLess(abs(split(**COMPLIANT)), 1.0)               # compliant: only the static force's cos term differs
+
+    def test_roll_command_is_reached_with_the_leg_difference_of_the_track(self):
+        plan = make_plan(**COMPLIANT)
+        self.assertTrue(plan.run(0.5))
+        plan.host.set_command(roll=0.05)
+        self.assertTrue(plan.run(3.0))
+        n = int(round(0.5 / plan.dt))
+        self.assertAlmostEqual(float(np.mean(plan.log["roll"][-n:])), 0.05, delta=0.005)
+        diff = float(np.mean(plan.log["L0_left"][-n:] - plan.log["L0_right"][-n:]))
+        d = plan.sim.data
+        tires = abs(d.geom("left_tire").xpos[1] - d.geom("right_tire").xpos[1])     # the model's, not the MCU's track constant
+        self.assertAlmostEqual(diff, tires * math.tan(0.05), delta=0.15 * tires * 0.05)
+
+    def test_soft_walls_only_act_outside_the_range_and_damp_outwards(self):
+        mcu = make_plan(**COMPLIANT).mcu
+        p = mcu.p
+        low = p.L_min - p.L_min_margin
+        self.assertEqual(mcu._leg_limit_force(0.5 * (p.L_min + p.L_max), 1.0), 0.0)
+        self.assertEqual(mcu._leg_limit_force(p.L_min - 0.5 * p.L_min_margin, -1.0), 0.0)   # the margin below L_min is free
+        self.assertAlmostEqual(mcu._leg_limit_force(p.L_max + 0.01, 0.0), -0.01 * p.kp_leg_limit)
+        self.assertAlmostEqual(mcu._leg_limit_force(p.L_max + 0.01, 0.1), -0.01 * p.kp_leg_limit - 0.1 * p.kd_leg_limit)
+        self.assertAlmostEqual(mcu._leg_limit_force(p.L_max + 0.01, -0.1), -0.01 * p.kp_leg_limit)
+        self.assertAlmostEqual(mcu._leg_limit_force(low - 0.01, -0.1), 0.01 * p.kp_leg_limit + 0.1 * p.kd_leg_limit)
+
+    def test_keeps_the_body_level_over_a_bump_under_one_wheel(self):
+        def roll_peak(**kw) -> float:
+            plan = make_plan(floor_bump=(0.015, 1.0, 0.25, 0.15, 0.3, 0.05), **kw)
+            self.assertTrue(plan.run(0.5))
+            self.assertTrue(plan.run(3.5, 0.3))
+            return float(np.degrees(np.abs(plan.log["roll"]).max()))
+
+        off, on = roll_peak(), roll_peak(**COMPLIANT)
+        self.assertGreater(off, 0.5)
+        self.assertLess(on, 0.5 * off)
+
+
+class Plan4YawWheelDampingTests(unittest.TestCase):
+    """McuParams.kw_yaw: the differential wheel torque also acts on the wheels' own speed difference."""
+
+    def test_off_by_default(self):
+        self.assertEqual(make_plan().mcu.p.kw_yaw, 0.0)
+
+    def test_wheel_speed_difference_reaches_the_differential_torque(self):
+        plan = make_plan(kw_yaw=2.0, vel_window_s=0.0)      # no position window: the driver velocity goes straight in
+        for _ in range(50):
+            plan.step(0.0)
+        obs = copy.deepcopy(plan._obs_to_mcu(plan.observation))
+        plan.mcu.tick(copy.deepcopy(obs))
+        before = plan.mcu.telemetry["tau_yaw"]
+        obs["time"] += plan.dt
+        obs["servo"]["left_wheel"]["velocity"] += 1.0       # left wheel faster: the robot turns right, torque to turn back left
+        plan.mcu.tick(obs)
+        p = plan.mcu.p
+        self.assertAlmostEqual(plan.mcu.telemetry["tau_yaw"] - before, p.kw_yaw * p.wheel_radius / p.track, delta=0.05 * p.kw_yaw * p.wheel_radius / p.track)
+
+    def test_reference_is_ramped_only_with_the_wheel_term_on(self):
+        def run(**kw):
+            plan = make_plan(**kw)
+            for _ in range(50):
+                plan.step(0.0)
+            for _ in range(100):
+                plan.step(0.0, 1.0)
+            return plan
+
+        on = run(kw_yaw=2.0, yaw_ref_rate=3.0)
+        self.assertAlmostEqual(on.mcu.yaw_ref_limited, 3.0 * 0.1, delta=0.03)
+        self.assertEqual(run().mcu.yaw_ref_limited, 0.0)
+
+    def test_keeps_the_heading_on_a_sharp_step_under_one_wheel(self):
+        def heading_peak(**kw) -> float:
+            plan = make_plan(floor_bump=(0.012, 1.0, 0.25, 0.005, 0.3, 0.05), **COMPLIANT, **kw)
+            self.assertTrue(plan.run(0.5))
+            self.assertTrue(plan.run(2.5, 0.3))
+            return float(np.degrees(np.abs(np.cumsum(plan.log["yaw_rate"]) * plan.dt).max()))
+
+        off, on = heading_peak(), heading_peak(kw_yaw=2.0, ki_yaw=2.4)
+        self.assertGreater(off, 3.0)
+        self.assertLess(on, 0.5 * off)
 
 
 # ----------------------------------------------------------------------------- sign adapter

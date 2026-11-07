@@ -60,6 +60,10 @@ class Plan4Config:
     kp_yaw: float = 0.4              # N m per rad/s
     ki_yaw: float = 0.8
     yaw_int_limit: float = 1.0       # rad: ki_yaw * limit = 0.8 N m steady differential torque against the tire scrub
+    kw_yaw: float = 0.0              # N m per rad/s of wheel-speed-difference yaw rate error (see McuParams)
+    yaw_ref_rate: float = 3.0        # rad/s^2, see McuParams
+    yaw_offset_tau: float = 0.0      # s, see McuParams (the v5 robot's pi3hat chain: wbr.plans.plan_v5)
+    attitude_tau: float = 0.0        # s, see McuParams (same)
                                      # (sized with upkie_description's 40 mm cylinder tire, whose two rim contacts scrub
                                      # when yawing: 0.5 rad capped it at 0.4 N m and the yaw rate stalled at 0.84 rad/s
                                      # with mass x1.15 / friction 1.0; kept for the ellipsoid tire of models/upkie_plan4)
@@ -74,6 +78,16 @@ class Plan4Config:
     predict_ms: float = 0.0          # LQI state-predictor horizon (design constant = nominal latency, not latency_ms);
                                      # 10 ms: latency tolerance 15 -> 30 ms but the push pitch peaks double, so off
                                      # by default (docs/plan4_lqi6.md 3.5)
+    wheel_reaction_ff: bool = False  # knee cancels the wheel motor's reaction on the shank (McuParams); off here so that
+                                     # the upkie results stay as judged, on for the CAD robots (wbr.bench.ake_cad)
+    roll_compliant: bool = False     # legs yield to a bump, the IMU roll levels the body (McuParams); off here, on for the CAD robots
+    kp_roll_force: float = 0.0       # N/rad, gains and limits of the compliant roll: wbr.bench.ake_cad.outer_loop_gains
+    ki_roll_force: float = 0.0
+    kd_roll_force: float = 0.0
+    roll_force_limit: Optional[float] = None   # None: the static leg force, where a wheel is just unloaded
+    roll_force_int_limit: float = 0.0
+    kp_leg_limit: float = 0.0
+    kd_leg_limit: float = 0.0
     friction_comp_rate_gate: float = 0.1    # rad/s: the stiction compensation fades with the body pitch rate (review r1
                                      # M1: the relay term sustained a 13 Hz limit cycle from 12 ms latency; with the
                                      # gate 12 ms recovers cleanly, standing quality unchanged); 0 = off
@@ -83,6 +97,22 @@ class Plan4Config:
     friction: Optional[float] = None
     slope_deg: float = 0.0
     payload: Optional[tuple] = None  # (mass [kg], x ahead of the axle [m], z above the axle [m] or None = torso COM height)
+    L_min_margin: float = 0.02          # see McuParams
+    L_max_margin: float = 0.0           # see McuParams
+    mean_follows_range: bool = False    # see McuParams
+    uneven_speed: float = 0.0           # see McuParams
+    uneven_d0: float = 0.01             # see McuParams
+    uneven_d1: float = 0.04             # see McuParams
+    uneven_brake: float = 0.0           # see McuParams
+    uneven_lean: float = 0.0            # see McuParams
+    uneven_hold_int: bool = False       # see McuParams
+    uneven_brake_tau: float = 0.0       # see McuParams
+    suspension: bool = False            # see McuParams
+    suspension_share: float = 0.0       # see McuParams
+    kd_leg_own: float = 0.0             # see McuParams
+    floor_humps: tuple = ()             # curved speed bumps, each (height [m], side +1 left / -1 right / 0 both wheels, x start [m], length [m], half width [m])
+    floor_bump: Optional[tuple] = None  # bump under one wheel: (height [m], side +1 left / -1 right, x start [m], length of
+                                     # each ramp [m], length of the top [m], half width [m]), centred on that tire's track
     drop_height: float = 0.0005
     params_json: Optional[str] = None
     host: str = "ramp"               # "ramp": plain MotionCtrl host; "mpc": stage-2 reference generator
@@ -90,23 +120,26 @@ class Plan4Config:
 
 class Plan4UpkieLQI6:
     def __init__(self, cfg: Plan4Config | None = None, law=None):
-        self.cfg = cfg or Plan4Config()
+        self.cfg = cfg or self.default_config()
         c = self.cfg
         self.dt = 1.0 / c.rate_hz
+        robot = self._robot_constants()
+        self.wheel_radius, self.track = robot["wheel_radius"], robot["track"]
         self.params = SerialPlantParams.from_json(c.params_json or MODELS_DIR / c.model_dir / "plan4_params.json")
         p = self.params
         if c.L_stand is not None:
             p.L0 = c.L_stand
         self.plant = SerialPlant(p)
         self.leg = SerialLeg(SerialLegGeometry(L1=p.extra["L1"], L2=p.extra["L2"], knee_sign=p.extra["knee_sign"]))
-        self.signs = dict(UPKIE_JOINT_SIGNS)
+        self.signs = dict(robot["joint_signs"])
         self.hip_above_base = p.hip_above_base
 
-        servo = ServoModel({j: ServoProperties(20.0, 1.0, TAU_WHEEL_MAX if "wheel" in j else TAU_LEG_MAX) for j in JOINTS})
+        servo = ServoModel({j: ServoProperties(20.0, 1.0, robot["tau_wheel_max"] if "wheel" in j else robot["tau_leg_max"]) for j in JOINTS})
         self.sim = MujocoSim(SimConfig(xml_path=MODELS_DIR / c.model_dir / c.scene, joint_names=JOINTS, wheel_joints=WHEELS,
-                                       base_body="base", imu_site="base", control_dt=self.dt,
+                                       base_body="base", imu_site=robot["imu_site"], control_dt=self.dt,
                                        wheel_geoms={"left_wheel": "left_tire", "right_wheel": "right_tire"},
-                                       spec_edit=self._spec_edit if c.payload else None, model_edit=self._model_edit), servo)
+                                       spec_edit=self._spec_edit if self._needs_spec_edit() else None,
+                                       model_edit=self._model_edit), servo)
         self.standing_base_z = None
 
         # controller -------------------------------------------------------------------------
@@ -128,26 +161,62 @@ class Plan4UpkieLQI6:
             lqi_kwargs["pred_steps"] = int(round(c.predict_ms * 1e-3 * c.rate_hz))
         # (the stage-2 MPC host flags MotionCtrl.host_shaped: the MCU then switches the LQI6 to plain tracking and
         #  falls back to this shaping on a link timeout or when the host's QP fails)
+        lqi_kwargs.update(self._lqi_design())
         lqi_kwargs.update(c.lqi_kwargs or {})
         self.law = law or LQI6Law(self.plant, Ts=self.dt, theta_eq=self.plant.theta_eq, Tp_ff=self.plant.Tp_eq(), **lqi_kwargs)
         self.link = HostLink(HostLinkParams(timeout_ms=c.host_timeout_ms))
         self.host = self._make_host()
-        mcu_params = McuParams(dt=self.dt, wheel_radius=WHEEL_RADIUS, track=TRACK, mass_total=p.extra["total_mass"],
+        mcu_params = McuParams(dt=self.dt, wheel_radius=self.wheel_radius, track=self.track, mass_total=p.extra["total_mass"],
                                mass_wheels=p.m_w, L_min=p.L_min, L_max=p.L_max, L_stand=p.L0, kp_leg=c.kp_leg, kd_leg=c.kd_leg,
-                               kp_yaw=c.kp_yaw, ki_yaw=c.ki_yaw, yaw_int_limit=c.yaw_int_limit,
+                               kp_yaw=c.kp_yaw, ki_yaw=c.ki_yaw, yaw_int_limit=c.yaw_int_limit, kw_yaw=c.kw_yaw,
+                               yaw_ref_rate=c.yaw_ref_rate, yaw_offset_tau=c.yaw_offset_tau, attitude_tau=c.attitude_tau,
+                               imu_position=robot.get("imu_position"),
                                kp_split=c.kp_split, kd_split=c.kd_split,
-                               tau_hip_max=TAU_LEG_MAX, tau_wheel_max=TAU_WHEEL_MAX,
-                               leg_joint="knee", F_ff_N=self._static_leg_force(), friction_comp_Nm=c.friction_comp_Nm,
+                               tau_hip_max=robot["tau_leg_max"], tau_wheel_max=robot["tau_wheel_max"],
+                               leg_joint="knee", F_ff_N=self._static_leg_force(), leg_force=self._leg_force_law(), friction_comp_Nm=c.friction_comp_Nm,
                                friction_comp_wheel_Nm=c.friction_comp_wheel_Nm,
                                friction_comp_static_tau=c.friction_comp_static_tau, vel_window_s=c.vel_window_s,
                                friction_comp_rate_gate=c.friction_comp_rate_gate,
-                               imu_rotation_base_to_imu=self.R_BASE_TO_IMU if c.real_imu_convention else None,
+                               wheel_reaction_ff=c.wheel_reaction_ff,
+                               roll_compliant=c.roll_compliant, kp_roll_force=c.kp_roll_force, ki_roll_force=c.ki_roll_force,
+                               kd_roll_force=c.kd_roll_force,
+                               roll_force_limit=self._static_leg_force() if c.roll_force_limit is None else c.roll_force_limit,
+                               roll_force_int_limit=c.roll_force_int_limit, kp_leg_limit=c.kp_leg_limit, kd_leg_limit=c.kd_leg_limit,
+                               L_min_margin=c.L_min_margin, L_max_margin=c.L_max_margin, mean_follows_range=c.mean_follows_range, uneven_speed=c.uneven_speed,
+                               uneven_d0=c.uneven_d0, uneven_d1=c.uneven_d1, uneven_brake=c.uneven_brake, uneven_lean=c.uneven_lean, uneven_hold_int=c.uneven_hold_int, uneven_brake_tau=c.uneven_brake_tau, suspension=c.suspension, suspension_share=c.suspension_share, kd_leg_own=c.kd_leg_own,
+                               imu_rotation_base_to_imu=robot["R_base_to_imu"] if c.real_imu_convention else None,
                                imu_rotation_ars_to_world=self.R_ARS_TO_WORLD if c.real_imu_convention else None)
         self.mcu = DiabloMcu(self.law, mcu_params, self.leg, self.link)
-        self.noise = SensorNoise(enabled=c.noise, seed=c.seed, pitch_bias=math.radians(c.pitch_bias_deg))
+        self.noise = self._make_noise()
         self.delay = ObservationDelay(int(math.ceil(c.latency_ms * 1e-3 * c.rate_hz - 1e-9)), dt=self.dt)   # never round a latency away
         self.up_cmd = 0.0
         self.reset()
+
+    # ------------------------------------------------------------------ what differs from robot to robot (plan_v5.PlanV5)
+    torso_body = "torso"            # the body a push acts on
+
+    def _leg_force_law(self):
+        """McuParams.leg_force: None keeps F_ff / cos(lean) (upkie's verdicts were made with it)."""
+        return None
+
+    @staticmethod
+    def default_config():
+        return Plan4Config()
+
+    def _robot_constants(self) -> dict:
+        """The module constants are read here, at construction: wbr.bench.ake_sizing.patched_plan4 patches them for scaled robots."""
+        return dict(wheel_radius=WHEEL_RADIUS, track=TRACK, tau_wheel_max=TAU_WHEEL_MAX, tau_leg_max=TAU_LEG_MAX, joint_signs=UPKIE_JOINT_SIGNS,
+                    imu_site="base", R_base_to_imu=self.R_BASE_TO_IMU)
+
+    def _lqi_design(self) -> dict:
+        return {}
+
+    def _needs_spec_edit(self) -> bool:
+        return bool(self.cfg.payload or self.cfg.floor_bump or self.cfg.floor_humps)
+
+    def _make_noise(self) -> SensorNoise:
+        c = self.cfg
+        return SensorNoise(enabled=c.noise, seed=c.seed, pitch_bias=math.radians(c.pitch_bias_deg))
 
     def _static_leg_force(self) -> float:
         """Static force along one virtual leg: the body weight plus the part of the leg weight carried at
@@ -174,6 +243,55 @@ class Plan4UpkieLQI6:
         return np.array([p_axle[0], 0.0, -self.hip_above_base + p_axle[1]])
 
     def _spec_edit(self, spec) -> None:
+        if self.cfg.payload:
+            self._add_payload(spec)
+        if self.cfg.floor_bump:
+            self._add_floor_bump(spec)
+        for i, hump in enumerate(self.cfg.floor_humps):
+            self._add_floor_hump(spec, i, *hump)
+
+    def _add_floor_bump(self, spec) -> None:
+        """Ramp up, flat top, ramp down: three boxes of floor material under one wheel track (a ramp length near 0 = a step)."""
+        h, side, x0, ramp, top, half_width = self.cfg.floor_bump
+        floor = next(g for g in spec.geoms if g.name == "floor")
+        thickness = 0.05
+
+        def box(name, x_a, z_a, x_b, z_b):
+            a = math.atan2(z_b - z_a, x_b - x_a)
+            g = spec.worldbody.add_geom(name=name, type=mujoco.mjtGeom.mjGEOM_BOX,
+                                        size=[0.5 * math.hypot(x_b - x_a, z_b - z_a), half_width, thickness],
+                                        pos=[0.5 * (x_a + x_b) + thickness * math.sin(a), side * 0.5 * self.track,
+                                             0.5 * (z_a + z_b) - thickness * math.cos(a)],
+                                        quat=[math.cos(-0.5 * a), 0.0, math.sin(-0.5 * a), 0.0])
+            g.contype, g.conaffinity = floor.contype, floor.conaffinity
+            g.friction = floor.friction
+            g.condim = floor.condim
+
+        box("bump_up", x0, 0.0, x0 + ramp, h)
+        box("bump_top", x0 + ramp, h, x0 + ramp + top, h)
+        box("bump_down", x0 + ramp + top, h, x0 + 2 * ramp + top, 0.0)
+
+    def _add_floor_hump(self, spec, index: int, h: float, side: float, x0: float, length: float, half_width: float) -> None:
+        """A curved speed bump, z = h/2 (1 - cos(2 pi s / length)): thin boxes of floor material, each following one chord of the curve."""
+        floor = next(g for g in spec.geoms if g.name == "floor")
+        thickness = 0.05
+        n = max(16, int(math.ceil(length / 0.03)))
+        z = lambda s: 0.5 * h * (1.0 - math.cos(2.0 * math.pi * s / length))
+        y = side * 0.5 * self.track
+        for k in range(n):
+            xa, xb = x0 + length * k / n, x0 + length * (k + 1) / n
+            za, zb = z(length * k / n), z(length * (k + 1) / n)
+            a = math.atan2(zb - za, xb - xa)
+            g = spec.worldbody.add_geom(name=f"hump{index}_{k}", type=mujoco.mjtGeom.mjGEOM_BOX,
+                                        size=[0.5 * math.hypot(xb - xa, zb - za) + 0.002, half_width, thickness],
+                                        pos=[0.5 * (xa + xb) + thickness * math.sin(a), y, 0.5 * (za + zb) - thickness * math.cos(a)],
+                                        quat=[math.cos(-0.5 * a), 0.0, math.sin(-0.5 * a), 0.0])
+            g.contype, g.conaffinity = floor.contype, floor.conaffinity
+            g.friction = floor.friction
+            g.condim = floor.condim
+            g.rgba = [0.75, 0.6, 0.2, 1.0]
+
+    def _add_payload(self, spec) -> None:
         mass, x_ahead, z_above = self.cfg.payload
         axle = self._axle_in_base(self.params.L0)
         torso = next(b for b in spec.bodies if b.name == "torso")
@@ -251,9 +369,9 @@ class Plan4UpkieLQI6:
         qk = joint_positions["left_knee"] * self.signs["left_knee"]
         p_axle, _, _ = self.leg.forward(qh, qk)
         wheel_offset = np.array([p_axle[0], 0.0, -self.hip_above_base + p_axle[1]])
-        pos, quat = placed_base_pose(wheel_offset, WHEEL_RADIUS, pitch, yaw)
+        pos, quat = placed_base_pose(wheel_offset, self.wheel_radius, pitch, yaw)
         slope = math.radians(self.cfg.slope_deg)
-        pos[2] += self.cfg.drop_height + WHEEL_RADIUS * (1.0 / math.cos(slope) - 1.0)
+        pos[2] += self.cfg.drop_height + self.wheel_radius * (1.0 / math.cos(slope) - 1.0)
         self.sim.reset(base_pos=pos, base_quat=quat, joint_positions=joint_positions, base_linvel=base_linvel)
         if self.standing_base_z is None:
             self.standing_base_z = float(pos[2])
@@ -302,9 +420,10 @@ class Plan4UpkieLQI6:
         e, tm = self.mcu.est, self.mcu.telemetry
         base = o["sim"]["base"]
         sv = o["servo"]
-        pitch_true = roll_pitch_yaw(quat_to_matrix(base["orientation"]))[1]     # ground truth (acceptance criteria)
-        self.log.log(t=self.sim.time, pitch=e.pitch, pitch_true=pitch_true, pitch_rate=e.pitch_rate, roll=e.roll, theta_v=e.theta_v_mean,
-                     L0=e.L0_mean, L_ref=tm.get("L_ref", 0.0), ground_vel=e.v, ground_pos=e.position,
+        roll_true, pitch_true, _ = roll_pitch_yaw(quat_to_matrix(base["orientation"]))     # ground truth (acceptance criteria)
+        self.log.log(t=self.sim.time, pitch=e.pitch, pitch_true=pitch_true, pitch_rate=e.pitch_rate, roll=e.roll, roll_true=roll_true, theta_v=e.theta_v_mean,
+                     L0=e.L0_mean, L0_left=e.L0["left"], L0_right=e.L0["right"], L_ref=tm.get("L_ref", 0.0),
+                     ground_vel=e.v, ground_pos=e.position,
                      x=base["position"][0], y=base["position"][1], z=base["position"][2], vx=base["linear_velocity"][0],
                      yaw_rate=base["angular_velocity"][2], T=tm.get("T", 0.0), Tp=tm.get("Tp", 0.0),
                      tau_lw=sv["left_wheel"]["torque"], tau_rw=sv["right_wheel"]["torque"],
@@ -326,7 +445,7 @@ class Plan4UpkieLQI6:
 
     def push(self, force_x: float, duration: float) -> None:
         """Horizontal push applied at the robot's total COM (acceptance criteria definition)."""
-        self.sim.push([force_x, 0.0, 0.0], duration, body="torso", point=self.sim.com())
+        self.sim.push([force_x, 0.0, 0.0], duration, body=self.torso_body, point=self.sim.com())
 
     def run(self, seconds: float, v=0.0, w=0.0) -> bool:
         for _ in range(int(round(seconds / self.dt))):

@@ -52,6 +52,12 @@ class LQI6Law:
         phi = -(est.pitch - refs.get("pitch_ref", 0.0))
         phi_dot = -est.pitch_rate
         theta = est.theta_v_mean - self.theta_eq(est.L0_mean)
+        if self.ctrl.shaping_on:                # slowing down over uneven ground (McuParams.uneven_brake, uneven_lean)
+            brake = refs.get("v_brake", 0.0)
+            self.ctrl.v_ramp_rate = brake if brake > 0.0 else self.ctrl._shaped[0]
+            self.ctrl.v_ref_tau_brake = refs.get("v_brake_tau", 0.0)
+            theta -= refs.get("v_lean", 0.0) * self.ctrl._a_ref_lp / 9.81
+        self.ctrl.hold_integrators = bool(refs.get("hold_integrators", False))
         T, Tp = self.ctrl.step(theta, est.theta_v_dot_mean, est.v, phi, phi_dot, est.L0_mean,
                                refs["v_ref"] if refs.get("balance", True) else 0.0)
         return {"T": T, "Tp": Tp + self.Tp_ff, "Tp_ff": self.Tp_ff, "K_T": self.ctrl.K[0].tolist(), "K_Tp": self.ctrl.K[1].tolist()}

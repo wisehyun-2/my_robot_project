@@ -74,6 +74,25 @@ def yaw_plant_gain(xml_path) -> dict:
     W = float(abs(d.geom_xpos[gl][1] - d.geom_xpos[gr][1]))
     R = float(m.geom_size[gl][0])
     return dict(W=W, R=R, Izz=Izz, g=W / (2 * R * Izz))
+
+
+def roll_plant_gain(xml_path) -> dict:
+    """Roll plant of a differential leg force in the straight-leg keyframe: +-F on the legs is a roll moment F W on the roll
+    inertia Ixx of the whole robot about its COM -> g = W / Ixx [rad/s^2 per N]."""
+    m = mujoco.MjModel.from_xml_path(str(xml_path))
+    d = mujoco.MjData(m)
+    mujoco.mj_resetDataKeyframe(m, d, mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_KEY, "stand"))
+    mujoco.mj_forward(m, d)
+    mass = float(m.body_mass[1:].sum())
+    com = sum(m.body_mass[b] * d.xipos[b] for b in range(1, m.nbody)) / mass
+    Ixx = 0.0
+    for b in range(1, m.nbody):
+        Rm = d.ximat[b].reshape(3, 3)
+        r = d.xipos[b] - com
+        Ixx += float((Rm @ np.diag(m.body_inertia[b]) @ Rm.T)[0, 0] + m.body_mass[b] * (r[1] ** 2 + r[2] ** 2))
+    gl, gr = (mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, f"{s}_tire") for s in ("left", "right"))
+    W = float(abs(d.geom_xpos[gl][1] - d.geom_xpos[gr][1]))
+    return dict(W=W, Ixx=Ixx, g=W / Ixx)
 KNEE_REACH_DEG = 60.0           # tire clearance: smallest knee angle checked besides the Plan 4 leg lengths
 
 
@@ -284,8 +303,9 @@ def make_plan(p4, case: Case, model_dir: str, params_json: Path, slope: float = 
     # CAD cases: outer-loop gains scaled to the robot (ake_cad); the staged tests (TEST/) also set lqi_kwargs, the
     # latency and the disturbances here - an override replaces the default above
     kw.update(getattr(case, "plan_overrides", None) or {})
-    cfg = p4.Plan4Config(**kw)
-    plan = p4.Plan4UpkieLQI6(cfg)
+    classes = case.plan_classes() if hasattr(case, "plan_classes") else None       # the CAD robot with its own URDF: wbr.plans.plan_v5
+    cfg_cls, plan_cls = classes or (p4.Plan4Config, p4.Plan4UpkieLQI6)
+    plan = plan_cls(cfg_cls(**kw))
     sm = plan.sim.servo_model
     servo_torque = sm.torque
 
@@ -420,11 +440,13 @@ def run_case(case: Case) -> dict:
         root = Path(tmp)
         params = build_model(case, root / "model")
         with patched_plan4(case, root) as p4:
-            plan = make_plan(p4, case, "model", root / "model" / "plan4_params.json")
+            params_json = root / "model" / getattr(case, "params_file", "plan4_params.json")
+            plan = make_plan(p4, case, "model", params_json)
             q = case.quick
             S: Dict[str, dict] = {}
             Ls, Lmin, Lmax = plan.mcu.p.L_stand, plan.mcu.p.L_min, plan.mcu.p.L_max
-            for L0 in ([Lmin, Ls] if q else [Lmin, 0.27, Ls, Lmax]):
+            mid = 0.27 if Lmin < 0.27 < Ls else 0.5 * (Lmin + Ls)       # (a robot with longer links: 0.27 m is below its range)
+            for L0 in ([Lmin, Ls] if q else [Lmin, mid, Ls, Lmax]):
                 fresh(plan, dh=L0 - Ls); run_for(plan, 5.0); S[f"stand_L{L0:.3f}"] = stats(plan, case, 0.0, 2.0)
             for deg in ([10, 20] if q else [5, 10, 15, 20, 25]):
                 fresh(plan, pitch=math.radians(deg)); run_for(plan, 6.0); S[f"tilt_{deg}"] = stats(plan, case)
@@ -442,7 +464,7 @@ def run_case(case: Case) -> dict:
                     break
             S["height_full_range"] = stats(plan, case)
             for slope in ([10] if q else [5, 10, 15]):
-                sp = make_plan(p4, case, "model", root / "model" / "plan4_params.json", slope)
+                sp = make_plan(p4, case, "model", params_json, slope)
                 fresh(sp); run_for(sp, 6.0); S[f"slope_{slope}_stand"] = stats(sp, case, 0.0, 3.0)
                 for name, V in (("up", 0.5), ("down", -0.5)):
                     fresh(sp); run_for(sp, 2.0) and run_for(sp, 4.0, V) and run_for(sp, 2.0)

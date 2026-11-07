@@ -1,0 +1,85 @@
+<mujoco model="wheelbiped_v5">
+  <compiler angle="radian" meshdir="."/>
+
+  <option timestep="0.0005" impratio="10" integrator="implicitfast" cone="elliptic" noslip_iterations="2"/>
+
+  <size nkey="1"/>
+
+  <asset>
+    <mesh name="base" file="meshes/base.stl"/>
+    <mesh name="left_thigh" file="meshes/left_thigh.stl"/>
+    <mesh name="left_shank" file="meshes/left_shank.stl"/>
+    <mesh name="left_wheel_link" file="meshes/left_wheel_link.stl"/>
+    <mesh name="right_thigh" file="meshes/right_thigh.stl"/>
+    <mesh name="right_shank" file="meshes/right_shank.stl"/>
+    <mesh name="right_wheel_link" file="meshes/right_wheel_link.stl"/>
+  </asset>
+
+  <worldbody>
+    <body name="base">
+      <inertial pos="0.000964086 0.000130928 0.0589893" quat="0.58965 0.589958 -0.388618 0.391457" mass="5.24883" diaginertia="0.0890845 0.0852592 0.0417524"/>
+      <joint name="base_freejoint" type="free"/>
+      <geom pos="0 0 0" quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.25 0.25 0.27 1" density="0" mesh="base"/>
+      <geom size="0.24225 0.17365 0.11065" pos="0.00225 0 0.039" type="box" contype="2" conaffinity="0" group="3" rgba="0.25 0.25 0.27 1"/>
+      <site name="imu" pos="-0.0005 -0.00245 -0.0355" quat="0 0 0 1"/>
+      <body name="left_thigh" pos="0 0.172 0">
+        <inertial pos="-0.00013219 0.0451776 -0.145584" quat="0.616931 -0.207019 -0.128811 0.748296" mass="1.26061" diaginertia="0.0140658 0.0126242 0.00537086"/>
+        <joint name="left_hip" range="-3.14159 3.14159" actuatorfrcrange="-12.5 12.5" armature="0.0041433" damping="0.02" frictionloss="0.12" axis="0 1 0" actuatorfrclimited="true"/>
+        <geom type="mesh" contype="0" conaffinity="0" group="2" rgba="0.25 0.25 0.27 1" density="0" mesh="left_thigh"/>
+        <geom size="0.033113 0.066975 0.125" pos="0 0.049525 -0.125" type="box" contype="2" conaffinity="0" group="3" rgba="0.25 0.25 0.27 1"/>
+        <body name="left_shank" pos="0 0.036 -0.25">
+          <inertial pos="-0.000160426 0.0139918 -0.148205" quat="0.706495 0.0993177 0.116994 0.690879" mass="0.857208" diaginertia="0.0109626 0.00876677 0.00257113"/>
+          <joint name="left_knee" range="-3.14159 3.14159" actuatorfrcrange="-12.5 12.5" armature="0.0041433" damping="0.02" frictionloss="0.12" axis="0 1 0" actuatorfrclimited="true"/>
+          <geom pos="0 0 0" quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.25 0.25 0.27 1" density="0" mesh="left_shank"/>
+          <geom size="0.0356845 0.02075 0.125" pos="0 0.02425 -0.125" type="box" contype="2" conaffinity="0" group="3" rgba="0.25 0.25 0.27 1"/>
+          <geom size="0.04645 0.024725" pos="0 0.005275 -0.25" quat="0.707107 0.707107 0 0" type="cylinder" contype="2" conaffinity="0" group="3" rgba="0.25 0.25 0.27 1"/>
+          <body name="left_wheel_link" pos="0 0.062 -0.25">
+            <inertial pos="0 -0.00402241 0" quat="0.270598 0.653281 0.653281 0.270598" mass="1.05626" diaginertia="0.00662908 0.00357787 0.00357787"/>
+            <joint name="left_wheel" actuatorfrcrange="-12.5 12.5" armature="0.0041433" damping="0.001" frictionloss="0.12" axis="0 1 0" actuatorfrclimited="true"/>
+            <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.25 0.25 0.27 1" density="0" mesh="left_wheel_link"/>
+            <geom name="left_tire" size="0.101 0.101 0.027" quat="0.707107 0.707107 0 0" type="ellipsoid" contype="2" conaffinity="0" condim="4" group="3" priority="1" rgba="0.25 0.25 0.27 1"/>
+          </body>
+        </body>
+      </body>
+      <body name="right_thigh" pos="0 -0.172 0">
+        <inertial pos="-0.00013219 -0.0451776 -0.145584" quat="0.748296 -0.128811 -0.207019 0.616931" mass="1.26061" diaginertia="0.0140658 0.0126242 0.00537086"/>
+        <joint name="right_hip" range="-3.14159 3.14159" actuatorfrcrange="-12.5 12.5" armature="0.0041433" damping="0.02" frictionloss="0.12" axis="0 1 0" actuatorfrclimited="true"/>
+        <geom type="mesh" contype="0" conaffinity="0" group="2" rgba="0.25 0.25 0.27 1" density="0" mesh="right_thigh"/>
+        <geom size="0.033113 0.066975 0.125" pos="0 -0.049525 -0.125" type="box" contype="2" conaffinity="0" group="3" rgba="0.25 0.25 0.27 1"/>
+        <body name="right_shank" pos="0 -0.036 -0.25">
+          <inertial pos="-0.000160426 -0.0139918 -0.148205" quat="0.690879 0.116994 0.0993177 0.706495" mass="0.857208" diaginertia="0.0109626 0.00876677 0.00257113"/>
+          <joint name="right_knee" range="-3.14159 3.14159" actuatorfrcrange="-12.5 12.5" armature="0.0041433" damping="0.02" frictionloss="0.12" axis="0 1 0" actuatorfrclimited="true"/>
+          <geom pos="0 0 0" quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.25 0.25 0.27 1" density="0" mesh="right_shank"/>
+          <geom size="0.0356845 0.02075 0.125" pos="0 -0.02425 -0.125" type="box" contype="2" conaffinity="0" group="3" rgba="0.25 0.25 0.27 1"/>
+          <geom size="0.04645 0.024725" pos="0 -0.005275 -0.25" quat="0.707107 0.707107 0 0" type="cylinder" contype="2" conaffinity="0" group="3" rgba="0.25 0.25 0.27 1"/>
+          <body name="right_wheel_link" pos="0 -0.062 -0.25">
+            <inertial pos="0 0.00402241 0" quat="0.653281 0.270598 0.270598 0.653281" mass="1.05626" diaginertia="0.00662908 0.00357787 0.00357787"/>
+            <joint name="right_wheel" actuatorfrcrange="-12.5 12.5" armature="0.0041433" damping="0.001" frictionloss="0.12" axis="0 1 0" actuatorfrclimited="true"/>
+            <geom quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="2" rgba="0.25 0.25 0.27 1" density="0" mesh="right_wheel_link"/>
+            <geom name="right_tire" size="0.101 0.101 0.027" quat="0.707107 0.707107 0 0" type="ellipsoid" contype="2" conaffinity="0" condim="4" group="3" priority="1" rgba="0.25 0.25 0.27 1"/>
+          </body>
+        </body>
+      </body>
+      <frame pos="-0.0005 -0.00245 -0.0355" quat="-1.73205e-07 0 0 1"/>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <general name="left_hip" joint="left_hip" ctrlrange="-12.5 12.5" ctrllimited="true"/>
+    <general name="left_knee" joint="left_knee" ctrlrange="-12.5 12.5" ctrllimited="true"/>
+    <general name="left_wheel" joint="left_wheel" ctrlrange="-12.5 12.5" ctrllimited="true"/>
+    <general name="right_hip" joint="right_hip" ctrlrange="-12.5 12.5" ctrllimited="true"/>
+    <general name="right_knee" joint="right_knee" ctrlrange="-12.5 12.5" ctrllimited="true"/>
+    <general name="right_wheel" joint="right_wheel" ctrlrange="-12.5 12.5" ctrllimited="true"/>
+  </actuator>
+
+  <sensor>
+    <framequat objtype="site" objname="imu" name="imu_quat"/>
+    <gyro site="imu" name="imu_gyro"/>
+    <accelerometer site="imu" name="imu_accel"/>
+  </sensor>
+
+  <keyframe>
+    <key name="stand" qpos="0 0 0.601 1 0 0 0 0 0 0 0 0 0"/>
+  </keyframe>
+</mujoco>
