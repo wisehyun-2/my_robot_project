@@ -215,7 +215,7 @@ STATOR = ('AKE60-8_KV80_stator', 'clamp ring stator', 'FX DIN 7984 M2.5x8 stator
 
 def turn_wheels(M):
     """Turn the wheel group outboard (legs_v5.wheel_turn), the driver / cup / plugs / their screws also re-clocked
-    (wheel_clock).  Decided per occurrence, so it is idempotent even when cadlib.IdentityParent has reset some child
+    (wheel_clock), and since 11-09 the motor stator, clamp ring and its screws too (legs_v5.CLOCK_MOTOR).  Decided per occurrence, so it is idempotent even when cadlib.IdentityParent has reset some child
     transforms: a part is turned when it sits on the other side of the shank mid-plane than in the v4 (inboard-wheel)
     build - every wheel_k child and the stator ring / its screws sat inboard, the other tibia parts near the axle
     outboard."""
@@ -239,7 +239,7 @@ def turn_wheels(M):
                 continue
             m = o.transform2.copy()
             m.transformBy(R)
-            if not in_wheel and not name.startswith(STATOR):
+            if not in_wheel and (LV.CLOCK_MOTOR or not name.startswith(STATOR)):   # 11-09: the motor with the cup
                 m.transformBy(Rc)
             if name.startswith(REPLACE):
                 # the AKE60 STEP component loses a transform2 change at the next recompute (e.g. any occurrence

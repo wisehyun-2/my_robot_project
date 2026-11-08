@@ -461,13 +461,13 @@ def fig_knee(recs):
 
 
 def fig_wheel(recs):
-    BU, BD = 125, 270
+    BU, BD = 125, 275          # 11-09: 275 (not 270) also cuts a ① stator screw since the motor is clocked with the cup
     H = half(recs, 'wheel', BU) + half(recs, 'wheel', BD, flip=True)
     SI, SO = LV.Y_SI, LV.Y_SO
     OUT = 2 * LV.Y_MSH - P.y_output('wheel')
     fig = plt.figure(figsize=(24, 30))
-    fig.suptitle('v5 바퀴 관절 — 실제 모델 단면 (Fusion WheelBiped_v5 버전 14, 링크 25 cm, 바퀴 묶음 2.5 mm 바깥으로, 핀 구멍 8.0, 오른쪽 다리, mm)  '
-                 '위 절반 %d°: 허브 M3 자리, 아래 절반 %d°: 림 M3 · 평행핀 자리' % (BU, BD),
+    fig.suptitle('v5 바퀴 관절 — 실제 모델 단면 (Fusion WheelBiped_v5 버전 16, 링크 25 cm, 바퀴 묶음 2.5 mm 바깥으로, 모터를 컵과 함께 돌림, 오른쪽 다리, mm)  '
+                 '위 절반 %d°: 허브 M3 자리, 아래 절반 %d°: 림 M3 · 평행핀 · 고정자 나사 자리' % (BU, BD),
                  fontsize=20, x=0.01, ha='left', y=0.995)
     ax = panel(fig, [0.04, 0.52, 0.55, 0.45], H, ((176, 302), (-108, 108)), '(a) 전체 — 드라이버 컵부터 타이어까지')
     for txt, key, xt, pick in (('PETG 정강이 (바퀴 하우징, 안쪽 면 평평 y %.0f)' % SI, 'shank_R main', (180, 100), 'max'),

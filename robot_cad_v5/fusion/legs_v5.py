@@ -103,6 +103,14 @@ def wheel_turn(s):
 WHEEL_CLOCK = 2 * math.atan2(P.KNEE_X, P.KNEE_Z - P.R_WHEEL)
 
 
+CLOCK_MOTOR = True                               # 11-09 (user: "알아서 판단해서 수정"): the wheel motor, its clamp ring /
+                                                 # screws and the shank's motor seat (screw holes, lead groove and slot) are
+                                                 # re-clocked with the cup as well.  Clocking the cup alone (11-01) left the
+                                                 # cup 55 deg off the motor leads: a cup column stood on the housing lead
+                                                 # slot exit and its insert hole ran 30 % open into the slot; now the leads,
+                                                 # the slot and the cup's lead notch line up as in v4 (columns 50 deg away)
+
+
 def wheel_clock(s):
     return C.rot_about((0.0, 0.0, P.R_WHEEL), (0, 1, 0), WHEEL_CLOCK)
 
@@ -329,11 +337,14 @@ def cap_seat(B, body, c):
 
 def wheel_housing(B, s):
     """v4 printed wheel seat (9 mm plate, Ø42.05 pocket, clamp ring recess, lead groove) built for the inboard wheel
-    and turned with the wheel group (plate now on the outer face), cup inserts turned and re-clocked with the cup."""
+    and turned with the wheel group (plate now on the outer face), seat and cup inserts re-clocked with the motor and
+    cup (CLOCK_MOTOR)."""
     W = (0.0, P.R_WHEEL)
     h = B.ycyl(W[0], W[1], Y_SI4, Y_SO4, P.HOUSING_R)
     LG._motor_seat(B, s, h, 'wheel', W, Y_SI4 + P.WHEEL_PLATE_T, Y_SI4, Y_SO4 + 1)
     C.transform(h, wheel_turn(s))
+    if CLOCK_MOTOR:
+        C.transform(h, wheel_clock(s))           # the seat with the re-clocked motor (the housing is round)
     for p in LG.cup_column_points('wheel', s):
         q = LG.lc(p, s)
         tool = B.ycyl(q[0], q[2], Y_SO4 + 0.1, Y_SO4 - CUP_INSERT_DEPTH, LG.INSERT_M25 / 2)
