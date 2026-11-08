@@ -16,7 +16,8 @@ Run each step in its own MCP script (put this folder on sys.path, import v5run):
                              # WHEEL_SHIFT; build() + turn() place them there directly) - before relegs()
     v5run.reshell()          # hub file: only the shell pieces rebuilt (plan corners on the switch side rounded, user 11-02; then
                              # turn(): the deletion reverts the AKE60 stators)
-    v5run.relayout()         # hub file: deck rebuilt, Pi / pi3hat / mjpower-ss / fan placed with the IMU on the centre line (11-07; then turn())
+    v5run.relayout()         # hub file: deck rebuilt, Pi / pi3hat / power board / fan placed with the IMU on the centre line (11-07; then turn());
+                             # 11-08: the power board is the power_dist r4.5b (pdist_v5.py), an mjpower-ss is swapped for it
     v5run.relink()           # hub file, once (11-07): links 175 -> 250 mm, every part moves with its joint (then relegs(), turn())
     v5run.deepen_hub_dowels()  # hub file, once (11-08): wheel hub flange dowel holes 7.0 -> 7.5 and the pins with them
                              # (unjoint() first, then turn(), joints(); build() makes them so from HUB_DOWEL_HOLE)
@@ -111,6 +112,11 @@ def load():
     assert legs_v5.__file__.lower().startswith(HERE.lower()), legs_v5.__file__
     _pa12(M['cadlib'])
     M['torso'].centre_imu()                        # v5's electronics layout (11-07); v4 keeps the Pi on the -y side
+    sys.modules.pop('pdist_v5', None)
+    import pdist_v5
+    assert pdist_v5.__file__.lower().startswith(HERE.lower()), pdist_v5.__file__
+    pdist_v5.patch(M)                              # power_dist r4.5b instead of the mjpower-ss (11-08 user)
+    M['pdist_v5'] = pdist_v5
     return M
 
 
@@ -395,16 +401,19 @@ def reshell():
     return dict(dropped=sorted(dropped))
 
 
-ELECTRONICS = ('electronics_deck', 'raspberry_pi_4b', 'pi3hat_r4.5', 'standoff M2.5x11 M-F (pi3hat)', 'mjpower_ss', 'fan 30x30x7 5V',
+BOARD = 'power_dist_r4.5b'                     # pdist_v5.NAME (11-08 user; mjpower-ss until hub version 14)
+ELECTRONICS = ('electronics_deck', 'raspberry_pi_4b', 'pi3hat_r4.5', 'standoff M2.5x11 M-F (pi3hat)', BOARD, 'fan 30x30x7 5V',
                'FX insert M2.5x4 deck', 'FX DIN 7984 M2.5x6 mjpower', 'FX pi3hat M2.5x5')
 
 
 def relayout():
-    """Hub file: the deck rebuilt and the Pi, hat, mjpower-ss, fan and their fasteners placed for torso.centre_imu() (11-07, user: the IMU
-    on the robot's centre line).  Direct design only: unjoint() first, then this, turn() in its own script, joints()."""
+    """Hub file: the deck rebuilt and the Pi, hat, power board, fan and their fasteners placed for torso.centre_imu() (11-07, user: the
+    IMU on the robot's centre line).  11-08 (user): the power board is the power_dist r4.5b (pdist_v5); an mjpower-ss found in the torso
+    is dropped and its _library master removed.  Direct design only: unjoint() first, then this, turn() in its own script, joints()."""
     doc()
     M = load()
-    C, A, F, TO = M['cadlib'], M['assembly'], M['fasteners'], M['torso']
+    C, A, F, TO, PD = M['cadlib'], M['assembly'], M['fasteners'], M['torso'], M['pdist_v5']
+    assert PD.NAME == BOARD
     _need_direct(C, 'relayout')
     M['poses'].reset()
     M['finalize'].show_all()
@@ -412,10 +421,13 @@ def relayout():
     masters, dropped = {}, []
     for o in list(t.childOccurrences):
         name = o.component.name
-        if name in ELECTRONICS:
+        if name in ELECTRONICS or name == PD.OLD_NAME:
             masters[name] = o.component
             dropped.append(name)
             o.deleteMe()
+    old_board = masters.pop(PD.OLD_NAME, None) is not None
+    if BOARD not in masters:
+        masters[BOARD] = M['vendor'].mjpower_ss()          # patched: the power_dist master
     assert sorted(masters) == sorted(ELECTRONICS), sorted(set(ELECTRONICS) - set(masters))
     A.add_part(t, 'electronics_deck', TO.deck(), 'PETG print', 'dark grey')
     A.place(t, masters['raspberry_pi_4b'], TO.rpi_frame())
@@ -423,7 +435,7 @@ def relayout():
     pm = TO.rpi_frame()
     for (x, y) in ((3.5, 3.5), (61.5, 3.5), (3.5, 52.5), (61.5, 52.5)):
         A.place(t, masters['standoff M2.5x11 M-F (pi3hat)'], C.frame(C.apply(pm, (x, y, 1.4)), (1, 0, 0), (0, 1, 0), (0, 0, 1)))
-    A.place(t, masters['mjpower_ss'], TO.mjpower_frame())
+    A.place(t, masters[BOARD], TO.mjpower_frame())
     A.place(t, masters['fan 30x30x7 5V'], TO.fan_frame())
     n = 0
     for rec in F.positions():
@@ -432,7 +444,8 @@ def relayout():
             assert link == 'torso', rec
             C.instance(t, masters[name], C.part_matrix(F._frame(o, ez, rec[4] if len(rec) > 4 else None)))
             n += 1
-    return dict(dropped=len(dropped), fasteners=n, imu=imu_pose())
+    lib_dropped = PD.drop_old_master(C) if old_board else 0
+    return dict(dropped=len(dropped), old_board=old_board, old_master_dropped=lib_dropped, fasteners=n, imu=imu_pose())
 
 
 def turn():

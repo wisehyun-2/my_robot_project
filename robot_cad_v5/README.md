@@ -58,12 +58,18 @@ Fusion 허브 **`WheelBiped_v5`**(`Default Project` 최상위). `export/WheelBip
   - **옛 이름 차단**: 버전 10 f3d에서 `turn`, `relegs`, `reshell`, `relayout`, `relink`, `shift`, `joints`, `images`, `save_mass_json`, `urdf_export`, `export`, `exports`, `sections` 13개가 모두 멈추고 문서를 바꾸지 않는다. `rename_to_robot()` 뒤에는 돈다.
 - 버전 12(11-08, 사용자가 직접 저장): 버전 11에 **조인트 자세만** 다르다(부품 477개의 링크 기준 위치·개수와 몸체 부피 차이 0). 사용자가 잡아 둔 자세로 저장되어 있고 숨긴 부품은 없다.
 - 버전 13(11-08, 사용자 요청): **바퀴 허브 플랜지 평행핀 구멍 7.0 → 7.5 mm**. 핀 Ø3 × 10이 3.0 나와 AKE 출력부 핀 구멍(깊이 3)에 여유가 0이었다 — 핀 길이 공차(±0.25)만큼 길면 핀이 먼저 바닥에 닿아 플랜지가 출력면에 붙지 않는다. hip·무릎 hub 인서트(10-31, `DOWEL_HOLE` 7.5)와 같게 2.5만 나오게 했다. v4 코드는 `params.HUB_DOWEL_HOLE` 7.0 그대로, v5는 `v5run.HUB_DOWEL_HOLE` 7.5(`build()`가 바로 만든다). 허브 파일은 `unjoint()` → `deepen_hub_dowels()` → `turn()` → `joints()`. 버전 12와 기준 자세에서 비교: 부품 477개 가운데 바뀐 것은 바퀴 핀 6개(축 방향 0.5 mm, 회전 0)뿐, 몸체 792개 가운데 `hub_flange_L/R`만 −10.60 mm³(구멍 3 × π · 1.5² · 0.5). `joint_check` 이상 없음, 6자세 실제 간섭 0건(결합 4건). 버전 12의 사용자 자세로 되돌려 저장했다. `export/WheelBiped_v5.f3d`, 조립 STEP, `hub_flange_L/R` STEP·STL, 단면 데이터, 바퀴 단면도, `hub_flange` 도면을 다시 뽑았다(나머지 부품 STEP은 시각만 달라 그대로 둠, STL은 바이트까지 같음). 질량 변화 약 0.03 g이라 `calc/*.json`·URDF는 그대로다.
-- **버전 14**(11-08, 최신, 사용자: "문제 2건 + 쉬운 것"): 체결부 축 방향 여유 전수 점검(나사·핀·스피곳·인서트를 공차까지 넣어 계산)에서 나온 고침. v4 파일은 v4 값 그대로이고 v5 값은 `fusion/v5_params.py`(`v5run.load()`, 도면·단면·강도 스크립트가 함께 씀)에 있다.
+- 버전 14(11-08, 사용자: "문제 2건 + 쉬운 것"): 체결부 축 방향 여유 전수 점검(나사·핀·스피곳·인서트를 공차까지 넣어 계산)에서 나온 고침. v4 파일은 v4 값 그대로이고 v5 값은 `fusion/v5_params.py`(`v5run.load()`, 도면·단면·강도 스크립트가 함께 씀)에 있다.
   - **림 등록 홈 Ø11.2 × 3.2 → 3.6**: 림은 허브 쪽 면을 바닥에 두고 출력해 홈 바닥이 브리지로 처진다. 허브 플랜지 Ø11 × 3 턱이 먼저 닿으면 림이 기운 채 ④에 당겨진다.
   - **셸 hip 조각·안장 안쪽에 Ø8 × 1.6 받침 12곳, 나사 ISO 7380 M3 × 6 → M3 × 8**: 1.4 mm 셸 벽과 hip 판 웹 사이가 1.6 mm 비어 있어 조이면 벽이 휘었다. 물림 3.0 → 5.0.
   - 쉬운 고침: 바퀴 허브 플랜지 핀 구멍 7.5 → **8.0**(핀 2.0 나옴, 출력 오차 ±0.2에도 여유 0.55), 스피곳 높이 바퀴 플랜지 1.3 → **1.0**·hub 인서트 1.4 → **1.2**(출력부 Ø12 × 1.5 홈 바닥에 먼저 닿지 않게; 위치는 핀이 잡음), 링크의 컵 기둥 인서트 구멍 5 → **6**·무릎 캡 인서트 구멍 6 → **7**(열압입 때 밀려 내려간 PETG 자리), moteus 보드 나사 DIN 7984 M2.5 × 6 → **× 5**(끝이 4 mm 인서트 안), 윗판 M4 × 25 카운터보어 4.0 → **4.3**(머리 높이 4.0), hub 인서트 도면에 핀 구멍 깊이 공차 **+0.2/0**.
   - 허브 파일: `unjoint()` → `fix_stackups()` → `relegs()` → `reshell()` → `turn()` → `robot_mass()` → `joints()`. 버전 13과 기준 자세에서 비교: 위치가 바뀐 부품은 바퀴 핀 6개(0.5)·M4 × 25 8개(0.3)뿐, 셸/보드 나사는 새 길이로 같은 자리에, 부피 변화는 계산값과 같다(허벅지 −61.07, 정강이 −27.44, 인서트 −21.87, 허브 플랜지 −43.41, 림 −39.41, 윗판 −84.06, 셸 hip 조각 +263.59, 안장 +131.80 mm³). `joint_check` 이상 없음, 6자세 실제 간섭 0건(결합 4건), **11.598 kg**. 버전 13의 사용자 자세로 되돌려 저장. 다시 뽑은 파일: f3d, 조립 STEP, 바뀐 부품 STEP·STL 22개, 단면 데이터·단면도 3장, 도면 9장(허벅지·정강이·hub 인서트 2·허브 플랜지·림·셸 hip 조각·안장·윗판), BOM. 셸 조각 STEP·STL은 다시 만들면서 링크 25 cm 높이의 실제 좌표로 나온다(이전 파일보다 z +132.857, 모양·크기 같음). 질량 변화 약 1 g이라 `calc/*.json`·URDF는 그대로다.
   - 정강이 바퀴 쪽 컵 기둥 인서트 구멍 하나(바퀴 축에서 r 40.5, 119.7°)는 원래부터 모터 리드선 통로(사각 홈) 모서리와 겹쳐 옆이 약 30 % 트여 있다 — 5절 결정 사항.
+- **버전 15**(11-08, 사용자: mjbots 주문을 power dist r4.5b로 확정 — CAN-FD로 Pi가 깨끗이 종료한 뒤 전원이 꺼지게): **전원보드 mjpower-ss → power dist r4.5b**.
+  - 보드: 80 × 50(mjpower-ss 70 × 50), PCB 1.5, 고정 구멍 M2.5 4개 **74 × 44**(64 × 44), 36 g. 형상은 mjbots가 r4.5b 상품 페이지에 거는 r4.3b 기계 STEP·도면(`C:\Users\User\Desktop\power_dist_r45b\`)이고, PCB와 커넥터 묶음(XT90-M, XT30-F × 6, PH-3 CAN × 2, PH-4 스위치, ZH-6 SWD, PH-5 GPIO)으로 나눴다. 커넥터 자리는 `fusion/pdist_v5.py`에 있다(Fusion에서 STEP을 읽어 잼).
+  - 자리·방향은 mjpower-ss 그대로(중심 CAD (0, −61), 긴 변 x, XT90은 스위치 쪽 CAD −x): 보드가 양 끝으로 5 mm씩 길어져 CAD x −40 ~ +40, y −86 ~ −36. 데크 보스·M2.5 인서트·M2.5 × 6 저두 볼트 4개가 74 × 44로 옮겼다(보드 나사는 1.5 PCB 위). CAN1·CAN2는 XT90 옆(CAD x −36, −28, y −71)이라 pi3hat JC3까지 10 cm 케이블이면 된다.
+  - 여유: XT90 앞(−x)에서 가장 가까운 것은 셸 이음 나사(CAD x −96)로 **56 mm**(이전 61) — XT90 변환 플러그·선이 들어갈 자리. 보드 위는 배터리 받침까지 84 mm, +x 끝은 셸까지 76 mm.
+  - v4 파일은 그대로다. `v5run.load()`가 `pdist_v5.patch()`로 v4 모듈의 보드 마스터(`vendor.mjpower_ss`), 데크 구멍(`torso.mjpower_holes_robot`), 보드 나사 높이, 질량(`check.LUMPED`)을 바꾼다 — `build()`도 r4.5b로 만든다. 보드 나사 이름은 v4 그대로 `FX DIN 7984 M2.5x6 mjpower`.
+  - 허브 파일: `unjoint()` → `relayout()`(mjpower-ss를 빼고 r4.5b를 넣으며 `_library`의 옛 마스터도 지움) → `turn()`(126) → `joints()` → `interference()` 6자세 실제 간섭 0건(결합 4건) → `robot_mass()` **11.600 kg**. 조인트 값은 버전 14와 같이 모두 0. 다시 뽑은 파일: f3d, 조립 STEP, 부품 STEP·STL(`exports()`), `electronics_deck` 도면, BOM(`manufacturing/bom.py`: r4.5b, 동봉 로커 스위치 하네스·XT30U 수, CAN은 mjbots 기성 케이블 30 cm 2 + 50 cm 4 + 10 cm 1). 질량 변화 2 g이라 `calc/*.json`·URDF는 그대로다.
 
 ![로봇](images/05_robot_iso.png) ![다리 안쪽 뒤](images/03_leg_iso_inboard_rear.png)
 
@@ -189,7 +195,7 @@ v5run.deepen_hub_dowels()  # 허브 파일만, 한 번(11-08): 바퀴 허브 플
 v5run.fix_stackups()   # 허브 파일만, 한 번(11-08): 축 방향 여유 고침(핀 구멍 8.0·스피곳·림 홈·윗판 카운터보어·셸/보드 나사) — unjoint() 뒤, 그다음 relegs(), reshell(), turn(), robot_mass(), joints()
 v5run.rename_to_robot()  # 허브 파일만, 한 번(11-08): 버전 10까지의 부품·몸체·조인트 이름을 스위치 쪽 기준으로. 이것 없이는 아래 단계가 멈춘다
 v5run.reshell()        # 허브 파일: 셸 조각만 다시 만든다(스위치 쪽 세로 모서리 R30) — 그 뒤 따로 turn()
-v5run.relayout()       # 허브 파일: 데크를 다시 만들고 Pi·hat·mjpower-ss·팬을 중심선 배치로(11-07) — 그 뒤 따로 turn()
+v5run.relayout()       # 허브 파일: 데크를 다시 만들고 Pi·hat·전원보드(11-08부터 power dist r4.5b)·팬을 중심선 배치로(11-07) — 그 뒤 따로 turn()
 v5run.urdf_export()    # calc/urdf_data.json + export/links_stl — 그 뒤 wheeled_biped에서 python -m wbr.models.build_v5
 v5run.turn()           # 바퀴 묶음 바깥쪽 — 마지막에, 따로 (이미 돌아 있으면 0개)
 v5run.report()         # 다리 부품 부피·질량·몸체/셸 수
@@ -439,7 +445,7 @@ Plan 4 기본값은 꺼짐). 잠긴 차동기처럼 멈춘 바퀴에 맞춰 반�
 
 `torso.centre_imu()`(v5만, v4는 그대로), `v5run.relayout()`:
 - Pi·pi3hat을 데크 가운데로: pi3hat r4.5의 IMU 자리 두 곳(BMI088, ICM-42688)이 x ±0.5, y ±2.45 mm에 온다(이전 x +8, y −68.3 mm). 높이는 그대로 hip 축 아래 35.5 mm다.
-- mjpower-ss를 CAD −y 쪽으로, 긴 변을 x 방향으로 돌렸다(CAD y −86 ~ −36). XT90은 스위치 쪽(CAD −x)을 보고, XT30 출력은 반대쪽에서 hat의 XT30(CAD y 약 −22) 옆에 온다.
+- mjpower-ss를 CAD −y 쪽으로, 긴 변을 x 방향으로 돌렸다(CAD y −86 ~ −36; 11-08 버전 15부터 같은 자리에 power dist r4.5b, x −40 ~ +40). XT90은 스위치 쪽(CAD −x)을 보고, XT30 출력은 반대쪽에서 hat의 XT30(CAD y 약 −22) 옆에 온다.
 - 데크는 보스·창만 새 자리로 다시 만들었다(`electronics_deck`, 질량 +0.25 g). 팬은 Pi를 따라 옮겼다(x −43 ~ −36).
 - 보드 방향은 그대로다: hat 위쪽, CAN·HDMI는 CAD +x, USB는 CAD +y. **로봇의 앞은 로커 스위치 쪽(CAD −x, 11-07 사용자)** 이라 CAN·HDMI가 로봇 뒤(무릎 쪽), USB가 로봇 오른쪽이고, `R_base_to_imu` = diag(−1, −1, 1)이다. 이 절의 좌표는 CAD 좌표다.
 - **부품 이름은 11-08(허브 버전 11)부터 로봇 기준이다**(사용자, 맨 위 버전 11의 표): `shell_front`·`rail_F`·`spine_tube_F`는 스위치 쪽(CAD −x), `_L` 부품은 로봇 왼쪽(CAD −y)이다. URDF(`build_v5`)의 `left_*`, `right_*`와 같은 방향이다.

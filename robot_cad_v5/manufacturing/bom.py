@@ -131,11 +131,14 @@ PURCHASED = [   # (prefix, item, spec, source, note)
     ('pi3hat_r4.5', 'mjbots pi3hat r4.5', 'CAN-FD ×5, IMU, 24 V → 5 V, M2.5 × 11 스탠드오프·나사 동봉', 'mjbots',
      '파이에는 USB-C 전원을 넣지 않는다(pi3hat이 5 V를 만든다)'),
     ('standoff M2.5x11', 'M2.5 × 11 육각 스탠드오프(수-암)', 'pi3hat 동봉 — 따로 사지 않는다', '(pi3hat 동봉)', '파이 ↔ pi3hat'),
-    ('mjpower_ss', 'mjbots power dist (mjpower-ss)', 'XT90 입력, XT30 출력 ×6, 프리차지, 10~54 V', 'mjbots', '배터리를 파이·pi3hat에 바로 물리지 않는다'),
+    ('power_dist_r4.5b', 'mjbots power dist r4.5b',
+     'XT90 입력, XT30 출력 ×6, 프리차지, CAN-FD(전압·전류·에너지, 소프트 종료), 10~44 V, 80 × 50, 구멍 74 × 44', 'mjbots',
+     '배터리를 파이·pi3hat에 바로 물리지 않는다(11-08 사용자: mjpower-ss 대신, 자동 종료용 CAN). 동봉: XT30U 수 6, XT90S 암 1, '
+     'PH-4·PH-3 짝 커넥터, 로커 스위치 하네스. CAN1 → pi3hat JC3, 기본 CAN ID 32, 보드에 종단 저항 없음(선이 0.5 m 미만이라 pi3hat 쪽만으로 됨)'),
     ('battery_24V_15Ah', '배터리 24 V 15 Ah', '75 × 310 × 75 mm, XT60(F) 리드', '(가지고 있는 배터리)', '새로 살 때는 크기·커넥터가 같은 것'),
     ('fan 30x30x7', '팬 30 × 30 × 7 mm 5 V', '2핀', '전자 부품상', 'pi3hat JP6(1번 5 V, 3번 GND), 데크에 1.5 mm 양면 폼테이프'),
-    ('rocker switch', '로커 스위치 19 × 13 + mjbots PH4 스위치 하네스', 'mjpower-ss 스위치 헤더용', 'mjbots / 전자 부품상',
-     '몸통 앞면(CAD −x) 수직면, 로봇 오른쪽(CAD +y)의 19 × 13 구멍'),
+    ('rocker switch', '로커 스위치 19 × 13 + mjbots PH4 스위치 하네스', 'power dist J2(PH-4)용, E-Switch R1966 + 30 cm 하네스',
+     '(power dist r4.5b 동봉)', '몸통 앞면(CAD −x) 수직면, 로봇 오른쪽(CAD +y)의 19 × 13 구멍'),
     ('CAN terminator', 'CAN-FD 종단 저항 120 Ω (JST PH-3)', '20 × 15 × 10 이하', 'mjbots (또는 120 Ω 저항 + PHR-3로 직접)',
      '바퀴 드라이버 CAN1(다리 끝). moteus에는 종단 저항이 없고 pi3hat 쪽에는 있다'),
     ('XT30 cap', 'XT30 보호 캡', 'XT30 수 커넥터용', '전자 부품상', '바퀴 드라이버 J2(24 V가 살아 있는 빈 포트)'),
@@ -232,8 +235,8 @@ FX = {
     'FX ISO 7380 M3x8 shell': ('몸통', '버튼 볼트 ISO 7380', 'M3 × 8', '셸(hip 조각·안장) 안쪽 받침 → hip 판 M3 탭 (11-08)', 12),
     'FX ISO 7380 M3x8 splice': ('몸통', '버튼 볼트 ISO 7380', 'M3 × 8', '셸 앞·뒤 조각 ↔ hip 조각 이음판 12개', 24),
     'FX DIN 934 M3 splice': ('몸통', '육각 너트 DIN 934', 'M3', '이음판 안쪽', 24),
-    'FX DIN 7984 M2.5x6 mjpower': ('몸통', '저두 볼트 DIN 7984', 'M2.5 × 6', 'mjpower-ss → 데크 보스', 4),
-    'FX insert M2.5x4 deck': ('몸통', '열압입 인서트 황동', 'M2.5 × 4 (구멍 Ø3.6)', '데크 보스(라즈베리파이 4, mjpower-ss 4)', 8),
+    'FX DIN 7984 M2.5x6 mjpower': ('몸통', '저두 볼트 DIN 7984', 'M2.5 × 6', 'power dist r4.5b → 데크 보스', 4),
+    'FX insert M2.5x4 deck': ('몸통', '열압입 인서트 황동', 'M2.5 × 4 (구멍 Ø3.6)', '데크 보스(라즈베리파이 4, power dist 4)', 8),
     'FX pi3hat M2.5x5': ('몸통', 'M2.5 × 5 나사 (pi3hat 동봉)', 'M2.5 × 5', 'pi3hat → 스탠드오프 위 — 따로 사지 않는다', 4),
     'FX foam pad': ('몸통', '폼 패드', '75 × 310 × 1 mm', '배터리 밑', 1),
 }
@@ -266,14 +269,16 @@ def spare(item, k):
 
 # wiring: not in the model (user 11-01); topology of robot_cad_v2 README 8 (= v4 / the v5 route of git 5a01c18)
 WIRING = [  # (item, spec, need, order, note)
-    ('XT30U 플러그 수(M), 16 AWG 납땜형', '전원 케이블 끝', 3, 4, '전원보드 P5 → pi3hat, P3 → 왼 hip, P6 → 오른 hip: 수-암 케이블 3개의 보드 쪽 끝'),
+    ('XT30U 플러그 수(M), 16 AWG 납땜형', '전원 케이블 끝', 3, '— (동봉)', '전원보드 P5 → pi3hat, P3 → 왼 hip, P6 → 오른 hip: 수-암 케이블 3개의 보드 쪽 끝 '
+     '(power dist r4.5b에 6개 동봉)'),
     ('XT30U 플러그 암(F), 16 AWG 납땜형', '전원 케이블 끝', 11, 13, '위 3개의 드라이버 쪽 끝 + hip → 무릎 → 바퀴 암-암 4개(양 끝)'),
     ('16 AWG 실리콘선 빨강', '전원', '약 2.7 m', '5 m', '어림: v2 모델 길이 2.4 m + 링크 25 cm로 다리마다 +0.15 m, 실물에서 재서 자름'),
     ('16 AWG 실리콘선 검정', '전원', '약 2.7 m', '5 m', '같음'),
-    ('CAN 꼬은선 26 AWG (2가닥)', 'CAN_H·CAN_L', '약 2.7 m', '5 m', 'pi3hat JC1 → 왼 다리, JC2 → 오른 다리, hip → 무릎 → 바퀴 (케이블 6개)'),
-    ('JST PHR-3 하우징', 'PH 2.0 mm 3핀', 12, 15, 'CAN 케이블 6개 × 양 끝, 1번 H · 2번 L · 3번(GND) 비움, 곧은 배선'),
-    ('JST SPH-002T-P0.5S 단자', '24~30 AWG 압착', 24, 50, '하우징마다 2개(3번 비움), 압착 실패 여유'),
-    ('XT90(F) → XT60(M) 변환 케이블', '12 AWG', 1, 1, '배터리 XT60(F) 리드 → mjpower-ss XT90(M)'),
+    ('mjbots JST PH3 Cable 30 cm', 'CAN-FD용 꼬은 3선, 1:1', 2, 2, 'pi3hat JC1 → 왼 hip, JC2 → 오른 hip (몸통 안)'),
+    ('mjbots JST PH3 Cable 50 cm', '같음', 4, 4, 'hip → 무릎, 무릎 → 바퀴 × 좌우. 25 cm 링크의 다리 경로는 어림 45~55 cm(모델 없음): '
+     '실물에 대 보고 모자라면 PHR-3 하우징 + SPH-002T 단자 + 26 AWG 꼬은선으로 직접 만든다'),
+    ('mjbots JST PH3 Cable 10 cm', '같음', 1, 1, 'pi3hat JC3 → power dist CAN1 (자동 종료·전력 측정)'),
+    ('XT90(F) → XT60(M) 변환 케이블', '12 AWG', 1, 1, '배터리 XT60(F) 리드 → power dist XT90(M). 동봉 XT90S 암에 XT60 수를 납땜해 만들어도 된다'),
     ('접착식 케이블타이 마운트', '20 × 20 mm 안팎', '약 16', 20, '링크에 구멍이 없어 다리 배선은 허벅지·정강이 뒷면을 따라 붙인다(git 5a01c18 경로)'),
     ('케이블타이', '100 × 2.5 mm', '약 30', '1봉(100개)', '마운트·다발 묶음'),
     ('수축 튜브', 'Ø3·Ø6 안팎', '-', '1세트', 'XT30 납땜부, 선 끝'),
@@ -282,7 +287,7 @@ TOOLS = [   # (item, where); {inserts} = heat-set inserts in the BOM
     ('나사 고정제(중강도, 예: 243급)', '⑥ hub 인서트 볼트(관절 단면도의 조립 순서), 금속 탭에 들어가는 다른 볼트는 선택'),
     ('에폭시 또는 순간접착제', 'AKE 부속 자석 → 6061 자석 스페이서 포켓'),
     ('열압입 인서트 인두 팁 M2.5 · M3 · M4', 'PETG 부품 인서트 {inserts}개'),
-    ('JST PH 압착 공구', 'CAN 케이블 단자(SPH-002T)'),
+    ('JST PH 압착 공구', 'mjbots 케이블이 다리 경로에 모자랄 때만: CAN 케이블 단자(SPH-002T)'),
     ('리머 Ø35 H7', '허벅지 바깥 막대의 무릎 캡 구멍 2곳(0.2 작게 출력한 뒤)'),
     ('2.5 mm 육각 볼드라이버, 축 120 mm 이상', 'hip·무릎 출력 볼트 ②를 Ø44 접근 구멍 안으로'),
     ('육각 렌치 1.5 · 2 · 2.5 · 3 mm', 'DIN 7984 M2.5(1.5), ISO 4762 M2.5 · 10642 M3 · 7380 M3(2), ISO 4762 M3 · 10642 M4(2.5), '
@@ -432,7 +437,8 @@ def write(R, c, leaves):
     L += ['', '①~⑦은 관절 단면도(`manufacturing/explain/hip_section.png`, `knee_section.png`, `wheel_section.png`)의 번호다.', '',
           '## 5. 배선·커넥터 (모델 없음)', '',
           '사용자 요청(11-01)으로 배선은 모델에 없다. 연결은 v2 README 8절과 같다: 전원보드 P5 → pi3hat, P3·P6 → 왼·오른 hip → 무릎 → 바퀴(XT30 데이지 체인, 16 AWG), '
-          'pi3hat JC1·JC2 → 각 다리 hip → 무릎 → 바퀴(CAN, 바퀴 CAN1에 종단 저항). 선 길이는 어림이므로 실물에서 재서 자른다. '
+          'pi3hat JC1·JC2 → 각 다리 hip → 무릎 → 바퀴(CAN, 바퀴 CAN1에 종단 저항), pi3hat JC3 → power dist CAN1(11-08). '
+          'CAN은 mjbots 기성 케이블(11-08 사용자 주문), 전원선 길이는 어림이므로 실물에서 재서 자른다. '
           '한 번 깔아 본 v5 다리 경로는 git `5a01c18`(`fusion/harness_v5.py`, 17.5 cm 링크).', '',
           '| 품목 | 규격 | 필요 | 주문 권장 | 비고 |', '|---|---|---|---|---|']
     L += ['| %s | %s | %s | %s | %s |' % (r[0], r[1], fmt_q(r[2]), fmt_q(r[3]), r[4]) for r in R['wire']]
