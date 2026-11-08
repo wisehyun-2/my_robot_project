@@ -106,7 +106,7 @@ def top_plate():
     for sx in (-1, 1):
         for yy in (-100.0, -33.3, 33.3, 100.0):
             C.cut(b, B.zcyl(sx * P.RAIL_X, yy, z0 - 1, z0 + t + 1, 2.2))
-            C.cut(b, B.zcyl(sx * P.RAIL_X, yy, z0 + t - 4.0, z0 + t + 1, 4.0))
+            C.cut(b, B.zcyl(sx * P.RAIL_X, yy, z0 + t - P.TOP_CBORE, z0 + t + 1, 4.0))
     for i in range(-2, 3):
         for j in range(-4, 5):
             x, y = 25.0 * i, 25.0 * j

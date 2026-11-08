@@ -149,8 +149,8 @@ def specs():
             % (P.RIM_SCREW_SEAT, 14 - P.RIM_SCREW_SEAT - WASHER[3][2] - 0.1)), 12),
         'FX insert M3x5.7 hub': (lambda: insert(3, 5.7, LG.INSERT_M3), 'Brass', 'brass', (
             '바퀴', '열압입 인서트 황동', 'M3 × 5.7 (구멍 Ø4.0 × 6)', '허브 플랜지'), 12),
-        'FX DIN 7984 M2.5x6 board': (sc(2.5, 6, 'low'), 'Steel', 'steel', (
-            '드라이버', '저두 볼트 DIN 7984', 'M2.5 × 6', 'moteus → 컵 스탠드오프(보드 모터 쪽에서)'), 24),
+        'FX DIN 7984 M2.5x%d board' % P.BOARD_SCREW_L: (sc(2.5, P.BOARD_SCREW_L, 'low'), 'Steel', 'steel', (
+            '드라이버', '저두 볼트 DIN 7984', 'M2.5 × %d' % P.BOARD_SCREW_L, 'moteus → 컵 스탠드오프(보드 모터 쪽에서)'), 24),
         'FX insert M2.5x4 cup': (lambda: insert(2.5, 4.0, LG.INSERT_M25), 'Brass', 'brass', (
             '드라이버', '열압입 인서트 황동', 'M2.5 × 4 (구멍 Ø3.6 × 5)', '컵 스탠드오프'), 24),
         'FX ISO 4762 M3x%d hip cup' % Lh: (sc(3, Lh), 'Steel', 'steel', (
@@ -167,9 +167,9 @@ def specs():
         'FX grommet D16': (grommet, 'Rubber', 'rubber', ('배선', '고무 그로밋', 'Ø16 구멍, 판 1.4 mm (안지름 14)',
                                                        '셸 hip 케이블 출구'), 2),
         'FX ISO 10642 M5x12': (lambda: csk_screw(5, 12), 'Steel', 'black satin', (
-            '몸통', '접시 볼트 ISO 10642', 'M5 × 12', 'hip 판 → 척추 봉 끝 M5 탭(물림 약 7.5 mm)'), 4),
+            '몸통', '접시 볼트 ISO 10642', 'M5 × 12', 'hip 판 → 척추 봉 끝 M5 탭(물림 약 7 mm)'), 4),
         'FX ISO 10642 M4x12': (lambda: csk_screw(4, 12), 'Steel', 'black satin', (
-            '몸통', '접시 볼트 ISO 10642', 'M4 × 12', 'hip 판 → 위 레일 끝 M4 탭(물림 약 7.5 mm)'), 4),
+            '몸통', '접시 볼트 ISO 10642', 'M4 × 12', 'hip 판 → 위 레일 끝 M4 탭(물림 약 7 mm)'), 4),
         'FX ISO 4762 M4x25 top': (sc(4, 25), 'Steel', 'black satin', (
             '몸통', '육각 홈붙이 볼트 ISO 4762', 'M4 × 25', '윗판 → 위 레일(관통)'), 8),
         'FX DIN 985 M4': (lambda: nut(4, nyloc=True), 'Steel', 'steel', ('몸통', '나일론 너트 DIN 985', 'M4', '위 레일 아래'), 8),
@@ -178,8 +178,10 @@ def specs():
             '몸통', '열압입 인서트 황동', 'M4 × 5.7 (구멍 Ø5.6 × 6)', '윗판 25 mm 격자(짐·로봇팔)'), _top_grid_count()),
         'FX ISO 4762 M3x8 deck': (sc(3, 8), 'Steel', 'steel', (
             '몸통', '육각 홈붙이 볼트 ISO 4762', 'M3 × 8', '전장 데크 플랜지 → hip 판 M3 탭'), 4),
-        'FX ISO 7380 M3x6 shell': (sc(3, 6, 'button'), 'Steel', 'black satin', (
-            '몸통', '버튼 볼트 ISO 7380', 'M3 × 6', '셸(hip 부분) → hip 판 M3 탭'), 12),
+        'FX ISO 7380 M3x%d shell' % P.SHELL_SCREW_L: (sc(3, P.SHELL_SCREW_L, 'button'), 'Steel', 'black satin', (
+            '몸통', '버튼 볼트 ISO 7380', 'M3 × %d' % P.SHELL_SCREW_L,
+            '셸(hip 부분) → hip 판 M3 탭' + (' (셸 안쪽 받침 %.1f 위, 물림 %.1f)' % (P.SHELL_PAD, P.SHELL_SCREW_L - P.SHELL_T - P.SHELL_PAD)
+                                         if P.SHELL_PAD else '')), 12),
         'FX ISO 7380 M3x8 splice': (sc(3, 8, 'button'), 'Steel', 'black satin', (
             '몸통', '버튼 볼트 ISO 7380', 'M3 × 8', '셸 앞·뒤 조각 ↔ hip 조각 이음판 12개'), 24),
         'FX DIN 934 M3 splice': (lambda: nut(3), 'Steel', 'steel', ('몸통', '육각 너트 DIN 934', 'M3', '이음판 안쪽'), 24),
@@ -264,7 +266,7 @@ def positions():
             nb = C.mul(yb, -1)
             for (x, z) in P.MOTEUS['holes']:
                 out.append((link, 'FX insert M2.5x4 cup', C.apply(b, (x, P.MOTEUS['pcb_t'] + 0.1, z)), yb))
-                out.append((link, 'FX DIN 7984 M2.5x6 board', C.apply(b, (x, 0.0, z)), yb))
+                out.append((link, 'FX DIN 7984 M2.5x%d board' % P.BOARD_SCREW_L, C.apply(b, (x, 0.0, z)), yb))
             rim, f_out = LG.cup_levels(joint, s)
             L, cb = LG.cup_screw(joint)
             name = {'hip': 'FX ISO 4762 M3x%d hip cup', 'knee': 'FX ISO 4762 M2.5x%d knee cup',
@@ -286,7 +288,7 @@ def positions():
             out.append(('torso', 'FX ISO 10642 M4x12', (sx * P.RAIL_X, Y(y_web), ZH + P.RAIL_Z), D(-1)))
             out.append(('torso', 'FX ISO 4762 M3x8 deck', (sx * 45.0, Y(y_in - 3.5), ZH - 42.0), D(+1)))
         for (x, z) in ((-50.0, 30.0), (50.0, 30.0), (-60.0, -20.0), (60.0, -20.0), (-40.0, 140.0), (40.0, 140.0)):
-            out.append(('torso', 'FX ISO 7380 M3x6 shell', (x, Y(P.YW), ZH + z), D(-1)))
+            out.append(('torso', 'FX ISO 7380 M3x%d shell' % P.SHELL_SCREW_L, (x, Y(P.YW), ZH + z), D(-1)))
         g = P.theta_dir(P.GROMMET_DEG)
         out.append(('torso', 'FX grommet D16', (g[0] * P.GROMMET_R, Y(P.YW), ZH + g[1] * P.GROMMET_R), D(+1)))
     ZH = P.Z_HIP
@@ -302,7 +304,7 @@ def positions():
     t_top = P.TOP_PLATE[2]
     for sx in (-1, 1):
         for yy in (-100.0, -33.3, 33.3, 100.0):
-            out.append(('torso', 'FX ISO 4762 M4x25 top', (sx * P.RAIL_X, yy, z0 + t_top - 4.0), (0, 0, -1)))
+            out.append(('torso', 'FX ISO 4762 M4x25 top', (sx * P.RAIL_X, yy, z0 + t_top - P.TOP_CBORE), (0, 0, -1)))
             out.append(('torso', 'FX DIN 125 M4', (sx * P.RAIL_X, yy, z0 - P.RAIL_S - WASHER[4][2]), (0, 0, 1)))
             out.append(('torso', 'FX DIN 985 M4', (sx * P.RAIL_X, yy, z0 - P.RAIL_S - WASHER[4][2] - NUT[4][1]), (0, 0, 1)))
     for (x, y) in _top_grid():

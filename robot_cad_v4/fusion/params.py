@@ -142,11 +142,16 @@ DOWEL_HOLE = 7.5            # hip / knee boss dowel holes, deep from the output 
                             # pins pressed to the bottom stand 2.5 proud (2.15 .. 2.75 with the pin length ±0.25), so
                             # they cannot bottom in the AKE output's 3 mm holes before the faces meet
 HUB_SCREW_SEAT = 9.5        # wheel hub flange: output face -> washer seat of its 6 x M3 x 14 (12.9) (10-30: with the
-HUB_SCREW_L = 14            # hip / knee 11.2 seat the M3 x 16 heads stood 1.2 mm into the hex hub's Ø20 register spigot;
-                            # now the heads stop 0.5 mm short of it, 4.0 mm engagement in the 5 mm output taps)
+HUB_SCREW_L = 14            # hip / knee 11.2 seat the M3 x 16 heads stood 1.2 mm into the then hex hub's Ø20 register
+                            # spigot; since the one-piece rim (10-31) the heads stop 2.0 mm short of the rim hub face,
+                            # 4.0 mm engagement in the 5 mm output taps)
 HUB_DOWEL_HOLE = 7.0        # wheel hub flange dowel holes, deep from the output face: the Ø3 x 10 pins stand 3.0 proud into
                             # the output's 3 mm holes (no room for the pin length tolerance).  v4 keeps 7.0; v5 sets 7.5
-                            # (11-08, user: like DOWEL_HOLE, 2.5 proud)
+                            # (11-08, user: like DOWEL_HOLE, 2.5 proud; then 8.0 for the print tolerance)
+SHELL_PAD = 0.0             # shell hip-section M3 screws: pad on the wall's inner face down to the hip plate web (v4 none:
+SHELL_SCREW_L = 6           # the 1.4 wall spans a 1.6 gap to the web; v5 1.6 pads + M3 x 8, 11-08 user)
+BOARD_SCREW_L = 6           # moteus board -> cup standoff DIN 7984 (v5 5: the tip stays in the 4 mm insert, 11-08 user)
+TOP_CBORE = 4.0             # top plate counterbore depth for the M4 x 25 heads (k 4.0; v5 4.3 so a head never stands proud)
 RING_T = 2.0                # laser-cut 2 mm stainless clamp rings (vendor.clamp_ring_*): no screw head bears on bare resin
                             # at a joint (v2 PETG, back in v4; v3 6061 had none)
 RING_OUT = (27.0, 12.5)     # driven bosses (OD inside the Ø28 access pocket, ID): 6 x M3 x 16 12.9 on PCD 20
@@ -175,7 +180,7 @@ HIP_CSK_EAR_R = 8.0          # web ear around the tube M5 countersinks (r 61.7):
                              # (0.83 mm at the r 68 disc), the ear stands 1.7 mm proud of the disc
 TAP_DRILL = {'M3': 2.5, 'M4': 3.3, 'M5': 4.2}
 END_TAP = {'M5': (14.0, 11.0), 'M4': (12.0, 9.0)}   # spine / rail end taps: drill depth, full-thread depth
-                            # (the ISO 10642 x 12 screws from the hip plate engage ~7.5 mm)
+                            # (the ISO 10642 x 12 screws from the hip plate's 5 mm web engage ~7.0 mm)
 GAP_TYRE = 5.0              # tyre sidewall -> shank plate
 
 Y_FEMUR_IN = YW + GAP_FEMUR
@@ -243,7 +248,7 @@ def y_output(joint):
 # TITA proportions (length ≈ 1.4 x width, hip axis at mid-length).  The front / rear sections are narrower than the
 # hip section: the knee drivers (y >= 154) and the tyres (y >= 140.5) swing past them over the full hip range.
 TORSO_X = 240.0             # front / rear end (length 480)
-TORSO_TOP = 148.0           # top surface above the hip axis (the payload plate stands 2 mm proud)
+TORSO_TOP = 148.0           # top surface above the hip axis (the payload plate stands 1 mm proud: its top at 149)
 TORSO_BOT = -70.0
 TORSO_Y_END = 135.0         # half width of the front / rear sections
 TORSO_X_MID, TORSO_X_TAPER = 75.0, 95.0     # full-width hip section |x| <= 75, tapering to TORSO_Y_END at |x| 95

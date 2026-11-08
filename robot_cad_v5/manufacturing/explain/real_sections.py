@@ -290,7 +290,7 @@ def fig_hip(recs):
     YR = LV.y_ring(TF)
     OUT = P.y_output('hip')
     fig = plt.figure(figsize=(24, 30))
-    fig.suptitle('v5 hip 관절 — 실제 모델 단면 (Fusion WheelBiped_v5 버전 11, 링크 25 cm, 오른쪽 다리, mm)  '
+    fig.suptitle('v5 hip 관절 — 실제 모델 단면 (Fusion WheelBiped_v5 버전 14, 링크 25 cm, 오른쪽 다리, mm)  '
                  '위 절반: 출력 M3 자리 %d°, 아래 절반: ⑥ 플랜지 볼트 · 평행핀 자리 %d°' % (BU, BD),
                  fontsize=20, x=0.01, ha='left', y=0.995)
     ax = panel(fig, [0.04, 0.52, 0.55, 0.45], H, ((118, 296), (-100, 100)), '(a) 전체 — 몸통 hip 판부터 허벅지 바깥 면까지')
@@ -336,7 +336,7 @@ def fig_hip(recs):
          '인서트 플랜지(접시 Ø7, 면과 같게) → PETG 벽 %.0f mm → 6061 받침 링 탭 6 mm (r %.0f).  열압입 인서트 없앰'
          % (LV.WALL_J, LV.FLANGE_BOLT_R)),
     ]
-    fits = [('A', 'Ø11.8 × 1.4 스피곳 (인서트) → 출력부 Ø12 × 1.5 홈'),
+    fits = [('A', 'Ø11.8 × %.1f 스피곳 (인서트) → 출력부 Ø12 × 1.5 홈 (바닥에서 %.1f 뜸)' % (LV.INSERT_SPIGOT[1], 1.5 - LV.INSERT_SPIGOT[1])),
             ('B', 'Ø28 보스 → 몸통 hip 판 Ø30 구멍: 반경 틈 1.0'),
             ('C', '인서트 플랜지 Ø48 → 허벅지 자리 Ø48.3 × 6 (반경 0.15)'),
             ('D', '받침 링 Ø43 → 접근 구멍 Ø44 (반경 0.5, 위에서 떨어뜨려 넣음)')]
@@ -374,7 +374,7 @@ def fig_knee(recs):
     YR = LV.y_ring(SI)
     OUT = P.y_output('knee')
     fig = plt.figure(figsize=(24, 30))
-    fig.suptitle('v5 무릎 관절 — 실제 모델 단면 (Fusion WheelBiped_v5 버전 11, 링크 25 cm, 오른쪽 다리, mm)  '
+    fig.suptitle('v5 무릎 관절 — 실제 모델 단면 (Fusion WheelBiped_v5 버전 14, 링크 25 cm, 오른쪽 다리, mm)  '
                  '위 절반: 출력 M3 자리 %d° (허벅지 쪽), 아래 절반: ⑥ 플랜지 볼트 자리 %d° (정강이 쪽)' % (BU, BD),
                  fontsize=20, x=0.01, ha='left', y=0.995)
     ax = panel(fig, [0.04, 0.52, 0.55, 0.45], H, ((140, 296), (-100, 100)), '(a) 전체 — 드라이버 컵부터 바깥 막대까지')
@@ -466,7 +466,7 @@ def fig_wheel(recs):
     SI, SO = LV.Y_SI, LV.Y_SO
     OUT = 2 * LV.Y_MSH - P.y_output('wheel')
     fig = plt.figure(figsize=(24, 30))
-    fig.suptitle('v5 바퀴 관절 — 실제 모델 단면 (Fusion WheelBiped_v5 버전 13, 링크 25 cm, 바퀴 묶음 2.5 mm 바깥으로, 핀 구멍 7.5, 오른쪽 다리, mm)  '
+    fig.suptitle('v5 바퀴 관절 — 실제 모델 단면 (Fusion WheelBiped_v5 버전 14, 링크 25 cm, 바퀴 묶음 2.5 mm 바깥으로, 핀 구멍 8.0, 오른쪽 다리, mm)  '
                  '위 절반 %d°: 허브 M3 자리, 아래 절반 %d°: 림 M3 · 평행핀 자리' % (BU, BD),
                  fontsize=20, x=0.01, ha='left', y=0.995)
     ax = panel(fig, [0.04, 0.52, 0.55, 0.45], H, ((176, 302), (-108, 108)), '(a) 전체 — 드라이버 컵부터 타이어까지')
@@ -497,8 +497,8 @@ def fig_wheel(recs):
         ('1', '#1f4e9c', 'M2.5 × 8 저두 DIN 7984 8.8   × 6  + SUS 고정 링',
          '정강이 바퀴 판(PETG 9, 바깥 면 홈) → AKE 고정자 링 — 허브 플랜지보다 먼저'),
         ('2', '#1f4e9c', 'M3 × 14 ISO 4762 12.9 + 와셔   × 6', 'PETG 허브 플랜지 → 바퀴 출력부 (PCD 20)'),
-        ('3', '#c0392b', '평행핀 Ø3 × 10   × 3', '허브 플랜지 구멍 Ø3 × 7.5 바닥까지 → 2.5 나와 출력부 구멍(3)으로 (11-08)'),
-        ('4', '#1f4e9c', 'M3 × 14 ISO 4762   × 6 + 황동 인서트 M3 × 5.7', '림 → 허브 플랜지'),
+        ('3', '#c0392b', '평행핀 Ø3 × 10   × 3', '허브 플랜지 구멍 Ø3 × %.1f 바닥까지 → %.1f 나와 출력부 구멍(3)으로 (11-08)' % (P.HUB_DOWEL_HOLE, 10 - P.HUB_DOWEL_HOLE)),
+        ('4', '#1f4e9c', 'M3 × 14 ISO 4762   × 6 + 황동 인서트 M3 × 5.7', '림 → 허브 플랜지 (림 등록 홈 Ø11.2 × %.1f)' % (P.RIM_REG[1] + P.RIM_REG_GAP[1])),
         ('5', '#1f4e9c', 'M2.5 × 18 ISO 4762   × 3 + 황동 인서트', '드라이버 컵 → 바퀴 하우징 안쪽 끝면 (y %.0f)' % SI),
     ]
     fits = [('A', '허브 Ø28 보스 → 바퀴 판 Ø30 구멍 (반경 1.0)'),

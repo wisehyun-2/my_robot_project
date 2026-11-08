@@ -1,7 +1,7 @@
 """WheelBiped v5 BOM for ordering (11-08, user: "v5 모델의 bom 파일").
 
 Quantities of every modelled part are the instance counts in the exported assembly STEP (export/WheelBiped_v5_assembly.step =
-hub version 11, the same parts as version 12).  Every STEP component must be classified below, so a part added to the model and
+hub version 14).  Every STEP component must be classified below, so a part added to the model and
 not to this file stops the script.  Printed masses and bed sizes come from export/parts_stl.  Parts that are not in the model
 (the v5 joint screws 6 and 7 and their inserts, wiring, tools) are added by hand and marked as such.
 
@@ -158,8 +158,8 @@ MACHINED = [    # (prefix, drawing, item, material / process, files, note)
      'export/parts_step/magnet_spacer_D9x5.35_(6061).step, drawings/magnet_spacer…pdf', '모터마다 1개. 작아서 +2 여유 권장'),
 ]
 V5_MACHINED = [  # parts that are bodies of the v5 leg components: (drawing, item, spec, files, note, count from model counts)
-    ('WBv5-M01', 'hip hub 인서트 왼쪽 (hub_insert_hip_L)', '6061-T6 환봉 Ø50, 선반 + MCT: Ø28 보스, Ø11.8 × 1.4 스피곳, 플랜지 Ø48 × 6, '
-     'M3 Ø3.4 × 6 (PCD 20, 와셔 자리), 핀 Ø3 N7 × 7.5 × 3, 접시 Ø7 × 6 (r 18), 검정 아노다이징 권장(끼움면 마스킹)',
+    ('WBv5-M01', 'hip hub 인서트 왼쪽 (hub_insert_hip_L)', '6061-T6 환봉 Ø50, 선반 + MCT: Ø28 보스, Ø11.8 × 1.2 스피곳, 플랜지 Ø48 × 6, '
+     'M3 Ø3.4 × 6 (PCD 20, 와셔 자리), 핀 Ø3 N7 × 7.5 (+0.2/0) × 3, 접시 Ø7 × 6 (r 18), 검정 아노다이징 권장(끼움면 마스킹)',
      'manufacturing/step/hub_insert_hip_L.step, drawings/hub_insert_hip.pdf', '왼·오른쪽은 거울상 = 다른 부품', lambda n: n['thigh_L']),
     ('WBv5-M01', 'hip hub 인서트 오른쪽 (hub_insert_hip_R)', '같음(거울상)', 'manufacturing/step/hub_insert_hip_R.step, drawings/hub_insert_hip.pdf',
      '', lambda n: n['thigh_R']),
@@ -214,12 +214,12 @@ FX = {
     'FX ISO 4762 M3x14 12.9 hub': ('바퀴', '육각 홈붙이 볼트 ISO 4762 12.9', 'M3 × 14', '바퀴 모터 출력 → PETG 허브 플랜지 (와셔 위)', 12),
     'FX ISO 4762 M3x14 rim': ('바퀴', '육각 홈붙이 볼트 ISO 4762 8.8', 'M3 × 14', '림 → 허브 플랜지 인서트 (와셔 위)', 12),
     'FX insert M3x5.7 hub': ('바퀴', '열압입 인서트 황동', 'M3 × 5.7 (구멍 Ø4.0)', '허브 플랜지', 12),
-    'FX DIN 7984 M2.5x6 board': ('드라이버', '저두 볼트 DIN 7984', 'M2.5 × 6', 'moteus → 컵 스탠드오프', 24),
+    'FX DIN 7984 M2.5x5 board': ('드라이버', '저두 볼트 DIN 7984', 'M2.5 × 5', 'moteus → 컵 스탠드오프 (끝이 4 mm 인서트 안, 11-08)', 24),
     'FX insert M2.5x4 cup': ('드라이버', '열압입 인서트 황동', 'M2.5 × 4 (구멍 Ø3.6)', '드라이버 컵 스탠드오프', 24),
     'FX ISO 4762 M3x40 hip cup': ('드라이버', '육각 홈붙이 볼트 ISO 4762', 'M3 × 40', 'hip 컵 → hip 판 M3 탭', 6),
     'FX ISO 4762 M2.5x18 knee cup': ('드라이버', '육각 홈붙이 볼트 ISO 4762', 'M2.5 × 18', '무릎 컵 → 허벅지 인서트', 6),
     'FX ISO 4762 M2.5x18 wheel cup': ('드라이버', '육각 홈붙이 볼트 ISO 4762', 'M2.5 × 18', '바퀴 컵 → 정강이 인서트', 6),
-    'FX insert M2.5x4 link cup': ('드라이버', '열압입 인서트 황동', 'M2.5 × 4 (구멍 Ø3.6)',
+    'FX insert M2.5x4 link cup': ('드라이버', '열압입 인서트 황동', 'M2.5 × 4 (구멍 Ø3.6 × 6)',
                                   'PETG 허벅지·정강이의 컵 기둥 자리(v4 SLA는 에폭시 접착, v5 PETG는 열압입)', 12),
     'FX grommet D16': ('몸통', '고무 그로밋', 'Ø16 구멍, 판 1.4 mm (안지름 14)', '셸 hip 케이블 출구', 2),
     'FX ISO 10642 M5x12': ('몸통', '접시 볼트 ISO 10642', 'M5 × 12', 'hip 판 → 척추 봉 끝 M5 탭', 4),
@@ -229,7 +229,7 @@ FX = {
     'FX DIN 125 M4': ('몸통', '평와셔 DIN 125 A2', 'M4', '위 레일 아래 나일론 너트 밑', 8),
     'FX insert M4x5.7 top': ('몸통', '열압입 인서트 황동', 'M4 × 5.7 (구멍 Ø5.6)', '위판 25 mm 격자(짐·로봇팔)', 35),
     'FX ISO 4762 M3x8 deck': ('몸통', '육각 홈붙이 볼트 ISO 4762', 'M3 × 8', '전장 데크 플랜지 → hip 판 M3 탭', 4),
-    'FX ISO 7380 M3x6 shell': ('몸통', '버튼 볼트 ISO 7380', 'M3 × 6', '셸(hip 조각) → hip 판 M3 탭', 12),
+    'FX ISO 7380 M3x8 shell': ('몸통', '버튼 볼트 ISO 7380', 'M3 × 8', '셸(hip 조각·안장) 안쪽 받침 → hip 판 M3 탭 (11-08)', 12),
     'FX ISO 7380 M3x8 splice': ('몸통', '버튼 볼트 ISO 7380', 'M3 × 8', '셸 앞·뒤 조각 ↔ hip 조각 이음판 12개', 24),
     'FX DIN 934 M3 splice': ('몸통', '육각 너트 DIN 934', 'M3', '이음판 안쪽', 24),
     'FX DIN 7984 M2.5x6 mjpower': ('몸통', '저두 볼트 DIN 7984', 'M2.5 × 6', 'mjpower-ss → 데크 보스', 4),
@@ -248,7 +248,7 @@ def not_modelled(n):
         ('관절', '접시 볼트 ISO 10642 12.9', 'M3 × 16', '⑥ hub 인서트 플랜지(접시, 면과 같게) → PETG 벽 6 → 6061 받침 링 탭, '
          '0.7 N·m + 나사 고정제 (hub 인서트마다 %d)' % FLANGE_BOLTS, FLANGE_BOLTS * hubs),
         ('관절', '저두 볼트 DIN 7984 8.8', 'M2.5 × 8', '⑦ 무릎 캡 플랜지 → 허벅지 바깥 막대 인서트 (캡마다 %d)' % CAP_BOLTS, CAP_BOLTS * caps),
-        ('관절', '열압입 인서트 황동', 'M2.5 × 4 (구멍 Ø3.6)', '⑦ 무릎 캡 자리(허벅지 바깥 막대, 구멍 깊이 6)', CAP_BOLTS * caps),
+        ('관절', '열압입 인서트 황동', 'M2.5 × 4 (구멍 Ø3.6)', '⑦ 무릎 캡 자리(허벅지 바깥 막대, 구멍 깊이 7)', CAP_BOLTS * caps),
         ('몸통', '벨크로 스트랩', '폭 25 × 400 mm', '배터리 + 받침을 척추 봉에 묶음(받침 슬롯)', 2),
     ]
 
@@ -375,7 +375,7 @@ def write(R, c, leaves):
     n_fx = sum(r[3] for r in R['fx'])
     L = ['# WheelBiped v5 BOM — 주문용', '',
          '`python manufacturing/bom.py`가 만든다(손으로 고치지 말 것). 모델에 있는 부품의 수량은 **조립 STEP**(`export/WheelBiped_v5_assembly.step`, '
-         '허브 버전 11 = 버전 12와 같은 부품, 링크 25 cm, 11.597 kg)의 인스턴스 수이고, 모델 부품이 하나라도 분류되지 않으면 스크립트가 멈춘다. '
+         '허브 버전 14, 링크 25 cm, 11.598 kg)의 인스턴스 수이고, 모델 부품이 하나라도 분류되지 않으면 스크립트가 멈춘다. '
          '모델에 없는 것(v5 관절 볼트 ⑥·⑦과 그 인서트, 배선, 공구)은 손으로 넣었고 **★ 또는 "모델 없음"** 으로 표시했다. '
          '출력 질량과 베드 크기는 `export/parts_stl`에서 계산했다. 가격은 넣지 않았다.', '',
          '## 0. 한눈에', '',

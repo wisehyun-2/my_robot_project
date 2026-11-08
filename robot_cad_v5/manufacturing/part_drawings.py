@@ -50,6 +50,8 @@ for _m in ('adsk', 'adsk.core', 'adsk.fusion'):
 import params as P  # noqa: E402
 import link_length as LL  # noqa: E402
 LL.lengthen(P)                # v5: links 250 mm (user 11-07), before anything reads them at import
+import v5_params as VP  # noqa: E402
+VP.apply(P)                   # v5-only values (11-08)
 import legs as LG  # noqa: E402
 import legs_v5 as LV  # noqa: E402
 import hlr_gmsh as G  # noqa: E402
@@ -603,8 +605,10 @@ def round_notes(name, res):
         j = 'hip' if name.endswith('hip') else '무릎'
         return [
             '단위 mm, 3각법, 원점 = 축 위 모터 출력 면 쪽 끝면(Z0, 스피곳 시작), +Z = 링크 쪽.%s' % rot,
-            '%s 모터(AKE60-8) 출력부에 Ø11.8 h9 스피곳 × 1.4 (0/-0.05) — AKE 홈 Ø12 × 1.5보다 낮아 Z0 면이 먼저 닿음.' % j,
-            '평행핀 구멍 Ø3 N7 × %.1f (출력부 핀과 같은 PCD 20, M3와 30° 어긋남) — 핀 Ø3 × 10을 바닥까지 압입, 2.5 돌출.' % P.DOWEL_HOLE,
+            '%s 모터(AKE60-8) 출력부에 Ø11.8 h9 스피곳 × %.1f (0/-0.05) — AKE 홈 Ø12 × 1.5보다 %.1f 낮아 Z0 면이 먼저 닿음 (11-08).' % (
+                j, LV.INSERT_SPIGOT[1], 1.5 - LV.INSERT_SPIGOT[1]),
+            '평행핀 구멍 Ø3 N7 × %.1f (+0.2/0) (출력부 핀과 같은 PCD 20, M3와 30° 어긋남) — 핀 Ø3 × 10을 바닥까지 압입, %.1f 돌출 '
+            '(출력부 핀 구멍 깊이 3: 얕게 가공되면 핀이 먼저 바닥에 닿음).' % (P.DOWEL_HOLE, 10 - P.DOWEL_HOLE),
             '출력 M3 × 16 12.9: Ø3.4 통과 + Ø7.2 카운터보어, 와셔 자리(바닥) Z %.1f ±0.05 — 탭 물림 4.3.' % P.BEARING_FACE,
             'Ø28 보스 (0/-0.1): 링크 판 Ø30 구멍과 반경 틈 1.0.  플랜지 Ø48 (-0.05/-0.15) → 링크 자리 Ø48.3.',
             '플랜지 나사 6개: Ø3.4 통과 + Ø%.1f × 90° 접시 (r %.0f, 30° + 60° 간격) — ISO 10642 M3 × 16 12.9 머리가 면과 같게, '
@@ -654,8 +658,16 @@ OTHER = {   # stem: (title, material, process, quantity, sides; the first side i
 V2_COPY = {'hip_plate': ('hip_plate_L', 'hip_plate_R'), 'spine_tube': ('spine_tube',), 'rail': ('rail',),
            'clamp_ring_stator_D45_t2.0_SUS304': ('clamp_ring_stator',), 'magnet_spacer_D9x5.35_(6061)': ('magnet_spacer',)}
 V4_CHANGED = {'shell_front': 'v4 부품에서 스위치 쪽 양옆 세로 모서리만 R30 라운드(v4는 45° 모따기, 사용자 11-02)',
-              'hub_flange': 'v4 부품에서 평행핀 구멍 3개(Ø3, 출력 쪽 면에서)만 깊이 7.0 → 7.5 — 핀 Ø3 × 10을 바닥까지 넣으면 2.5 나와 '
-                            '출력부 핀 구멍(깊이 3)에 0.5 여유(사용자 11-08)'}
+              'hub_flange': 'v4 부품에서 평행핀 구멍 3개(Ø3, 출력 쪽 면에서) 깊이 7.0 → %.1f — 핀 Ø3 × 10을 바닥까지 넣으면 %.1f 나와 '
+                            '출력부 핀 구멍(깊이 3)에 여유 %.1f, 스피곳 Ø11.8 높이 1.3 → %.1f(출력부 홈 1.5 바닥에서 %.1f 뜸; 사용자 11-08)'
+                            % (P.HUB_DOWEL_HOLE, 10 - P.HUB_DOWEL_HOLE, P.HUB_DOWEL_HOLE - 7.0, P.HUB_SPIGOT[1], 1.5 - P.HUB_SPIGOT[1]),
+              'rim': 'v4 부품에서 등록 홈만 Ø11.2 × 3.2 → × %.1f — 허브 쪽 면을 바닥에 두고 출력해 홈 바닥이 브리지로 처져도 허브 플랜지의 '
+                     'Ø11 × 3 턱이 바닥에 먼저 닿지 않게(사용자 11-08)' % (P.RIM_REG[1] + P.RIM_REG_GAP[1]),
+              'shell_mid': 'v4 부품에 hip 판 나사 4곳 안쪽 받침 Ø8 × %.1f(셸 벽에서 hip 판 웹 면까지, 조이면 벽이 휘던 1.6 틈을 메움) — 나사 '
+                           'ISO 7380 M3 × %d(사용자 11-08)' % (P.SHELL_PAD, P.SHELL_SCREW_L),
+              'saddle': 'v4 부품에 hip 판 나사 2곳 안쪽 받침 Ø8 × %.1f(셸 hip 조각과 같은 이유, 사용자 11-08)' % P.SHELL_PAD,
+              'top_plate': 'v4 부품에서 M4 × 25 머리 카운터보어 깊이만 4.0 → %.1f(머리 높이 4.0이 판 위로 나오지 않게, 사용자 11-08) — '
+                           'x ±52 레일 위 열의 M4 인서트에 넣는 짐 나사는 판 윗면에서 6 이하로(그 밑이 레일)' % P.TOP_CBORE}
 
 
 def other_sheet(stem, pdf, png_dir):

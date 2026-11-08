@@ -24,6 +24,8 @@ for _m in ('adsk', 'adsk.core', 'adsk.fusion'):
 import params as P            # noqa: E402
 import link_length as LL      # noqa: E402
 LL.lengthen(P)                # before anything reads them at import (v5: links 250 mm, user 11-07)
+import v5_params as VP  # noqa: E402
+VP.apply(P)                   # v5-only values (11-08)
 import legs_v5 as LV          # noqa: E402
 
 # ----------------------------------------------------------------------------- materials

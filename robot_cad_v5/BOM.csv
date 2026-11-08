@@ -18,7 +18,7 @@
 2 가공,위 레일,"6061-T6 각봉 15 × 15 통짜, 길이 328.00 ±0.05, 양 끝 M4 탭 깊이 9, Ø4.4 관통 4",2,2,"WBv5-S16 (v2 WBv2-M06); export/parts_step/rail_F.step, drawings/rail.pdf, v2_rail.pdf",,앞·뒤 같은 부품,있음
 2 가공,고정자 클램프 링 Ø45,"SUS304 2B 2t 레이저, Ø45 / Ø30, Ø2.8 × 6 (PCD 36.5)",4,4,"WBv5-S17 (v2 WBv2-M08); export/parts_step/clamp_ring_stator_D45_t2.0_SUS304.step, drawings/clamp_ring_stator…pdf, robot_cad_v2/manufacturing/dxf/clamp_ring_stator.dxf",,무릎·바퀴 고정자 나사 머리 밑(PETG 판 위). 작아서 +2 여유 권장,있음
 2 가공,자석 스페이서 Ø9 × 5.35,"6061(비자성 필수) 선반, Ø6.20 × 2.5 자석 포켓, Ø5.90 × 2.3 스피곳",6,6,"WBv5-S18 (v2 WBv2-M02); export/parts_step/magnet_spacer_D9x5.35_(6061).step, drawings/magnet_spacer…pdf",,모터마다 1개. 작아서 +2 여유 권장,있음
-2 가공,hip hub 인서트 왼쪽 (hub_insert_hip_L),"6061-T6 환봉 Ø50, 선반 + MCT: Ø28 보스, Ø11.8 × 1.4 스피곳, 플랜지 Ø48 × 6, M3 Ø3.4 × 6 (PCD 20, 와셔 자리), 핀 Ø3 N7 × 7.5 × 3, 접시 Ø7 × 6 (r 18), 검정 아노다이징 권장(끼움면 마스킹)",1,1,"WBv5-M01; manufacturing/step/hub_insert_hip_L.step, drawings/hub_insert_hip.pdf",,왼·오른쪽은 거울상 = 다른 부품,있음
+2 가공,hip hub 인서트 왼쪽 (hub_insert_hip_L),"6061-T6 환봉 Ø50, 선반 + MCT: Ø28 보스, Ø11.8 × 1.2 스피곳, 플랜지 Ø48 × 6, M3 Ø3.4 × 6 (PCD 20, 와셔 자리), 핀 Ø3 N7 × 7.5 (+0.2/0) × 3, 접시 Ø7 × 6 (r 18), 검정 아노다이징 권장(끼움면 마스킹)",1,1,"WBv5-M01; manufacturing/step/hub_insert_hip_L.step, drawings/hub_insert_hip.pdf",,왼·오른쪽은 거울상 = 다른 부품,있음
 2 가공,hip hub 인서트 오른쪽 (hub_insert_hip_R),같음(거울상),1,1,"WBv5-M01; manufacturing/step/hub_insert_hip_R.step, drawings/hub_insert_hip.pdf",,,있음
 2 가공,무릎 hub 인서트 왼쪽 (hub_insert_knee_L),hip hub 인서트와 같은 공정(보스 길이만 다름),1,1,"WBv5-M02; manufacturing/step/hub_insert_knee_L.step, drawings/hub_insert_knee.pdf",,왼·오른쪽은 거울상 = 다른 부품,있음
 2 가공,무릎 hub 인서트 오른쪽 (hub_insert_knee_R),같음(거울상),1,1,"WBv5-M02; manufacturing/step/hub_insert_knee_R.step, drawings/hub_insert_knee.pdf",,,있음
@@ -26,8 +26,8 @@
 2 가공,받침 링 (hub_ring),"6061-T6 환봉 Ø45, 선반: Ø43 / Ø29 × 6, M3 탭 관통 6 (r 18), 버 제거",4,4,"WBv5-M04; manufacturing/step/hub_ring_R.step, drawings/hub_ring.pdf",,hip·무릎 × 왼·오른쪽 같은 부품,있음
 3 출력,thigh_L,"허벅지; PETG FDM 한 덩어리: 벽 3.5 둘레선, 채움 100 %, 닫힌 칸(배출 구멍 없음), 바깥 면(평평, y 288.5)을 바닥에 — 갈래 틈 안 서포트; 색 검정",1,1,WBv5-P01; export/parts_stl/thigh_L.stl,"출력 약 827 g, 정사각 베드 259 mm","열압입 M2.5 인서트 6(컵 3 + 무릎 캡 3), 캡 관 구멍 Ø35 H7은 0.2 작게 뽑고 리머",있음
 3 출력,thigh_R,"허벅지; PETG FDM 한 덩어리: 벽 3.5 둘레선, 채움 100 %, 닫힌 칸(배출 구멍 없음), 바깥 면(평평, y 288.5)을 바닥에 — 갈래 틈 안 서포트; 색 검정",1,1,WBv5-P01; export/parts_stl/thigh_R.stl,"출력 약 827 g, 정사각 베드 259 mm","열압입 M2.5 인서트 6(컵 3 + 무릎 캡 3), 캡 관 구멍 Ø35 H7은 0.2 작게 뽑고 리머",있음
-3 출력,shank_L,"정강이; PETG FDM 한 덩어리: 벽 3.5 둘레선, 채움 100 %, 닫힌 칸(배출 구멍 없음), 안쪽 면(평평, y 208)을 바닥에 — 바퀴 모터 칸 Ø74 안 서포트; 색 검정",1,1,WBv5-P02; export/parts_stl/shank_L.stl,"출력 약 421 g, 정사각 베드 266 mm","열압입 M2.5 인서트 3(바퀴 컵), 61807 자리 Ø47 압입",있음
-3 출력,shank_R,"정강이; PETG FDM 한 덩어리: 벽 3.5 둘레선, 채움 100 %, 닫힌 칸(배출 구멍 없음), 안쪽 면(평평, y 208)을 바닥에 — 바퀴 모터 칸 Ø74 안 서포트; 색 검정",1,1,WBv5-P02; export/parts_stl/shank_R.stl,"출력 약 421 g, 정사각 베드 266 mm","열압입 M2.5 인서트 3(바퀴 컵), 61807 자리 Ø47 압입",있음
+3 출력,shank_L,"정강이; PETG FDM 한 덩어리: 벽 3.5 둘레선, 채움 100 %, 닫힌 칸(배출 구멍 없음), 안쪽 면(평평, y 208)을 바닥에 — 바퀴 모터 칸 Ø74 안 서포트; 색 검정",1,1,WBv5-P02; export/parts_stl/shank_L.stl,"출력 약 420 g, 정사각 베드 266 mm","열압입 M2.5 인서트 3(바퀴 컵), 61807 자리 Ø47 압입",있음
+3 출력,shank_R,"정강이; PETG FDM 한 덩어리: 벽 3.5 둘레선, 채움 100 %, 닫힌 칸(배출 구멍 없음), 안쪽 면(평평, y 208)을 바닥에 — 바퀴 모터 칸 Ø74 안 서포트; 색 검정",1,1,WBv5-P02; export/parts_stl/shank_R.stl,"출력 약 420 g, 정사각 베드 266 mm","열압입 M2.5 인서트 3(바퀴 컵), 61807 자리 Ø47 압입",있음
 3 출력,cup_hip_L,"hip 드라이버 컵; PETG 30 %, 바닥(덮개 면)을 바닥에, 서포트는 커넥터 창만; 색 검정",1,1,WBv5-S01; export/parts_stl/cup_hip_L.stl,"출력 약 48 g, 정사각 베드 87 mm",열압입 M2.5 인서트 4,있음
 3 출력,cup_hip_R,"hip 드라이버 컵; PETG 30 %, 바닥(덮개 면)을 바닥에, 서포트는 커넥터 창만; 색 검정",1,1,WBv5-S01; export/parts_stl/cup_hip_R.stl,"출력 약 48 g, 정사각 베드 87 mm",열압입 M2.5 인서트 4,있음
 3 출력,cup_knee_L,"무릎 드라이버 컵; PETG 30 %, 바닥을 바닥에, 서포트는 커넥터 창만; 색 검정",1,1,WBv5-S02; export/parts_stl/cup_knee_L.stl,"출력 약 34 g, 정사각 베드 93 mm",열압입 M2.5 인서트 4,있음
@@ -40,8 +40,8 @@
 3 출력,rim_R,"바퀴 림(한 조각); PETG 벽 6겹(2.4 mm) · 채움 40 %, 허브 쪽 평면을 바닥에, 열린 쪽 플랜지 밑 4.5 mm 턱만 서포트; 색 검정",1,1,WBv5-S05; export/parts_stl/rim_R.stl,"출력 약 278 g, 정사각 베드 150 mm",,있음
 3 출력,shell_front_L,"몸통 셸 앞(스위치 쪽); PETG 25 %, 바깥 면을 위로(서포트 필요); 색 진회색",1,1,WBv5-S06; export/parts_stl/shell_front_L.stl,"출력 약 132 g, 정사각 베드 187 mm",v4와 달리 세로 모서리 R30,있음
 3 출력,shell_front_R,"몸통 셸 앞(스위치 쪽); PETG 25 %, 바깥 면을 위로(서포트 필요); 색 진회색",1,1,WBv5-S06; export/parts_stl/shell_front_R.stl,"출력 약 132 g, 정사각 베드 187 mm",v4와 달리 세로 모서리 R30,있음
-3 출력,shell_mid_L,"몸통 셸 가운데(hip); PETG 25 %, 바깥 면을 위로(서포트 필요); 색 진회색",1,1,WBv5-S07; export/parts_stl/shell_mid_L.stl,"출력 약 145 g, 정사각 베드 218 mm",,있음
-3 출력,shell_mid_R,"몸통 셸 가운데(hip); PETG 25 %, 바깥 면을 위로(서포트 필요); 색 진회색",1,1,WBv5-S07; export/parts_stl/shell_mid_R.stl,"출력 약 145 g, 정사각 베드 218 mm",,있음
+3 출력,shell_mid_L,"몸통 셸 가운데(hip); PETG 25 %, 바깥 면을 위로(서포트 필요); 색 진회색",1,1,WBv5-S07; export/parts_stl/shell_mid_L.stl,"출력 약 146 g, 정사각 베드 218 mm",,있음
+3 출력,shell_mid_R,"몸통 셸 가운데(hip); PETG 25 %, 바깥 면을 위로(서포트 필요); 색 진회색",1,1,WBv5-S07; export/parts_stl/shell_mid_R.stl,"출력 약 146 g, 정사각 베드 218 mm",,있음
 3 출력,shell_rear_L,"몸통 셸 뒤(무릎 쪽); PETG 25 %, 바깥 면을 위로(서포트 필요); 색 진회색",1,1,WBv5-S08; export/parts_stl/shell_rear_L.stl,"출력 약 126 g, 정사각 베드 206 mm",,있음
 3 출력,shell_rear_R,"몸통 셸 뒤(무릎 쪽); PETG 25 %, 바깥 면을 위로(서포트 필요); 색 진회색",1,1,WBv5-S08; export/parts_stl/shell_rear_R.stl,"출력 약 126 g, 정사각 베드 206 mm",,있음
 3 출력,saddle_L,hip 위 안장; PETG 25 %; 색 파랑,1,1,WBv5-S09; export/parts_stl/saddle_L.stl,"출력 약 32 g, 정사각 베드 169 mm",,있음
@@ -52,10 +52,9 @@
 3 출력,splice_tabs,셸 이음판 12개(한 파일); PETG 100 %; 색 진회색,1,1,WBv5-S13; export/parts_stl/splice_tabs.stl,"출력 약 10 g, 정사각 베드 247 mm",12개가 로봇 위치 그대로 한 파일에 있다 — 슬라이서에서 나눠 놓는다(베드 값은 무시),있음
 4 체결(주문 합계),고무 그로밋,"Ø16 구멍, 판 1.4 mm (안지름 14)",2,2,,,셸 hip 케이블 출구 × 2,있음
 4 체결(주문 합계),나일론 너트 DIN 985,M4,8,10,,,위 레일 아래 × 8,있음
-4 체결(주문 합계),버튼 볼트 ISO 7380,M3 × 6,12,14,,,셸(hip 조각) → hip 판 M3 탭 × 12,있음
-4 체결(주문 합계),버튼 볼트 ISO 7380,M3 × 8,24,27,,,셸 앞·뒤 조각 ↔ hip 조각 이음판 12개 × 24,있음
+4 체결(주문 합계),버튼 볼트 ISO 7380,M3 × 8,36,40,,,셸(hip 조각·안장) 안쪽 받침 → hip 판 M3 탭 (11-08) × 12; 셸 앞·뒤 조각 ↔ hip 조각 이음판 12개 × 24,있음
 4 체결(주문 합계),벨크로 스트랩,폭 25 × 400 mm,2,2,,,배터리 + 받침을 척추 봉에 묶음(받침 슬롯) × 2,★ 일부 없음
-4 체결(주문 합계),열압입 인서트 황동,M2.5 × 4 (구멍 Ø3.6),50,60,,,"드라이버 컵 스탠드오프 × 24; PETG 허벅지·정강이의 컵 기둥 자리(v4 SLA는 에폭시 접착, v5 PETG는 열압입) × 12; 데크 보스(라즈베리파이 4, mjpower-ss 4) × 8; ⑦ 무릎 캡 자리(허벅지 바깥 막대, 구멍 깊이 6) × 6",★ 일부 없음
+4 체결(주문 합계),열압입 인서트 황동,M2.5 × 4 (구멍 Ø3.6),50,60,,,"드라이버 컵 스탠드오프 × 24; PETG 허벅지·정강이의 컵 기둥 자리(v4 SLA는 에폭시 접착, v5 PETG는 열압입) × 12; 데크 보스(라즈베리파이 4, mjpower-ss 4) × 8; ⑦ 무릎 캡 자리(허벅지 바깥 막대, 구멍 깊이 7) × 6",★ 일부 없음
 4 체결(주문 합계),열압입 인서트 황동,M3 × 5.7 (구멍 Ø4.0),12,16,,,허브 플랜지 × 12,있음
 4 체결(주문 합계),열압입 인서트 황동,M4 × 5.7 (구멍 Ø5.6),35,42,,,위판 25 mm 격자(짐·로봇팔) × 35,있음
 4 체결(주문 합계),육각 너트 DIN 934,M3,24,27,,,이음판 안쪽 × 24,있음
@@ -67,7 +66,8 @@
 4 체결(주문 합계),육각 홈붙이 볼트 ISO 4762 12.9,M3 × 14,12,14,,,바퀴 모터 출력 → PETG 허브 플랜지 (와셔 위) × 12,있음
 4 체결(주문 합계),육각 홈붙이 볼트 ISO 4762 12.9,M3 × 16,24,27,,,hip·무릎 모터 출력 → 6061 hub 인서트 ② (와셔 위) × 24,있음
 4 체결(주문 합계),육각 홈붙이 볼트 ISO 4762 8.8,M3 × 14,12,14,,,림 → 허브 플랜지 인서트 (와셔 위) × 12,있음
-4 체결(주문 합계),저두 볼트 DIN 7984,M2.5 × 6,28,31,,,moteus → 컵 스탠드오프 × 24; mjpower-ss → 데크 보스 × 4,있음
+4 체결(주문 합계),저두 볼트 DIN 7984,M2.5 × 5,24,27,,,"moteus → 컵 스탠드오프 (끝이 4 mm 인서트 안, 11-08) × 24",있음
+4 체결(주문 합계),저두 볼트 DIN 7984,M2.5 × 6,4,6,,,mjpower-ss → 데크 보스 × 4,있음
 4 체결(주문 합계),저두 볼트 DIN 7984 8.8,M2.5 × 8,30,33,,,"무릎·바퀴 고정자 링 → PETG 모터 판, SUS 클램프 링 위 ① × 24; ⑦ 무릎 캡 플랜지 → 허벅지 바깥 막대 인서트 (캡마다 3) × 6",★ 일부 없음
 4 체결(주문 합계),접시 볼트 ISO 10642,M4 × 12,4,6,,,hip 판 → 위 레일 끝 M4 탭 × 4,있음
 4 체결(주문 합계),접시 볼트 ISO 10642,M5 × 12,4,6,,,hip 판 → 척추 봉 끝 M5 탭 × 4,있음

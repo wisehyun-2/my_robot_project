@@ -185,6 +185,9 @@ def corner_posts(h):
     return h
 
 
+SHELL_SCREWS = ((-50.0, 30.0), (50.0, 30.0), (-60.0, -20.0), (60.0, -20.0), (-40.0, 140.0), (40.0, 140.0))   # (x, z - Z_HIP)
+
+
 def openings(h):
     B = C.Builder()
     lx, ly, t = P.TOP_PLATE
@@ -194,8 +197,10 @@ def openings(h):
         C.cut(h, B.ycyl(0, ZH, y0, y1, 26.6))                                  # hip plate boss
         g = P.theta_dir(P.GROMMET_DEG)
         C.cut(h, B.ycyl(g[0] * P.GROMMET_R, ZH + g[1] * P.GROMMET_R, y0, y1, 8.0))   # cable grommet Ø16
-        for (x, z) in ((-50.0, 30.0), (50.0, 30.0), (-60.0, -20.0), (60.0, -20.0), (-40.0, 140.0), (40.0, 140.0)):
-            C.cut(h, B.ycyl(x, ZH + z, y0, y1, 1.7))                           # M3 to the hip plate
+        for (x, z) in SHELL_SCREWS:
+            if P.SHELL_PAD:                                                    # Ø8 pad from the wall down to the web face
+                C.union(h, B.ycyl(x, ZH + z, sy * (YW - P.SHELL_T - P.SHELL_PAD), sy * (YW - P.SHELL_T + 0.5), 4.0))
+            C.cut(h, B.ycyl(x, ZH + z, sy * (YW - P.SHELL_T - P.SHELL_PAD - 1), y1, 1.7))    # M3 to the hip plate
         for x in (-205.0, -198.0, -191.0):                                     # side vents (three slots)
             C.cut(h, B.slot((x, sy * YE, ZH + 30.0), (x, sy * YE, ZH + 48.0), (0, 1, 0), 1.25, 8.0))
     p0, u, n, L = face_frame()

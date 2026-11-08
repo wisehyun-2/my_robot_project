@@ -106,8 +106,8 @@ def joint_rows(k):
             ('%s 타이어 – 정강이' % k, dist(whl, sh), '> 0')]
     # fasteners (10-30): the wheel output screws under the hex hub's Ø20 register spigot, the stator ring screw
     # heads under the turning hub flange
-    shell_heads = occs('torso', 'FX ISO 7380 M3x6 shell')
-    rows.append(('%s 허벅지 – 셸 버튼 볼트 머리(ISO 7380 M3 × 6, 허벅지 안쪽 면 %.1f 들어감)' % (k, P.FEMUR_IN_RELIEF[0]),
+    shell_heads = occs('torso', 'FX ISO 7380 M3x%d shell' % P.SHELL_SCREW_L)
+    rows.append(('%s 허벅지 – 셸 버튼 볼트 머리(ISO 7380 M3 × %d, 허벅지 안쪽 면 %.1f 들어감)' % (k, P.SHELL_SCREW_L, P.FEMUR_IN_RELIEF[0]),
                  min(dist(th, o) for o in shell_heads), '≥ 1.5'))
     hub_screws = occs('wheel_' + k, 'FX ISO 4762 M3x%d 12.9 hub' % P.HUB_SCREW_L)
     stator_screws = occs('tibia_' + k, 'FX DIN 7984 M2.5x8 stator')

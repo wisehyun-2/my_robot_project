@@ -50,6 +50,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 if HERE not in sys.path:
     sys.path.insert(0, HERE)
 import link_length as LL  # noqa: E402
+sys.modules.pop('v5_params', None)               # Fusion keeps modules between scripts: always this folder's current file
+import v5_params as VP  # noqa: E402
+assert VP.__file__.lower().startswith(HERE.lower()), VP.__file__
 
 BASE = os.path.dirname(HERE)
 V4 = os.path.join(os.path.dirname(BASE), 'robot_cad_v4', 'fusion')
@@ -62,8 +65,7 @@ LOOK ={'main': 'black satin', 'insert': 'alu', 'ring': 'alu', 'bearing': 'steel'
 MAT = {'main': 'PETG print', 'insert': 'Al6061', 'ring': 'Al6061', 'bearing': 'Steel', 'cap': 'Al6061'}   # links PETG
                                                  # FDM since 11-02 (user; MJF PA12 before), printed solid (walls 3.5)
 V5_PARTS = ('thigh', 'shank', 'kneecap', 'kneebearing')
-HUB_DOWEL_HOLE = 7.5                             # wheel hub flange dowel holes (11-08, user; v4 7.0): Ø3 x 10 pins 2.5 proud
-                                                 # into the AKE output's 3 mm holes, as the hip / knee inserts (DOWEL_HOLE)
+HUB_DOWEL_HOLE = VP.HUB_DOWEL_HOLE                # wheel hub flange dowel holes (v5_params, 11-08 user)
 POSES = tuple((L0 * LL.SCALE, hip) for L0, hip in ((310, 0), (200, 0), (240, -60), (240, 60), (335, 0), (200, -80)))    # (L0 mm, hip deg):
                                                  # the poses of the 175 mm link at the same knee angles
 
@@ -84,7 +86,7 @@ def _v4_loader(v4run):
                 out[n] = importlib.reload(importlib.import_module(n))
                 if n == 'params':
                     LL.lengthen(out[n])
-                    out[n].HUB_DOWEL_HOLE = HUB_DOWEL_HOLE
+                    VP.apply(out[n])
         return out
     return loader
 
@@ -705,15 +707,15 @@ def deepen_hub_dowels(depth=None):
             ci.isKeepToolBodies = False
             comp.features.combineFeatures.add(ci)
         assert comp.bRepBodies.count == 1, ('hub_flange_' + k, [b.name for b in comp.bRepBodies])
-        # each pin (origin = its end in the hole, on the hole axis) to its hole bottom, in world coordinates: a transform
-        # can only be set on an occurrence proxy from the root, and its transform2 is the world placement
+        # each pin (origin = its end in the hole, on the hole axis) to its hole bottom, in world coordinates (a root
+        # proxy's transform2): re-instanced, because a proxy override goes back when the parent link is set later
         body = comp.bRepBodies.itemByName(bname)
         moved = 0
         for b, t, dep in _dowel_holes(body.createForAssemblyContext(fo)):
             u = t.vectorTo(b)
             u.normalize()
             hit = []
-            for o in pins:
+            for o in [o for o in wheel.childOccurrences if o.component.name.startswith('FX ISO 8734')]:
                 w = b.vectorTo(o.transform2.translation.asPoint())
                 along = w.dotProduct(u)
                 if math.sqrt(max(w.length ** 2 - along ** 2, 0.0)) < 1e-4:
@@ -721,13 +723,199 @@ def deepen_hub_dowels(depth=None):
             assert len(hit) == 1, ('pin on the hole axis', k, len(hit))
             along, o = hit[0]
             if abs(along) > 1e-5:
-                m = o.transform2.copy()
-                m.translation = b.asVector()
-                o.transform2 = m
+                o = _reinstance(C, o, o.transform2.translation.asPoint().vectorTo(b))
                 moved += 1
             got = o.transform2.translation.asPoint().distanceTo(b) * 10.0
             assert got < 1e-3, ('pin not at the hole bottom', k, got)
         rep.append((k, [round(h[2], 3) for h in _dowel_holes(body)], moved, round(body.volume * 1000.0, 3)))
+    return rep
+
+
+def _reinstance(C, o, d=None, comp=None):
+    """Occurrence proxy o (a child of a root-level link) replaced by a fresh instance of comp (default its own
+    component) moved by the world vector d (cm).  An inserted placement survives later moves of the parent link
+    (IdentityParent, poses.reset); a transform set on the proxy does not.  Returns the new proxy."""
+    parent = o.assemblyContext
+    assert parent is not None and parent.assemblyContext is None, o.fullPathName
+    m = o.nativeObject.transform2.copy()
+    if d is not None:
+        inv = parent.transform2.copy()
+        inv.invert()
+        dl = d.copy()
+        dl.transformBy(inv)                           # a vector: rotation only
+        t = m.translation
+        t.add(dl)
+        m.translation = t
+    want = o.transform2.copy()
+    if d is not None:
+        t = want.translation
+        t.add(d)
+        want.translation = t
+    n = C.instance(parent, comp or o.component, m).createForAssemblyContext(parent)
+    got = n.transform2.asArray()
+    assert max(abs(a - b) for a, b in zip(want.asArray(), got)) < 1e-7, (o.fullPathName, want.asArray(), got)
+    o.deleteMe()
+    return n
+
+
+def _end_disc(face, small=0.08):
+    """(bottom centre, open centre, depth mm) of a cylindrical pocket face: the bottom is the circle on the smaller
+    adjacent flat face (area < small cm2), the open end the circle on the other one."""
+    ends = []
+    for e in face.edges:
+        if isinstance(e.geometry, (adsk.core.Circle3D, adsk.core.Arc3D)):   # an arc where a pocket breaks a rounded edge
+            other = [x for x in e.faces if x != face][0]
+            ends.append((isinstance(other.geometry, adsk.core.Plane) and other.area < small, e.geometry.center))
+    bot = [c for sm, c in ends if sm]
+    top = [c for sm, c in ends if not sm]
+    if len(bot) != 1 or len(top) != 1:
+        return None
+    return bot[0], top[0], bot[0].distanceTo(top[0]) * 10.0
+
+
+def _cut_cyl(comp, bname, a, b, r_mm):
+    """Cut a cylinder (component coordinates a -> b, cm) from body bname of comp (direct design)."""
+    tbm = adsk.fusion.TemporaryBRepManager.get()
+    tool = comp.bRepBodies.add(tbm.createCylinderOrCone(a, r_mm / 10.0, b, r_mm / 10.0))
+    tool.name = 'stackup_cut_tmp'
+    coll = adsk.core.ObjectCollection.create()
+    coll.add(tool)
+    ci = comp.features.combineFeatures.createInput(comp.bRepBodies.itemByName(bname), coll)
+    ci.operation = adsk.fusion.FeatureOperations.CutFeatureOperation
+    ci.isKeepToolBodies = False
+    comp.features.combineFeatures.add(ci)
+
+
+def _deepen(comp, bname, r_mm, depth_mm, count, small):
+    """Every cylindrical pocket of radius r_mm in body bname to depth_mm (the extra cut along its own axis, same
+    radius).  Returns [(old depth, bottom before, unit axis into the material)] in component coordinates."""
+    body = comp.bRepBodies.itemByName(bname)
+    pockets = []
+    for f in body.faces:
+        g = f.geometry
+        if isinstance(g, adsk.core.Cylinder) and abs(g.radius * 10.0 - r_mm) < 1e-3:
+            e = _end_disc(f, small)
+            if e:
+                pockets.append(e)
+    assert len(pockets) == count, (bname, r_mm, len(pockets), count)
+    out = []
+    for b, t, dep in pockets:
+        add = depth_mm - dep
+        assert add > -1e-3, (bname, r_mm, dep, depth_mm)
+        u = t.vectorTo(b)
+        u.normalize()
+        if add > 1e-3:
+            p1, p2 = b.copy(), b.copy()
+            v = u.copy()
+            v.scaleBy(-0.001)
+            p1.translateBy(v)
+            v = u.copy()
+            v.scaleBy(add / 10.0)
+            p2.translateBy(v)
+            _cut_cyl(comp, bname, p1, p2, r_mm)
+        out.append((dep, b, u, add))
+    return out
+
+
+def _swap_master(C, F, old, new):
+    """Every instance of fastener master old replaced by master new (same placement: origin = head bearing face, +z =
+    travel), the old master dropped from _library.  New masters come from fasteners.specs() (v5 params)."""
+    sp = F.specs()[new]
+    comp = C.find_comp(new)
+    if comp is None:
+        comp = C.master(new)
+        C.add_body(comp, sp[0](), new, sp[1], sp[2])
+    root = C.design().rootComponent
+    olds = [o for o in root.allOccurrences if o.component.name == old and '_library' not in o.fullPathName]
+    for o in olds:
+        _reinstance(C, o, None, comp)
+    lib = C.library().component
+    for o in list(lib.occurrences):
+        if o.component.name == old:
+            o.deleteMe()
+    return len(olds)
+
+
+def fix_stackups():
+    """Hub file migration (11-08, user: "문제 2건 + 쉬운 것" after the axial stack-up review): on the parts the v5 leg / shell
+    rebuilds do not touch - wheel hub flange dowel holes to HUB_DOWEL_HOLE (pins with them) and spigot to HUB_SPIGOT
+    height, rim register recess to RIM_REG + RIM_REG_GAP deep, top plate counterbores to TOP_CBORE (M4 x 25 heads with
+    them), shell M3 screws M3 x SHELL_SCREW_L and moteus board screws M2.5 x BOARD_SCREW_L.  build() makes all of it
+    from v5_params.  Route: unjoint(), this, relegs() (insert holes, insert spigot), reshell() (shell pads), turn(),
+    robot_mass(), joints().  A second run changes nothing."""
+    deep = deepen_hub_dowels()
+    doc()
+    M = load()
+    C, P, F = M['cadlib'], M['params'], M['fasteners']
+    _need_direct(C, 'fix_stackups')
+    root = C.design().rootComponent
+    rep = dict(dowels=deep)
+
+    def one(name):
+        o = [x for x in root.allOccurrences if x.component.name == name and '_library' not in x.fullPathName]
+        assert len(o) == 1, (name, len(o))
+        return o[0]
+
+    for _s, k in SIDES:
+        # hub flange spigot: its tip face (a flat disc of r 5.9) down to HUB_SPIGOT[1] above the output face
+        fo = one('hub_flange_' + k)
+        comp, bname = fo.component, 'hub_flange_' + k
+        body = comp.bRepBodies.itemByName(bname)
+        tips = [f for f in body.faces if isinstance(f.geometry, adsk.core.Plane) and f.area < 1.2   # not the output face
+                and any(isinstance(e.geometry, adsk.core.Circle3D) and abs(e.geometry.radius * 10.0 - P.HUB_SPIGOT[0]) < 1e-3
+                        for e in f.edges)]
+        assert len(tips) == 1, ('spigot tip', k, len(tips))
+        tip = tips[0]
+        n = tip.evaluator.getNormalAtPoint(tip.pointOnFace)[1]          # out of the material = towards the motor
+        out_face = _dowel_holes(body)[0][1]                             # an open dowel end lies on the output face
+        h = out_face.vectorTo(tip.pointOnFace).dotProduct(n) * 10.0
+        trim = h - P.HUB_SPIGOT[1]
+        assert trim > -1e-3, ('spigot', k, h)
+        if trim > 1e-3:
+            c = tip.centroid
+            a, b = c.copy(), c.copy()
+            v = n.copy()
+            v.scaleBy(0.01)
+            a.translateBy(v)
+            v = n.copy()
+            v.scaleBy(-trim / 10.0)
+            b.translateBy(v)
+            _cut_cyl(comp, bname, a, b, P.HUB_SPIGOT[0] + 0.3)
+        rep['spigot_' + k] = (round(h, 3), round(trim, 3))
+        # rim register recess (Ø11.2, its floor the smaller flat face)
+        ro = one('rim_' + k)
+        rr = P.RIM_REG[0] + P.RIM_REG_GAP[0]
+        rep['rim_' + k] = [(round(d, 3), round(add, 3)) for d, _b, _u, add in
+                           _deepen(ro.component, 'rim_' + k, rr, P.RIM_REG[1] + P.RIM_REG_GAP[1], 1, 1.2)]
+    # top plate: Ø8 counterbores to TOP_CBORE, the 8 M4 x 25 heads down onto the new floors (world = torso local)
+    tp = one('top_plate')
+    torso = tp.assemblyContext
+    to_world = tp.transform2
+    cb = _deepen(tp.component, 'top_plate', 4.0, P.TOP_CBORE, 8, 0.4)
+    assert len([o for o in torso.childOccurrences if o.component.name == 'FX ISO 4762 M4x25 top']) == 8
+    moved = 0
+    for dep, b, u, add in cb:
+        screws = [o for o in torso.childOccurrences if o.component.name == 'FX ISO 4762 M4x25 top']
+        old, new = b.copy(), b.copy()
+        v = u.copy()
+        v.scaleBy(add / 10.0)
+        new.translateBy(v)
+        old.transformBy(to_world)
+        new.transformBy(to_world)
+        hit = [o for o in screws if o.transform2.translation.asPoint().distanceTo(old) < 1e-4
+               or o.transform2.translation.asPoint().distanceTo(new) < 1e-4]
+        assert len(hit) == 1, ('M4 head on the counterbore floor', len(hit))
+        o = hit[0]
+        if o.transform2.translation.asPoint().distanceTo(new) > 1e-5:
+            o = _reinstance(C, o, o.transform2.translation.asPoint().vectorTo(new))
+            moved += 1
+        assert o.transform2.translation.asPoint().distanceTo(new) < 1e-4
+    rep['top_cbore'] = (sorted(set(round(d, 3) for d, *_r in cb)), moved)
+    # fastener masters
+    rep['shell_screws'] = _swap_master(C, F, 'FX ISO 7380 M3x6 shell', 'FX ISO 7380 M3x%d shell' % P.SHELL_SCREW_L) \
+        if P.SHELL_SCREW_L != 6 else 0
+    rep['board_screws'] = _swap_master(C, F, 'FX DIN 7984 M2.5x6 board', 'FX DIN 7984 M2.5x%d board' % P.BOARD_SCREW_L) \
+        if P.BOARD_SCREW_L != 6 else 0
     return rep
 
 

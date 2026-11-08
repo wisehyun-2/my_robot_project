@@ -86,6 +86,11 @@ BORE_R = 22.0                                    # access bore above the ring (r
                                                  # ring - on the knee cap - runs free over the bore)
 FLANGE_BOLT_R = 18.0                             # 6 x ISO 10642 M3 x 16 12.9: flange countersink -> PETG wall -> ring tap
 INSERT_CSK = 7.0                                 # countersink Ø7.0 x 90 deg in the flange (head flush), 2.5 to its edge
+INSERT_SPIGOT = (5.9, 1.2)                       # 6061 hub insert spigot into the AKE output's Ø12 x 1.5 recess (radius, height):
+                                                 # 11-08 1.4 -> 1.2, the tip 0.3 off the recess floor (the dowels locate)
+CUP_INSERT_DEPTH = 6.0                           # M2.5 x 4 cup column insert holes in the links (11-08 5 -> 6: room under
+                                                 # the insert for the melted-in PETG, the M2.5 x 18 tip 2.0 above the floor)
+CAP_INSERT_DEPTH = 7.0                           # knee cap M2.5 insert holes below the cap pocket (11-08 6 -> 7, same reason)
 
 
 def wheel_turn(s):
@@ -288,7 +293,7 @@ def hub_insert(B, s, joint, c, y_link_in):
     y_out = P.y_output(joint)
     yt = y_link_in + INSERT_FL[1]
     body = B.ycyl(c[0], c[1], y_out, yt, P.HUB_BOSS_D / 2)
-    C.union(body, B.ycyl(c[0], c[1], y_out - 1.4, y_out, 5.9))
+    C.union(body, B.ycyl(c[0], c[1], y_out - INSERT_SPIGOT[1], y_out, INSERT_SPIGOT[0]))
     C.union(body, B.ycyl(c[0], c[1], y_link_in, yt, INSERT_FL[0]))
     floor = y_out + P.BEARING_FACE
     C.cut(body, B.ycyl(c[0], c[1], floor, yt + 1, 9.0))
@@ -318,7 +323,7 @@ def _cap_bolts(B, c, y0, y1, d):
 def cap_seat(B, body, c):
     """Flush cap pocket (r 23.2 x CAP_T) in the thigh's outer face + 3 x M2.5 insert holes."""
     C.cut(body, B.ycyl(c[0], c[1], SPAR[1] - CAP_T, SPAR[1] + 1.0, CAP_R[2] + 0.2))
-    C.cut(body, _cap_bolts(B, c, SPAR[1] - CAP_T - 6.0, SPAR[1] - CAP_T + 0.1, LG.INSERT_M25))
+    C.cut(body, _cap_bolts(B, c, SPAR[1] - CAP_T - CAP_INSERT_DEPTH, SPAR[1] - CAP_T + 0.1, LG.INSERT_M25))
     return body
 
 
@@ -331,7 +336,7 @@ def wheel_housing(B, s):
     C.transform(h, wheel_turn(s))
     for p in LG.cup_column_points('wheel', s):
         q = LG.lc(p, s)
-        tool = B.ycyl(q[0], q[2], Y_SO4 + 0.1, Y_SO4 - 5.0, LG.INSERT_M25 / 2)
+        tool = B.ycyl(q[0], q[2], Y_SO4 + 0.1, Y_SO4 - CUP_INSERT_DEPTH, LG.INSERT_M25 / 2)
         C.transform(tool, wheel_turn(s))
         C.transform(tool, wheel_clock(s))
         C.cut(h, tool)
@@ -353,7 +358,7 @@ def thigh(s=1):
     C.union(body, ribs)
     hub_pocket(B, s, body, H, Y_TF, SPAR[1])
     LG._motor_seat(B, s, body, 'knee', K, Y_TO - P.KNEE_PLATE_T, Y_TO, Y_TI - 1)
-    LG._cup_inserts(B, s, body, 'knee', Y_TI)
+    LG._cup_inserts(B, s, body, 'knee', Y_TI, CUP_INSERT_DEPTH)
     C.cut(body, B.ycyl(K[0], K[1], SPAR[0] - 1, SPAR[1] + 1, CAP_R[1] + CAP_FIT))   # knee cap through the spar
     cap_seat(B, body, K)
     return dict(main=body, insert=hub_insert(B, s, 'hip', H, Y_TF), ring=hub_ring(B, H, Y_TF))

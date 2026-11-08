@@ -19,6 +19,8 @@ for _m in ('adsk', 'adsk.core', 'adsk.fusion'):
 import params as P                               # noqa: E402
 import link_length as LL                         # noqa: E402
 LL.lengthen(P)                                   # v5: links 250 mm (user 11-07), before anything reads them at import
+import v5_params as VP  # noqa: E402
+VP.apply(P)                   # v5-only values (11-08)
 import legs as LG                                # noqa: E402
 import layout as LY                              # noqa: E402
 import legs_v5 as LV                             # noqa: E402
@@ -247,8 +249,9 @@ class Board:
 # ----------------------------------------------------------------------------- 6061 hub insert (legs_v5.hub_insert)
 class Insert:
     """6061 turned hub insert of a driven joint (hip / knee): Ø28 boss from the motor output face to the link, Ø11.8 x
-    1.4 spigot, flange r 24 x 6 flush in the link's inner face, Ø18 bore + Ø7.2 counterbores from the washer floor
-    (BEARING_FACE from the output face) outwards, Ø3 x 7.5 dowel holes, 6 x Ø3.4 flange bolt holes at r 20."""
+    INSERT_SPIGOT spigot (1.2 since 11-08), flange r 24 x 6 flush in the link's inner face, Ø18 bore + Ø7.2 counterbores
+    from the washer floor (BEARING_FACE from the output face) outwards, Ø3 x 7.5 dowel holes, 6 x Ø3.4 flange bolt
+    holes at FLANGE_BOLT_R (18)."""
 
     def __init__(self, joint, y_link_in):
         self.OUT = P.y_output(joint)
@@ -262,8 +265,8 @@ class Insert:
         self.PIN1 = self.OUT + P.DOWEL_HOLE         # dowel hole bottom = pin end (pressed to the bottom)
         self.PIN0 = self.PIN1 - 10.0                # 2.5 proud into the output's 3 mm holes
         self.RQ = P.AKE_PCD_OUT / 2
-        self.RB = LV.INSERT_BOLT_R
-        self.SPIG = (5.9, 1.4)
+        self.RB = LV.FLANGE_BOLT_R
+        self.SPIG = LV.INSERT_SPIGOT
         self.BORE_R, self.CB_R = 9.0, 3.6
 
     def draw(self, ax, s, screws=True):
