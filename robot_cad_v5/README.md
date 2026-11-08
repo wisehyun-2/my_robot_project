@@ -238,7 +238,8 @@ v5run.unjoint()        # 조인트 문서를 다시 고칠 때: 직접 모델링
 - 무릎 PETG 모터 판·고정 링 ①: 모터가 옆 모멘트를 다 받는다고 보면 검토 하중에서 넘는다. 실제로는 61807이 나눠 받는다(캡 맞춤으로
   그 길을 단단하게 함). 실물에서 무릎 판 변형을 확인할 것.
 - **30자세 전체 간섭 스윕·간격 측정**: 지금은 6자세 + 관절 단면 검사. v4의 `poses.sweep`, `gaps.measure`에 해당한다.
-- **새 체결 부품 형상, BOM**: ⑥ ISO 10642 M3 × 16 12.9 × 6 (관절마다), ⑦ 캡 DIN 7984 M2.5 × 8 × 3 + 인서트, 61807, 받침 링.
+- **새 체결 부품 형상**: ⑥ ISO 10642 M3 × 16 12.9 × 6 (관절마다), ⑦ 캡 DIN 7984 M2.5 × 8 × 3 + 인서트는 아직 모델에 없다(61807, 받침 링은 있음).
+  **BOM은 11-08에 만들었다**: `BOM.md`·`BOM.csv`(`python manufacturing/bom.py`, 조립 STEP의 인스턴스 수 + 모델에 없는 ⑥·⑦·배선·공구는 ★로 따로).
 - **MuJoCo 재검증에서 나온 결정 사항**(6절): 무릎 완전 신장을 막는 기구 멈춤 또는 MCU 관절 한계 보호를 넣을지. 요·다리 길이
   게인은 환산값을 쓰기로 했다(11-05 사용자) — 시뮬 벤치에는 들어갔고, **실기 MCU 설정에도 같은 값을 넣어야 한다.**
 
@@ -445,6 +446,7 @@ Plan 4 기본값은 꺼짐). 잠긴 차동기처럼 멈춘 바퀴에 맞춰 반�
 | `export/WheelBiped_v5.f3d` | Fusion 모델(파라메트릭, 조인트 6개, 배선 없음, 허브 버전 11과 같은 상태, 기준 자세, 숨긴 부품 없음) |
 | `export/WheelBiped_v5_assembly.step` | 로봇 전체 조립 STEP(버전 11, 링크 25 cm, 그리는 자세 L0 442.9) |
 | `export/parts_step/`, `parts_stl/` | 설계 부품마다 STEP · STL(링크 25 cm). 다리 부품은 CAD 좌표고, `relink()`로 옮긴 기존 부품(셸, 컵 등)은 17.5 cm 때 부품 좌표 그대로다(형상은 같다). 다리 부품은 몸체마다 따로: `thigh_*`, `shank_*`(PETG), `hub_insert_hip_*`, `hub_insert_knee_*`, `hub_ring_hip_*`, `hub_ring_knee_*`, `knee_cap_*`(6061). 나머지는 v4 부품 그대로(바퀴 쪽은 v4 위치의 부품 좌표). 61807과 구매품은 조립 STEP에만 있다 |
+| `BOM.md`, `BOM.csv` | 주문용 부품 목록(11-08): 구매품·가공·3D 출력(출력 질량·필요한 베드)·체결 부품(주문용 합계 + 쓰는 곳)·배선·공구. `manufacturing/bom.py`가 조립 STEP에서 수량을 세어 만들고, 분류되지 않은 모델 부품이 있으면 멈춘다 |
 | `manufacturing/part_drawings.py` | 2D 도면 생성(v3 `link_drawings` 양식, gmsh 은선 제거) |
 | `manufacturing/step/` | v5 새 부품의 부품 좌표 STEP(L·R) |
 | `manufacturing/drawings/` | 도면 PDF(A3, 3각법): 아래 표 |
