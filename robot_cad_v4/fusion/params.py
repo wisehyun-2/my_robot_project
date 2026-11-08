@@ -144,6 +144,9 @@ DOWEL_HOLE = 7.5            # hip / knee boss dowel holes, deep from the output 
 HUB_SCREW_SEAT = 9.5        # wheel hub flange: output face -> washer seat of its 6 x M3 x 14 (12.9) (10-30: with the
 HUB_SCREW_L = 14            # hip / knee 11.2 seat the M3 x 16 heads stood 1.2 mm into the hex hub's Ø20 register spigot;
                             # now the heads stop 0.5 mm short of it, 4.0 mm engagement in the 5 mm output taps)
+HUB_DOWEL_HOLE = 7.0        # wheel hub flange dowel holes, deep from the output face: the Ø3 x 10 pins stand 3.0 proud into
+                            # the output's 3 mm holes (no room for the pin length tolerance).  v4 keeps 7.0; v5 sets 7.5
+                            # (11-08, user: like DOWEL_HOLE, 2.5 proud)
 RING_T = 2.0                # laser-cut 2 mm stainless clamp rings (vendor.clamp_ring_*): no screw head bears on bare resin
                             # at a joint (v2 PETG, back in v4; v3 6061 had none)
 RING_OUT = (27.0, 12.5)     # driven bosses (OD inside the Ø28 access pocket, ID): 6 x M3 x 16 12.9 on PCD 20

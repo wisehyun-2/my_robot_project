@@ -18,6 +18,8 @@ Run each step in its own MCP script (put this folder on sys.path, import v5run):
                              # turn(): the deletion reverts the AKE60 stators)
     v5run.relayout()         # hub file: deck rebuilt, Pi / pi3hat / mjpower-ss / fan placed with the IMU on the centre line (11-07; then turn())
     v5run.relink()           # hub file, once (11-07): links 175 -> 250 mm, every part moves with its joint (then relegs(), turn())
+    v5run.deepen_hub_dowels()  # hub file, once (11-08): wheel hub flange dowel holes 7.0 -> 7.5 and the pins with them
+                             # (unjoint() first, then turn(), joints(); build() makes them so from HUB_DOWEL_HOLE)
     v5run.joints()           # last step of a model change: 6 as-built revolute joints (the design becomes parametric;
                              # torso grounded, every nested part grounded to its parent). Rebuild steps above and
                              # images() refuse a jointed design: v5run.unjoint() first (drops joints and timeline)
@@ -60,6 +62,8 @@ LOOK ={'main': 'black satin', 'insert': 'alu', 'ring': 'alu', 'bearing': 'steel'
 MAT = {'main': 'PETG print', 'insert': 'Al6061', 'ring': 'Al6061', 'bearing': 'Steel', 'cap': 'Al6061'}   # links PETG
                                                  # FDM since 11-02 (user; MJF PA12 before), printed solid (walls 3.5)
 V5_PARTS = ('thigh', 'shank', 'kneecap', 'kneebearing')
+HUB_DOWEL_HOLE = 7.5                             # wheel hub flange dowel holes (11-08, user; v4 7.0): Ø3 x 10 pins 2.5 proud
+                                                 # into the AKE output's 3 mm holes, as the hip / knee inserts (DOWEL_HOLE)
 POSES = tuple((L0 * LL.SCALE, hip) for L0, hip in ((310, 0), (200, 0), (240, -60), (240, 60), (335, 0), (200, -80)))    # (L0 mm, hip deg):
                                                  # the poses of the 175 mm link at the same knee angles
 
@@ -80,6 +84,7 @@ def _v4_loader(v4run):
                 out[n] = importlib.reload(importlib.import_module(n))
                 if n == 'params':
                     LL.lengthen(out[n])
+                    out[n].HUB_DOWEL_HOLE = HUB_DOWEL_HOLE
         return out
     return loader
 
@@ -624,6 +629,106 @@ def shift(dy=None, stator_from=216.7):
                 o.transform2 = m
             moved.append(o.component.name if o.isValid else 'stator')
     return len(moved)
+
+
+def _dowel_holes(body):
+    """The Ø3 dowel holes of a wheel hub flange body: [(bottom centre, open centre, depth mm)] in the body's coordinates
+    (the bottom is the circle on a small flat disc, the open end the circle on the output face)."""
+    out = []
+    for f in body.faces:
+        g = f.geometry
+        if not (isinstance(g, adsk.core.Cylinder) and abs(g.radius - 0.15) < 1e-4):
+            continue
+        ends = []
+        for e in f.edges:
+            if isinstance(e.geometry, adsk.core.Circle3D):
+                other = [x for x in e.faces if x != f][0]
+                ends.append((isinstance(other.geometry, adsk.core.Plane) and other.area < 0.08, e.geometry.center))
+        bot = [c for small, c in ends if small]
+        top = [c for small, c in ends if not small]
+        assert len(bot) == 1 and len(top) == 1, ('dowel hole ends', len(bot), len(top))
+        out.append((bot[0], top[0], bot[0].distanceTo(top[0]) * 10.0))
+    return out
+
+
+def deepen_hub_dowels(depth=None):
+    """Hub file migration (11-08, user): the wheel hub flange dowel holes 7.0 -> HUB_DOWEL_HOLE deep, and each wheel's
+    3 pins moved to the new hole bottoms (pressed to the bottom: 2.5 instead of 3.0 proud into the AKE output's 3 mm
+    holes, as the hip / knee inserts).  build() makes them so from params.HUB_DOWEL_HOLE; this changes an existing
+    document.  Measured on the bodies (any turn state); a second run changes nothing.  Route: unjoint(), this, turn(),
+    joints()."""
+    doc()
+    M = load()
+    C = M['cadlib']
+    _need_direct(C, 'deepen_hub_dowels')
+    depth = HUB_DOWEL_HOLE if depth is None else depth
+    root = C.design().rootComponent
+    tbm = adsk.fusion.TemporaryBRepManager.get()
+    rep = []
+    for _s, k in SIDES:
+        fo = [o for o in root.allOccurrences if o.component.name == 'hub_flange_' + k and '_library' not in o.fullPathName]
+        assert len(fo) == 1, ('hub_flange_' + k, len(fo))
+        fo = fo[0]
+        wheel = fo.assemblyContext                      # wheel_k: the pins are its children as well
+        assert wheel is not None and wheel.component.name == 'wheel_' + k, fo.fullPathName
+        comp = fo.component
+        bodies = [b for b in comp.bRepBodies if b.isSolid]
+        assert len(bodies) == 1, ('hub_flange_' + k, len(bodies))
+        body = bodies[0]
+        bname = body.name
+        holes = _dowel_holes(body)                      # component coordinates
+        assert len(holes) == 3, ('hub_flange_' + k, len(holes))
+        pins = [o for o in wheel.childOccurrences if o.component.name.startswith('FX ISO 8734')]   # proxies from the root
+        assert len(pins) == 3, ('pins of wheel_' + k, len(pins))
+        for b, t, dep in holes:
+            add = depth - dep
+            if add < -1e-3:
+                raise RuntimeError('hub_flange_%s: hole already %.3f deep (> %.3f)' % (k, dep, depth))
+            if add <= 1e-3:
+                continue
+            u = t.vectorTo(b)                           # open end -> bottom: into the material
+            u.normalize()
+            p1, p2 = b.copy(), b.copy()
+            v = u.copy()
+            v.scaleBy(-0.001)                           # 0.01 mm back into the hole: a clean cut
+            p1.translateBy(v)
+            v = u.copy()
+            v.scaleBy(add / 10.0)
+            p2.translateBy(v)
+            tool = comp.bRepBodies.add(tbm.createCylinderOrCone(p1, 0.15, p2, 0.15))
+            tool.name = 'dowel_cut_tmp'
+            coll = adsk.core.ObjectCollection.create()
+            coll.add(tool)
+            body = comp.bRepBodies.itemByName(bname)
+            ci = comp.features.combineFeatures.createInput(body, coll)
+            ci.operation = adsk.fusion.FeatureOperations.CutFeatureOperation
+            ci.isKeepToolBodies = False
+            comp.features.combineFeatures.add(ci)
+        assert comp.bRepBodies.count == 1, ('hub_flange_' + k, [b.name for b in comp.bRepBodies])
+        # each pin (origin = its end in the hole, on the hole axis) to its hole bottom, in world coordinates: a transform
+        # can only be set on an occurrence proxy from the root, and its transform2 is the world placement
+        body = comp.bRepBodies.itemByName(bname)
+        moved = 0
+        for b, t, dep in _dowel_holes(body.createForAssemblyContext(fo)):
+            u = t.vectorTo(b)
+            u.normalize()
+            hit = []
+            for o in pins:
+                w = b.vectorTo(o.transform2.translation.asPoint())
+                along = w.dotProduct(u)
+                if math.sqrt(max(w.length ** 2 - along ** 2, 0.0)) < 1e-4:
+                    hit.append((along, o))
+            assert len(hit) == 1, ('pin on the hole axis', k, len(hit))
+            along, o = hit[0]
+            if abs(along) > 1e-5:
+                m = o.transform2.copy()
+                m.translation = b.asVector()
+                o.transform2 = m
+                moved += 1
+            got = o.transform2.translation.asPoint().distanceTo(b) * 10.0
+            assert got < 1e-3, ('pin not at the hole bottom', k, got)
+        rep.append((k, [round(h[2], 3) for h in _dowel_holes(body)], moved, round(body.volume * 1000.0, 3)))
+    return rep
 
 
 def v5_occs(C):

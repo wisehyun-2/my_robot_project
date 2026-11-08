@@ -56,7 +56,8 @@ Fusion 허브 **`WheelBiped_v5`**(`Default Project` 최상위). `export/WheelBip
   - **`relayout()`**: 차이 0(다시 만든 `electronics_deck`만 재질이 `PETG print`로 돌아가므로 뒤에 `robot_mass()`가 필요).
   - **`shift()`**: 적용 전 f3d(git `0e8be1a`)에서 `rim_R` y +258.8 → +261.3, `rim_L` −258.8 → −261.3, 타이어 중심 ±267.5 → ±270. 양쪽 다 바깥으로 2.5 mm.
   - **옛 이름 차단**: 버전 10 f3d에서 `turn`, `relegs`, `reshell`, `relayout`, `relink`, `shift`, `joints`, `images`, `save_mass_json`, `urdf_export`, `export`, `exports`, `sections` 13개가 모두 멈추고 문서를 바꾸지 않는다. `rename_to_robot()` 뒤에는 돈다.
-- **버전 12**(11-08, 최신, 사용자가 직접 저장): 버전 11에 **조인트 자세만** 다르다(부품 477개의 링크 기준 위치·개수와 몸체 부피 차이 0). 사용자가 잡아 둔 자세로 저장되어 있고 숨긴 부품은 없다. `export/`, `calc/`, 도면, 단면도는 기준 자세라서 버전 11과 같고, 버전 12를 기준 자세로 돌린 것과도 같다.
+- 버전 12(11-08, 사용자가 직접 저장): 버전 11에 **조인트 자세만** 다르다(부품 477개의 링크 기준 위치·개수와 몸체 부피 차이 0). 사용자가 잡아 둔 자세로 저장되어 있고 숨긴 부품은 없다.
+- **버전 13**(11-08, 최신, 사용자 요청): **바퀴 허브 플랜지 평행핀 구멍 7.0 → 7.5 mm**. 핀 Ø3 × 10이 3.0 나와 AKE 출력부 핀 구멍(깊이 3)에 여유가 0이었다 — 핀 길이 공차(±0.25)만큼 길면 핀이 먼저 바닥에 닿아 플랜지가 출력면에 붙지 않는다. hip·무릎 hub 인서트(10-31, `DOWEL_HOLE` 7.5)와 같게 2.5만 나오게 했다. v4 코드는 `params.HUB_DOWEL_HOLE` 7.0 그대로, v5는 `v5run.HUB_DOWEL_HOLE` 7.5(`build()`가 바로 만든다). 허브 파일은 `unjoint()` → `deepen_hub_dowels()` → `turn()` → `joints()`. 버전 12와 기준 자세에서 비교: 부품 477개 가운데 바뀐 것은 바퀴 핀 6개(축 방향 0.5 mm, 회전 0)뿐, 몸체 792개 가운데 `hub_flange_L/R`만 −10.60 mm³(구멍 3 × π · 1.5² · 0.5). `joint_check` 이상 없음, 6자세 실제 간섭 0건(결합 4건). 버전 12의 사용자 자세로 되돌려 저장했다. `export/WheelBiped_v5.f3d`, 조립 STEP, `hub_flange_L/R` STEP·STL, 단면 데이터, 바퀴 단면도, `hub_flange` 도면을 다시 뽑았다(나머지 부품 STEP은 시각만 달라 그대로 둠, STL은 바이트까지 같음). 질량 변화 약 0.03 g이라 `calc/*.json`·URDF는 그대로다.
 
 ![로봇](images/05_robot_iso.png) ![다리 안쪽 뒤](images/03_leg_iso_inboard_rear.png)
 
@@ -178,6 +179,7 @@ v5run.build()          # v4 로봇(배선 제외) → v4 링크·출력 클램�
 v5run.shift()          # 허브 파일만, 한 번(11-02): 옛 버전의 돌린 바퀴 묶음을 2.5 mm 바깥으로 — relegs() 전에
 v5run.relink()         # 허브 파일만, 한 번(11-07): 링크 17.5 → 25 cm, 모든 부품을 자기 관절과 함께 평행 이동 — unjoint() 뒤, relegs() 전에
 v5run.relegs()         # build() 대신: 열어 둔 허브 파일에서 다리 부품만 다시 만든다(다리만 바꿀 때, 허브 새 버전용)
+v5run.deepen_hub_dowels()  # 허브 파일만, 한 번(11-08): 바퀴 허브 플랜지 핀 구멍 7.0 → 7.5, 핀 6개를 새 바닥으로 — unjoint() 뒤, 그다음 turn(), joints()
 v5run.rename_to_robot()  # 허브 파일만, 한 번(11-08): 버전 10까지의 부품·몸체·조인트 이름을 스위치 쪽 기준으로. 이것 없이는 아래 단계가 멈춘다
 v5run.reshell()        # 허브 파일: 셸 조각만 다시 만든다(스위치 쪽 세로 모서리 R30) — 그 뒤 따로 turn()
 v5run.relayout()       # 허브 파일: 데크를 다시 만들고 Pi·hat·mjpower-ss·팬을 중심선 배치로(11-07) — 그 뒤 따로 turn()

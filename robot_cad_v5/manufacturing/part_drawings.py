@@ -653,7 +653,9 @@ OTHER = {   # stem: (title, material, process, quantity, sides; the first side i
 }
 V2_COPY = {'hip_plate': ('hip_plate_L', 'hip_plate_R'), 'spine_tube': ('spine_tube',), 'rail': ('rail',),
            'clamp_ring_stator_D45_t2.0_SUS304': ('clamp_ring_stator',), 'magnet_spacer_D9x5.35_(6061)': ('magnet_spacer',)}
-V4_CHANGED = {'shell_front': 'v4 부품에서 스위치 쪽 양옆 세로 모서리만 R30 라운드(v4는 45° 모따기, 사용자 11-02)'}
+V4_CHANGED = {'shell_front': 'v4 부품에서 스위치 쪽 양옆 세로 모서리만 R30 라운드(v4는 45° 모따기, 사용자 11-02)',
+              'hub_flange': 'v4 부품에서 평행핀 구멍 3개(Ø3, 출력 쪽 면에서)만 깊이 7.0 → 7.5 — 핀 Ø3 × 10을 바닥까지 넣으면 2.5 나와 '
+                            '출력부 핀 구멍(깊이 3)에 0.5 여유(사용자 11-08)'}
 
 
 def other_sheet(stem, pdf, png_dir):

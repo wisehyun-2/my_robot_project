@@ -300,7 +300,7 @@ def hub_flange(s):
         C.cut(body, B.ycyl(q[0], q[2], lv['f0'] - 1, bear, 3.75))
     for p in LY.motor_points(fr['motor'], P.AKE_PCD_OUT / 2, P.AKE_OUT_PIN, P.AKE['out']):
         q = lc(p, s)
-        C.cut(body, B.ycyl(q[0], q[2], y_out - 7.0, y_out + 2, 1.5))
+        C.cut(body, B.ycyl(q[0], q[2], y_out - P.HUB_DOWEL_HOLE, y_out + 2, 1.5))
     C.union(body, B.ycyl(W[0], W[1], lv['f0'] - P.RIM_REG[1], lv['f0'] + 0.5, P.RIM_REG[0]))   # centre register
     for a in HUB_SCREWS:
         C.cut(body, B.ycyl(18 * math.cos(a), W[1] + 18 * math.sin(a), lv['f0'] - 1, lv['f0'] + 6.0, INSERT_M3 / 2))

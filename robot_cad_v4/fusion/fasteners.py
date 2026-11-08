@@ -141,7 +141,8 @@ def specs():
         'FX DIN 125 M3': (lambda: washer(3), 'Steel', 'steel', (
             '관절', '평와셔 DIN 125 A2', 'M3', '출력 M3 × 16·M3 × %d·림 M3 × 14 머리 밑' % P.HUB_SCREW_L), 48),
         'FX ISO 8734 3x10': (lambda: dowel(3.0, 10.0), 'Steel', 'steel', (
-            '관절', '평행 핀 ISO 8734 m6 경화', 'Ø3 × 10', '모터 출력 다웰(SLA 보스 7.5 mm 끼움·접착 + 출력 2.5 mm / PETG 허브 7 + 출력 3 mm)'), 18),
+            '관절', '평행 핀 ISO 8734 m6 경화', 'Ø3 × 10', '모터 출력 다웰(SLA 보스 %g mm 끼움·접착 + 출력 %g mm / PETG 허브 %g + 출력 %g mm)'
+            % (P.DOWEL_HOLE, 10 - P.DOWEL_HOLE, P.HUB_DOWEL_HOLE, 10 - P.HUB_DOWEL_HOLE)), 18),
         'FX ISO 4762 M3x14 rim': (sc(3, 14), 'Steel', 'steel', (
             '바퀴', '육각 홈붙이 볼트 ISO 4762 8.8', 'M3 × 14',
             '림 → 허브 플랜지 인서트(와셔 위, 림 허브 %.0f mm 체결, 인서트 %.1f mm 물림)'
@@ -232,7 +233,7 @@ def positions():
             out.append(('wheel_' + k, 'FX ISO 4762 M3x%d 12.9 hub' % P.HUB_SCREW_L, (q[0], Y(bear), q[2]), D(+1)))
             out.append(('wheel_' + k, 'FX DIN 125 M3', (q[0], Y(bear), q[2]), D(+1)))
         for q in LY.motor_points(m, P.AKE_PCD_OUT / 2, P.AKE_OUT_PIN, A['out']):
-            out.append(('wheel_' + k, 'FX ISO 8734 3x10', (q[0], Y(y_out - 7.0), q[2]), D(+1)))
+            out.append(('wheel_' + k, 'FX ISO 8734 3x10', (q[0], Y(y_out - P.HUB_DOWEL_HOLE), q[2]), D(+1)))
         lv = LG.hub_levels()
         for a in LG.HUB_SCREWS:
             x, z = 18 * math.cos(a), P.R_WHEEL + 18 * math.sin(a)
