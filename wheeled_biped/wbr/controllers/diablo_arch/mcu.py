@@ -67,6 +67,7 @@ class McuParams:
     disconnect_off_s: float = 0.0       # > 0: all motors off this long after the host link dropped (report 4.5);
                                         # 0 keeps DIABLO's behaviour (balance on the spot indefinitely)
     arm_pitch: float = math.radians(3)  # arm() only accepts an upright robot
+    arm_leg_angle: float = math.radians(20)  # ... whose legs hang under it: |world leg angle| below this on both sides (arm_refusal)
     kp_split: float = 15.0              # N m/rad on the left-right leg angle difference (anti-split)
     kd_split: float = 0.8
     max_forward: float = 1.0            # m/s (DIABLO normal speed mode)
@@ -190,6 +191,10 @@ class DiabloMcu:
         self.roll_force_int = 0.0
         self.roll_ref_limited = 0.0
         self.est_valid = False          # becomes True after the first estimate() (arm() needs a measurement)
+        self.home_state: Dict[str, int] = {}     # moteus register 0x00c per servo, when the sample carries "home_state"
+        self.arm_refused: Optional[str] = None   # why the last arm() refused (arm_refusal)
+        self.last_used_time: Optional[float] = None   # time stamp of the last sample the estimator integrated (_sample_dt)
+        self._no_bias_event = False
         self.off_latched = False        # motors switched off after a host-link loss (disconnect_off_s)
         self.ever_connected = False
         self._down_refused = False
@@ -227,13 +232,45 @@ class DiabloMcu:
 
     def arm(self, force: bool = False) -> bool:
         """Enable balancing; refused before the first measurement, while the motors are latched off after a
-        link loss, or unless the robot is upright (force=True bypasses all three)."""
-        if force or (self.est_valid and not self.off_latched and abs(self.est.pitch) < self.p.arm_pitch):
+        link loss, unless the robot is upright, or while the joints do not read like legs under it (arm_refusal;
+        force=True bypasses all of them)."""
+        self.arm_refused = None if force else self.arm_refusal()
+        if self.arm_refused is None:
             if not self.armed:
                 self.events.append((self.t, "armed"))
             self.armed = True
             self.fault = False
         return self.armed
+
+    def arm_refusal(self) -> Optional[str]:
+        """Why arm() would refuse now, None when it would arm.
+
+        Besides the pitch, the hips and knees must read like legs under the body.  A moteus whose encoder sits on the rotor
+        (8:1) knows the output angle only within +-22.5 deg after power-on: an un-homed knee then reads |sigma2| <= 22.5 deg,
+        a leg of at least 2 L1 cos(11.25 deg) = 490 mm on the v5 robot whatever its real length (above the range's 485 mm),
+        and an un-homed hip turns the leg by a multiple of 45 deg.  Armed like that, the controller folds the legs at full
+        torque (v5 simulation: fall in 0.24 s).  So both legs must be inside the range the leg control allows
+        (L_min - L_min_margin .. L_max + L_max_margin) and within arm_leg_angle of vertical, and a servo sample that carries
+        "home_state" (moteus register 0x00c) must say 2 = output referenced for the hips and knees."""
+        p, e = self.p, self.est
+        if not self.est_valid:
+            return "no measurement yet"
+        if self.off_latched:
+            return "motors latched off after a host-link loss"
+        if abs(e.pitch) >= p.arm_pitch:
+            return f"body pitch {math.degrees(e.pitch):+.1f} deg (limit {math.degrees(p.arm_pitch):.1f})"
+        for name in ("left_hip", f"left_{p.leg_joint}", "right_hip", f"right_{p.leg_joint}"):
+            hs = self.home_state.get(name)
+            if hs is not None and hs != 2:
+                return f"{name} not referenced to the output (home state {hs}, needs 2: d nearest / d exact)"
+        low, high = p.L_min - p.L_min_margin, p.L_max + p.L_max_margin
+        for side in ("left", "right"):
+            L0, th = e.L0[side], e.theta_v[side]
+            if not low <= L0 <= high:
+                return f"{side} leg reads {1e3 * L0:.1f} mm, outside {1e3 * low:.0f}..{1e3 * high:.0f} mm (encoder zero / homing)"
+            if abs(th) >= p.arm_leg_angle:
+                return f"{side} leg angle {math.degrees(th):+.1f} deg (limit {math.degrees(p.arm_leg_angle):.0f}; hip zero / homing)"
+        return None
 
     def disarm(self, reason: str = "disarm") -> None:
         if self.armed:
@@ -263,17 +300,27 @@ class DiabloMcu:
             out[name] = {"position": s["position"], "velocity": vel, "torque": s["torque"]}
         return out
 
-    @staticmethod
-    def _invalid_channel(obs: dict) -> Optional[str]:
+    def _invalid_channel(self, obs: dict) -> Optional[str]:
         """Name of the first invalid channel of the sample (non-finite, or a non-unit quaternion), None when the
         sample is valid: finite unit quaternion and gyro, finite joint positions / velocities.  The FAULT event
-        names the channel for the real-robot diagnosis (review r3 n1)."""
+        names the channel for the real-robot diagnosis (review r3 n1).  The channels the configured estimator
+        integrates are checked too: the accelerometer for the attitude filter (one NaN made its low-pass NaN for
+        good, the attitude then ran on the gyro alone without a FAULT) and the board's gyro bias for the raw yaw
+        path (a NaN made the attitude NaN; a sample that stops carrying it would switch the path off silently)."""
         imu = obs["imu"]
         q = np.asarray(imu["orientation"], dtype=float)
         if not (np.all(np.isfinite(q)) and abs(float(np.linalg.norm(q)) - 1.0) < 0.1):
             return "imu.orientation"
         if not np.all(np.isfinite(np.asarray(imu["angular_velocity"], dtype=float))):
             return "imu.angular_velocity"
+        if self.attitude is not None:
+            f = imu.get("linear_acceleration")
+            if f is None or not np.all(np.isfinite(np.asarray(f, dtype=float))):
+                return "imu.linear_acceleration"
+        if self.p.yaw_offset_tau > 0.0:
+            b = imu.get("bias_rps")
+            if (b is None and self.yaw_offset is not None) or (b is not None and not np.all(np.isfinite(np.asarray(b, dtype=float)))):
+                return "imu.bias_rps"
         for name, s in obs["servo"].items():
             if not math.isfinite(s["position"]):
                 return f"servo.{name}.position"
@@ -281,9 +328,25 @@ class DiabloMcu:
                 return f"servo.{name}.velocity"
         return None
 
-    @classmethod
-    def _sample_valid(cls, obs: dict) -> bool:
-        return cls._invalid_channel(obs) is None
+    def _sample_valid(self, obs: dict) -> bool:
+        return self._invalid_channel(obs) is None
+
+    def _sample_dt(self, t_obs) -> float:
+        """Time since the last sample the estimator integrated, from the samples' own time stamps, for the gyro paths
+        (attitude filter, yaw offset).  A sample the loop never saw (sample age jitter, a late read) is then integrated
+        over its real interval: with the fixed dt the attitude filter lost that piece of angle, and with samples 0-5 ms
+        old at random the robot fell.  The nominal dt without a time stamp, at the first sample and when the interval
+        equals it (runs stay bit-identical), at most stale_fault_s after a long gap.  The position stays on the fixed
+        dt: its velocity comes from position differences over a window counted in ticks (vel_window_s), so the two
+        cancel when the real period is off; with dt_s alone the position read 23 % long at 1.25 x the period."""
+        p = self.p
+        last, self.last_used_time = self.last_used_time, (None if t_obs is None else float(t_obs))
+        if t_obs is None or last is None:
+            return p.dt
+        gap = float(t_obs) - last
+        if gap <= 0.0 or abs(gap - p.dt) <= 1e-9:
+            return p.dt
+        return min(gap, max(p.stale_fault_s, p.dt))
 
     def _hold_history(self) -> None:
         """A held sample still advances the position-difference window by one step (repeat the last position), so
@@ -329,6 +392,10 @@ class DiabloMcu:
             return e
         self.bad_samples = 0
         self.est_hold = False
+        dt_s = self._sample_dt(t_obs)
+        for name, s in obs["servo"].items():
+            if "home_state" in s:
+                self.home_state[name] = int(s["home_state"])
         gyro_raw = np.asarray(obs["imu"]["angular_velocity"], dtype=float)
         quat = np.asarray(obs["imu"]["orientation"], dtype=float)
         quat = quat / np.linalg.norm(quat)           # unit quaternion before use (review r2 n2)
@@ -341,6 +408,9 @@ class DiabloMcu:
             gyro = gyro_raw
         p = self.p
         raw_yaw = p.yaw_offset_tau > 0.0 and "bias_rps" in obs["imu"]
+        if p.yaw_offset_tau > 0.0 and not raw_yaw and not self._no_bias_event:
+            self._no_bias_event = True
+            self.events.append((self.t, "yaw rate from the board's rate: the IMU sample has no bias_rps (request_attitude_detail)"))
         if raw_yaw:                                 # the yaw axis without the board's bias state, offset learned below
             bias = np.asarray(obs["imu"]["bias_rps"], dtype=float)
             bias_z = float((self.imu.R_base_to_imu.T @ bias)[2] if self.imu is not None else bias[2])
@@ -350,7 +420,7 @@ class DiabloMcu:
             gyro[2] -= bias_z + self.yaw_offset
         if self.attitude is not None:
             f = np.asarray(obs["imu"]["linear_acceleration"], dtype=float)
-            up = self.attitude.update(gyro, self.imu.R_base_to_imu.T @ f if self.imu is not None else f, R[2, :])    # R[2, :]: the
+            up = self.attitude.update(gyro, self.imu.R_base_to_imu.T @ f if self.imu is not None else f, R[2, :], dt_s)   # R[2, :]: the
             roll, pitch = self.attitude.roll, self.attitude.pitch                                       # world's up in the base frame
             yaw_rate = float(up @ gyro)
         else:
@@ -377,25 +447,25 @@ class DiabloMcu:
         e.theta_v_mean = 0.5 * (e.theta_v["left"] + e.theta_v["right"])
         e.theta_v_dot_mean = 0.5 * (e.theta_v_dot["left"] + e.theta_v_dot["right"])
         e.L0_mean = 0.5 * (e.L0["left"] + e.L0["right"])
-        self.position += e.v * self.p.dt
+        self.position += e.v * self.p.dt            # on the same tick base as the velocity window (vel_window_s), not dt_s
         e.position = self.position
         if raw_yaw:
-            self._learn_yaw_offset(e)
+            self._learn_yaw_offset(e, dt_s)
         if self.attitude is not None:               # the hip midpoint's velocity for the next sample
             th, L = e.theta_v_mean, e.L0_mean
             Ld = 0.5 * (e.L0_dot["left"] + e.L0_dot["right"])
             thd = e.theta_v_dot_mean
-            self.attitude.set_hip_velocity(e.v + Ld * math.sin(th) + L * thd * math.cos(th), Ld * math.cos(th) - L * thd * math.sin(th), e.yaw_rate)
+            self.attitude.set_hip_velocity(e.v + Ld * math.sin(th) + L * thd * math.cos(th), Ld * math.cos(th) - L * thd * math.sin(th), e.yaw_rate, dt_s)
         return e
 
-    def _learn_yaw_offset(self, e: Estimate) -> None:
+    def _learn_yaw_offset(self, e: Estimate, dt: float) -> None:
         """The raw yaw gyro's offset is learned against the wheels while they show no turn (no yaw command, so no slip is expected).
         It starts from the board's own bias, which a robot at rest has converged on."""
         p = self.p
         wheel_yaw = (e.v_wheel["right"] - e.v_wheel["left"]) / p.track
-        self.wheel_yaw_lp += (wheel_yaw - self.wheel_yaw_lp) * min(p.dt / 0.1, 1.0)
+        self.wheel_yaw_lp += (wheel_yaw - self.wheel_yaw_lp) * min(dt / 0.1, 1.0)
         if self.yaw_rate_ref == 0.0 and abs(self.wheel_yaw_lp) < 0.1:
-            self.yaw_offset += (e.yaw_rate - self.wheel_yaw_lp) * p.dt / p.yaw_offset_tau
+            self.yaw_offset += (e.yaw_rate - self.wheel_yaw_lp) * dt / p.yaw_offset_tau
 
     # ------------------------------------------------------------- commands
     def apply_command(self, cmd: MotionCtrl, dt: float) -> None:

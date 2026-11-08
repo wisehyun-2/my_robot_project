@@ -11,7 +11,9 @@ the body (wbr.observers.pi3hat_ars).  This filter integrates the gyro and pulls 
     a_hip = time derivative of (v + d/dt (L0 sin theta), d/dt (L0 cos theta)), plus the centripetal yaw_rate * v sideways
 
 Everything is in the base frame (x forward, y left, z up); the state is the world's up direction seen from the base.
-The pi3hat library delivers the raw sample: gyro = rate_dps - bias_dps, accelerometer = accel_mps2 + 9.81 * (gravity of its attitude).
+The pi3hat library delivers the raw sample: gyro = rate_dps - bias_dps, accelerometer = accel_mps2 + 9.81 * conj(q) (0, 0, -1), q the
+board's attitude (IMU -> ARS frame, z down): the firmware's OrientationToAccel, the world's UP seen from the IMU, (0, 0, +1) with the hat
+side up at rest.  The physical down direction there would flip the sign.
 """
 from __future__ import annotations
 
@@ -50,26 +52,31 @@ class BodyAttitude:
     def pitch(self) -> float:
         return math.atan2(-self.up[0], math.hypot(self.up[1], self.up[2]))
 
-    def set_hip_velocity(self, vx: float, vz: float, yaw_rate: float) -> None:
-        """Hip midpoint velocity in the heading frame, from the encoders and the leg angle: called once per sample, after the legs."""
+    def set_hip_velocity(self, vx: float, vz: float, yaw_rate: float, dt: float | None = None) -> None:
+        """Hip midpoint velocity in the heading frame, from the encoders and the leg angle: called once per sample, after the legs.
+        dt: the time since the previous sample (the nominal dt when None)."""
+        dt = self.dt if dt is None else dt
         v = np.array([vx, vz])
         if self.vh_lp is None:
             self.vh_lp = v.copy()
         self.a_hip = (v - self.vh_lp) / self.deriv_tau
-        self.vh_lp = self.vh_lp + self.a_hip * self.dt
+        self.vh_lp = self.vh_lp + self.a_hip * dt
         self.lateral = yaw_rate * vx
 
-    def update(self, gyro: np.ndarray, f: np.ndarray, start_up: np.ndarray) -> np.ndarray:
-        """gyro, f in the base frame; start_up: the up direction to start from (the board's attitude).  Returns the up direction."""
-        k = self.dt / self.deriv_tau
+    def update(self, gyro: np.ndarray, f: np.ndarray, start_up: np.ndarray, dt: float | None = None) -> np.ndarray:
+        """gyro, f in the base frame; start_up: the up direction to start from (the board's attitude).  Returns the up direction.
+        dt: the time since the previous sample, from the time stamps (the nominal dt when None): a sample the loop skipped is
+        integrated over its real interval, with the fixed dt its piece of angle was lost."""
+        dt = self.dt if dt is None else dt
+        k = dt / self.deriv_tau
         if self.up is None:
             self.up = np.asarray(start_up, dtype=float) / np.linalg.norm(start_up)
             self.gyro_lp = gyro.copy()
             self.f_lp = G * self.up
         self.alpha = (gyro - self.gyro_lp) / self.deriv_tau
-        self.gyro_lp = self.gyro_lp + self.alpha * self.dt
+        self.gyro_lp = self.gyro_lp + self.alpha * dt
         self.f_lp = self.f_lp + k * (f - self.f_lp)
-        self.up = self.up - self.dt * np.cross(gyro, self.up)
+        self.up = self.up - dt * np.cross(gyro, self.up)
         self.up /= np.linalg.norm(self.up)
         # the robot's acceleration in the base frame: heading frame -> base (Rx(-roll) Ry(-pitch))
         sp, cp = math.sin(self.pitch), math.cos(self.pitch)
@@ -81,6 +88,6 @@ class BodyAttitude:
         m = self.f_lp - a_imu
         norm = float(np.linalg.norm(m))
         if abs(norm - G) < self.reject and float(np.linalg.norm(a_imu)) < self.quiet:
-            self.up = self.up + (self.dt / self.tau) * (m / norm - self.up)
+            self.up = self.up + (dt / self.tau) * (m / norm - self.up)
             self.up /= np.linalg.norm(self.up)
         return self.up

@@ -384,5 +384,126 @@ class MountErrorTests(unittest.TestCase):
         self.assertAlmostEqual(math.degrees(plan.mcu.est.pitch), 1.0, delta=0.2)
 
 
+def _power_on_read(q: float, ratio: float = 0.125) -> float:
+    """What a moteus with its encoder on the rotor reads after power-on: the output angle within +-22.5 deg (8:1)."""
+    h = math.pi * ratio
+    return (q + h) % (2 * h) - h
+
+
+class BringUpGuardTests(unittest.TestCase):
+    """Step 0 of the bring-up (docs/bringup_step0.md): what the MCU must refuse, or survive, on the real robot."""
+
+    def _at_rest(self):
+        plan = PlanV5(PlanV5Config.from_model(latency_ms=0.0))
+        plan.reset()
+        plan.mcu.reset(armed=False)
+        return plan, plan._obs_to_mcu(plan.observation)
+
+    def _feed(self, plan, obs, n, edit=None):
+        t0 = obs["time"]
+        for k in range(n):
+            o = copy.deepcopy(obs)
+            o["time"] = t0 + k * plan.dt
+            if edit is not None:
+                edit(k, o)
+            plan.mcu.estimate(o)
+
+    def test_arm_refuses_legs_read_before_homing(self):
+        # every un-homed knee reads |sigma2| <= 22.5 deg, a leg of at least 490 mm, above the 485 mm range
+        for L0 in (0.372, 0.42, 0.46, 0.485):
+            plan, obs = self._at_rest()
+            qh, qk = plan.leg.inverse(L0, plan.plant.theta_eq(L0))
+            for side in ("left", "right"):
+                obs["servo"][f"{side}_hip"]["position"] = _power_on_read(qh)
+                obs["servo"][f"{side}_knee"]["position"] = _power_on_read(qk)
+            plan.mcu.estimate(obs)
+            self.assertGreater(plan.mcu.est.L0["left"], 0.49)
+            self.assertFalse(plan.mcu.arm(), L0)
+            self.assertIn("leg reads", plan.mcu.arm_refused)
+
+    def test_arm_refuses_a_hip_read_45_deg_off(self):
+        plan, obs = self._at_rest()
+        for side in ("left", "right"):
+            obs["servo"][f"{side}_hip"]["position"] = _power_on_read(obs["servo"][f"{side}_hip"]["position"])
+        plan.mcu.estimate(obs)
+        self.assertFalse(plan.mcu.arm())
+        self.assertIn("leg angle", plan.mcu.arm_refused)
+
+    def test_arm_needs_the_legs_referenced_to_the_output(self):
+        plan, obs = self._at_rest()
+        for s in obs["servo"].values():
+            s["home_state"] = 1                     # moteus 0x00c: rotor only, before d nearest
+        self._feed(plan, obs, 1)
+        self.assertFalse(plan.mcu.arm())
+        self.assertIn("home state 1", plan.mcu.arm_refused)
+        for name, s in obs["servo"].items():
+            s["home_state"] = 1 if name.endswith("wheel") else 2     # the wheels need no output reference
+        obs["time"] += plan.dt
+        self._feed(plan, obs, 1)
+        self.assertTrue(plan.mcu.arm())
+        self.assertIsNone(plan.mcu.arm_refused)
+
+    def test_the_standing_robot_arms(self):
+        plan, obs = self._at_rest()
+        plan.mcu.estimate(obs)
+        self.assertTrue(plan.mcu.arm(), plan.mcu.arm_refused)
+
+    def test_a_nan_in_the_new_imu_channels_is_a_fault(self):
+        for channel, bad in (("linear_acceleration", [math.nan, 0.0, G]), ("bias_rps", [0.0, 0.0, math.nan])):
+            plan, obs = self._at_rest()
+
+            def edit(k, o, channel=channel, bad=bad):
+                if k >= 10:
+                    o["imu"][channel] = np.array(bad)
+            self._feed(plan, obs, 20, edit)
+            self.assertTrue(plan.mcu.fault, channel)
+            self.assertTrue(any(f"imu.{channel}" in m for _, m in plan.mcu.events), plan.mcu.events)
+            self.assertTrue(np.all(np.isfinite(plan.mcu.attitude.f_lp)))
+            self.assertTrue(math.isfinite(plan.mcu.est.pitch))
+
+    def test_a_missing_accelerometer_is_a_fault_not_a_crash(self):
+        plan, obs = self._at_rest()
+        del obs["imu"]["linear_acceleration"]
+        self._feed(plan, obs, 10)
+        self.assertTrue(plan.mcu.fault)
+        self.assertTrue(any("imu.linear_acceleration" in m for _, m in plan.mcu.events), plan.mcu.events)
+
+    def test_the_bias_channel_lost_is_a_fault_and_never_sent_is_reported(self):
+        plan, obs = self._at_rest()
+
+        def drop(k, o):
+            if k >= 5:
+                del o["imu"]["bias_rps"]
+        self._feed(plan, obs, 15, drop)
+        self.assertTrue(plan.mcu.fault)
+        self.assertTrue(any("imu.bias_rps" in m for _, m in plan.mcu.events), plan.mcu.events)
+        plan, obs = self._at_rest()
+        del obs["imu"]["bias_rps"]
+        self._feed(plan, obs, 15)
+        self.assertFalse(plan.mcu.fault)
+        self.assertEqual(sum("no bias_rps" in m for _, m in plan.mcu.events), 1)
+
+    def test_a_skipped_sample_is_integrated_over_its_interval(self):
+        # the body turns at 0.5 rad/s about +y; the second run sees only every other sample (random sample age, late reads)
+        def pitch_after(step):
+            plan, obs = self._at_rest()
+            w = plan.mcu.imu.R_base_to_imu @ np.array([0.0, 0.5, 0.0])
+            obs["imu"]["angular_velocity"] = w
+            t0 = obs["time"]
+            for k in range(0, 101, step):
+                o = copy.deepcopy(obs)
+                o["time"] = t0 + k * plan.dt
+                plan.mcu.estimate(o)
+            return plan.mcu.est.pitch
+        every, skipped = pitch_after(1), pitch_after(2)
+        self.assertAlmostEqual(every, 0.5 * 0.101, delta=0.002)
+        self.assertAlmostEqual(skipped, every, delta=5e-4)       # fixed dt: half of it
+
+    def test_steady_covariance_at_the_slow_rate(self):
+        self.assertEqual(steady_covariance(5e-3).shape, (7, 7))        # WBR_TEST_RATE=200
+        P = steady_covariance(1e-2)                                     # not in the table: computed
+        self.assertTrue(np.all(np.linalg.eigvalsh(P) > 0.0))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

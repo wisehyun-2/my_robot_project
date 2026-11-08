@@ -11,6 +11,7 @@ plus a pseudo measurement that pulls the world-frame yaw rate towards 0.  Same p
 """
 from __future__ import annotations
 
+import functools
 import json
 import math
 from pathlib import Path
@@ -145,23 +146,34 @@ class Pi3HatAttitude:
 def steady_covariance(dt: float) -> np.ndarray:
     """Covariance of a board at rest, hat side up, POWER_ON_S after power-on (pi3hat_ars_steady.json, python -m wbr.observers.pi3hat_ars).
     The accelerometer's weight keeps falling for many minutes (2 m/s^2 for 0.5 s reads 2.9 deg after 10 s, 1.6 after 60 s, 0.9
-    after 15 min): a robot that is armed a minute after power-on is the realistic and the less favourable case."""
+    after 15 min): a robot that is armed a minute after power-on is the realistic and the less favourable case.
+    The table has TABLE_RATES; any other rate is computed the same way on first use (about 1 s per 200 Hz)."""
+    hz = int(round(1.0 / dt))
     table = json.loads(STEADY_FILE.read_text(encoding="utf-8"))
-    return np.array(table[str(int(round(1.0 / dt)))])
+    if str(hz) in table:
+        return np.array(table[str(hz)])
+    return _rest_covariance(hz).copy()
 
 
 POWER_ON_S = 60
+TABLE_RATES = (1000, 400, 200)      # Hz: the plans' MCU rates (1000 or 200, WBR_TEST_RATE) and 400
+
+
+@functools.lru_cache(maxsize=None)
+def _rest_covariance(rate: int) -> np.ndarray:
+    f = Pi3HatAttitude(1.0 / rate)
+    accel = np.array([0.0, 0.0, G])
+    for _ in range(rate * POWER_ON_S):
+        f.process(np.zeros(3), accel)
+    return f.P.copy()
 
 
 def main() -> None:
-    table = {}
-    for rate in (1000, 400):
-        f = Pi3HatAttitude(1.0 / rate)
-        accel = np.array([0.0, 0.0, G])
-        for _ in range(rate * POWER_ON_S):
-            f.process(np.zeros(3), accel)
-        print(rate, "Hz, sqrt P diag", np.round(np.sqrt(np.diag(f.P)), 7))
-        table[str(rate)] = f.P.tolist()
+    table = json.loads(STEADY_FILE.read_text(encoding="utf-8")) if STEADY_FILE.exists() else {}
+    for rate in TABLE_RATES:
+        P = _rest_covariance(rate)
+        print(rate, "Hz, sqrt P diag", np.round(np.sqrt(np.diag(P)), 7))
+        table[str(rate)] = P.tolist()
     STEADY_FILE.write_text(json.dumps(table), encoding="utf-8")
     print("wrote", STEADY_FILE)
 

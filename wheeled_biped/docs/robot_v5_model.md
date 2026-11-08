@@ -121,7 +121,7 @@ a_hip = d/dt(v + d/dt(L0 sin θ), d/dt(L0 cos θ)), 옆으로 ω_z · v
 이 필터에서는 이전 위치도 hip 중앙과 같은 값을 낸다(위치를 알려 줄 때). 위치를 무시하면(r = 0) 이전 위치의 제자리 2 rad/s 피치 오차가 0.05 → 0.19°가 된다. 새 위치에서는 무시해도 차이가 없다.
 
 실기 브리지에서 받을 값(pi3hat 라이브러리 `Attitude`, `request_attitude_detail`):
-- 원시 자이로 = `rate_dps − bias_dps`, 원시 가속도 = `accel_mps2 + 9.81 × (보드 자세의 중력 방향)`
+- 원시 자이로 = `rate_dps − bias_dps`, 원시 가속도 = `accel_mps2 + 9.81 × conj(q)·(0, 0, −1)`(펌웨어 `OrientationToAccel`: ARS 프레임의 위 방향을 IMU 축으로 본 값, hat이 위인 정지 상태에서 (0, 0, +1); 물리적인 아래 방향으로 넣으면 부호가 틀린다)
 - 시뮬레이션의 `obs["imu"]`: `orientation`(보드 쿼터니언), `angular_velocity`(`rate`), `bias_rps`, `linear_acceleration`(원시)
 
 지연 여유(밀기 0.25 / 0.5 / 1 W × 시드 2개, 마지막 3 s 피치 흔들림 3° 초과를 "떨림"으로 셈):
