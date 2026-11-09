@@ -55,6 +55,7 @@ VP.apply(P)                   # v5-only values (11-08)
 import legs as LG  # noqa: E402
 import legs_v5 as LV  # noqa: E402
 import split_v5 as SP  # noqa: E402
+import switch_v5 as SW  # noqa: E402
 import hlr_gmsh as G  # noqa: E402
 import gmsh  # noqa: E402
 
@@ -662,14 +663,17 @@ V2_COPY = {'hip_plate': ('hip_plate_L', 'hip_plate_R'), 'spine_tube': ('spine_tu
 V4_CHANGED = {'battery_tray': 'v4 부품을 가운데 리브 자리(y 0)에서 두 조각으로 나누고 그 리브 대신 이음 턱 두 장을 붙임(split_v5.py, 사용자 11-09)',
               'electronics_deck': 'v4 부품(v5 전장 배치)을 y 80(라즈베리파이와 +y 끝 창 사이)에서 두 조각으로 나누고 이음 턱 두 장을 붙임 — '
                                   '턱은 리브 바깥 면까지(x ±41.5, 셸 바닥 경사와 1.5 mm; split_v5.py, 사용자 11-09)',
-              'shell_front':'v4 부품에서 스위치 쪽 양옆 세로 모서리만 R30 라운드(v4는 45° 모따기, 사용자 11-02)',
+              'shell_front': 'v4 부품에서 스위치 쪽 양옆 세로 모서리만 R30 라운드(v4는 45° 모따기, 사용자 11-02), 앞면 스위치 구멍 없음'
+                             '(11-09: 스위치는 셸 가운데 조각 윗면, switch_v5.py)',
               'hub_flange': 'v4 부품에서 평행핀 구멍 3개(Ø3, 출력 쪽 면에서) 깊이 7.0 → %.1f — 핀 Ø3 × 10을 바닥까지 넣으면 %.1f 나와 '
                             '출력부 핀 구멍(깊이 3)에 여유 %.1f, 스피곳 Ø11.8 높이 1.3 → %.1f(출력부 홈 1.5 바닥에서 %.1f 뜸; 사용자 11-08)'
                             % (P.HUB_DOWEL_HOLE, 10 - P.HUB_DOWEL_HOLE, P.HUB_DOWEL_HOLE - 7.0, P.HUB_SPIGOT[1], 1.5 - P.HUB_SPIGOT[1]),
               'rim': 'v4 부품에서 등록 홈만 Ø11.2 × 3.2 → × %.1f — 허브 쪽 면을 바닥에 두고 출력해 홈 바닥이 브리지로 처져도 허브 플랜지의 '
                      'Ø11 × 3 턱이 바닥에 먼저 닿지 않게(사용자 11-08)' % (P.RIM_REG[1] + P.RIM_REG_GAP[1]),
               'shell_mid': 'v4 부품에 hip 판 나사 4곳 안쪽 받침 Ø8 × %.1f(셸 벽에서 hip 판 웹 면까지, 조이면 벽이 휘던 1.6 틈을 메움) — 나사 '
-                           'ISO 7380 M3 × %d(사용자 11-08)' % (P.SHELL_PAD, P.SHELL_SCREW_L),
+                           'ISO 7380 M3 × %d(사용자 11-08); 윗면 위판 구멍 뒤 x %+.0f, 좌우 정중앙에 로커 스위치 구멍 %.0f × %.0f'
+                           '(긴 변 좌우 방향, 좌우 조각에 반씩; 사용자 11-09, switch_v5.py)'
+                           % (P.SHELL_PAD, P.SHELL_SCREW_L, SW.X, SW.HOLE[0], SW.HOLE[1]),
               'saddle': 'v4 부품에 hip 판 나사 2곳 안쪽 받침 Ø8 × %.1f(셸 hip 조각과 같은 이유, 사용자 11-08)' % P.SHELL_PAD,
               'top_plate': 'v4 부품에서 M4 × 25 머리 카운터보어 깊이만 4.0 → %.1f(머리 높이 4.0이 판 위로 나오지 않게, 사용자 11-08) — '
                            'x ±52 레일 위 열의 M4 인서트에 넣는 짐 나사는 판 윗면에서 6 이하로(그 밑이 레일)' % P.TOP_CBORE}

@@ -20,6 +20,9 @@ Run each step in its own MCP script (put this folder on sys.path, import v5run):
                              # 11-08: the power board is the power_dist r4.5b (pdist_v5.py), an mjpower-ss is swapped for it
     v5run.resplit()          # hub file (11-09): battery tray / electronics deck in two pieces each, bolted flanges (split_v5.py;
                              # unjoint() first, then turn(), joints(); build() and relayout() make the pieces directly)
+    v5run.reswitch()         # hub file (11-09): rocker switch on the hip-section top, centre line, behind the payload plate
+                             # (switch_v5.py; shell pieces rebuilt; unjoint() first, then turn(), joints(), robot_mass())
+    v5run.drop_grommets()    # hub file (11-09): the 2 shell grommets out, the Ø16 cable holes stay (same route as reswitch)
     v5run.relink()           # hub file, once (11-07): links 175 -> 250 mm, every part moves with its joint (then relegs(), turn())
     v5run.deepen_hub_dowels()  # hub file, once (11-08): wheel hub flange dowel holes 7.0 -> 7.5 and the pins with them
                              # (unjoint() first, then turn(), joints(); build() makes them so from HUB_DOWEL_HOLE)
@@ -123,6 +126,11 @@ def load():
     import split_v5
     assert split_v5.__file__.lower().startswith(HERE.lower()), split_v5.__file__
     M['split_v5'] = split_v5                       # battery tray / deck in two pieces each (11-09 user)
+    sys.modules.pop('switch_v5', None)
+    import switch_v5
+    assert switch_v5.__file__.lower().startswith(HERE.lower()), switch_v5.__file__
+    switch_v5.patch(M)                             # rocker switch on the hip-section top, centre line (11-09 user)
+    M['switch_v5'] = switch_v5
     return M
 
 
@@ -269,6 +277,9 @@ def build():
     rename_to_robot()                              # before SIDES is used on the v4 parts
     Ms = load()                                    # fresh modules (v4run.build reloaded them without the v5 patches)
     Ms['split_v5'].apply(Ms)                       # tray / deck in two pieces (11-09 user)
+    _reshell(Ms)                                   # shell with the switch hole on the top (11-09 user) ...
+    _move_switch(Ms)                               # ... and the switch there
+    _drop_grommets(C)                              # no shell grommets (11-09 user)
     dropped = []
     for s, k in SIDES:                             # v4 links out
         for link, name in (('femur_', 'thigh_'), ('tibia_', 'shank_')):
@@ -391,22 +402,79 @@ SHELL_PARTS = ('shell_', 'saddle_', 'splice_tabs')
 def reshell():
     """Rebuild only the torso shell pieces (front / mid / rear sections, saddles, splice tabs) in the v5 document - the
     hub file - with the plan corners on the switch side rounded (shell.REAR_ROUND, the v4 code's rear, user 11-02: v4 keeps its 45 deg
-    chamfers).  The shell screws, grommets and nuts stay (nothing they sit on moves).  Run turn() afterwards in its own script."""
+    chamfers).  The shell screws, grommets and nuts stay (nothing they sit on moves).  Run turn() afterwards in its own script.
+    Since 11-09 the shell has its switch hole on the top (switch_v5): on a document whose switch is still on the face, run reswitch()."""
     doc()
     M = load()
-    C, A = M['cadlib'], M['assembly']
-    _need_direct(C, 'reshell')
+    _need_direct(M['cadlib'], 'reshell')
     M['poses'].reset()
     M['finalize'].show_all()
+    return _reshell(M)
+
+
+def _reshell(M):
+    C, A = M['cadlib'], M['assembly']
     M['shell'].REAR_ROUND = True
     dropped = []
     for o in list(C.root_occ('torso').childOccurrences):
         if o.component.name.startswith(SHELL_PARTS):
             dropped.append(o.component.name)
             o.deleteMe()
-    A.build_shell()
+    A.build_shell()                                # (load() patched shell.openings: switch hole on the top, switch_v5)
     _name_parts([o.component for o in C.root_occ('torso').childOccurrences if o.component.name.startswith(SHELL_PARTS)])
     return dict(dropped=sorted(dropped))
+
+
+def _move_switch(M):
+    """The rocker switch occurrence to switch_v5.frame (its master stays in _library)."""
+    C, A, SW = M['cadlib'], M['assembly'], M['switch_v5']
+    t = C.root_occ('torso')
+    occ = [o for o in t.childOccurrences if o.component.name.startswith(SW.NAME)]
+    assert len(occ) == 1, [o.component.name for o in occ]
+    comp = occ[0].component
+    occ[0].deleteMe()
+    A.place(t, comp, SW.frame(M))
+    return comp.name
+
+
+GROMMET = 'FX grommet D16'                     # v4 rubber grommets in the shell's Ø16 hip cable holes - removed (11-09 user)
+
+
+def _drop_grommets(C):
+    """The grommet occurrences and their _library master out (the Ø16 holes stay: the hip cables still pass there)."""
+    n = 0
+    for o in list(C.root_occ('torso').childOccurrences):
+        if o.component.name == GROMMET:
+            o.deleteMe()
+            n += 1
+    for o in list(C.library().component.occurrences):
+        if o.component.name == GROMMET:
+            o.deleteMe()
+    return n
+
+
+def drop_grommets():
+    """Hub file (11-09, user: "grommet 부품도 제거해줘"): the two shell grommets out.  Direct design only: unjoint() first, then this,
+    turn() in its own script, joints(), robot_mass()."""
+    doc()
+    M = load()
+    _need_direct(M['cadlib'], 'drop_grommets')
+    M['poses'].reset()
+    return _drop_grommets(M['cadlib'])
+
+
+def reswitch():
+    """Hub file (11-09, user: the rocker switch on the torso top, centre line, just behind the payload plate - switch_v5): the shell
+    pieces rebuilt (no hole on the switch-side face, a 19 x 13 hole across shell_mid_L / _R on the top) and the switch moved there.
+    Direct design only: unjoint() first, then this, turn() in its own script, joints(), robot_mass()."""
+    doc()
+    M = load()
+    _need_direct(M['cadlib'], 'reswitch')
+    M['poses'].reset()
+    M['finalize'].show_all()
+    out = _reshell(M)
+    out['switch'] = _move_switch(M)
+    return out
 
 
 BOARD = 'power_dist_r4.5b'                     # pdist_v5.NAME (11-08 user; mjpower-ss until hub version 14)

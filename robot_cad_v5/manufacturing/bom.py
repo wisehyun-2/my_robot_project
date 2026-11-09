@@ -39,8 +39,8 @@ BED = 300.0                        # user 11-09: the printer prints up to 300 x 
 BRIM = 5.0                         # brim per side, for the margin note
 FLANGE_BOLTS, CAP_BOLTS = 6, 3     # legs_v5: _flange_bolts (6 per hub insert, r 18), _cap_bolts (3 per knee cap, r 20.5)
 HIP_PLATE_M3, END_TAPS = 11, 2     # v4 torso.hip_plate: M3 tapped (cup 3, deck 2, shell 6); spine / rail: both ends tapped
-MODEL = '허브 버전 17(11-09, 받침·데크 두 조각) = `export/WheelBiped_v5.f3d`, 링크 25 cm'
-MODEL_KG = 11.611                  # v5run.robot_mass() of that model (metal parts as modelled)
+MODEL = ('허브 버전 18(11-09: 버전 17의 받침·데크 두 조각 + 스위치 윗면 이동·그로밋 제거) = `export/WheelBiped_v5.f3d`; 링크 25 cm')
+MODEL_KG = 11.610                  # v5run.robot_mass() of that model (metal parts as modelled)
 MAT = 'PLA 또는 PETG'
 HOT = 'PETG 권장(모터 열)'          # parts on the motors / drivers: PLA softens at about 55-60 C
 
@@ -155,7 +155,8 @@ PURCHASED = [   # (prefix, item, spec, source, note)
     ('battery_24V_15Ah', '배터리 24 V 15 Ah', '75 × 310 × 75 mm, XT60(F) 리드', '(가지고 있는 배터리)', '새로 살 때는 크기·커넥터가 같은 것'),
     ('fan 30x30x7', '팬 30 × 30 × 7 mm 5 V', '2핀', '전자 부품상', 'pi3hat JP6(1번 5 V, 3번 GND), 데크에 1.5 mm 양면 폼테이프'),
     ('rocker switch', '로커 스위치 19 × 13 + mjbots PH4 스위치 하네스', 'power dist J2(PH-4)용, E-Switch R1966 + 30 cm 하네스',
-     '(power dist r4.5b 동봉)', '몸통 앞면(CAD −x) 수직면, 로봇 오른쪽(CAD +y)의 19 × 13 구멍'),
+     '(power dist r4.5b 동봉)', '11-09: 몸통 **윗면**, 위판 구멍 바로 뒤(무릎 쪽, CAD x +78) 좌우 정중앙의 19 × 13 구멍(셸 가운데 좌우 조각에 '
+     '반씩, 긴 변 좌우 방향). 하네스 30 cm는 이 자리에서 데크의 power dist J2까지 어림 약 29 cm(모델 없음) — 실물에 대 보고 모자라면 PH-4 연장'),
     ('CAN terminator', 'CAN-FD 종단 저항 120 Ω (JST PH-3)', '20 × 15 × 10 이하', 'mjbots (또는 120 Ω 저항 + PHR-3로 직접)',
      '바퀴 드라이버 CAN1(다리 끝). moteus에는 종단 저항이 없고 pi3hat 쪽에는 있다'),
     ('XT30 cap', 'XT30 보호 캡', 'XT30 수 커넥터용', '전자 부품상', '바퀴 드라이버 J2(24 V가 살아 있는 빈 포트)'),
@@ -227,8 +228,10 @@ PRINTED = [     # (prefix, drawing, item, settings / orientation, colour, STL ax
     ('hub_flange', 'WBv5-S04', '바퀴 허브 플랜지', '채움 100 %, 모터 쪽 면을 바닥에', '검정', None, '열압입 M3 인서트 6', HOT),
     ('rim_', 'WBv5-S05', '바퀴 림(한 조각)', '벽 6겹(2.4 mm) · 채움 40 %, 허브 쪽 평면을 바닥에, 열린 쪽 플랜지 밑 4.5 mm 턱만 서포트',
      '검정', None, '', MAT),
-    ('shell_front', 'WBv5-S06', '몸통 셸 앞(스위치 쪽)', '채움 25 %, 바깥 면을 위로(서포트 필요)', '진회색', None, 'v4와 달리 세로 모서리 R30', MAT),
-    ('shell_mid', 'WBv5-S07', '몸통 셸 가운데(hip)', '채움 25 %, 바깥 면을 위로(서포트 필요)', '진회색', None, '', MAT),
+    ('shell_front', 'WBv5-S06', '몸통 셸 앞(스위치 쪽)', '채움 25 %, 바깥 면을 위로(서포트 필요)', '진회색', None,
+     'v4와 달리 세로 모서리 R30, 앞면 스위치 구멍 없음(11-09)', MAT),
+    ('shell_mid', 'WBv5-S07', '몸통 셸 가운데(hip)', '채움 25 %, 바깥 면을 위로(서포트 필요)', '진회색', None,
+     '윗면 위판 뒤 좌우 정중앙의 스위치 구멍 19 × 13을 좌우 조각이 반씩 나눔(11-09). 옆면 Ø16 hip 케이블 구멍은 그로밋 없이 씀', MAT),
     ('shell_rear', 'WBv5-S08', '몸통 셸 뒤(무릎 쪽)', '채움 25 %, 바깥 면을 위로(서포트 필요)', '진회색', None, '', MAT),
     ('saddle_', 'WBv5-S09', 'hip 위 안장', '채움 25 %', '파랑', None, '', MAT),
     ('top_plate', 'WBv5-S10', '위판(짐 판)', '채움 25 %', '검정', None, '열압입 M4 인서트 35', MAT),
@@ -264,7 +267,6 @@ FX = {
     'FX ISO 4762 M2.5x18 knee cup': ('드라이버', '육각 홈붙이 볼트 ISO 4762', 'M2.5 × 18', '무릎 컵 → 허벅지 인서트', 6),
     'FX ISO 4762 M2.5x18 wheel cup': ('드라이버', '육각 홈붙이 볼트 ISO 4762', 'M2.5 × 18', '바퀴 컵 → 정강이 인서트', 6),
     'FX insert M2.5x4 link cup': ('드라이버', '열압입 인서트 황동', 'M2.5 × 4 (구멍 Ø3.6 × 6)', '허벅지·정강이의 컵 기둥 자리(열압입)', 12),
-    'FX grommet D16': ('몸통', '고무 그로밋', 'Ø16 구멍, 판 1.4 mm (안지름 14)', '셸 hip 케이블 출구', 2),
     'FX ISO 10642 M5x12': ('몸통', '접시 볼트 ISO 10642', 'M5 × 12', 'hip 판 → 척추 봉 끝 M5 탭', 4),
     'FX ISO 10642 M4x12': ('몸통', '접시 볼트 ISO 10642', 'M4 × 12', 'hip 판 → 위 레일 끝 M4 탭', 4),
     'FX ISO 4762 M4x25 top': ('몸통', '육각 홈붙이 볼트 ISO 4762', 'M4 × 25', '위판 → 위 레일(관통)', 8),
@@ -521,6 +523,7 @@ def write(R, c, leaves):
     star = {(f[1], f[2].split(' (')[0]) for f in R['fx'] if f[5] != '있음'}
     L += ['| %s%s | %s | %d | %d | %s |' % (r[0], ' ★' if (r[0], r[1].split(' (')[0]) in star else '', r[1], r[2], r[3], r[4]) for r in tot]
     L += ['', '- pi3hat의 M2.5 × 5 나사 4개와 스탠드오프 4개는 pi3hat에 들어 있어 뺐다.',
+          '- 고무 그로밋(셸 hip 케이블 구멍 Ø16 × 2)은 뺐다(사용자 11-09). 구멍은 그대로 두고 케이블이 그냥 지나간다.',
           '- 12.9 볼트(①·②·⑥·허브)는 6061 부품을 조이던 때의 등급이다. 이제는 모두 출력 부품을 조이거나 출력 부품의 탭에 들어가고 강도는 보지 않으므로 '
           '(사용자 11-09) **더 싼 등급(8.8·A2)으로 사도 된다**. ⑥은 출력 받침 링의 플라스틱 나사산이라 0.7 N·m·나사 고정제 없이 손으로 가볍게 조인다.',
           '- ISO 4762 M3 × 14는 12.9(허브) 12 + 8.8(림) 12다. 같은 길이이므로 한 등급으로 24개를 사도 된다.', '',
