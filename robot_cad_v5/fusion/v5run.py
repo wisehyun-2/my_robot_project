@@ -18,6 +18,8 @@ Run each step in its own MCP script (put this folder on sys.path, import v5run):
                              # turn(): the deletion reverts the AKE60 stators)
     v5run.relayout()         # hub file: deck rebuilt, Pi / pi3hat / power board / fan placed with the IMU on the centre line (11-07; then turn());
                              # 11-08: the power board is the power_dist r4.5b (pdist_v5.py), an mjpower-ss is swapped for it
+    v5run.resplit()          # hub file (11-09): battery tray / electronics deck in two pieces each, bolted flanges (split_v5.py;
+                             # unjoint() first, then turn(), joints(); build() and relayout() make the pieces directly)
     v5run.relink()           # hub file, once (11-07): links 175 -> 250 mm, every part moves with its joint (then relegs(), turn())
     v5run.deepen_hub_dowels()  # hub file, once (11-08): wheel hub flange dowel holes 7.0 -> 7.5 and the pins with them
                              # (unjoint() first, then turn(), joints(); build() makes them so from HUB_DOWEL_HOLE)
@@ -117,6 +119,10 @@ def load():
     assert pdist_v5.__file__.lower().startswith(HERE.lower()), pdist_v5.__file__
     pdist_v5.patch(M)                              # power_dist r4.5b instead of the mjpower-ss (11-08 user)
     M['pdist_v5'] = pdist_v5
+    sys.modules.pop('split_v5', None)
+    import split_v5
+    assert split_v5.__file__.lower().startswith(HERE.lower()), split_v5.__file__
+    M['split_v5'] = split_v5                       # battery tray / deck in two pieces each (11-09 user)
     return M
 
 
@@ -261,6 +267,8 @@ def build():
     _pa12(C)
     M['finalize'].show_all()
     rename_to_robot()                              # before SIDES is used on the v4 parts
+    Ms = load()                                    # fresh modules (v4run.build reloaded them without the v5 patches)
+    Ms['split_v5'].apply(Ms)                       # tray / deck in two pieces (11-09 user)
     dropped = []
     for s, k in SIDES:                             # v4 links out
         for link, name in (('femur_', 'thigh_'), ('tibia_', 'shank_')):
@@ -418,7 +426,11 @@ def relayout():
     M['poses'].reset()
     M['finalize'].show_all()
     t = C.root_occ('torso')
-    masters, dropped = {}, []
+    SP = M['split_v5']
+    deck = 'electronics_deck'
+    dropped = SP.drop(t, (deck,))                          # the deck, one piece or two (11-09)
+    SP.drop_fasteners(M, t, (deck,))
+    masters = {deck: None}
     for o in list(t.childOccurrences):
         name = o.component.name
         if name in ELECTRONICS or name == PD.OLD_NAME:
@@ -429,7 +441,7 @@ def relayout():
     if BOARD not in masters:
         masters[BOARD] = M['vendor'].mjpower_ss()          # patched: the power_dist master
     assert sorted(masters) == sorted(ELECTRONICS), sorted(set(ELECTRONICS) - set(masters))
-    A.add_part(t, 'electronics_deck', TO.deck(), 'PETG print', 'dark grey')
+    SP.add(M, t, (deck,))                                  # the deck in two pieces + its joint screws (11-09 user)
     A.place(t, masters['raspberry_pi_4b'], TO.rpi_frame())
     A.place(t, masters['pi3hat_r4.5'], TO.pi3hat_frame())
     pm = TO.rpi_frame()
@@ -446,6 +458,18 @@ def relayout():
             n += 1
     lib_dropped = PD.drop_old_master(C) if old_board else 0
     return dict(dropped=len(dropped), old_board=old_board, old_master_dropped=lib_dropped, fasteners=n, imu=imu_pose())
+
+
+def resplit():
+    """Hub file (11-09, user: the battery tray and the electronics deck printed in two pieces each and joined): the one-piece parts
+    replaced by the split_v5 pieces and their joint screws / nuts (a second run rebuilds them).  Direct design only: unjoint() first,
+    then this, turn() in its own script, joints()."""
+    doc()
+    M = load()
+    _need_direct(M['cadlib'], 'resplit')
+    M['poses'].reset()
+    M['finalize'].show_all()
+    return M['split_v5'].apply(M)
 
 
 def turn():

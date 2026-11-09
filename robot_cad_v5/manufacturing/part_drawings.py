@@ -54,6 +54,7 @@ import v5_params as VP  # noqa: E402
 VP.apply(P)                   # v5-only values (11-08)
 import legs as LG  # noqa: E402
 import legs_v5 as LV  # noqa: E402
+import split_v5 as SP  # noqa: E402
 import hlr_gmsh as G  # noqa: E402
 import gmsh  # noqa: E402
 
@@ -646,8 +647,8 @@ OTHER = {   # stem: (title, material, process, quantity, sides; the first side i
     'shell_rear': ('몸통 셸 뒤', 'PETG 진회색', '3D 프린트 25 %, 바깥 면을 위로', '왼 1 + 오른 1', 'RL'),
     'saddle': ('hip 위 안장', 'PETG 파랑', '3D 프린트 25 %', '왼 1 + 오른 1', 'RL'),
     'top_plate': ('위판 (짐 판)', 'PETG', '3D 프린트 25 %, M4 열압입 인서트', '1', ''),
-    'battery_tray': ('배터리 받침', 'PETG', '3D 프린트 30 %, 리브를 위로', '1', ''),
-    'electronics_deck': ('전장 데크', 'PETG', '3D 프린트 30 %', '1', ''),
+    'battery_tray': ('배터리 받침', 'PLA 또는 PETG', '3D 프린트 30 %, 두 조각, 긴 옆면을 바닥에 세워서', '왼 1 + 오른 1 (두 조각)', 'LR'),
+    'electronics_deck': ('전장 데크', 'PLA 또는 PETG', '3D 프린트 30 %, 두 조각, 보스를 위로', '왼 1 + 오른 1 (두 조각)', 'LR'),
     'splice_tabs': ('셸 이음판', 'PETG', '3D 프린트 100 %, M3 + 너트', '1 세트', ''),
     'hip_plate': ('hip 판', 'AL6061-T6 판 10t 이상', '3축 MCT 양면 (v2 도면 WBv2-M01 참고)', '왼 1 + 오른 1', 'RL'),
     'spine_tube': ('척추 봉', 'AL6061-T6 환봉 Ø16', '선반: 양 끝 면삭 + M5 탭', '2 (앞 · 뒤)', 'BF'),
@@ -655,9 +656,13 @@ OTHER = {   # stem: (title, material, process, quantity, sides; the first side i
     'clamp_ring_stator_D45_t2.0_SUS304': ('고정 링 (고정자)', 'SUS304 2t', '레이저 가공', '4 (무릎·바퀴 × 2)', ''),
     'magnet_spacer_D9x5.35_(6061)': ('자석 스페이서', 'AL6061 (비자성)', '선반', '6', ''),
 }
+SPLIT = ('battery_tray', 'electronics_deck')   # printed in two pieces, one page each (11-09, split_v5.py)
 V2_COPY = {'hip_plate': ('hip_plate_L', 'hip_plate_R'), 'spine_tube': ('spine_tube',), 'rail': ('rail',),
            'clamp_ring_stator_D45_t2.0_SUS304': ('clamp_ring_stator',), 'magnet_spacer_D9x5.35_(6061)': ('magnet_spacer',)}
-V4_CHANGED = {'shell_front': 'v4 부품에서 스위치 쪽 양옆 세로 모서리만 R30 라운드(v4는 45° 모따기, 사용자 11-02)',
+V4_CHANGED = {'battery_tray': 'v4 부품을 가운데 리브 자리(y 0)에서 두 조각으로 나누고 그 리브 대신 이음 턱 두 장을 붙임(split_v5.py, 사용자 11-09)',
+              'electronics_deck': 'v4 부품(v5 전장 배치)을 y 80(라즈베리파이와 +y 끝 창 사이)에서 두 조각으로 나누고 이음 턱 두 장을 붙임 — '
+                                  '턱은 리브 바깥 면까지(x ±41.5, 셸 바닥 경사와 1.5 mm; split_v5.py, 사용자 11-09)',
+              'shell_front':'v4 부품에서 스위치 쪽 양옆 세로 모서리만 R30 라운드(v4는 45° 모따기, 사용자 11-02)',
               'hub_flange': 'v4 부품에서 평행핀 구멍 3개(Ø3, 출력 쪽 면에서) 깊이 7.0 → %.1f — 핀 Ø3 × 10을 바닥까지 넣으면 %.1f 나와 '
                             '출력부 핀 구멍(깊이 3)에 여유 %.1f, 스피곳 Ø11.8 높이 1.3 → %.1f(출력부 홈 1.5 바닥에서 %.1f 뜸; 사용자 11-08)'
                             % (P.HUB_DOWEL_HOLE, 10 - P.HUB_DOWEL_HOLE, P.HUB_DOWEL_HOLE - 7.0, P.HUB_SPIGOT[1], 1.5 - P.HUB_SPIGOT[1]),
@@ -672,10 +677,17 @@ V4_CHANGED = {'shell_front': 'v4 부품에서 스위치 쪽 양옆 세로 모서
 
 def other_sheet(stem, pdf, png_dir):
     """Three hidden-line views along the CAD axes (Fusion world: X = CAD y, Y = CAD z, Z = CAD x; the robot's front is -x), overall
-    sizes, title block."""
-    title, mat, proc, qty, sides = OTHER[stem]
+    sizes, title block.  A part printed in pieces (SPLIT, 11-09) gets one page per piece."""
+    sides = OTHER[stem][4]
     files = [stem + '_' + c for c in sides] if sides else [stem]
-    src = SRC / (files[0] + '.step')
+    drawn = files if stem in SPLIT else files[:1]
+    for i, fn in enumerate(drawn):
+        _other_page(stem, fn, files, '' if len(drawn) == 1 else ' (%d/%d)' % (i + 1, len(drawn)), pdf, png_dir)
+
+
+def _other_page(stem, fn, files, page, pdf, png_dir):
+    title, mat, proc, qty, sides = OTHER[stem]
+    src = SRC / (fn + '.step')
     G.load(src)
     x0, y0, z0, x1, y1, z1 = G.bbox()
     vol = G.volume()
@@ -705,11 +717,20 @@ def other_sheet(stem, pdf, png_dir):
         notes.append('치수·공차가 다 들어간 가공 도면: drawings/v2_%s.pdf (v2 도면, 같은 형상 확인).' % V2_COPY[stem][0])
     if stem == 'hip_plate':
         notes.append('v2 도면의 이름은 v2 기준이다: v2의 hip_plate_L이 이 로봇의 hip_plate_R(CAD +y), v2의 hip_plate_R이 hip_plate_L이다.')
+    name = '%s (%s)' % (title, stem)
+    if stem in SPLIT:
+        yc = SP.TRAY_CUT_Y if stem == 'battery_tray' else SP.DECK_CUT_Y
+        xs = SP.BOLTS_X[stem]
+        notes.append('두 조각으로 출력(사용자 11-09: 베드 300 × 300): y %.0f에서 잘라 각 조각의 자른 면 바닥 밑에 이음 턱 %.0f × %.0f mm. 두 턱을 '
+                     '맞대고 ISO 7380 M3 × %d + DIN 934 M3 2쌍(x %+.0f, %+.0f, 머리는 -y 조각 쪽)으로 조인다 — 원하면 턱 면을 접착. '
+                     '왼쪽(_L) = CAD -y 조각, 오른쪽(_R) = +y 조각, 서로 다른 모양.'
+                     % (yc, SP.FLANGE_T, SP.FLANGE_D, SP.SCREW_L, xs[0], xs[1]))
+        name = '%s %s 조각 (%s)' % (title, '왼쪽' if fn.endswith('_L') else '오른쪽', fn)
     S.notes(25.0, 52.0, notes, width=110)
-    S.title_block('%s (%s)' % (title, stem), 'WBv5-S%02d' % (list(OTHER).index(stem) + 1),
+    S.title_block(name, 'WBv5-S%02d%s' % (list(OTHER).index(stem) + 1, page),
                   {'재질': mat, '수량': qty, '공정': proc, '척도': '1:%g' % (1 / k) if k < 1 else '1:1',
-                   'step': '../export/parts_step/%s.step' % files[0], '공차': 'KS B ISO 2768-mK / 출력 ±0.2'})
-    finish(S, pdf, png_dir, stem)
+                   'step': '../export/parts_step/%s.step' % fn, '공차': 'KS B ISO 2768-mK / 출력 ±0.2'})
+    finish(S, pdf, png_dir, fn if stem in SPLIT else stem)
 
 
 def copy_v2(stem):

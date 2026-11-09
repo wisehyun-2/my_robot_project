@@ -1,9 +1,14 @@
 """WheelBiped v5 BOM for ordering (11-08, user: "v5 모델의 bom 파일").
 
 Quantities of every modelled part are the instance counts in the exported assembly STEP (export/WheelBiped_v5_assembly.step =
-hub version 14).  Every STEP component must be classified below, so a part added to the model and
+hub version 16).  Every STEP component must be classified below, so a part added to the model and
 not to this file stops the script.  Printed masses and bed sizes come from export/parts_stl.  Parts that are not in the model
 (the v5 joint screws 6 and 7 and their inserts, wiring, tools) are added by hand and marked as such.
+
+11-09 user: every part is printed on the user's 300 x 300 mm printer in PLA or PETG, strength not considered - there is no
+machining order any more.  The former machined parts (6061 / SUS304) are printed solid from the same STL; their tapped holes are
+in the STL as tap-drill holes (hand-tapped after printing) and their fits are worked to the real part.  The script stops when a
+printed part does not fit the bed in the orientation given here.
 
     python manufacturing/bom.py        # -> ../BOM.md, ../BOM.csv (run from robot_cad_v5)
 
@@ -17,15 +22,27 @@ import re
 import struct
 from collections import defaultdict
 
+import sys
+
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BASE = os.path.dirname(HERE)
+sys.path.insert(0, os.path.join(BASE, 'fusion'))
+import split_v5 as SP  # noqa: E402  (Fusion-free constants of the two-piece tray / deck)
 STEP = os.path.join(BASE, 'export', 'WheelBiped_v5_assembly.step')
 STL = os.path.join(BASE, 'export', 'parts_stl')
-RHO = 1.27e-3                      # PETG g/mm3 (v4 params.PETG_RHO)
+RHO = 1.27e-3                      # PETG g/mm3 (v4 params.PETG_RHO); PLA 1.24e-3
+RHO_AL, RHO_SUS = 2.70e-3, 7.93e-3  # the former machined parts as modelled (6061-T6, SUS304)
 WASTE = 1.15                       # filament: + 15 % for supports, brims and failed prints
+BED = 300.0                        # user 11-09: the printer prints up to 300 x 300 mm
+BRIM = 5.0                         # brim per side, for the margin note
 FLANGE_BOLTS, CAP_BOLTS = 6, 3     # legs_v5: _flange_bolts (6 per hub insert, r 18), _cap_bolts (3 per knee cap, r 20.5)
+HIP_PLATE_M3, END_TAPS = 11, 2     # v4 torso.hip_plate: M3 tapped (cup 3, deck 2, shell 6); spine / rail: both ends tapped
+MODEL = '허브 버전 17(11-09, 받침·데크 두 조각) = `export/WheelBiped_v5.f3d`, 링크 25 cm'
+MODEL_KG = 11.611                  # v5run.robot_mass() of that model (metal parts as modelled)
+MAT = 'PLA 또는 PETG'
+HOT = 'PETG 권장(모터 열)'          # parts on the motors / drivers: PLA softens at about 55-60 C
 
 
 # ----------------------------------------------------------------------------- model counts (assembly STEP)
@@ -106,8 +123,8 @@ def square_bed(p2):
 
 
 def stl_info(name, axis=None):
-    """Volume mm3, area mm2, sorted box, smallest square bed - lying on the face normal to axis (STL x, y, z), or lying flat
-    (on the axis of the smallest extent) when axis is None."""
+    """Volume mm3, area mm2, sorted box, smallest square bed, print height - lying on the face normal to axis (STL x, y, z), or
+    lying flat (on the axis of the smallest extent) when axis is None."""
     t = stl(os.path.join(STL, name + '.stl'))
     a, b, c = t[:, 0], t[:, 1], t[:, 2]
     area = 0.5 * np.linalg.norm(np.cross(b - a, c - a), axis=1).sum()
@@ -115,7 +132,7 @@ def stl_info(name, axis=None):
     p = t.reshape(-1, 3)
     ext = p.max(0) - p.min(0)
     ax = int(np.argmin(ext)) if axis is None else axis
-    return vol, area, sorted(ext.round(0), reverse=True), square_bed(p[:, [i for i in range(3) if i != ax]])
+    return vol, area, sorted(ext.round(0), reverse=True), square_bed(p[:, [i for i in range(3) if i != ax]]), ext[ax]
 
 
 # ----------------------------------------------------------------------------- what every model part is
@@ -125,7 +142,7 @@ IN_MOTOR = ('AKE60-8_KV80_output',)                                        # the
 
 PURCHASED = [   # (prefix, item, spec, source, note)
     ('AKE60-8_KV80_stator', 'CubeMars AKE60-8 KV80', '8:1, 피크 12.5 / 정격 5 N·m, 0.26 kg, Ø69 × 25', 'CubeMars',
-     'hip·무릎·바퀴 × 좌우. 부속 자석 Ø6 × 2.5 N38H(엔코더용)를 6061 자석 스페이서에 붙여 쓴다'),
+     'hip·무릎·바퀴 × 좌우. 부속 자석 Ø6 × 2.5 N38H(엔코더용)를 출력한 자석 스페이서(2절)에 붙여 쓴다'),
     ('moteus_r4.11', 'mjbots moteus r4.11', 'XT30PW-M ×2, JST PH-3 CAN ×2, 10~44 V', 'mjbots', '관절마다 1개, 드라이버 컵 안'),
     ('raspberry_pi_4b', 'Raspberry Pi 4 Model B', '4 GB 이상', '라즈베리파이 판매점', 'microSD는 이 표 맨 아래'),
     ('pi3hat_r4.5', 'mjbots pi3hat r4.5', 'CAN-FD ×5, IMU, 24 V → 5 V, M2.5 × 11 스탠드오프·나사 동봉', 'mjbots',
@@ -146,75 +163,99 @@ PURCHASED = [   # (prefix, item, spec, source, note)
      'AliExpress', '사용자가 이미 주문함(v2 때) — 받았는지 확인'),
 ]
 
-MACHINED = [    # (prefix, drawing, item, material / process, files, note)
-    ('hip_plate_', 'WBv5-S14 (치수: v2 WBv2-M01)', 'hip 판', '6061-T6 판 10t 이상(완성 9.5), 3축 MCT 양면, Ø42 H7, M3 탭 11, 검정 아노다이징',
-     'export/parts_step/hip_plate_L·R.step, manufacturing/drawings/hip_plate.pdf, v2_hip_plate_L·R.pdf',
-     '좌우 거울상. v2 도면 이름은 반대: v2_hip_plate_L = 이 로봇의 hip_plate_R'),
-    ('spine_tube_', 'WBv5-S15 (v2 WBv2-M05)', '척추 봉', '6061-T6 환봉 Ø16 통짜, 길이 328.00 ±0.05, 양 끝 면삭 + M5 탭 깊이 11',
-     'export/parts_step/spine_tube_F.step, drawings/spine_tube.pdf, v2_spine_tube.pdf', '앞·뒤 같은 부품. 레일 2개와 같은 세팅으로 길이 맞춤'),
-    ('rail_', 'WBv5-S16 (v2 WBv2-M06)', '위 레일', '6061-T6 각봉 15 × 15 통짜, 길이 328.00 ±0.05, 양 끝 M4 탭 깊이 9, Ø4.4 관통 4',
-     'export/parts_step/rail_F.step, drawings/rail.pdf, v2_rail.pdf', '앞·뒤 같은 부품'),
-    ('clamp ring stator', 'WBv5-S17 (v2 WBv2-M08)', '고정자 클램프 링 Ø45', 'SUS304 2B 2t 레이저, Ø45 / Ø30, Ø2.8 × 6 (PCD 36.5)',
-     'export/parts_step/clamp_ring_stator_D45_t2.0_SUS304.step, drawings/clamp_ring_stator…pdf, robot_cad_v2/manufacturing/dxf/clamp_ring_stator.dxf',
-     '무릎·바퀴 고정자 나사 머리 밑(PETG 판 위). 작아서 +2 여유 권장'),
-    ('magnet spacer', 'WBv5-S18 (v2 WBv2-M02)', '자석 스페이서 Ø9 × 5.35', '6061(비자성 필수) 선반, Ø6.20 × 2.5 자석 포켓, Ø5.90 × 2.3 스피곳',
-     'export/parts_step/magnet_spacer_D9x5.35_(6061).step, drawings/magnet_spacer…pdf', '모터마다 1개. 작아서 +2 여유 권장'),
-]
-V5_MACHINED = [  # parts that are bodies of the v5 leg components: (drawing, item, spec, files, note, count from model counts)
-    ('WBv5-M01', 'hip hub 인서트 왼쪽 (hub_insert_hip_L)', '6061-T6 환봉 Ø50, 선반 + MCT: Ø28 보스, Ø11.8 × 1.2 스피곳, 플랜지 Ø48 × 6, '
-     'M3 Ø3.4 × 6 (PCD 20, 와셔 자리), 핀 Ø3 N7 × 7.5 (+0.2/0) × 3, 접시 Ø7 × 6 (r 18), 검정 아노다이징 권장(끼움면 마스킹)',
-     'manufacturing/step/hub_insert_hip_L.step, drawings/hub_insert_hip.pdf', '왼·오른쪽은 거울상 = 다른 부품', lambda n: n['thigh_L']),
-    ('WBv5-M01', 'hip hub 인서트 오른쪽 (hub_insert_hip_R)', '같음(거울상)', 'manufacturing/step/hub_insert_hip_R.step, drawings/hub_insert_hip.pdf',
-     '', lambda n: n['thigh_R']),
-    ('WBv5-M02', '무릎 hub 인서트 왼쪽 (hub_insert_knee_L)', 'hip hub 인서트와 같은 공정(보스 길이만 다름)',
-     'manufacturing/step/hub_insert_knee_L.step, drawings/hub_insert_knee.pdf', '왼·오른쪽은 거울상 = 다른 부품', lambda n: n['shank_L']),
-    ('WBv5-M02', '무릎 hub 인서트 오른쪽 (hub_insert_knee_R)', '같음(거울상)', 'manufacturing/step/hub_insert_knee_R.step, drawings/hub_insert_knee.pdf',
-     '', lambda n: n['shank_R']),
-    ('WBv5-M03', '무릎 캡 (knee_cap)', '6061-T6 환봉 Ø50, 선반 + 드릴: 관 Ø35 g6 (61807 안륜·바깥 막대 구멍), 플랜지 Ø46 × 3, '
-     'Ø2.8 × 3 (r 20.5), 검정 아노다이징 권장', 'manufacturing/step/knee_cap_R.step, drawings/knee_cap.pdf', '왼·오른쪽 같은 부품',
-     lambda n: n['kneecap_L'] + n['kneecap_R']),
-    ('WBv5-M04', '받침 링 (hub_ring)', '6061-T6 환봉 Ø45, 선반: Ø43 / Ø29 × 6, M3 탭 관통 6 (r 18), 버 제거',
-     'manufacturing/step/hub_ring_R.step, drawings/hub_ring.pdf', 'hip·무릎 × 왼·오른쪽 같은 부품',
-     lambda n: n['thigh_L'] + n['thigh_R'] + n['shank_L'] + n['shank_R']),
-]
-NOT_ORDERED = ('clamp ring output',)   # v4 part removed from v5 (the 6061 hub inserts replace it); its STEP / STL files are left in export/
 
-LEG_PRINT = ('PETG FDM 한 덩어리: 벽 3.5 둘레선, 채움 100 %, 닫힌 칸(배출 구멍 없음)')
-PRINTED = [     # (prefix, drawing, item, settings / orientation, colour, STL axis of the face on the bed or None, note)
-    ('thigh_', 'WBv5-P01', '허벅지', LEG_PRINT + ', 바깥 면(평평, y 288.5)을 바닥에 — 갈래 틈 안 서포트', '검정', 0,
-     '열압입 M2.5 인서트 6(컵 3 + 무릎 캡 3), 캡 관 구멍 Ø35 H7은 0.2 작게 뽑고 리머'),
-    ('shank_', 'WBv5-P02', '정강이', LEG_PRINT + ', 안쪽 면(평평, y 208)을 바닥에 — 바퀴 모터 칸 Ø74 안 서포트', '검정', 0,
-     '열압입 M2.5 인서트 3(바퀴 컵), 61807 자리 Ø47 압입'),
-    ('cup_hip', 'WBv5-S01', 'hip 드라이버 컵', 'PETG 30 %, 바닥(덮개 면)을 바닥에, 서포트는 커넥터 창만', '검정', None, '열압입 M2.5 인서트 4'),
-    ('cup_knee', 'WBv5-S02', '무릎 드라이버 컵', 'PETG 30 %, 바닥을 바닥에, 서포트는 커넥터 창만', '검정', None, '열압입 M2.5 인서트 4'),
-    ('cup_wheel', 'WBv5-S03', '바퀴 드라이버 컵', 'PETG 30 %, 바닥을 바닥에, 서포트는 커넥터 창만', '검정', None, '열압입 M2.5 인서트 4'),
-    ('hub_flange', 'WBv5-S04', '바퀴 허브 플랜지', 'PETG 100 %, 모터 쪽 면을 바닥에', '검정', None, '열압입 M3 인서트 6'),
-    ('rim_', 'WBv5-S05', '바퀴 림(한 조각)', 'PETG 벽 6겹(2.4 mm) · 채움 40 %, 허브 쪽 평면을 바닥에, 열린 쪽 플랜지 밑 4.5 mm 턱만 서포트',
-     '검정', None, ''),
-    ('shell_front', 'WBv5-S06', '몸통 셸 앞(스위치 쪽)', 'PETG 25 %, 바깥 면을 위로(서포트 필요)', '진회색', None, 'v4와 달리 세로 모서리 R30'),
-    ('shell_mid', 'WBv5-S07', '몸통 셸 가운데(hip)', 'PETG 25 %, 바깥 면을 위로(서포트 필요)', '진회색', None, ''),
-    ('shell_rear', 'WBv5-S08', '몸통 셸 뒤(무릎 쪽)', 'PETG 25 %, 바깥 면을 위로(서포트 필요)', '진회색', None, ''),
-    ('saddle_', 'WBv5-S09', 'hip 위 안장', 'PETG 25 %', '파랑', None, ''),
-    ('top_plate', 'WBv5-S10', '위판(짐 판)', 'PETG 25 %', '검정', None, '열압입 M4 인서트 35'),
-    ('battery_tray', 'WBv5-S11', '배터리 받침', 'PETG 30 %, 리브를 위로', '진회색', None, ''),
-    ('electronics_deck', 'WBv5-S12', '전장 데크', 'PETG 30 %', '진회색', None, '열압입 M2.5 인서트 8'),
-    ('splice_tabs', 'WBv5-S13', '셸 이음판 12개(한 파일)', 'PETG 100 %', '진회색', None,
-     '12개가 로봇 위치 그대로 한 파일에 있다 — 슬라이서에서 나눠 놓는다(베드 값은 무시)'),
+def cnt(prefix):
+    """Model count of the STEP components starting with prefix."""
+    return lambda n: sum(v for k, v in n.items() if k.startswith(prefix))
+
+
+# 11-09 user: the former machined parts are printed too (no machining order).  STEP components they are counted from (the hub
+# inserts and backing rings are bodies of thigh_* / shank_*, the knee caps are kneecap_*):
+EX_STEP = ('hip_plate_', 'spine_tube_', 'rail_', 'clamp ring stator', 'magnet spacer', 'kneecap_')
+SOLID = '채움 100 %'
+EX_MACHINED = [  # (drawing, item, was, print settings / face on the bed, STL axis normal to the bed or None, after printing,
+    #             [(STL name, count from the STEP counts n, metal density as modelled)])
+    ('WBv5-S14', 'hip 판', '6061-T6 판, 3축 MCT 양면, 검정 아노다이징',
+     SOLID + ', 안쪽 면(Ø80 컵 받침 턱)을 바닥에 — 턱 밖 웹 밑 1.5 mm만 바닥 서포트', 0,
+     'M3 탭 %d(Ø2.5 구멍: 컵 3, 데크 2, 셸 6), Ø42 모터 파일럿 자리를 모터에 맞춰 다듬기. 왼·오른쪽 거울상 = 다른 파일' % HIP_PLATE_M3,
+     [('hip_plate_L', cnt('hip_plate_L'), RHO_AL), ('hip_plate_R', cnt('hip_plate_R'), RHO_AL)]),
+    ('WBv5-S15', '척추 봉 Ø16 × 328', '6061-T6 환봉, 길이 328.00 ±0.05',
+     SOLID + ', 눕혀 대각선으로, 둥근 아래쪽은 바닥 서포트', None,
+     '양 끝 M5 탭 깊이 11(Ø4.2 구멍, 눕혀 뽑은 구멍이라 드릴로 정리 후 탭). 길이 328을 레일과 같게(길면 끝면을 사포로)',
+     [('spine_tube_F', cnt('spine_tube_F'), RHO_AL), ('spine_tube_B', cnt('spine_tube_B'), RHO_AL)]),
+    ('WBv5-S16', '위 레일 15 × 15 × 328', '6061-T6 각봉, 길이 328.00 ±0.05',
+     SOLID + ', Ø4.4 관통 구멍이 위아래로 서게 옆면을 바닥에, 대각선으로 — 서포트 없음', 1,
+     '양 끝 M4 탭 깊이 9(Ø3.3 구멍). 길이 328을 척추 봉과 같게',
+     [('rail_F', cnt('rail_F'), RHO_AL), ('rail_B', cnt('rail_B'), RHO_AL)]),
+    ('WBv5-S17', '고정자 클램프 링 Ø45 × 2', 'SUS304 2t 레이저',
+     SOLID + ', 평평하게', None, '없음. 작고 얇아 여분 2개를 더 뽑는다',
+     [('clamp_ring_stator_D45_t2.0_SUS304', cnt('clamp ring stator'), RHO_SUS)]),
+    ('WBv5-S18', '자석 스페이서 Ø9 × 5.35', '6061(비자성) 선반',
+     SOLID + ', 자석 구멍 쪽을 바닥에 스피곳을 위로, 층 0.1 mm 권장', 1,
+     'AKE 부속 자석 Ø6 × 2.5를 구멍에 순간접착, Ø5.9 스피곳을 끼울 자리에 맞춰 다듬기. 작아서 여분 2개를 더 뽑는다(출력이라 비자성 조건은 저절로 맞음)',
+     [('magnet_spacer_D9x5.35_(6061)__spacer', cnt('magnet spacer'), RHO_AL)]),
+    ('WBv5-M01', 'hip hub 인서트', '6061-T6 환봉 선반 + MCT, 아노다이징 권장',
+     SOLID + ', 플랜지 바깥 면(접시 구멍 쪽, 평평)을 바닥에, 보스·스피곳을 위로 — 서포트 없음', 0,
+     '평행핀 구멍 Ø3 × 7.5에 Ø3 드릴 → 핀 압입, Ø11.8 스피곳을 모터 출력부 Ø12 홈에, Ø48 플랜지를 링크 자리 Ø48.3에 맞춰 다듬기. 왼·오른쪽 거울상 = 다른 파일',
+     [('hub_insert_hip_L', cnt('thigh_L'), RHO_AL), ('hub_insert_hip_R', cnt('thigh_R'), RHO_AL)]),
+    ('WBv5-M02', '무릎 hub 인서트', '6061-T6 환봉 선반 + MCT, 아노다이징 권장',
+     SOLID + ', hip hub 인서트와 같게 플랜지 바깥 면을 바닥에 — 서포트 없음', 0,
+     'hip hub 인서트와 같음(보스 길이만 다름). 왼·오른쪽 거울상 = 다른 파일',
+     [('hub_insert_knee_L', cnt('shank_L'), RHO_AL), ('hub_insert_knee_R', cnt('shank_R'), RHO_AL)]),
+    ('WBv5-M03', '무릎 캡', '6061-T6 환봉 선반 + 드릴, 아노다이징 권장',
+     SOLID + ', 플랜지를 바닥에 관을 위로 — 서포트 없음', 0,
+     'Ø35 관을 61807 안륜·허벅지 바깥 막대 구멍에 꼭 맞게 사포로. 왼·오른쪽 같은 부품',
+     [('knee_cap_L', cnt('kneecap_L'), RHO_AL), ('knee_cap_R', cnt('kneecap_R'), RHO_AL)]),
+    ('WBv5-M04', '받침 링 Ø43 / Ø29 × 6', '6061-T6 환봉 선반, M3 탭 관통 6',
+     SOLID + ', 평평하게', 0,
+     'M3 탭 관통 %d(Ø2.5 구멍). hip·무릎 × 왼·오른쪽 모두 같은 부품 — 한 파일로 4개를 뽑아도 된다' % FLANGE_BOLTS,
+     [('hub_ring_hip_L', cnt('thigh_L'), RHO_AL), ('hub_ring_hip_R', cnt('thigh_R'), RHO_AL),
+      ('hub_ring_knee_L', cnt('shank_L'), RHO_AL), ('hub_ring_knee_R', cnt('shank_R'), RHO_AL)]),
 ]
-PRINT_PROFILE = {   # wall mm, infill (v4 params.PRINT; v5 links solid)
+EX_HOT = ('WBv5-S14', 'WBv5-S17', 'WBv5-S18', 'WBv5-M01', 'WBv5-M02', 'WBv5-M04')   # on the motors: PETG recommended
+NOT_ORDERED = ('clamp ring output',)   # v4 part removed from v5 (the hub inserts replace it); its STEP / STL files are left in export/
+
+LEG_PRINT = ('FDM 한 덩어리: 벽 3.5 둘레선, 채움 100 %, 닫힌 칸(배출 구멍 없음)')
+PRINTED = [     # (prefix, drawing, item, settings / orientation, colour, STL axis of the face on the bed or None, note, material)
+    ('thigh_', 'WBv5-P01', '허벅지', LEG_PRINT + ', 바깥 면(평평, y 288.5)을 바닥에 — 갈래 틈 안 서포트', '검정', 0,
+     '열압입 M2.5 인서트 6(컵 3 + 무릎 캡 3), 캡 관 구멍 Ø35 H7은 0.2 작게 뽑고 리머', HOT),
+    ('shank_', 'WBv5-P02', '정강이', LEG_PRINT + ', 안쪽 면(평평, y 208)을 바닥에 — 바퀴 모터 칸 Ø74 안 서포트', '검정', 0,
+     '열압입 M2.5 인서트 3(바퀴 컵), 61807 자리 Ø47 압입', HOT),
+    ('cup_hip', 'WBv5-S01', 'hip 드라이버 컵', '채움 30 %, 바닥(덮개 면)을 바닥에, 서포트는 커넥터 창만', '검정', None, '열압입 M2.5 인서트 4', HOT),
+    ('cup_knee', 'WBv5-S02', '무릎 드라이버 컵', '채움 30 %, 바닥을 바닥에, 서포트는 커넥터 창만', '검정', None, '열압입 M2.5 인서트 4', HOT),
+    ('cup_wheel', 'WBv5-S03', '바퀴 드라이버 컵', '채움 30 %, 바닥을 바닥에, 서포트는 커넥터 창만', '검정', None, '열압입 M2.5 인서트 4', HOT),
+    ('hub_flange', 'WBv5-S04', '바퀴 허브 플랜지', '채움 100 %, 모터 쪽 면을 바닥에', '검정', None, '열압입 M3 인서트 6', HOT),
+    ('rim_', 'WBv5-S05', '바퀴 림(한 조각)', '벽 6겹(2.4 mm) · 채움 40 %, 허브 쪽 평면을 바닥에, 열린 쪽 플랜지 밑 4.5 mm 턱만 서포트',
+     '검정', None, '', MAT),
+    ('shell_front', 'WBv5-S06', '몸통 셸 앞(스위치 쪽)', '채움 25 %, 바깥 면을 위로(서포트 필요)', '진회색', None, 'v4와 달리 세로 모서리 R30', MAT),
+    ('shell_mid', 'WBv5-S07', '몸통 셸 가운데(hip)', '채움 25 %, 바깥 면을 위로(서포트 필요)', '진회색', None, '', MAT),
+    ('shell_rear', 'WBv5-S08', '몸통 셸 뒤(무릎 쪽)', '채움 25 %, 바깥 면을 위로(서포트 필요)', '진회색', None, '', MAT),
+    ('saddle_', 'WBv5-S09', 'hip 위 안장', '채움 25 %', '파랑', None, '', MAT),
+    ('top_plate', 'WBv5-S10', '위판(짐 판)', '채움 25 %', '검정', None, '열압입 M4 인서트 35', MAT),
+    ('battery_tray', 'WBv5-S11', '배터리 받침(두 조각)',
+     '채움 30 %, 긴 옆면(159 × 28)을 바닥에 세워서 — 배터리 옆 턱 2줄(14 mm) 밑만 서포트(눕히면 바닥 판 밑 전체에 서포트)', '진회색', 2,
+     '11-09 두 조각: 가운데(리브 자리)의 이음 턱끼리 M3 × 10 버튼 볼트 + 너트 2쌍(3절 끝). _L·_R은 다른 파일(리드선 홈은 _R 끝)', MAT),
+    ('electronics_deck', 'WBv5-S12', '전장 데크(두 조각)',
+     '채움 30 %, 놓인 그대로(보스·끝 플랜지를 위로) — 바닥 판·리브 밑 서포트', '진회색', 1,
+     '11-09 두 조각: y 80(라즈베리파이와 끝 창 사이) 이음 턱끼리 M3 × 10 + 너트 2쌍(3절 끝). 열압입 M2.5 인서트 8은 모두 _L(파이·전원보드 쪽)', MAT),
+    ('splice_tabs', 'WBv5-S13', '셸 이음판 12개(한 파일)', '채움 100 %', '진회색', None,
+     '12개가 로봇 위치 그대로 한 파일에 있다 — 슬라이서에서 나눠 놓는다(베드 값은 무시)', MAT),
+]
+PRINT_PROFILE = {   # wall mm, infill (v4 params.PRINT; v5 links and the former machined parts solid)
     'thigh_': (99.0, 1.0), 'shank_': (99.0, 1.0), 'hub_flange': (99.0, 1.0), 'rim_': (2.4, 0.40), 'cup_': (1.6, 0.30),
     'top_plate': (1.6, 0.25), 'battery_tray': (1.6, 0.30), 'electronics_deck': (1.6, 0.30), 'shell_': (1.6, 0.25),
     'saddle_': (1.6, 0.25), 'splice_tabs': (1.6, 1.0),
 }
+EX_COLOUR = '검정'
 
 # fasteners modelled by the v4 code ('FX ...' masters): name -> (group, item, spec, where, expected count from v4 fasteners.specs)
 FX = {
-    'FX ISO 4762 M2.5x6 12.9 hip': ('관절', '육각 홈붙이 볼트 ISO 4762 12.9', 'M2.5 × 6', 'hip 고정자 링 → 6061 hip 판 ①', 12),
-    'FX DIN 7984 M2.5x8 stator': ('관절', '저두 볼트 DIN 7984 8.8', 'M2.5 × 8', '무릎·바퀴 고정자 링 → PETG 모터 판, SUS 클램프 링 위 ①', 24),
-    'FX ISO 4762 M3x16 12.9': ('관절', '육각 홈붙이 볼트 ISO 4762 12.9', 'M3 × 16', 'hip·무릎 모터 출력 → 6061 hub 인서트 ② (와셔 위)', 24),
-    'FX ISO 8734 3x10': ('관절', '평행 핀 ISO 8734 m6 경화', 'Ø3 × 10', '출력 다웰 ③: hub 인서트 12 (Ø3 N7 압입) + 바퀴 허브 플랜지 6', 18),
+    'FX ISO 4762 M2.5x6 12.9 hip': ('관절', '육각 홈붙이 볼트 ISO 4762 12.9', 'M2.5 × 6', 'hip 고정자 링 → hip 판 ①', 12),
+    'FX DIN 7984 M2.5x8 stator': ('관절', '저두 볼트 DIN 7984 8.8', 'M2.5 × 8', '무릎·바퀴 고정자 링 → 링크 모터 판, 클램프 링 위 ①', 24),
+    'FX ISO 4762 M3x16 12.9': ('관절', '육각 홈붙이 볼트 ISO 4762 12.9', 'M3 × 16', 'hip·무릎 모터 출력 → hub 인서트 ② (와셔 위)', 24),
+    'FX ISO 8734 3x10': ('관절', '평행 핀 ISO 8734 m6 경화', 'Ø3 × 10', '출력 다웰 ③: hub 인서트 12 (Ø3 압입) + 바퀴 허브 플랜지 6', 18),
     'FX DIN 125 M3': ('관절', '평와셔 DIN 125 A2', 'M3', '② M3 × 16, 허브 M3 × 14, 림 M3 × 14 머리 밑', 48),
-    'FX ISO 4762 M3x14 12.9 hub': ('바퀴', '육각 홈붙이 볼트 ISO 4762 12.9', 'M3 × 14', '바퀴 모터 출력 → PETG 허브 플랜지 (와셔 위)', 12),
+    'FX ISO 4762 M3x14 12.9 hub': ('바퀴', '육각 홈붙이 볼트 ISO 4762 12.9', 'M3 × 14', '바퀴 모터 출력 → 허브 플랜지 (와셔 위)', 12),
     'FX ISO 4762 M3x14 rim': ('바퀴', '육각 홈붙이 볼트 ISO 4762 8.8', 'M3 × 14', '림 → 허브 플랜지 인서트 (와셔 위)', 12),
     'FX insert M3x5.7 hub': ('바퀴', '열압입 인서트 황동', 'M3 × 5.7 (구멍 Ø4.0)', '허브 플랜지', 12),
     'FX DIN 7984 M2.5x5 board': ('드라이버', '저두 볼트 DIN 7984', 'M2.5 × 5', 'moteus → 컵 스탠드오프 (끝이 4 mm 인서트 안, 11-08)', 24),
@@ -222,8 +263,7 @@ FX = {
     'FX ISO 4762 M3x40 hip cup': ('드라이버', '육각 홈붙이 볼트 ISO 4762', 'M3 × 40', 'hip 컵 → hip 판 M3 탭', 6),
     'FX ISO 4762 M2.5x18 knee cup': ('드라이버', '육각 홈붙이 볼트 ISO 4762', 'M2.5 × 18', '무릎 컵 → 허벅지 인서트', 6),
     'FX ISO 4762 M2.5x18 wheel cup': ('드라이버', '육각 홈붙이 볼트 ISO 4762', 'M2.5 × 18', '바퀴 컵 → 정강이 인서트', 6),
-    'FX insert M2.5x4 link cup': ('드라이버', '열압입 인서트 황동', 'M2.5 × 4 (구멍 Ø3.6 × 6)',
-                                  'PETG 허벅지·정강이의 컵 기둥 자리(v4 SLA는 에폭시 접착, v5 PETG는 열압입)', 12),
+    'FX insert M2.5x4 link cup': ('드라이버', '열압입 인서트 황동', 'M2.5 × 4 (구멍 Ø3.6 × 6)', '허벅지·정강이의 컵 기둥 자리(열압입)', 12),
     'FX grommet D16': ('몸통', '고무 그로밋', 'Ø16 구멍, 판 1.4 mm (안지름 14)', '셸 hip 케이블 출구', 2),
     'FX ISO 10642 M5x12': ('몸통', '접시 볼트 ISO 10642', 'M5 × 12', 'hip 판 → 척추 봉 끝 M5 탭', 4),
     'FX ISO 10642 M4x12': ('몸통', '접시 볼트 ISO 10642', 'M4 × 12', 'hip 판 → 위 레일 끝 M4 탭', 4),
@@ -239,6 +279,9 @@ FX = {
     'FX insert M2.5x4 deck': ('몸통', '열압입 인서트 황동', 'M2.5 × 4 (구멍 Ø3.6)', '데크 보스(라즈베리파이 4, power dist 4)', 8),
     'FX pi3hat M2.5x5': ('몸통', 'M2.5 × 5 나사 (pi3hat 동봉)', 'M2.5 × 5', 'pi3hat → 스탠드오프 위 — 따로 사지 않는다', 4),
     'FX foam pad': ('몸통', '폼 패드', '75 × 310 × 1 mm', '배터리 밑', 1),
+    # v5 (11-09, fusion/split_v5.py): the two-piece battery tray and deck
+    'FX ISO 7380 M3x10 split': ('몸통', '버튼 볼트 ISO 7380', 'M3 × 10', '배터리 받침·전장 데크 두 조각의 이음 턱 (조각 이음마다 2)', 4),
+    'FX DIN 934 M3 split': ('몸통', '육각 너트 DIN 934', 'M3', '배터리 받침·전장 데크 이음 턱 (+y 조각 쪽)', 4),
 }
 INCLUDED = ('FX pi3hat M2.5x5',)          # comes with the pi3hat: no order line
 
@@ -248,8 +291,8 @@ def not_modelled(n):
     hubs = n['thigh_L'] + n['thigh_R'] + n['shank_L'] + n['shank_R']
     caps = n['kneecap_L'] + n['kneecap_R']
     return [
-        ('관절', '접시 볼트 ISO 10642 12.9', 'M3 × 16', '⑥ hub 인서트 플랜지(접시, 면과 같게) → PETG 벽 6 → 6061 받침 링 탭, '
-         '0.7 N·m + 나사 고정제 (hub 인서트마다 %d)' % FLANGE_BOLTS, FLANGE_BOLTS * hubs),
+        ('관절', '접시 볼트 ISO 10642 12.9', 'M3 × 16', '⑥ hub 인서트 플랜지(접시, 면과 같게) → 링크 벽 6 → 받침 링 탭(출력 부품, 손으로 가볍게, '
+         '혐기성 고정제 쓰지 않음) (hub 인서트마다 %d)' % FLANGE_BOLTS, FLANGE_BOLTS * hubs),
         ('관절', '저두 볼트 DIN 7984 8.8', 'M2.5 × 8', '⑦ 무릎 캡 플랜지 → 허벅지 바깥 막대 인서트 (캡마다 %d)' % CAP_BOLTS, CAP_BOLTS * caps),
         ('관절', '열압입 인서트 황동', 'M2.5 × 4 (구멍 Ø3.6)', '⑦ 무릎 캡 자리(허벅지 바깥 막대, 구멍 깊이 7)', CAP_BOLTS * caps),
         ('몸통', '벨크로 스트랩', '폭 25 × 400 mm', '배터리 + 받침을 척추 봉에 묶음(받침 슬롯)', 2),
@@ -283,17 +326,20 @@ WIRING = [  # (item, spec, need, order, note)
     ('케이블타이', '100 × 2.5 mm', '약 30', '1봉(100개)', '마운트·다발 묶음'),
     ('수축 튜브', 'Ø3·Ø6 안팎', '-', '1세트', 'XT30 납땜부, 선 끝'),
 ]
-TOOLS = [   # (item, where); {inserts} = heat-set inserts in the BOM
-    ('나사 고정제(중강도, 예: 243급)', '⑥ hub 인서트 볼트(관절 단면도의 조립 순서), 금속 탭에 들어가는 다른 볼트는 선택'),
-    ('에폭시 또는 순간접착제', 'AKE 부속 자석 → 6061 자석 스페이서 포켓'),
-    ('열압입 인서트 인두 팁 M2.5 · M3 · M4', 'PETG 부품 인서트 {inserts}개'),
+TOOLS = [   # (item, where); {inserts} = heat-set inserts in the BOM, {m3} {m4} {m5} = tapped holes in the former machined parts
+    ('핸드 탭 M3 · M4 · M5 + 탭 핸들', '예전 가공 부품의 탭 구멍(출력 뒤): M3 {m3}(hip 판 · 받침 링), M4 {m4}(레일 끝), M5 {m5}(척추 봉 끝)'),
+    ('드릴 날 Ø2.5 · 3.0 · 3.3 · 4.2', '탭 전에 출력 구멍 정리(M3 · M4 · M5), hub 인서트 평행핀 구멍 Ø3'),
+    ('사포 #240~400 · 작은 줄', '끼움 자리 다듬기: hip 판 Ø42 파일럿, hub 인서트 스피곳·플랜지, 무릎 캡 관, 자석 스페이서'),
+    ('나사 고정제 (선택)', '모터 금속 탭에 들어가는 ①·② 나사에만 소량. 출력 부품의 나사산(⑥, hip 판·봉·레일 탭)에는 혐기성 고정제(243 등)를 '
+     '쓰지 않는다 — PLA·PETG가 갈라질 수 있다'),
+    ('순간접착제', 'AKE 부속 자석 → 출력 자석 스페이서 구멍'),
+    ('열압입 인서트 인두 팁 M2.5 · M3 · M4', '출력 부품 인서트 {inserts}개'),
     ('JST PH 압착 공구', 'mjbots 케이블이 다리 경로에 모자랄 때만: CAN 케이블 단자(SPH-002T)'),
     ('리머 Ø35 H7', '허벅지 바깥 막대의 무릎 캡 구멍 2곳(0.2 작게 출력한 뒤)'),
     ('2.5 mm 육각 볼드라이버, 축 120 mm 이상', 'hip·무릎 출력 볼트 ②를 Ø44 접근 구멍 안으로'),
     ('육각 렌치 1.5 · 2 · 2.5 · 3 mm', 'DIN 7984 M2.5(1.5), ISO 4762 M2.5 · 10642 M3 · 7380 M3(2), ISO 4762 M3 · 10642 M4(2.5), '
      'ISO 4762 M4 · 10642 M5(3)'),
-    ('스패너 5.5 · 7 mm', 'M3 너트(이음판), M4 나일론 너트(위 레일)'),
-    ('토크 드라이버 0.5~1 N·m (있으면)', '⑥ 0.7 N·m'),
+    ('스패너 5.5 · 7 mm', 'M3 너트(셸 이음판, 받침·데크 이음 턱), M4 나일론 너트(위 레일)'),
 ]
 
 
@@ -307,50 +353,66 @@ def classify(n):
     out = {}
     for prefix, *_r in PURCHASED:
         out[prefix] = sum(left.pop(k) for k in [k for k in left if k.startswith(prefix)])
-    for prefix, *_r in MACHINED:
+    for prefix in EX_STEP:                            # counted in EX_MACHINED (kneecap_: knee cap)
         out[prefix] = sum(left.pop(k) for k in [k for k in left if k.startswith(prefix)])
+        assert out[prefix], prefix
     for prefix, *_r in PRINTED:
         out[prefix] = {k: left.pop(k) for k in sorted(k for k in left if k.startswith(prefix))}
     for k in FX:
         out[k] = left.pop(k, 0)
     out['61807'] = sum(left.pop(k) for k in [k for k in left if k.startswith('kneebearing_')])
-    for k in [k for k in left if k.startswith('kneecap_')]:
-        left.pop(k)                                   # counted in V5_MACHINED (knee cap)
     assert not left, 'model parts with no BOM line: %s' % left
     return out
+
+
+def print_row(dwg, name, item, spec, colour, axis, note, mat, k, profile):
+    vol, area, box, bed, h = stl_info(name, axis)
+    wall, infill = profile
+    sh = min(vol, area * wall)
+    g = (sh + infill * (vol - sh)) * RHO
+    return (dwg, name, item, spec, colour, k, g * k, vol, box, bed, note, mat, h)
 
 
 def rows_all(n):
     c = classify(n)
     bad = {k: (c[k], v[4]) for k, v in FX.items() if c[k] != v[4]}
     assert not bad, 'fastener counts differ from the v4 fasteners.specs: %s' % bad
-    R = {'buy': [], 'mach': [], 'print': [], 'fx': [], 'wire': WIRING, 'tools': []}
+    R = {'buy': [], 'ex': [], 'print': [], 'fx': [], 'wire': WIRING, 'tools': []}
     for prefix, item, spec, src, note in PURCHASED:
         assert c[prefix], prefix
         R['buy'].append((item, spec, c[prefix], 0 if '동봉' in src else c[prefix], src, note, '있음'))
     R['buy'].append(('깊은 홈 볼 베어링 61807', 'Ø35 × Ø47 × 7, 2RS 또는 ZZ', c['61807'], c['61807'], '베어링 판매점',
                      '정강이 머리 패드 바깥 면 자리(Ø47 압입), 안륜은 무릎 캡 관', '있음'))
     R['buy'].append(('microSD 카드', '32 GB 이상(A1/A2)', 1, 1, '전자 부품상', '라즈베리파이 OS', '없음'))
-    for prefix, dwg, item, spec, files, note in MACHINED:
-        k = c[prefix]
-        R['mach'].append((dwg, item, spec, k, k, files, note))
-    for dwg, item, spec, files, note, fn in V5_MACHINED:
-        k = fn(n)
-        R['mach'].append((dwg, item, spec, k, k, files, note))
-    for prefix, dwg, item, spec, colour, axis, note in PRINTED:
+    metal = 0.0
+    for dwg, item, was, spec, axis, after, parts in EX_MACHINED:
+        for name, fn, rho in parts:
+            k = fn(n)
+            assert k, name
+            R['ex'].append(print_row(dwg, name, item, spec, EX_COLOUR, axis, '출력 뒤: %s. (예전: %s)' % (after, was),
+                                     HOT if dwg in EX_HOT else MAT, k, (99.0, 1.0)))
+            metal += R['ex'][-1][7] * rho * k
+    # model counts of the former machined STEP components = the printed rows that come from them
+    for prefix in EX_STEP:
+        rows = [r for r in R['ex'] if r[1].startswith(prefix.replace(' ', '_').replace('kneecap_', 'knee_cap_'))]
+        assert sum(r[5] for r in rows) == c[prefix], (prefix, c[prefix])
+    for prefix, dwg, item, spec, colour, axis, note, mat in PRINTED:
         for name, k in c[prefix].items():
-            vol, area, box, bed = stl_info(name, axis)
-            wall, infill = PRINT_PROFILE[next(p for p in PRINT_PROFILE if name.startswith(p))]
-            sh = min(vol, area * wall)
-            g = (sh + infill * (vol - sh)) * RHO
-            R['print'].append((dwg, name, item, spec, colour, k, g * k, vol, box, bed, note))
+            prof = PRINT_PROFILE[next(p for p in PRINT_PROFILE if name.startswith(p))]
+            R['print'].append(print_row(dwg, name, item, spec, colour, axis, note, mat, k, prof))
+    over = [(r[1], round(r[9])) for r in R['ex'] + R['print'] if r[9] > BED and r[1] != 'splice_tabs']
+    assert not over, 'parts that do not fit the %.0f mm bed: %s' % (BED, over)
     for name, (grp, item, spec, where, _e) in FX.items():
         if name not in INCLUDED:
             R['fx'].append((grp, item, spec, c[name], where, '있음'))
     for grp, item, spec, where, k in not_modelled(n):
         R['fx'].append((grp, item, spec, k, where, '없음 ★'))
     ins = sum(r[3] for r in R['fx'] if '인서트' in r[1])
-    R['tools'] = [(a, b.format(inserts=ins)) for a, b in TOOLS]
+    hp = c['hip_plate_']
+    taps = dict(m3=HIP_PLATE_M3 * hp + FLANGE_BOLTS * sum(r[5] for r in R['ex'] if r[1].startswith('hub_ring')),
+                m4=END_TAPS * c['rail_'], m5=END_TAPS * c['spine_tube_'])
+    R['tools'] = [(a, b.format(inserts=ins, **taps)) for a, b in TOOLS]
+    R['metal'] = metal
     return R, c
 
 
@@ -369,58 +431,89 @@ def fmt_q(k):
     return '%d' % k if isinstance(k, int) else str(k)
 
 
+def print_table(rows):
+    L = ['| 도번 | 파일 | 부품 | 재료 | 설정·놓는 면 | 색 | 수량 | 출력 질량(어림) | 외곽(mm) | 놓은 면 기준 베드 / 높이 | 비고 |',
+         '|---|---|---|---|---|---|---|---|---|---|---|']
+    L += ['| %s | `parts_stl/%s.stl` | %s | %s | %s | %s | %d | %.0f g | %s | %.0f mm / %.0f mm | %s |'
+          % (r[0], r[1], r[2], r[11], r[3], r[4], r[5], r[6], ' × '.join('%.0f' % x for x in r[8]), r[9], r[12], r[10]) for r in rows]
+    return L
+
+
 def write(R, c, leaves):
-    pr = R['print']
-    g_tot = sum(r[6] for r in pr)
+    ex, pr = R['ex'], R['print']
+    allp = ex + pr
+    g_ex, g_pr = sum(r[6] for r in ex), sum(r[6] for r in pr)
+    g_tot = g_ex + g_pr
     colours = defaultdict(float)
-    for r in pr:
+    for r in allp:
         colours[r[4]] += r[6]
-    big = [r for r in pr if r[9] > 250.0]
+    fit = [r for r in allp if r[1] != 'splice_tabs']
+    widest = max(fit, key=lambda r: r[9])
+    tallest = max(fit, key=lambda r: r[12])
     tot = fx_totals(R['fx'])
     n_fx = sum(r[3] for r in R['fx'])
+    solid_ex = sum(r[7] * r[5] for r in ex) * RHO
     L = ['# WheelBiped v5 BOM — 주문용', '',
          '`python manufacturing/bom.py`가 만든다(손으로 고치지 말 것). 모델에 있는 부품의 수량은 **조립 STEP**(`export/WheelBiped_v5_assembly.step`, '
-         '허브 버전 14, 링크 25 cm, 11.598 kg)의 인스턴스 수이고, 모델 부품이 하나라도 분류되지 않으면 스크립트가 멈춘다. '
+         '%s, %.3f kg — 금속 부품 기준)의 인스턴스 수이고, 모델 부품이 하나라도 분류되지 않으면 스크립트가 멈춘다. ' % (MODEL, MODEL_KG) +
          '모델에 없는 것(v5 관절 볼트 ⑥·⑦과 그 인서트, 배선, 공구)은 손으로 넣었고 **★ 또는 "모델 없음"** 으로 표시했다. '
          '출력 질량과 베드 크기는 `export/parts_stl`에서 계산했다. 가격은 넣지 않았다.', '',
+         '**11-09 사용자: 모든 부품을 3D 프린터(최대 %.0f × %.0f mm)로 PLA 또는 PETG로 뽑는다. 강도는 보지 않는다.** 그래서 가공 주문은 없고, '
+         '예전 가공 부품(6061·SUS304)은 2절에서 출력 부품으로 바뀌었다. 놓는 면을 정한 출력 부품이 베드에 안 들어가면 스크립트가 멈춘다.' % (BED, BED), '',
          '## 0. 한눈에', '',
          '| 묶음 | 종류 | 개수 | 어디에 |', '|---|---|---|---|',
          '| 1. 구매품(모터·전장·바퀴) | %d | %d | mjbots, CubeMars, 전자 부품상, 베어링 |' % (len(R['buy']), sum(r[2] for r in R['buy'])),
-         '| 2. 가공 주문(CNC·레이저) | %d | %d | CNC + 판금 업체 한 곳 (`robot_cad_v2/manufacturing/주문_요청서.md` 양식) |'
-         % (len(R['mach']), sum(r[3] for r in R['mach'])),
-         '| 3. 3D 출력(PETG) | %d | %d | 직접 출력 또는 출력 대행. 필라멘트 약 %.1f kg(+15 %% 여유 %.1f kg) |'
-         % (len(pr), sum(r[5] for r in pr), g_tot / 1000, g_tot * WASTE / 1000),
+         '| 2. 3D 출력 — 예전 가공 부품(가공 주문 없음) | %d | %d | 직접 출력 + 탭·다듬기. 필라멘트 약 %.2f kg |'
+         % (len(ex), sum(r[5] for r in ex), g_ex / 1000),
+         '| 3. 3D 출력 — 그 밖의 출력 부품 | %d | %d | 직접 출력. 필라멘트 약 %.1f kg |' % (len(pr), sum(r[5] for r in pr), g_pr / 1000),
          '| 4. 체결 부품 | %d | %d (주문 권장 %d) | 나사 쇼핑몰 |' % (len(tot), n_fx, sum(r[3] for r in tot)),
          '| 5. 배선·커넥터(모델 없음) | %d | — | 전자 부품상 |' % len(R['wire']),
          '| 6. 공구·소모품(있으면 생략) | %d | — | |' % len(R['tools']), '',
-         '조립 STEP의 부품 인스턴스 %d개(링크 묶음 torso·femur·tibia·wheel 7개를 더하면 README의 "부품 477개"와 같다)를 모두 아래 줄로 나눴다.'
-         % leaves, '']
+         '출력 필라멘트 합계(2·3절) 약 **%.1f kg**, 서포트·브림·실패 여유 15 %%를 더하면 **%.1f kg → 1 kg 스풀 %d개**. '
+         '조립 STEP의 부품 인스턴스 %d개(링크 묶음 torso·femur·tibia·wheel 7개를 더하면 %d개)를 모두 아래 줄로 나눴다.'
+         % (g_tot / 1000, g_tot * WASTE / 1000, math.ceil(g_tot * WASTE / 1000), leaves, leaves + 7), '']
     L += ['## 1. 구매품', '',
           '| 품목 | 규격 | 필요 | 주문 | 구입처 | 비고 |', '|---|---|---|---|---|---|']
     L += ['| %s | %s | %d | %s | %s | %s%s |' % (r[0], r[1], r[2], r[3] if r[3] else '— (동봉)', r[4], r[5],
                                                '' if r[6] == '있음' else ' — 모델 없음') for r in R['buy']]
-    L += ['', '## 2. 가공 주문', '',
-          '도면은 `manufacturing/drawings/`, 부품 좌표 STEP은 `manufacturing/step/`(v5 새 부품)·`export/parts_step/`(v4·v2 부품). '
-          'v2 부품(S14~S18)의 공차·탭·후처리는 `v2_*.pdf`와 `robot_cad_v2/manufacturing/주문_요청서.md`에 다 있다. '
-          '탭은 STEP에 기초 구멍으로만 들어 있으니 요청서·도면으로 전한다.', '',
-          '| 도번 | 부품 | 재질·공정 | 수량 | 파일 | 비고 |', '|---|---|---|---|---|---|']
-    L += ['| %s | %s | %s | %d | %s | %s |' % (r[0], r[1], r[2], r[3], r[5], r[6]) for r in R['mach']]
-    L += ['', '**주문하지 않는 것**: `clamp_ring_output_D27_t2.0_SUS304`(v4 출력 클램프 링). v5에서는 6061 hub 인서트가 대신하고 모델에도 없지만 '
-          '`export/parts_step`·`parts_stl`에 파일이 남아 있다.', '',
-          '## 3. 3D 출력 (PETG)', '',
-          '| 도번 | 파일 | 부품 | 설정·놓는 면 | 색 | 수량 | 출력 질량(어림) | 외곽(mm) | 필요한 정사각 베드 | 비고 |',
-          '|---|---|---|---|---|---|---|---|---|---|']
-    L += ['| %s | `parts_stl/%s.stl` | %s | %s | %s | %d | %.0f g | %s | %.0f mm | %s |'
-          % (r[0], r[1], r[2], r[3], r[4], r[5], r[6], ' × '.join('%.0f' % x for x in r[8]), r[9], r[10]) for r in pr]
-    L += ['', '- 출력 질량은 v4 `check.print_fraction`의 식(벽 두께만큼 꽉 차고 속은 채움 비율)으로 STL에서 어림했다. 허벅지·정강이는 꽉 찬 PETG라 '
-          '모델 값(827.5 / 420.7 g)과 같다.',
-          '- 색별 합계: %s. 서포트·브림·실패 여유 15 %%를 더하면 **약 %.1f kg → 1 kg 스풀 %d개**(색을 하나로 하면).'
+    L += ['', '## 2. 3D 출력 — 예전 가공 부품 (11-09: 가공 주문 없음)', '',
+          '가공으로 주문하려던 부품 %d종 %d개를 **같은 STL로 출력**한다. 모양은 그대로다(모델을 바꾸지 않음). 공통:'
+          % (len({r[0] + r[2] for r in ex}), sum(r[5] for r in ex)), '',
+          '- **채움 100 %%**(속까지 꽉 차게): 탭 나사산과 끼워맞춤 자리가 속 빈 채움에 걸리지 않게 한다. 모두 작아서 필라멘트는 %.2f kg뿐이다.' % (g_ex / 1000),
+          '- **탭**: 금속 가공 때의 탭 자리가 STL에 기초 구멍(M3 Ø2.5, M4 Ø3.3, M5 Ø4.2)으로 들어 있다. 그대로 뽑고, 같은 지름 드릴로 한 번 정리한 뒤 '
+          '핸드 탭으로 나사산을 낸다. 플라스틱 나사산이라 세게 조이지 않는다.',
+          '- **끼워맞춤**(H7·g6·N7·h9 같은 가공 공차)은 출력 오차(±0.2)보다 작다. 맞닿는 실물(모터, 61807, 핀)에 대 보며 드릴·사포로 다듬는다. '
+          '아노다이징·버 제거 같은 금속 후처리는 없다.',
+          '- 도면(`manufacturing/drawings/`의 hip_plate·spine_tube·rail·clamp_ring_stator·magnet_spacer·hub_insert_hip·hub_insert_knee·'
+          'knee_cap·hub_ring, `v2_*.pdf`)은 **치수 참고용**이다. 재질·공정 칸(6061·SUS304, 선반·MCT·아노다이징)은 예전 가공 기준이다.',
+          '- 모델(질량 %.3f kg)에서 이 부품들은 금속으로 %.2f kg이고, 꽉 찬 PETG로 뽑으면 %.2f kg이다. **로봇이 약 %.2f kg 가벼워진다**. '
+          'CAD 재질·`calc/mass_properties.json`·URDF는 아직 금속 기준이다.'
+          % (MODEL_KG, R['metal'] / 1000, solid_ex / 1000, (R['metal'] - solid_ex) / 1000), '']
+    L += print_table(ex)
+    L += ['', '**뽑지 않는 것**: `clamp_ring_output_D27_t2.0_SUS304`(v4 출력 클램프 링). v5에서는 hub 인서트가 대신하고 모델에도 없지만 '
+          '`export/parts_step`·`parts_stl`에 파일이 남아 있다. 같은 폴더의 `magnet_spacer_…__magnet_D6x2.5_N38H_(AKE).stl`은 모터 부속 자석이라 뽑지 않는다.', '',
+          '## 3. 3D 출력 — 그 밖의 출력 부품 (PLA 또는 PETG)', '']
+    L += print_table(pr)
+    L += ['', '- **재료**: PLA 또는 PETG(사용자 11-09). "PETG 권장(모터 열)"은 모터·드라이버에 닿는 부품이다 — PLA는 55~60 °C 안팎에서 물러지는데, '
+          '모터·드라이버는 오래 돌리면 그 근처까지 데워질 수 있다. 강도는 보지 않는다(사용자).',
+          '- 출력 질량은 v4 `check.print_fraction`의 식(벽 두께만큼 꽉 차고 속은 채움 비율)으로 STL에서 어림했고 PETG 밀도(1.27) 기준이다. '
+          'PLA(1.24)는 약 2 % 가볍다. 허벅지·정강이는 꽉 찬 출력이라 모델 값(827.5 / 420.7 g)과 같다.',
+          '- 색별 합계(2·3절): %s. 여유 15 %%를 더하면 **약 %.1f kg → 1 kg 스풀 %d개**(색을 하나로 하면).'
           % (', '.join('%s %.2f kg' % (k, v / 1000) for k, v in sorted(colours.items(), key=lambda x: -x[1])), g_tot * WASTE / 1000,
              math.ceil(g_tot * WASTE / 1000)),
-          '- **베드**: "필요한 정사각 베드"는 대각선으로 돌려 놓는 것까지 따진 가장 작은 정사각 베드 한 변이다(허벅지·정강이는 정해진 평평한 면, '
-          '나머지는 눕혀 놓은 면 기준, 브림 여유 없음). **%s는 250 mm 넘게 필요해서 256 × 256 베드(Bambu X1·P1·A1)에도 안 들어간다** — '
-          '300 × 300급 프린터나 출력 대행을 쓴다.' % ', '.join(dict.fromkeys(r[2] for r in big if r[1] != 'splice_tabs')),
-          '- 인서트는 모두 PETG 열압입이다(v4 SLA 링크의 에폭시 접착 인서트 대신).', '']
+          '- **베드 %.0f × %.0f**(사용자): "놓은 면 기준 베드"는 표의 놓는 면으로 두고 대각선으로 돌리는 것까지 따진 가장 작은 정사각 베드 한 변이고, '
+          '"높이"는 그때의 출력 높이다. **모든 부품이 들어간다** — 가장 큰 것은 %s %.0f mm(브림 %.0f mm를 둘러도 %.0f mm), 가장 높은 것은 %s %.0f mm. '
+          '척추 봉·위 레일은 길이 328 mm로 베드 한 변(%.0f)보다 길지만 베드 대각선은 %.0f mm라, 45° 돌려 대각선 방향으로 놓으면 들어간다. '
+          '부품 길이는 그대로이고, 243 mm는 그렇게 놓았을 때 필요한 정사각 베드 한 변이다(봉 끝이 베드 가장자리에서 약 %.0f mm 안쪽).'
+          % (BED, BED, widest[2], widest[9], BRIM, widest[9] + 2 * BRIM, tallest[2], tallest[12], BED, BED * math.sqrt(2),
+             (BED - (328.0 + 16.0) / math.sqrt(2)) / 2),
+          '- **배터리 받침·전장 데크는 두 조각으로 뽑아 잇는다**(사용자 11-09, `fusion/split_v5.py`): 한 덩어리로는 대각선으로도 304 / 309 mm가 '
+          '필요했다. 자른 면마다 바닥 밑으로 이음 턱(두께 %.0f, 깊이 %.0f mm)이 있어 두 턱을 맞대고 ISO 7380 M3 × %d 버튼 볼트 + DIN 934 너트 2쌍으로 '
+          '조인다(머리는 -y 조각 쪽, 육각 렌치 2 mm·스패너 5.5 mm). 원하면 턱 면을 접착해도 된다. 조일 때 두 조각의 윗면을 평평한 판에 함께 대고 맞춘다. '
+          '배터리 받침은 가운데 리브 자리(y %.0f)에서 나뉘고 조각마다 척추 봉 받침과 벨크로 슬롯이 있어 따로도 얹힌다. 전장 데크는 y %.0f(라즈베리파이 '
+          'USB 끝과 +y 끝 창 사이)에서 나뉘고, 이음 턱은 리브 바깥 면까지(셸 바닥 경사와 1.5 mm)다. 6자세 간섭 0건.'
+          % (SP.FLANGE_T, SP.FLANGE_D, SP.SCREW_L, SP.TRAY_CUT_Y, SP.DECK_CUT_Y),
+          '- 인서트는 모두 열압입이다.', '']
     L += ['## 4. 체결 부품·베어링', '',
           '### 4-1. 주문용 합계 (같은 품목·크기를 모음)', '',
           '주문 권장 = 필요 + 여유(나사·와셔·너트 +10 %, 최소 2 / 인서트 +20 %, 최소 4 / 핀 +3). ★는 모델에 없는 v5 관절 부품이 들어간 줄.', '',
@@ -428,9 +521,9 @@ def write(R, c, leaves):
     star = {(f[1], f[2].split(' (')[0]) for f in R['fx'] if f[5] != '있음'}
     L += ['| %s%s | %s | %d | %d | %s |' % (r[0], ' ★' if (r[0], r[1].split(' (')[0]) in star else '', r[1], r[2], r[3], r[4]) for r in tot]
     L += ['', '- pi3hat의 M2.5 × 5 나사 4개와 스탠드오프 4개는 pi3hat에 들어 있어 뺐다.',
-          '- ⑥ ISO 10642 M3 × 16을 **12.9로 구하기 어려우면 10.9**(보증 하중 약 4.2 kN)도 설계 하중(hip 3.1 kN)은 통과한다. 검토 하중(안전계수 2, 5.2 kN)은 '
-          '12.9(4.9 kN)도 넘는다 — README 0절 표, `calc/strength_v5.md`.',
-          '- ISO 4762 M3 × 14는 12.9(허브) 12 + 8.8(림) 12다. 같은 길이이므로 12.9로 24개를 사도 된다.', '',
+          '- 12.9 볼트(①·②·⑥·허브)는 6061 부품을 조이던 때의 등급이다. 이제는 모두 출력 부품을 조이거나 출력 부품의 탭에 들어가고 강도는 보지 않으므로 '
+          '(사용자 11-09) **더 싼 등급(8.8·A2)으로 사도 된다**. ⑥은 출력 받침 링의 플라스틱 나사산이라 0.7 N·m·나사 고정제 없이 손으로 가볍게 조인다.',
+          '- ISO 4762 M3 × 14는 12.9(허브) 12 + 8.8(림) 12다. 같은 길이이므로 한 등급으로 24개를 사도 된다.', '',
           '### 4-2. 쓰는 곳별 상세', '',
           '| 묶음 | 품목 | 규격 | 수량 | 위치 | 모델 |', '|---|---|---|---|---|---|']
     L += ['| %s | %s | %s | %d | %s | %s |' % (r[0], r[1], r[2], r[3], r[4], r[5]) for r in R['fx']]
@@ -446,12 +539,14 @@ def write(R, c, leaves):
           '## 6. 공구·소모품 (이미 있으면 생략)', '', '| 품목 | 쓰는 곳 |', '|---|---|']
     L += ['| %s | %s |' % r for r in R['tools']]
     L += ['', '## 7. 주문 전 확인', '',
+          '- **가공 주문은 없다**(11-09 사용자: 모두 3D 출력, PLA 또는 PETG, 강도는 보지 않음). 예전 가공 부품은 출력한 뒤 탭·다듬기가 필요하다(2절).',
           '- **타이어**는 v2 때 이미 주문했다(AliExpress). 받았는지만 확인한다. **배터리**는 가지고 있는 24 V 15 Ah(XT60) 기준이다.',
-          '- **hip 판·hub 인서트는 왼·오른쪽이 거울상**이라 서로 다른 부품이다(각 1개씩). 받침 링 4개, 무릎 캡 2개는 같은 부품이다.',
-          '- v2 도면을 그대로 쓰는 부품(S14~S18)은 이름이 v2 기준이다: `v2_hip_plate_L.pdf` = 이 로봇의 `hip_plate_R`(CAD +y). 두 장을 다 주문하면 된다.',
+          '- **hip 판·hub 인서트는 왼·오른쪽이 거울상**이라 STL이 따로 있다(각 1개씩). 받침 링 4개, 무릎 캡 2개는 같은 부품이다.',
+          '- v2 도면(S14~S18)은 금속 가공용이고 이름이 v2 기준이다: `v2_hip_plate_L.pdf` = 이 로봇의 `hip_plate_R`(CAD +y). 출력은 STL로 한다.',
           '- 61807은 2RS(고무 실)나 ZZ(금속 실) 어느 쪽이든 폭 7 mm면 맞는다.',
-          '- 허벅지·정강이·배터리 받침·전장 데크는 큰 베드가 필요하다(3절).',
-          '- 비용: 아노다이징은 hip 판만 도면 지시이고, hub 인서트·무릎 캡은 "권장"이다. 빼면 가공비가 준다(끼움면 마스킹도 필요 없어짐).',
+          '- 프린터 베드 %.0f × %.0f에 모두 들어간다. 배터리 받침·전장 데크는 두 조각씩 뽑아 M3로 잇는다(3절).' % (BED, BED),
+          '- 금속 → 출력으로 로봇이 약 %.2f kg 가벼워진다(2절). 강도 계산(`calc/strength_v5.md`)과 질량·URDF는 아직 금속 기준이다.'
+          % ((R['metal'] - solid_ex) / 1000),
           '- 남은 설계 결정(README 5절: 정강이 처짐 기준, hip ②·⑥ 검토 하중 초과, 무릎 완전 신장 멈춤)은 부품 목록을 바꾸지 않는다. '
           '기구 멈춤을 넣기로 하면 그때 부품이 늘어난다.']
     md = '\n'.join(L) + '\n'
@@ -462,11 +557,11 @@ def write(R, c, leaves):
         w.writerow(('묶음', '품목', '규격·설명', '필요 수량', '주문 권장', '도번·파일', '구입처·공정', '위치·비고', '모델에 있음'))
         for r in R['buy']:
             w.writerow(('1 구매품', r[0], r[1], r[2], r[3], '', r[4], r[5], r[6]))
-        for r in R['mach']:
-            w.writerow(('2 가공', r[1], r[2], r[3], r[4], '%s; %s' % (r[0], r[5]), '', r[6], '있음'))
-        for r in pr:
-            w.writerow(('3 출력', r[1], '%s; %s; 색 %s' % (r[2], r[3], r[4]), r[5], r[5], '%s; export/parts_stl/%s.stl' % (r[0], r[1]),
-                        '출력 약 %.0f g, 정사각 베드 %.0f mm' % (r[6], r[9]), r[10], '있음'))
+        for grp, rows in (('2 출력(예전 가공)', ex), ('3 출력', pr)):
+            for r in rows:
+                w.writerow((grp, r[1], '%s; %s; %s; 색 %s' % (r[2], r[11], r[3], r[4]), r[5], r[5],
+                            '%s; export/parts_stl/%s.stl' % (r[0], r[1]),
+                            '출력 약 %.0f g, 정사각 베드 %.0f mm, 높이 %.0f mm' % (r[6], r[9], r[12]), r[10], '있음'))
         for r in tot:
             w.writerow(('4 체결(주문 합계)', r[0], r[1], r[2], r[3], '', '', r[4], '★ 일부 없음' if (r[0], r[1].split(' (')[0]) in star else '있음'))
         for r in R['wire']:
@@ -484,6 +579,7 @@ def main():
     sh = stl_info('shank_R', 0)
     print('thigh %.1f cm3 %.1f g, shank %.1f cm3 %.1f g (README 651.4 / 331.1 cm3, 827.5 / 420.7 g)'
           % (th[0] / 1000, th[0] * RHO, sh[0] / 1000, sh[0] * RHO))
+    print('former machined: metal %.0f g -> printed %.0f g' % (R['metal'], sum(r[7] * r[5] for r in R['ex']) * RHO))
     print('leaf instances %d, BOM.md %d lines' % (leaves, md.count('\n')))
 
 
