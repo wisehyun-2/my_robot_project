@@ -21,7 +21,7 @@ def config(M):
              X.pick('BOARD', 'tibia_R:1+CAN terminator'),
              X.pick('BOARD', 'tibia_R:1+XT30 cap'),
              X.pick('CINS', 'tibia_R:1+FX insert M2.5x4 cup', each=ny),
-             X.pick('BS', 'tibia_R:1+FX DIN 7984 M2.5x6 board', each=ny),
+             X.pick('BS', 'tibia_R:1+FX DIN 7984 M2.5x5 board', each=ny),
              X.pick('CS', 'tibia_R:1+FX ISO 4762 M2.5x18 wheel cup', each=py),
              X.pick('PINS', 'wheel_R:1+FX ISO 8734 3x10', each=ny),
              X.pick('HUB', 'wheel_R:1+hub_flange_R'),
@@ -45,7 +45,7 @@ def config(M):
              moves=[[('WINS', 0)]], view=(0.8, -0.8, 0.45)),
         dict(key='s2', title='2단계  모터 → 정강이 바퀴 하우징',
              text='AKE60-8을 정강이 안쪽에서 하우징 안으로 넣어 Ø42 파일럿을 바깥쪽 바퀴 판(9 mm) 포켓에 앉힌다.\n'
-                  '출력부는 판의 Ø30 구멍 쪽(바깥, 바퀴 쪽)을 향한다.',
+                  '출력부는 판의 Ø30 구멍 쪽(바깥)으로, 리드선은 판의 리드선 홈 → 하우징 축 방향 홈으로 (컵의 리드선 홈과 같은 각도).',
              moves=[[('MOTOR', 0)]], view=(0.85, -0.75, 0.45)),
         dict(key='s3', title='3단계  SUS 링 + ① M2.5 × 8 × 6 → 모터 고정자',
              text='정강이 바깥 면의 홈에 SUS 클램프 링을 넣고, ① M2.5 × 8 저두 6개를 판을 지나 고정자 링 탭에\n'
@@ -53,7 +53,7 @@ def config(M):
              moves=[[('RING_S', 0)], [('S25', 0)]], spin=['S25'], view=(0.85, 0.75, 0.45)),
         dict(key='s4', title='4단계  moteus → 드라이버 컵 (작업대)',
              text='컵 스탠드오프 4곳에 인서트 M2.5를 넣고, moteus r4.11(CAN 종단 저항·XT30 캡 포함)을 얹어\n'
-                  '④ M2.5 × 6 저두 4개로 모터 쪽 면에서 조인다.',
+                  '④ M2.5 × 5 저두 4개로 모터 쪽 면에서 조인다.',
              moves=[[('CINS', 'CUP')], [('BOARD', 'CUP')], [('BS', 'CUP')]], spin=['BS'],
              bench=['CUP', 'CINS', 'BOARD', 'BS'], view=(0.55, 0.85, 0.45)),
         dict(key='s5', title='5단계  드라이버 컵 → 바퀴 하우징 + ⑤ M2.5 × 18 × 3',
@@ -65,18 +65,18 @@ def config(M):
              text='인두로 황동 인서트 M3 × 5.7 6개를 허브 플랜지 바깥 면(림 쪽)의 구멍에 녹여 넣는다.',
              moves=[[('HINS', 'HUB')]], bench=['HUB', 'HINS'], view=(0.6, 0.8, 0.45)),
         dict(key='s7', title='7단계  ③ 핀 + 허브 플랜지 + 와셔 + ② M3 × 14 × 6',
-             text='③ 평행핀 3개를 출력부 구멍에 꽂고, 허브 플랜지의 Ø28 보스를 바퀴 판 Ø30 구멍으로 넣어 스피곳을 맞춘 뒤\n'
-                  '평와셔 + ② M3 × 14 (12.9) 6개로 출력부에 조인다 (머리는 플랜지 카운터보어 안, 물림 4.0 mm).',
-             pre=dict(PINS=(0, 0, 0, 30), HUB=(0, 70, 0, 0), HINS=(0, 70, 0, 0), WASH=(0, 0, 0, 100),
+             text='③ 평행핀 3개를 허브 플랜지 구멍(Ø3 × 8) 바닥까지 눌러 넣고(2.0 mm 나옴), Ø28 보스를 바퀴 판 Ø30 구멍으로\n'
+                  '넣어 핀을 출력부 구멍에 맞춘 뒤 평와셔 + ② M3 × 14 (12.9) 6개로 조인다 (머리는 카운터보어 안, 물림 4.0 mm).',
+             pre=dict(PINS=(0, 70, 0, 0), HUB=(0, 70, 0, 0), HINS=(0, 70, 0, 0), WASH=(0, 0, 0, 100),
                       S314=(0, 0, 0, 115)),
-             moves=[[('PINS', 0)], [('HUB', 0), ('HINS', 0)], [('WASH', 0)], [('S314', 0)]], spin=['S314'],
+             moves=[[('HUB', 0), ('HINS', 0), ('PINS', 0)], [('WASH', 0)], [('S314', 0)]], spin=['S314'],
              view=(0.8, 0.85, 0.45)),
         dict(key='s8', title='8단계  타이어 → 한 조각 림 (작업대)',
              text='M365 타이어를 뜨거운 물(60~80 °C)에 데워 림의 열린 쪽(바깥) 플랜지 위로 굴려 넣고,\n'
                   '안쪽 구멍을 림 돌기에 맞춘다 (토크는 돌기가 전한다).',
              moves=[[('TYRE', 'RIM')]], bench=['RIM', 'TYRE'], view=(0.7, 0.65, 0.4)),
         dict(key='s9', title='9단계  림 + 타이어 → 허브 플랜지 + ④ M3 × 14 × 6',
-             text='림 허브의 홈을 허브 플랜지의 등록 턱에 맞춰 밀어 넣고,\n'
+             text='림 허브의 홈(Ø11.2 × 3.6)을 허브 플랜지의 등록 턱(Ø11 × 3)에 맞춰 밀어 넣고 (턱은 홈 바닥에 닿지 않음),\n'
                   '바깥에서 평와셔 + ④ M3 × 14 6개를 허브 플랜지 인서트에 조인다.',
              pre=dict(RIM=(0, 120, 0, 0), TYRE=(0, 120, 0, 0), RWASH=(0, 0, 0, 170), RS=(0, 0, 0, 185)),
              moves=[[('RIM', 0), ('TYRE', 0)], [('RWASH', 0)], [('RS', 0)]], spin=['RS'],
@@ -94,16 +94,17 @@ def config(M):
                         'AKE60-8': X.on_sector_face(c, 5, 26.0, 215.0),
                         '정강이 바퀴 하우징': X.on_sector_face(c, 5, 41.0, 225.0),
                         'moteus + 컵': X.on_sector_face(c, 5, 12.0, 197.0)}),
-            dict(key='cut2', remove=X.sector(c, 35.0, 155.0), view=(-0.08, 0.6, 0.8), target=tgt, zoom=0.6,
-                 title='단면 ②  ③ 평행핀 · ① M2.5 × 8 (35°, 155°) 자리를 지나는 단면',
-                 feats={'③ 평행핀 Ø3 × 10': X.on_sector_face(c, 35, 10.0, 234.0),
-                        '③ 평행핀 (155°)': X.on_sector_face(c, 155, 10.0, 234.0),
-                        '① M2.5 × 8 + SUS 링': X.on_sector_face(c, 35, 18.25, 233.0),
-                        '① M2.5 × 8 (155°)': X.on_sector_face(c, 155, 18.25, 233.0),
-                        '타이어 M365': X.on_sector_face(c, 35, 90.0, 270.0),
-                        '림 (PETG)': X.on_sector_face(c, 155, 45.0, 252.0)})]
+            # 11-09: the stator (and its ① screws) turned with the cup sit at 39.7 + 60k deg, the pins stay at 35 + 120k
+            dict(key='cut2', remove=X.sector(c, 40.0, 160.0), view=(-0.08, 0.6, 0.8), target=tgt, zoom=0.6,
+                 title='단면 ②  ③ 평행핀 (35°, 155°) · ① M2.5 × 8 (39.7°, 159.7°) 자리를 지나는 단면 (40°, 160°)',
+                 feats={'③ 평행핀 Ø3 × 10': X.on_sector_face(c, 40, 10.0, 234.0),
+                        '③ 평행핀 (155°)': X.on_sector_face(c, 160, 10.0, 234.0),
+                        '① M2.5 × 8 + SUS 링': X.on_sector_face(c, 40, 18.25, 233.0),
+                        '① M2.5 × 8 (160°)': X.on_sector_face(c, 160, 18.25, 233.0),
+                        '타이어 M365': X.on_sector_face(c, 40, 90.0, 270.0),
+                        '림 (PETG)': X.on_sector_face(c, 160, 45.0, 252.0)})]
     return dict(
-        job='wheel', title='바퀴 관절 조립 (v5)', subtitle='오른쪽 다리 (_R) · Fusion 모델 버전 11',
+        job='wheel', title='바퀴 관절 조립 (v5)', subtitle='오른쪽 다리 (_R) · Fusion 모델 버전 16',
         picks=picks, fasteners=[], fixed=['SHANK'],
         recolor={'SHANK': ('ax petg green', (120, 185, 120)), 'CUP': ('ax cup grey', (150, 150, 158)),
                  'HUB': ('ax hub orange', (215, 110, 55)), 'RIM': ('ax rim orange', (240, 165, 85))},
@@ -111,7 +112,7 @@ def config(M):
         view_done=(0.85, 0.6, 0.45), move=36, long_move=56,
         names=dict(SHANK='정강이 (PETG, 바퀴 쪽만)', WINS='황동 인서트 M2.5 × 3 (하우징)', MOTOR='AKE60-8 모터 (바퀴)',
                    RING_S='SUS304 클램프 링 Ø45', S25='① M2.5 × 8 저두 × 6', CUP='드라이버 컵 (PETG)',
-                   CINS='황동 인서트 M2.5 × 4 (컵)', BOARD='moteus r4.11', BS='④ M2.5 × 6 저두 × 4',
+                   CINS='황동 인서트 M2.5 × 4 (컵)', BOARD='moteus r4.11', BS='④ M2.5 × 5 저두 × 4',
                    CS='⑤ M2.5 × 18 × 3', PINS='③ 평행핀 Ø3 × 10 × 3', HUB='허브 플랜지 (PETG)',
                    HINS='황동 인서트 M3 × 6 (허브)', WASH='평와셔 M3 × 6', S314='② M3 × 14 (12.9) × 6',
                    RIM='한 조각 림 (PETG)', TYRE='M365 8.5 × 2 통고무 타이어', RWASH='평와셔 M3 × 6 (림)',
@@ -119,7 +120,7 @@ def config(M):
         captions=dict(WINS='황동 인서트 M2.5 × 3 → 하우징 끝', MOTOR='AKE60-8 → 바퀴 판 포켓 (Ø42 파일럿)',
                       RING_S='SUS304 클램프 링 → 정강이 바깥 면 홈', S25='① M2.5 × 8 저두 × 6 조임',
                       CINS='황동 인서트 M2.5 × 4 → 컵 스탠드오프', BOARD='moteus r4.11 → 컵',
-                      BS='④ M2.5 × 6 저두 × 4 조임', CUP='드라이버 컵 → 하우징 끝 (Ø88 립)', CS='⑤ M2.5 × 18 × 3 조임',
+                      BS='④ M2.5 × 5 저두 × 4 조임', CUP='드라이버 컵 → 하우징 끝 (Ø88 립)', CS='⑤ M2.5 × 18 × 3 조임',
                       HINS='황동 인서트 M3 × 6 → 허브 플랜지', PINS='③ 평행핀 × 3 → 출력부',
                       HUB='허브 플랜지 → 출력부 (Ø28 보스 · 스피곳)', WASH='평와셔 M3 × 6',
                       S314='② M3 × 14 (12.9) × 6 조임', TYRE='타이어 → 림 (데워서, 구멍 ↔ 돌기)',
@@ -127,7 +128,7 @@ def config(M):
         short=['인서트 → 하우징 끝', '모터 → 바퀴 하우징', 'SUS 링 + ① M2.5 × 8', 'moteus → 컵', '컵 → 하우징 (⑤)',
                '인서트 → 허브 플랜지', '③ 핀 + 허브 + ②', '타이어 → 림', '림 → 허브 + ④'],
         legend=['① M2.5 × 8 저두 × 6 + SUS 링', '② M3 × 14 (12.9) × 6 + 와셔', '③ 평행핀 Ø3 × 10 × 3',
-                '④ M3 × 14 × 6 + 와셔 (림)', '⑤ M2.5 × 18 × 3, moteus M2.5 × 6 × 4', '인서트 M2.5 × 7, M3 × 6'],
+                '④ M3 × 14 × 6 + 와셔 (림)', '⑤ M2.5 × 18 × 3, moteus M2.5 × 5 × 4', '인서트 M2.5 × 7, M3 × 6'],
         major=['SHANK', 'MOTOR', 'CUP', 'HUB', 'RIM', 'TYRE'], done_labels=['SHANK', 'CUP', 'RIM', 'TYRE'],
         overview=('바퀴 관절 분해도  (오른쪽 다리)',
                   '모든 부품이 떨어진 상태 — 오른쪽이 바깥(타이어 쪽), 왼쪽이 로봇 중심 쪽(드라이버 컵).  모두 바퀴 축 방향으로 끼워진다.\n'

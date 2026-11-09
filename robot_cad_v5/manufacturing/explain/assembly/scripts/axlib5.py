@@ -1,7 +1,7 @@
 """Exploded-assembly renderer for the v5 robot (runs inside Fusion through fusion_rpc.py).
 
 The v2 engine (robot_cad_v2/manufacturing/explain/assembly/scripts/axlib.py) adapted to v5:
-- the parts come from export/WheelBiped_v5.f3d (hub version 11, nominal pose, robot part names), imported into an
+- the parts come from export/WheelBiped_v5.f3d (hub version 16 since 11-09, nominal pose, robot part names), imported into an
   unsaved document; the hub document (the user's pose) is never opened or changed;
 - the v5 model already holds almost every fastener ('FX ...' occurrences): a pick with each=<travel vector> copies
   every matching occurrence on its own, with its own axis, so the screws turn in; only the fasteners the model lacks
