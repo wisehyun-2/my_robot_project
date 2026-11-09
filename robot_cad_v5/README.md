@@ -182,11 +182,12 @@ Fusion 모델을 hip·무릎·바퀴 축을 지나는 면으로 잘라(`v5run.se
 
 ![hip](manufacturing/explain/hip_section.png)
 
-### 조립 그림·영상 (`manufacturing/explain/assembly/`, 11-08, 11-09 버전 16으로 다시 만듦)
+### 조립 그림·영상 (`manufacturing/explain/assembly/`, 11-08, 11-09 버전 16, 11-10 버전 18 + 출력 재질 표기로 다시 만듦)
 
-hip·무릎·바퀴 관절을 `export/WheelBiped_v5.f3d`(버전 16)에서 복사해 분해 → 조립 단계별로 찍은 그림과 영상이다(v2 양식, 오른쪽 다리,
+hip·무릎·바퀴 관절을 `export/WheelBiped_v5.f3d`(버전 18)에서 복사해 분해 → 조립 단계별로 찍은 그림과 영상이다(v2 양식, 오른쪽 다리,
 Fusion 캡처 + ffmpeg). `hip/hip_assembly.mp4`, `knee/knee_assembly.mp4`, `wheel/wheel_assembly.mp4`. 무릎 영상은 안 A 순서(정강이를
-9.5 mm 띄워 갈래 틈으로 넣고 안쪽으로 밀기 → 바깥 막대 구멍으로 ② → 무릎 캡)를 따른다. 다시 만드는 법은 그 폴더 README.
+9.5 mm 띄워 갈래 틈으로 넣고 안쪽으로 밀기 → 바깥 막대 구멍으로 ② → 무릎 캡)를 따른다. 화면 글자의 재질은 11-09 "모든 부품 출력"
+결정(BOM 2절)을 따른다(hip 판·hub 인서트·받침 링·클램프 링·무릎 캡 = PETG). 다시 만드는 법은 그 폴더 README.
 
 ## 2. 배선 — 모델에 없음
 

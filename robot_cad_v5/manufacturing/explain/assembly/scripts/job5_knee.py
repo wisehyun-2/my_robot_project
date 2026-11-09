@@ -1,6 +1,6 @@
 """Right knee (_R, CAD +y): PETG fork thigh (knee plate + outer spar) + AKE60-8 + moteus cup, PETG shank with the
-6061 hub insert / backing ring / 61807, the shank held 9.5 mm outboard into the fork then slid onto the output
-(plan A, 11-01), output screws through the spar hole, then the 6061 knee cap."""
+printed hub insert / backing ring / 61807, the shank held 9.5 mm outboard into the fork then slid onto the output
+(plan A, 11-01), output screws through the spar hole, then the printed knee cap (every part printed since 11-09)."""
 import axlib5 as X
 
 
@@ -65,8 +65,8 @@ def config(M):
              text='AKE60-8을 허벅지 안쪽에서 하우징 안으로 넣어 Ø42 파일럿을 무릎 판(9 mm) 포켓에 앉힌다.\n'
                   '출력부는 판의 Ø30 구멍 쪽(갈래 틈 쪽)을 향한다.',
              moves=[[('MOTOR', 0)]], view=(0.9, -0.75, 0.45)),
-        dict(key='s4', title='4단계  SUS 링 + ① M2.5 × 8 × 6 → 모터 고정자',
-             text='갈래 틈 쪽 무릎 판 면의 홈에 SUS 클램프 링(Ø45 / Ø30, 2 t)을 넣고, ① M2.5 × 8 저두 6개를\n'
+        dict(key='s4', title='4단계  클램프 링 + ① M2.5 × 8 × 6 → 모터 고정자',
+             text='갈래 틈 쪽 무릎 판 면의 홈에 클램프 링(PETG 출력, Ø45 / Ø30, 2 t)을 넣고, ① M2.5 × 8 저두 6개를\n'
                   '판을 지나 고정자 링 탭에 조인다 (짧은 육각 렌치로 갈래 틈 59.5 mm 안에서, 물림 3.2 mm).',
              moves=[[('RING_S', 0)], [('S25', 0)]], spin=['S25'], ghost=['THIGH'], view=(0.85, 0.75, 0.4)),
         dict(key='s5', title='5단계  moteus → 드라이버 컵 (작업대)',
@@ -79,7 +79,7 @@ def config(M):
              view=(0.9, -0.7, 0.45)),
         dict(key='s7', title='7단계  정강이 준비 (작업대)',
              text='Ø44 구멍으로 받침 링을 떨어뜨려 PETG 벽 위에 앉히고, 안쪽 면 자리에 hub 인서트를 넣어 ⑥ M3 × 16 접시 6개를\n'
-                  '받침 링에 조인다 (약 0.7 N·m). ③ 평행핀 3개를 인서트에 압입하고, 61807을 패드 바깥 면 자리(Ø47)에 턱까지 압입한다.',
+                  '받침 링에 가볍게 조인다 (플라스틱 나사산). ③ 평행핀 3개를 인서트에 압입하고, 61807을 패드 바깥 면 자리(Ø47)에 턱까지 압입한다.',
              moves=[[('RING', 'SHANK')], [('INSERT', 'SHANK')], [('F6', 'SHANK')], [('PINS', 'SHANK')],
                     [('BRG', 'SHANK')]], spin=['F6'], ghost=['SHANK'], bench=sset, view=(0.55, -0.75, 0.5)),
         dict(key='s8', title='8단계  정강이 → 갈래 틈 → 무릎 출력부',
@@ -93,7 +93,7 @@ def config(M):
              pre=dict(WASH=(0, 0, 0, 100), S316=(0, 0, 0, 120)),
              moves=[[('WASH', 0)], [('S316', 0)]], spin=['S316'], view=(0.45, 0.85, 0.3), zoom=0.75),
         dict(key='s10', title='10단계  무릎 캡 + ⑦ M2.5 × 8 × 3',
-             text='6061 무릎 캡의 관(Ø35 g6)을 바깥 막대 구멍(Ø35 H7)과 61807 안륜에 밀어 넣고 (꼭 맞음, 고무망치),\n'
+             text='무릎 캡(PETG 출력)의 관(Ø35)을 바깥 막대 구멍(Ø35)과 61807 안륜에 밀어 넣고 (사포로 꼭 맞게 다듬음, 고무망치),\n'
                   '면과 같은 높이의 플랜지를 ⑦ M2.5 × 8 저두 3개로 인서트에 조인다.',
              moves=[[('CAP', 0)], [('F7', 0)]], spin=['F7'], view=(0.75, 0.8, 0.45)),
     ]
@@ -102,11 +102,11 @@ def config(M):
     cuts = [dict(key='cut1', remove=X.sector(c, 10.0, 90.0), view=(0.5, 0.5, 0.62), target=tgt, zoom=0.5,
                  title='단면 ①  ② M3 × 16 (10°) · ⑥ 플랜지 볼트 · ⑦ 캡 나사 (90°) 자리를 지나는 단면',
                  feats={'② M3 × 16 + 와셔': X.on_sector_face(c, 10, 10.0, 211.0),
-                        'hub 인서트 (6061)': X.on_sector_face(c, 10, 21.0, 211.0),
-                        '6061 받침 링': X.on_sector_face(c, 10, 18.0, 223.0),
+                        'hub 인서트 (PETG)': X.on_sector_face(c, 10, 21.0, 211.0),
+                        '받침 링 (PETG)': X.on_sector_face(c, 10, 18.0, 223.0),
                         '⑥ M3 × 16 접시': X.on_sector_face(c, 90, 18.0, 214.0),
                         '61807': X.on_sector_face(c, 10, 20.5, 249.5),
-                        '무릎 캡 (6061)': X.on_sector_face(c, 10, 16.0, 270.0),
+                        '무릎 캡 (PETG)': X.on_sector_face(c, 10, 16.0, 270.0),
                         '⑦ M2.5 × 8 + 인서트': X.on_sector_face(c, 90, 20.5, 284.0),
                         'A Ø11.8 스피곳': X.on_sector_face(c, 10, 5.0, y_out - 0.7),
                         '정강이 (PETG)': X.on_sector_face(c, 10, 40.0, 210.0),
@@ -117,27 +117,27 @@ def config(M):
                  title='단면 ②  ③ 평행핀 · ① M2.5 × 8 (40°, 160°) 자리를 지나는 단면',
                  feats={'③ 평행핀 Ø3 × 10': X.on_sector_face(c, 40, 10.0, 200.5),
                         '③ 평행핀 (160°)': X.on_sector_face(c, 160, 10.0, 200.5),
-                        '① M2.5 × 8 + SUS 링': X.on_sector_face(c, 40, 18.25, 199.0),
+                        '① M2.5 × 8 + 클램프 링': X.on_sector_face(c, 40, 18.25, 199.0),
                         '① M2.5 × 8 (160°)': X.on_sector_face(c, 160, 18.25, 199.0),
                         '61807': X.on_sector_face(c, 40, 20.5, 249.5),
                         '정강이 (PETG)': X.on_sector_face(c, 40, 40.0, 210.0),
                         '바깥 막대 (허벅지)': X.on_sector_face(c, 160, 24.0, 276.0)})]
     return dict(
-        job='knee', title='무릎 관절 조립 (v5)', subtitle='오른쪽 다리 (_R) · Fusion 모델 버전 16',
+        job='knee', title='무릎 관절 조립 (v5)', subtitle='오른쪽 다리 (_R) · Fusion 모델 버전 18',
         picks=picks, fasteners=F, fixed=['THIGH'],
         recolor={'THIGH': ('ax thigh blue', (110, 150, 205)), 'SHANK': ('ax petg green', (120, 185, 120)),
                  'CUP': ('ax cup grey', (150, 150, 158))},
         home=home, steps=steps, cuts=cuts, target=(K[0], 0.0, K[1]), view0=(0.95, 0.4, 0.3),
         view_done=(0.85, 0.6, 0.45), move=36, long_move=56,
         names=dict(THIGH='허벅지 (PETG 갈래, 무릎 쪽만)', TINS='황동 인서트 M2.5 × 3 (하우징)', MOTOR='AKE60-8 모터 (무릎)',
-                   RING_S='SUS304 클램프 링 Ø45', S25='① M2.5 × 8 저두 × 6', CUP='드라이버 컵 (PETG)',
+                   RING_S='클램프 링 Ø45 (PETG)', S25='① M2.5 × 8 저두 × 6', CUP='드라이버 컵 (PETG)',
                    CINS='황동 인서트 M2.5 × 4 (컵)', BOARD='moteus r4.11', BS='④ M2.5 × 5 저두 × 4',
-                   CS='⑤ M2.5 × 18 × 3', SHANK='정강이 (PETG, 무릎 쪽만)', INSERT='hub 인서트 (6061)',
-                   RING='받침 링 (6061)', F6='⑥ M3 × 16 접시 (12.9) × 6', PINS='③ 평행핀 Ø3 × 10 × 3',
-                   BRG='61807 베어링', WASH='평와셔 M3 × 6', S316='② M3 × 16 (12.9) × 6', CAP='무릎 캡 (6061)',
+                   CS='⑤ M2.5 × 18 × 3', SHANK='정강이 (PETG, 무릎 쪽만)', INSERT='hub 인서트 (PETG)',
+                   RING='받침 링 (PETG)', F6='⑥ M3 × 16 접시 (12.9) × 6', PINS='③ 평행핀 Ø3 × 10 × 3',
+                   BRG='61807 베어링', WASH='평와셔 M3 × 6', S316='② M3 × 16 (12.9) × 6', CAP='무릎 캡 (PETG)',
                    CAPINS='황동 인서트 M2.5 × 3 (캡 자리)', F7='⑦ M2.5 × 8 저두 × 3'),
         captions=dict(TINS='황동 인서트 M2.5 × 3 → 하우징 끝', CAPINS='황동 인서트 M2.5 × 3 → 바깥 막대 캡 자리',
-                      MOTOR='AKE60-8 → 무릎 포켓 (Ø42 파일럿)', RING_S='SUS304 클램프 링 → 무릎 판 홈',
+                      MOTOR='AKE60-8 → 무릎 포켓 (Ø42 파일럿)', RING_S='클램프 링 → 무릎 판 홈',
                       S25='① M2.5 × 8 저두 × 6 조임', CINS='황동 인서트 M2.5 × 4 → 컵 스탠드오프',
                       BOARD='moteus r4.11 → 컵', BS='④ M2.5 × 5 저두 × 4 조임', CUP='드라이버 컵 → 하우징 (Ø88 립)',
                       CS='⑤ M2.5 × 18 × 3 조임', RING='받침 링 → Ø44 구멍 → PETG 벽 위',
@@ -146,9 +146,9 @@ def config(M):
                       SHANK='정강이를 9.5 mm 띄워 갈래 틈으로 → 안쪽으로 밀어 출력부에', WASH='평와셔 M3 × 6 (캡 구멍으로)',
                       S316='② M3 × 16 (12.9) × 6 조임', CAP='무릎 캡 → 바깥 막대 구멍 + 61807 안륜',
                       F7='⑦ M2.5 × 8 저두 × 3 조임'),
-        short=['인서트 → 하우징 끝', '인서트 → 캡 자리', '모터 → 무릎 포켓', 'SUS 링 + ① M2.5 × 8', 'moteus → 컵',
+        short=['인서트 → 하우징 끝', '인서트 → 캡 자리', '모터 → 무릎 포켓', '클램프 링 + ① M2.5 × 8', 'moteus → 컵',
                '컵 → 하우징 (⑤)', '정강이 준비', '정강이 → 갈래 → 출력부', '와셔 + ② M3 × 16', '무릎 캡 + ⑦'],
-        legend=['① M2.5 × 8 저두 × 6 + SUS 링', '② M3 × 16 (12.9) × 6 + 와셔', '③ 평행핀 Ø3 × 10 × 3',
+        legend=['① M2.5 × 8 저두 × 6 + 클램프 링', '② M3 × 16 (12.9) × 6 + 와셔', '③ 평행핀 Ø3 × 10 × 3',
                 '④ M2.5 × 5 × 4  ⑤ M2.5 × 18 × 3', '⑥ M3 × 16 접시 × 6  ⑦ M2.5 × 8 × 3', '61807, 인서트 M2.5 × 10'],
         major=['THIGH', 'MOTOR', 'SHANK', 'CUP', 'CAP', 'INSERT', 'RING', 'BRG'],
         done_labels=['THIGH', 'SHANK', 'CUP', 'CAP'],
@@ -158,5 +158,5 @@ def config(M):
         done=('조립 완료 — 무릎 관절',
               '정강이 → (⑥ + 받침 링) → hub 인서트 → (② + ③ 핀 + Ø11.8 스피곳) → AKE 출력부 → 고정자 → (① + Ø42 파일럿) → 무릎 판.\n'
               '바깥에서는 61807(정강이 패드) → 무릎 캡(⑦) → 바깥 막대가 무릎을 한 번 더 잡는다.'),
-        note='색은 부품 구분용 (실제 허벅지·정강이·컵은 검정 PETG)  ·  허벅지·정강이는 무릎 쪽만  ·  배선·커넥터는 생략  ·  '
+        note='색은 부품 구분용 (실제 출력 부품은 모두 검정 PETG)  ·  허벅지·정강이는 무릎 쪽만  ·  배선·커넥터는 생략  ·  '
              '⑥·⑦·캡 인서트는 모델에 없어 BOM 규격으로 그림')
