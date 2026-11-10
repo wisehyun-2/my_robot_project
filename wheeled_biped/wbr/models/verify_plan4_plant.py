@@ -24,8 +24,8 @@ import numpy as np
 import scipy.linalg as la
 
 from wbr import MODELS_DIR, RESULTS_DIR
-from wbr.controllers.lqi6.plant_serial import SerialPlant, SerialPlantParams
-from wbr.controllers.lqi6.serial_leg import UPKIE_JOINT_SIGNS, SerialLeg, SerialLegGeometry
+from wbr.controllers.lqi8.plant_serial import SerialPlant, SerialPlantParams
+from wbr.controllers.lqi8.serial_leg import UPKIE_JOINT_SIGNS, SerialLeg, SerialLegGeometry
 from wbr.models.upkie_params import set_leg_posture
 
 KNEE_LOCK_ARMATURE = 1.0e3     # kg m^2 on the knee dofs: the knee cannot move (rigid virtual leg)

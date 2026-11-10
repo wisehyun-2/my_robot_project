@@ -7,7 +7,7 @@ upkie link / wheel masses, hip and knee = AKE50-8 KV110 (0.19 kg), wheel = AKE60
 other motors per joint (Case.hip_motor / knee_motor / wheel_motor; the motor masses follow).  Motor model:
 peak torque, the voltage line of the torque-speed curve (no-load speed at the rated 24 V, winding resistance) while
 motoring, reflected rotor inertia (rotor inertia x gear^2) as joint armature, backdrive torque as joint friction.
-Controller: Plan 4 (MCU 1 kHz, LQI6, noise + 2 ms latency) with the plant re-identified from this model; the LQI6
+Controller: Plan 4 (MCU 1 kHz, LQI8, noise + 2 ms latency) with the plant re-identified from this model; the LQI8
 torque budget is the Plan 4 tuning scaled by mass and wheel radius (the validated closed loop), the actuators clip at
 the real motor limits.  Plan 4 itself is not modified: its model folder, wheel radius and torque limits are patched for
 the duration of one case.  Besides the joint torques and speeds every step records the tire normal forces and the
@@ -47,7 +47,7 @@ from wbr import MODELS_DIR, RESULTS_DIR
 G = 9.81
 JN = ["left_hip", "left_knee", "left_wheel", "right_hip", "right_knee", "right_wheel"]
 OUT_DIR = RESULTS_DIR / "ake_sizing"
-UPKIE_MASS = 5.33922            # Plan 4 model, the reference of the LQI6 tuning
+UPKIE_MASS = 5.33922            # Plan 4 model, the reference of the LQI8 tuning
 UPKIE_R = 0.056
 UPKIE_WHEEL_MARKERS = 0.002     # contact + wheel-centre marker bodies, counted in the 0.135 kg upkie wheel
 # References of the outer-loop tunings (Plan 4 model, models/upkie_plan4), used to scale them to another robot:
@@ -277,7 +277,7 @@ def tire_clearance(diameter_mm: float, samples: int = 60) -> dict:
 
 @contextlib.contextmanager
 def patched_plan4(case: Case, root: Path):
-    import wbr.plans.plan4_upkie_lqi6 as p4
+    import wbr.plans.plan4_lqi8 as p4
     saved = p4.MODELS_DIR, p4.WHEEL_RADIUS, p4.TAU_WHEEL_MAX, p4.TAU_LEG_MAX, p4.TRACK
     try:
         p4.MODELS_DIR, p4.WHEEL_RADIUS = root, case.radius
@@ -300,11 +300,11 @@ def make_plan(p4, case: Case, model_dir: str, params_json: Path, slope: float = 
     kw = dict(model_dir=model_dir, params_json=str(params_json), latency_ms=2.0, noise=True, seed=case.seed,
               slope_deg=slope, friction_comp_Nm=0.8 * case.motor("hip").backdrive,
               friction_comp_wheel_Nm=0.8 * case.motor("wheel").backdrive)
-    # CAD cases: outer-loop gains scaled to the robot (ake_cad); the staged tests (TEST/) also set lqi_kwargs, the
+    # CAD cases: outer-loop gains scaled to the robot (ake_cad); the staged tests (v5_lqi/TEST, v5_mpc/TEST) also set lqi_kwargs / mpc_kwargs, the
     # latency and the disturbances here - an override replaces the default above
     kw.update(getattr(case, "plan_overrides", None) or {})
     classes = case.plan_classes() if hasattr(case, "plan_classes") else None       # the CAD robot with its own URDF: wbr.plans.plan_v5
-    cfg_cls, plan_cls = classes or (p4.Plan4Config, p4.Plan4UpkieLQI6)
+    cfg_cls, plan_cls = classes or (p4.Plan4Config, p4.Plan4LQI8)
     plan = plan_cls(cfg_cls(**kw))
     sm = plan.sim.servo_model
     servo_torque = sm.torque

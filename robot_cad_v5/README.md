@@ -295,7 +295,7 @@ v5run.unjoint()        # 조인트 문서를 다시 고칠 때: 직접 모델링
 
 `v5run.save_mass_json()`이 허브 버전 9의 링크별 질량·무게중심·관성을 `calc/mass_properties.json`에 쓴다(바깥쪽 타이어 중심 y 270,
 Fusion 문서는 바꾸지 않는다). `wheeled_biped/results/ake_cad_v5/`가 그 값으로 돌린 결과다(시나리오 28개 × 로봇만 / 짐 5 kg,
-Plan 4 LQI6, 잡음 + 2 ms 지연, 시드 0). 이번부터 `ake_cad`는 **좌우 치수도 CAD 값**을 쓴다(링크 무게중심 y, 타이어 중심, MCU 트랙
+Plan 4 LQI8, 잡음 + 2 ms 지연, 시드 0). 이번부터 `ake_cad`는 **좌우 치수도 CAD 값**을 쓴다(링크 무게중심 y, 타이어 중심, MCU 트랙
 0.54 m; 전에는 upkie 좌우 배치라 접지 간격이 305 mm였다 — `--lateral upkie`로 예전 방식). MuJoCo 링크는 강체다.
 
 | 항목 | Fusion | MuJoCo 모델 |
@@ -312,7 +312,7 @@ v4보다 다리 묶음이 1.03 kg 무거워(2.56 → 3.59 kg) 평형 다리각�
 ### 바깥 루프 게인 (11-05 사용자: 환산값 적용)
 
 Plan 4의 요 PI와 다리 길이 PD는 5.3 kg upkie에서 맞춘 값이다. `ake_cad`는 이제 이 둘을 CAD 로봇 크기로 환산해 쓴다
-(`ake_cad.outer_loop_gains`; `--outer-gains upkie`가 예전 값). Plan 4 기본값과 균형 제어기(LQI6)는 그대로다.
+(`ake_cad.outer_loop_gains`; `--outer-gains upkie`가 예전 값). Plan 4 기본값과 균형 제어기(LQI8)는 그대로다.
 
 | 루프 | upkie 값 | 환산 기준 | v5 로봇만 | v5 짐 5 kg |
 |---|---|---|---|---|
@@ -463,7 +463,7 @@ Plan 4 기본값은 꺼짐). 잠긴 차동기처럼 멈춘 바퀴에 맞춰 반�
 | 모델 ↔ Fusion | 질량 10.9314 kg, 무게중심·관성·관절 위치 일치(`tests/test_robot_v5.py`) |
 | 플랜트 ↔ 모델 | 불안정 극 6.457 / 8.691 rad/s(차이 0.01 % 이하), 입력 행렬 0.02 %(`results/wheelbiped_v5_model`) |
 | 벤치(앞 = 스위치 쪽) | 두 경우 28개 모두 회복, 꺾임 없음. 로봇만 hip 11.43 / 무릎 9.47 / 바퀴 8.84 N·m, 짐 5 kg 12.50 / 12.50 / 12.50 N·m, 무릎 정지 최대 4.22 / 7.40 N·m. 무릎 피크는 스위치 쪽으로 기운 복귀에서 나온다 |
-| 단계 시험(전체 제어기, 시드 5개) | 1440건 모두 통과(2-12·2-13 기준은 앞 주행 측정에 맞춰 다시 정함, `TEST/README.md` 5절) |
+| 단계 시험(전체 제어기, 시드 5개) | 1440건 모두 통과(2-12·2-13 기준은 앞 주행 측정에 맞춰 다시 정함, `wheeled_biped/v5_lqi/TEST/README.md` 5절) |
 | 과속방지턱(한쪽 바퀴) | 14 cm까지 롤 0.5° 안, 20 cm 6.4°(다리 범위 200~344 mm의 한계). 라이브 화면: `python -m wbr.viewer.course_v5` |
 | 바닥 여유 | 바퀴 모터 하우징 r 46.4 mm, 바닥에서 54.6 mm(upkie 발목 상자로 잰 약 57 mm 대신) |
 

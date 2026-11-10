@@ -30,7 +30,7 @@ import numpy as np
 
 from wbr import MODELS_DIR
 from wbr.bench.ake_sizing import AKE60_8, Motor
-from wbr.controllers.lqi6.plant_serial import SerialPlantParams
+from wbr.controllers.lqi8.plant_serial import SerialPlantParams
 
 REPO = Path(__file__).resolve().parents[3]
 CAD_DIR = REPO / "robot_cad_v5"

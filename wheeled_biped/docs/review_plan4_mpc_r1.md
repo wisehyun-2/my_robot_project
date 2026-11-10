@@ -244,7 +244,7 @@ a_max를 결정한 기동(−1 → +1 m/s 반전, `experiments_stage2.py`)을 �
 **M5. 최종 상태 절과 `results/plan4_mpc/` 산출물에 최종 코드로 재현되지 않는 수치가 있다**
 - `docs/plan4_mpc_host.md:30`·`results/plan4_mpc/model_fit.json/png`(01:56): 스텝 피치 rms 0.46~0.52°, 밀기 피치 rms 0.47~0.59° → 최종 코드 재실행 0.66~0.70°, 0.11~0.29°(1.5절). `lqi6.py`가 02:00에 바뀐 뒤 다시 만들지 않았다. 사양이 요구한 "겹친 그림 + rms 기록" 산출물이다.
 - `docs/plan4_mpc_host.md:25`: "19번 … 전체 매트릭스 최악 1.65°(1 kHz)·1.51°(200 Hz)" → 공식 JSON·재현 모두 **1.172°·1.292°**. 1.652°·1.505°는 01:53~01:54의 중간 실행 캐시 `mpc_w4_r1`(축소 매트릭스, 02:00 lqi6.py 수정 전)에 있는 값과 일치한다.
-- `docs/plan4_mpc_host.md:86`: "6(1 kHz 3회, 바퀴 rms 0.22)" → 공식 1 kHz 6번 실패는 **10회**(m×0.85의 μ0.75·μ1.0 각 시드 0~4, 0.222~0.227; `docs/plan4_lqi6.md` 0절도 같은 오기).
+- `docs/plan4_mpc_host.md:86`: "6(1 kHz 3회, 바퀴 rms 0.22)" → 공식 1 kHz 6번 실패는 **10회**(m×0.85의 μ0.75·μ1.0 각 시드 0~4, 0.222~0.227; `docs/plan4_lqi8.md` 0절도 같은 오기).
 - `docs/plan4_mpc_host.md:85`: "1~17은 … 수치가 같다" → 10번은 1 kHz에서 45회 모두 다르다(n3); "오버슈트 ≤ 11 % → ≈1 %" → 200 Hz는 13.3 % → 3.0 %; "정지 거리 0.11 → 0.07 m" → 1단계 0.087/0.088 m(그리고 M3); "여유율이 10 % 넘게 나빠진 지표 없음" → 저장소의 `regression.py` 규칙으로 200 Hz 8번 wheel_peak ×0.217 → ×0.247(+14 %).
 - `results/plan4_mpc/regression.md·regression_vs_official_stage1.md·ramp_vs_mpc*.{png,json}·constraint_check.json·compare_hosts*.log·identify.log·timing_variants.json`은 01:10~01:31(시점 A/B) 산출이다. 예: `ramp_vs_mpc.json`의 MPC 피치 2.17°(19번 실패 수준), `constraint_check.json`의 바퀴 피크 0.43~0.53 N·m.
 - 영향: 판정 결과 파일(`plan4_mpc_*Hz.json`)은 정확하므로 통과/실패는 바뀌지 않는다. 그러나 문서·산출물의 수치를 근거로 쓸 수 없다(등급 규칙상 재현 불가 수치).

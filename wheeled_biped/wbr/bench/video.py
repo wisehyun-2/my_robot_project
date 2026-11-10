@@ -1,9 +1,10 @@
-"""Render a demonstration sequence of a plan to MP4 (offscreen MuJoCo renderer).
+"""Render a demonstration sequence of the Plan 4 closed loop (upkie-hardware model) to MP4 (offscreen MuJoCo renderer).
 
-    python -m wbr.bench.video --plan 1|2|3|4 [--balancer pid|mpc] [--out results/videos/planN.mp4]
+    python -m wbr.bench.video [--plan 4] [--balancer ramp|mpc] [--out results/videos/plan4_lqi8.mp4]
 
 Sequence: stand 1 s -> push 0.6 W at 1.0 s -> drive 0.6 m/s from 2.5 s to 5.5 s with a 0.8 rad/s
 turn between 3.5 and 4.5 s -> crouch 6 cm at 6 s -> back up at 7.5 s -> stop at 9 s.
+(Plans 1-3 were removed on 2026-11-11; their videos stay in results/videos.)
 """
 from __future__ import annotations
 
@@ -18,18 +19,9 @@ import numpy as np
 from wbr import RESULTS_DIR
 
 
-def make_plan(plan: int, balancer: str):
-    if plan == 1:
-        from wbr.plans.plan1_upkie import Plan1Config, Plan1Upkie
-        return Plan1Upkie(Plan1Config(balancer=balancer, noise=True, latency_ms=2.0))
-    if plan == 2:
-        from wbr.plans.plan2_diablo_lqi6 import Plan2Config, Plan2DiabloLQI6
-        return Plan2DiabloLQI6(Plan2Config(noise=True, latency_ms=2.0))
-    if plan == 4:
-        from wbr.plans.plan4_upkie_lqi6 import Plan4Config, Plan4UpkieLQI6
-        return Plan4UpkieLQI6(Plan4Config(noise=True, latency_ms=10.0, host="mpc" if balancer == "mpc" else "ramp"))
-    from wbr.plans.plan3_diablo_upkie import Plan3Config, Plan3DiabloUpkie
-    return Plan3DiabloUpkie(Plan3Config(balancer=balancer, noise=True, latency_ms=2.0))
+def make_plan(balancer: str):
+    from wbr.plans.plan4_lqi8 import Plan4Config, Plan4LQI8
+    return Plan4LQI8(Plan4Config(noise=True, latency_ms=10.0, host="mpc" if balancer == "mpc" else "ramp"))
 
 
 def command_at(t: float):
@@ -41,15 +33,15 @@ def command_at(t: float):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--plan", type=int, default=1)
-    ap.add_argument("--balancer", default="pid")
+    ap.add_argument("--plan", type=int, default=4, choices=(4,), help="kept for old command lines; only Plan 4 is left")
+    ap.add_argument("--balancer", default="ramp", choices=("ramp", "mpc"), help="host: ramp (stage 1) or the MPC host (stage 2)")
     ap.add_argument("--out", default=None)
     ap.add_argument("--fps", type=int, default=30)
     ap.add_argument("--duration", type=float, default=10.0)
     args = ap.parse_args()
-    plan = make_plan(args.plan, args.balancer)
-    tag = "lqi6" if args.plan == 2 else ("lqi6_mpc" if (args.plan == 4 and args.balancer == "mpc") else "lqi6" if args.plan == 4 else args.balancer)
-    out = Path(args.out) if args.out else RESULTS_DIR / "videos" / f"plan{args.plan}_{tag}.mp4"
+    plan = make_plan(args.balancer)
+    tag = "lqi8_mpc" if args.balancer == "mpc" else "lqi8"
+    out = Path(args.out) if args.out else RESULTS_DIR / "videos" / f"plan4_{tag}.mp4"
     out.parent.mkdir(parents=True, exist_ok=True)
     sim = plan.sim
     renderer = mujoco.Renderer(sim.model, height=720, width=1280)

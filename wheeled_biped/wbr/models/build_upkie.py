@@ -1,4 +1,6 @@
-"""Build the MuJoCo model of Upkie from the upkie_description URDF (Plan 1).
+"""Build the MuJoCo model of Upkie from the upkie_description URDF (the Plan 4 model and the ake_sizing / ake_cad benches;
+Plan 4: --out models/upkie_plan4 --tire-radius 0.056 --tire-shape ellipsoid --tire-condim 4).  The default output folder
+models/upkie was Plan 1's model, removed with Plans 1-3 on 2026-11-11.
 
 Steps: patch package:// mesh paths, let MuJoCo parse the URDF into an MjSpec, add a free joint,
 joint dynamics (rotor armature / friction), torque actuators named like the joints, an IMU site

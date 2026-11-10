@@ -1,6 +1,8 @@
 """Live MuJoCo window: the v5 robot (full controller, real IMU chain) drives over curved speed bumps under one wheel.
 
-    python -m wbr.viewer.course_v5 [--humps 0.06,0.10,0.14,0.20] [--v 0.8] [--speed 1.0] [--both-wheels] [--once]
+    python -m wbr.viewer.course_v5 [--controller lqi|mpc] [--humps 0.06,0.10,0.14,0.20] [--v 0.8] [--speed 1.0] [--both-wheels] [--once]
+
+--controller: the balance law of v5_lqi (LQI8, default) or of v5_mpc (MPC); run from wheeled_biped/.
 
 The bumps are in the robot's path, alternating left and right wheel, length max(0.8 m, 10 h).  The robot drives by itself, slows down while its
 legs differ in length, stops after the last bump and starts again.
@@ -36,11 +38,19 @@ def main() -> None:
     ap.add_argument("--speed", type=float, default=1.0, help="real-time factor")
     ap.add_argument("--both-wheels", action="store_true")
     ap.add_argument("--once", action="store_true", help="stay at the end of the course")
+    ap.add_argument("--controller", choices=("lqi", "mpc"), default="lqi", help="balance law: v5_lqi (LQI8) or v5_mpc (MPC)")
     args = ap.parse_args()
 
-    from wbr.plans.plan_v5 import PlanV5, PlanV5Config
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))         # wheeled_biped/: the v5_lqi / v5_mpc folders
+    if args.controller == "mpc":
+        from v5_mpc.controller import make_plan
+    else:
+        from v5_lqi.controller import make_plan
     humps, x_end = course([float(h) for h in args.humps.split(",")], args.both_wheels)
-    plan = PlanV5(PlanV5Config.from_model(floor_humps=humps, noise=True, seed=0, latency_ms=10.0))
+    plan = make_plan(floor_humps=humps, noise=True, seed=0, latency_ms=10.0)
+    print(f"balance controller: {args.controller.upper()}", flush=True)
     sim = plan.sim
     cmd = {"v": args.v, "go": True, "push": 0.0, "reset": False}
 

@@ -134,7 +134,7 @@ v3run.load()['finalize'].exports()              # export/: f3d, 조립 STEP, 부
 
 ## 5. 모터 재검증 (MuJoCo, `wbr/bench/ake_cad.py --cad`)
 
-`results/ake_cad_v3/`(시나리오 28개 × 로봇만 / 짐 5 kg, Plan 4 LQI6, 잡음 + 2 ms 지연, 시드 0). 링크가 가벼워지고(허벅지 쪽 0.80
+`results/ake_cad_v3/`(시나리오 28개 × 로봇만 / 짐 5 kg, Plan 4 LQI8, 잡음 + 2 ms 지연, 시드 0). 링크가 가벼워지고(허벅지 쪽 0.80
 → 0.73 kg) 무게중심이 조금 바뀐 것 말고는 v2와 같은 모델이다.
 
 | 경우 | 질량 | 회복 못 한 시나리오 | 최대 토크 hip / knee / 바퀴 [N·m] | 무릎 정지 최대 |

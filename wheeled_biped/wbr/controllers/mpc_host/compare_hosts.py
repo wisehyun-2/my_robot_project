@@ -25,7 +25,7 @@ def run(host: str, rate: float, seed: int, mass: float, friction: float) -> dict
     ref = []
     orig_step = plan.step
 
-    def step(v=0.0, w=0.0):                         # record the reference the LQI6 actually used
+    def step(v=0.0, w=0.0):                         # record the reference the LQI8 actually used
         o = orig_step(v, w)
         ref.append(plan.law.ctrl.v_filt)
         return o
@@ -55,7 +55,7 @@ def plot(ramp: dict, mpc: dict, path) -> None:
         rows.append(f"{name}: rise {m['rise_s']:.2f} s, overshoot {m['overshoot_pct']:.1f} %, pitch {m['pitch_peak']:.2f} deg, "
                     f"stop {m['stop_disp']:.3f} m, wheel peak {m['wheel_peak']:.2f} Nm")
         ax[0].plot(t, d["vx"], c, lw=0.9, label=f"{name}: v_base")
-        ax[0].plot(t, d["r"], c, lw=1.4, ls="--", alpha=0.8, label=f"{name}: reference used by the LQI6")
+        ax[0].plot(t, d["r"], c, lw=1.4, ls="--", alpha=0.8, label=f"{name}: reference used by the LQI8")
         ax[1].plot(t, d["pitch"], c, lw=0.8, label=name)
         ax[2].plot(t, d["x"], c, lw=1.2, label=name)
         ax[3].plot(t, d["tau_w"], c, lw=0.6, alpha=0.8, label=name)

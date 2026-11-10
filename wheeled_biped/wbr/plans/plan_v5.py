@@ -1,4 +1,4 @@
-"""The v5 robot's closed loop: its own URDF model (wbr.models.build_v5), the DIABLO-style MCU with the LQI6 designed on that model,
+"""The v5 robot's closed loop: its own URDF model (wbr.models.build_v5), the DIABLO-style MCU with the LQI8 designed on that model,
 and the IMU the way the real board delivers it.
 
 Same runtime structure as Plan 4 (the class is shared), but nothing of upkie's: model, joint signs, tyre, track, motor limits, IMU
@@ -23,7 +23,7 @@ import numpy as np
 from wbr.common.rotations import quat_to_matrix, roll_pitch_yaw, rot_y
 from wbr.models import build_v5 as BV
 from wbr.observers.pi3hat_ars import Pi3HatAttitude
-from wbr.plans import plan4_upkie_lqi6 as P4
+from wbr.plans import plan4_lqi8 as P4
 from wbr.plans.common import SensorNoise
 
 
@@ -59,7 +59,7 @@ class PlanV5Config(P4.Plan4Config):
         return cls(**args)
 
 
-class PlanV5(P4.Plan4UpkieLQI6):
+class PlanV5(P4.Plan4LQI8):
     torso_body = "base"
 
     @staticmethod

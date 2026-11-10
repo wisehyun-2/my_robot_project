@@ -1,6 +1,6 @@
 # Plan 4 2단계: 호스트 MPC 기준 생성기
 
-작성 2026-10-23(검토 1라운드 반영판: 이전 판의 "시점 A/B/C" 설계 기록은 `docs/review_plan4_mpc_r1.md`·`docs/review_plan4_r1_response.md`와 git 이력에 있다). 대상: Plan 4(upkie 하드웨어 + LQI6 + DIABLO식 호스트/MCU 분리)의 호스트 쪽 MPC 기준 생성기. 기존 `HostEmulator` 자리에 들어가 MCU의 LQI6 균형기 위에서 속도 기준만 만든다. 코드는 `wbr/controllers/mpc_host/`(`model.py` 예측 모델, `reference_mpc.py` MpcHost·QP·한계 유도·관측기·폴백, `fallback.py` 1단계 성형, `identify.py` 모델 검증), 합격 시험 연결은 `wbr/bench/acceptance_mpc.py`, 결과는 `results/acceptance/plan4_mpc_<rate>Hz.md|json`과 `results/plan4_mpc/`(`model_fit.png/json`), 모델 JSON은 `models/upkie_plan4/plan4_closed_loop.json`.
+작성 2026-10-23(검토 1라운드 반영판: 이전 판의 "시점 A/B/C" 설계 기록은 `docs/review_plan4_mpc_r1.md`·`docs/review_plan4_r1_response.md`와 git 이력에 있다). 대상: Plan 4(upkie 하드웨어 + LQI8 + DIABLO식 호스트/MCU 분리)의 호스트 쪽 MPC 기준 생성기. 기존 `HostEmulator` 자리에 들어가 MCU의 LQI8 균형기 위에서 속도 기준만 만든다. 코드는 `wbr/controllers/mpc_host/`(`model.py` 예측 모델, `reference_mpc.py` MpcHost·QP·한계 유도·관측기·폴백, `fallback.py` 1단계 성형, `identify.py` 모델 검증), 합격 시험 연결은 `wbr/bench/acceptance_mpc.py`, 결과는 `results/acceptance/plan4_mpc_<rate>Hz.md|json`과 `results/plan4_mpc/`(`model_fit.png/json`), 모델 JSON은 `models/upkie_plan4/plan4_closed_loop.json`.
 
 ```
 python -m wbr.controllers.mpc_host.identify                                            # 모델 검증 그림·JSON
@@ -13,8 +13,8 @@ python -m wbr.bench.acceptance_mpc 1000                                         
 
 | 항목 | 결과 |
 |---|---|
-| 구조 | 50 Hz 호스트, 1.5 s 구간(75단) QP. MotionCtrl(forward = 최적 기준 궤적의 첫 값, left 통과, up 다리 길이 범위로 클립, pitch = 0, roll·leg_split = 0) → MCU LQI6. **MPC에 적분기 없음** |
-| 내부 루프(MPC 모드) | `host_shaped = True` → LQI6 플레인 추종(4 m/s² 램프로 기준을 따라붙음, 전치 필터 없음). **기준이 가속하는 동안(저역통과 0.1 s 가속도 > 0.1 m/s²) 적분기 z·z_att·z_pos 전부 동결**(`freeze_int_on_accel_plain`). 타임아웃·QP 실패 때는 플래그 거짓 → 1단계 성형(램프 2 + 전치 필터 0.3 s + 동결) |
+| 구조 | 50 Hz 호스트, 1.5 s 구간(75단) QP. MotionCtrl(forward = 최적 기준 궤적의 첫 값, left 통과, up 다리 길이 범위로 클립, pitch = 0, roll·leg_split = 0) → MCU LQI8. **MPC에 적분기 없음** |
+| 내부 루프(MPC 모드) | `host_shaped = True` → LQI8 플레인 추종(4 m/s² 램프로 기준을 따라붙음, 전치 필터 없음). **기준이 가속하는 동안(저역통과 0.1 s 가속도 > 0.1 m/s²) 적분기 z·z_att·z_pos 전부 동결**(`freeze_int_on_accel_plain`). 타임아웃·QP 실패 때는 플래그 거짓 → 1단계 성형(램프 2 + 전치 필터 0.3 s + 동결) |
 | 예측 모델 | (a) 선형 폐루프 축약, **기동 영역의 적분기 없는 상태 되먹임 루프**(플랜트 5상태 + 10 ms 관측 지연 → 1 kHz 55상태 / 200 Hz 15상태 → 20 ms 리프팅 → 균형 절단 1 kHz 4차·200 Hz 5차). 속도 스텝 rms 오차 0.025~0.027 m/s(0.5 m/s의 5 %), 피치 0.32~0.38°; 실측 피치 피크가 모델의 1.18~1.30배(건마찰·5 ms 속도 창) |
 | 제약 | \|r\| ≤ 1.0 m/s; 가속 \|a\| ≤ a_max = **0.889 / 0.884 m/s²**(1 kHz / 200 Hz; 19번 피치 예산 (2° − 0.5°)/모델 오차 계수 1.3이 결정); **제동**(로봇의 예측 속도와 반대 방향) ≤ a_dec = 1.17 a_max = **1.040 / 1.035**; 저크 \|Δa\| ≤ j_max T, j_max = a_max/0.10 s = 8.9; up은 다리 길이 [0.24, 0.335] m로 클립 |
 | 텔레메트리 보정 | 기동 중(목표 ≠ 0, 끝난 뒤 `obs_hold_s` 1.0 s, 그 뒤에도 텔레메트리 속도 > 0.05 m/s면 최대 3 s까지 — 3라운드 m2)에만, 20 ms 평균 est.v로 축약 모델의 가장 느린 모드를 칼만 보정(σ_z 0.0005, 관측기 극 0.91/20 ms ≈ 0.22 s). **혁신 \|y − ŷ\| > 0.1 m/s는 외란으로 보고 보정하지 않음**, 목표 \|v*\| < 0.02 m/s는 정확히 0 |
@@ -41,11 +41,11 @@ python -m wbr.bench.acceptance_mpc 1000                                         
                         ▼
  HostLink (500 ms 타임아웃 → MCU 단절 프로그램, host_shaped = False)   ▲ 텔레메트리 plan.mcu.est: v, v_ref(MCU 자체 기준),
                         ▼                                            │ position, pitch, pitch_rate, theta_v_mean, L0_mean
- MCU 1 kHz / 200 Hz: 추정기 → LQI6(플레인 추종, 기동 중 적분기 동결) → 다리 PD·VMC → 토크
+ MCU 1 kHz / 200 Hz: 추정기 → LQI8(플레인 추종, 기동 중 적분기 동결) → 다리 PD·VMC → 토크
 ```
 
-- 호스트는 LQI6를 대체하지 않는다. 내려보내는 것은 속도·요·높이 기준뿐이고 피치 기준은 항상 0(`pitch_ctrl_mode = False`), roll·leg_split도 0으로 고정한다(사양 "속도·요·높이만").
-- 호스트가 읽는 실행 중 정보는 `plan.mcu.est`(텔레메트리)뿐이다. 모델·이득·MCU 주기·지연은 설계 정보(같은 펌웨어의 이득표, 설정 지연 `latency_ms` — 실기에서는 측정 지연으로 바꿀 것)로 쓴다. 시뮬레이터 상태는 쓰지 않는다(`Plan4UpkieLQI6._obs_to_mcu`가 참값 키를 제거하고, 호스트는 MCU 추정만 본다).
+- 호스트는 LQI8을 대체하지 않는다. 내려보내는 것은 속도·요·높이 기준뿐이고 피치 기준은 항상 0(`pitch_ctrl_mode = False`), roll·leg_split도 0으로 고정한다(사양 "속도·요·높이만").
+- 호스트가 읽는 실행 중 정보는 `plan.mcu.est`(텔레메트리)뿐이다. 모델·이득·MCU 주기·지연은 설계 정보(같은 펌웨어의 이득표, 설정 지연 `latency_ms` — 실기에서는 측정 지연으로 바꿀 것)로 쓴다. 시뮬레이터 상태는 쓰지 않는다(`Plan4LQI8._obs_to_mcu`가 참값 키를 제거하고, 호스트는 MCU 추정만 본다).
 - 정지 중(목표 0이고 기동이 끝난 뒤)에는 기준이 정확히 0이고 보정도 하지 않는다. 그래서 목표 0인 항목(1~7, 9, 10, 12, 15~17)은 1단계와 같은 내부 루프 응답이다(1단계 HostEmulator도 고정 격자 50 Hz로 게시하므로 20번 비교는 같은 호스트 주기에서 이루어진다).
 - 사양 범위 검사: 호스트 주기 50~100 Hz, 구간 1~2 s, MCU 주기의 정수배가 아니면 생성 시 `ValueError`(조용히 꺼지지 않음). 내부 폐루프가 불안정하면(지연 ≥ 20 ms) 예측 모델이 무의미하므로 MPC를 끄고 1단계 성형만 쓴다(이벤트).
 - 인터페이스(`reference_mpc.MpcHost`): `MpcHost(link, plan, publish_hz=50, horizon_s=None, config=MpcConfig())`; `set_command(**fields)`, `tick(t)`, 속성 `enabled`, `cmd`, `sent`, `violations`, `solve_times_ms`, `qp_failures`, `solver_failures`, `fallback_used`, `force_fail`, `events`, `trace`, `corrections`, `gated_corrections`, `stats()`.
@@ -58,9 +58,9 @@ python -m wbr.bench.acceptance_mpc 1000                                         
 
 ### 2.2 기동 영역의 내부 루프 = 적분기 없는 상태 되먹임 (검토 1라운드 M4)
 
-MCU의 LQI6는 호스트 기준이 움직이는 동안 **모든 적분기를 동결**한다(`lqi6.py`: `freeze_int_on_accel_plain`, z_att는 그 전부터 같은 조건으로 게이팅). 그래서 MPC가 예측해야 하는 폐루프는 u = −K_5 [θ, θ̇, v − r, φ, φ̇]의 순수 상태 되먹임 루프다(`model.lqi6_options(ctrl, L0)` → `use_int = False`, `att_gM = None`, `use_pos = False`, `select_gains`가 K의 앞 5열만 쓴다). 적분기를 포함한 모델(1라운드 전)은 가속 중 z_att가 적분한다고 보아 스텝 피치 피크를 1.8° 대 실제 1.0°로 과대 예측했다. 적분기가 다시 켜지는 것은 가속이 끝난 뒤(순항·정지)이고, 그때의 잔류 속도 오차는 MCU의 z가 없앤다(선형 무마찰 모델의 r → v 정상상태 이득은 1.017: 관절 점성 감쇠를 이기는 정상 토크 때문).
+MCU의 LQI8은 호스트 기준이 움직이는 동안 **모든 적분기를 동결**한다(`lqi8.py`: `freeze_int_on_accel_plain`, z_att는 그 전부터 같은 조건으로 게이팅). 그래서 MPC가 예측해야 하는 폐루프는 u = −K_5 [θ, θ̇, v − r, φ, φ̇]의 순수 상태 되먹임 루프다(`model.lqi8_options(ctrl, L0)` → `use_int = False`, `att_gM = None`, `use_pos = False`, `select_gains`가 K의 앞 5열만 쓴다). 적분기를 포함한 모델(1라운드 전)은 가속 중 z_att가 적분한다고 보아 스텝 피치 피크를 1.8° 대 실제 1.0°로 과대 예측했다. 적분기가 다시 켜지는 것은 가속이 끝난 뒤(순항·정지)이고, 그때의 잔류 속도 오차는 MCU의 z가 없앤다(선형 무마찰 모델의 r → v 정상상태 이득은 1.017: 관절 점성 감쇠를 이기는 정상 토크 때문).
 
-구성(`model.py lqi6_closed_loop`): 플랜트 5상태 s = [θ, θ̇, v, φ, φ̇]를 MCU 주기로 ZOH 이산화(`LQI6.design`과 같은 c2d), 측정 e = s_{k−d}(관측 지연 d = 10 ms = 1 kHz 10스텝 / 200 Hz 2스텝), u_k = −K_5[e_θ, e_θ̇, e_v − r_k, e_φ, e_φ̇]. 상태 수 1 kHz 5 + 50 = 55, 200 Hz 5 + 10 = 15. 입력 r(LQI6가 쓰는 기준), F(전체 무게중심 수평 힘, 밀기 검증용), Tf(바퀴 외란 토크). 출력 v(텔레메트리 est.v), v_base(= 판정 vx = v + L0 cos θ_eq θ̇ − h_b φ̇, h_b 0.164 m), pitch(= −φ), θ, T, Tp. 호스트 주기 리프팅(20 ms 동안 r 고정) 뒤 제곱근 균형 절단 + DC 맞춤(채널 가중 r 1 m/s ~ Tf 0.05 N·m, v_base 0.1 m/s ~ 피치 1°), 차수는 단위 스텝 오차가 속도 1 %·피치 0.1° 이하가 되는 최소값 자동 선택.
+구성(`model.py lqi8_closed_loop`): 플랜트 5상태 s = [θ, θ̇, v, φ, φ̇]를 MCU 주기로 ZOH 이산화(`LQI8.design`과 같은 c2d), 측정 e = s_{k−d}(관측 지연 d = 10 ms = 1 kHz 10스텝 / 200 Hz 2스텝), u_k = −K_5[e_θ, e_θ̇, e_v − r_k, e_φ, e_φ̇]. 상태 수 1 kHz 5 + 50 = 55, 200 Hz 5 + 10 = 15. 입력 r(LQI8이 쓰는 기준), F(전체 무게중심 수평 힘, 밀기 검증용), Tf(바퀴 외란 토크). 출력 v(텔레메트리 est.v), v_base(= 판정 vx = v + L0 cos θ_eq θ̇ − h_b φ̇, h_b 0.164 m), pitch(= −φ), θ, T, Tp. 호스트 주기 리프팅(20 ms 동안 r 고정) 뒤 제곱근 균형 절단 + DC 맞춤(채널 가중 r 1 m/s ~ Tf 0.05 N·m, v_base 0.1 m/s ~ 피치 1°), 차수는 단위 스텝 오차가 속도 1 %·피치 0.1° 이하가 되는 최소값 자동 선택.
 
 | 차수 | 3 | 4 | 5 |
 |---|---|---|---|
@@ -71,7 +71,7 @@ MCU의 LQI6는 호스트 기준이 움직이는 동안 **모든 적분기를 동
 
 ### 2.3 검증: 모델 대 시뮬레이션(`identify.py`, 그림 `results/plan4_mpc/model_fit.png`, 수치 `model_fit.json`)
 
-내부 루프를 MPC 모드 그대로(HostEmulator가 `host_shaped = True`를 보냄 → 플레인 추종 + 가속 중 동결) 두고 ① 0 → 0.5 m/s 속도 스텝(MCU 4 m/s² 램프, 2.5 s 유지 후 0), ② 서 있는 상태에서 0.5 W 밀기(0.1 s)를 돌렸다. 모델 입력은 LQI6가 실제로 쓴 기준(`law.ctrl.v_filt`, 매 스텝 기록)과 같은 밀기 힘. 오차는 사건 이후 구간 rms(모델 − 시뮬), 피치는 실제 몸체 피치. 스텝은 기동 모델, 밀기는 정지 모델(적분기 활성)과 비교한다(정지 중 밀기는 호스트가 아무것도 하지 않는 영역이다).
+내부 루프를 MPC 모드 그대로(HostEmulator가 `host_shaped = True`를 보냄 → 플레인 추종 + 가속 중 동결) 두고 ① 0 → 0.5 m/s 속도 스텝(MCU 4 m/s² 램프, 2.5 s 유지 후 0), ② 서 있는 상태에서 0.5 W 밀기(0.1 s)를 돌렸다. 모델 입력은 LQI8이 실제로 쓴 기준(`law.ctrl.v_filt`, 매 스텝 기록)과 같은 밀기 힘. 오차는 사건 이후 구간 rms(모델 − 시뮬), 피치는 실제 몸체 피치. 스텝은 기동 모델, 밀기는 정지 모델(적분기 활성)과 비교한다(정지 중 밀기는 호스트가 아무것도 하지 않는 영역이다).
 
 | 조건 | 주기 | 스텝 v_base rms | 스텝 피치 rms | 스텝 피치 피크 시뮬 / 모델 | 밀기 v_base rms(정지 모델) | 밀기 피치 rms | 축약 모델 스텝 v_base |
 |---|---|---|---|---|---|---|---|
@@ -162,14 +162,14 @@ a_max에서의 모델 피크: 19번 기동 바퀴 T/2 0.149 N·m, 피치 1.153°
 | 크기 | 변수 75, 부등식 300(r·a 상하 4 × 75) + 변수 상하한 150 |
 | 응축 | qpmpc `MPCProblem/MPCQP`의 Φ, Ψ, G; 출력 가중 비용 P = 2(MᵀWM + w_u I)는 직접 조립. P, G 고정(가속/감속 두 벌), 매 풀이마다 q(x0, v_d)와 h(x0, 단계 상하한) 갱신 |
 | 솔버 | qpsolvers + DAQP(warm start = 지난 해를 한 단 당김). DAQP 실패 시 같은 주기에 OSQP(`time_limit` 10 ms) |
-| 적분기 | 없음. 외란·오차 적분 상태가 없고 정상 상태 오차는 내부 LQI6의 적분기(가속이 끝난 뒤)가 없앤다 |
+| 적분기 | 없음. 외란·오차 적분 상태가 없고 정상 상태 오차는 내부 LQI8의 적분기(가속이 끝난 뒤)가 없앤다 |
 
 송신값은 최적 기준 궤적의 첫 값 r_0 = r_{−1} + T(a_{−1} + u_0)다.
 
 ## 5. 텔레메트리 보정 (검토 1라운드 M1)
 
 - 측정 y = 직전 20 ms 동안의 est.v 평균(σ_v 0.01 m/s), 예측 ŷ = 한 주기 전 예측. 보정 x̂ ← x̂ + A L (y − ŷ), L은 가장 느린 축약 모드 방향의 과정 잡음 σ_z = 0.0005/주기로 정한 정상 상태 칼만 이득(관측기 극 |λ| ≤ 0.912 / 0.913 per 20 ms ≈ 0.22 s; 1라운드 전 σ_z 0.002는 극 0.80으로 텔레메트리를 거의 그대로 따라가는 것이었다).
-- **혁신 게이트**: |y − ŷ| > 0.1 m/s이면 모델 오차가 아니라 외란(밀기)으로 보고 보정하지 않는다(`gated_corrections` 집계). 1라운드에서는 주행 중 밀기에 호스트가 기준을 −0.67 m/s까지 흔들었다(LQI6 적분기와 같은 오차를 둘이 적분).
+- **혁신 게이트**: |y − ŷ| > 0.1 m/s이면 모델 오차가 아니라 외란(밀기)으로 보고 보정하지 않는다(`gated_corrections` 집계). 1라운드에서는 주행 중 밀기에 호스트가 기준을 −0.67 m/s까지 흔들었다(LQI8 적분기와 같은 오차를 둘이 적분).
 - 보정은 목표가 0이 아닌 동안과 목표가 0이 된 뒤 `obs_hold_s` = 1.0 s까지만(정지가 끝날 때까지; 3.4절); 목표는 데드밴드 0.02 m/s로 정확히 0이 된다(1e−4 m/s 조이스틱 잔류가 보정을 켜 두던 문제). 기동이 끝나면 예측 상태를 0으로 넘긴다(handover). 단계별 제동 방향에 쓰는 예측 속도는 직전 주기의 계획(한 단 지연, 2라운드 n2)이다.
 - 적분기 판정: 단위원 위 극이 없고 외란 상태도 없다. 1.5 s 시정수의 강한 바깥 속도 루프였던 1라운드 설정과 달리 0.2 s의 약한 보정이며, 내부 적분기가 기동 중 동결되어 "두 적분기의 싸움"이 구조적으로 없다. 측정(24번: 0.3 m/s 순항 중 0.75 W 밀기): 공칭 정착 MPC 1.91/2.03 s(1 kHz/200 Hz) 대 램프 호스트 1.90/1.99 s, 후진 최대 0.006 m/s(1라운드 0.67 m/s); 2라운드 검토의 9조합 재실험에서도 정착 최대 MPC 2.25 s 대 램프 2.33 s, 후진 ≤ 0.018 m/s.
 

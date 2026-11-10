@@ -7,12 +7,12 @@ import unittest
 import numpy as np
 
 from wbr.controllers.diablo_arch.host_link import HostEmulator, HostLink, HostLinkParams
-from wbr.plans.plan4_upkie_lqi6 import Plan4Config, Plan4UpkieLQI6
+from wbr.plans.plan4_lqi8 import Plan4Config, Plan4LQI8
 
 
 def make_plan(rate=1000.0, **kw):
     cfg = Plan4Config(rate_hz=rate, noise=True, latency_ms=10.0, **kw)
-    plan = Plan4UpkieLQI6(cfg)
+    plan = Plan4LQI8(cfg)
     plan.reset()
     return plan
 
@@ -209,7 +209,7 @@ class HostCommandGuardTests(unittest.TestCase):
             plan = make_plan(rate)
             self.assertTrue(plan.run(0.5))
             good = plan.law.theta_eq
-            plan.law.theta_eq = lambda L0: float("nan")           # corrupts theta inside LQI6Law.compute
+            plan.law.theta_eq = lambda L0: float("nan")           # corrupts theta inside LQI8Law.compute
             for _ in range(3):
                 plan.step(0.0, 0.0)
             self.assertFalse(plan.mcu.fault, f"{rate} Hz: faulted before max_bad_samples")
@@ -228,12 +228,12 @@ class ImuConventionTests(unittest.TestCase):
         y); the MCU's BaseOrientation adapter must recover exactly the world-frame base estimate (review r1 M3)."""
         import mujoco
         from wbr.controllers.diablo_arch.mcu import DiabloMcu, McuParams
-        plan = Plan4UpkieLQI6(Plan4Config(rate_hz=1000.0, noise=False, latency_ms=0.0, real_imu_convention=True))
+        plan = Plan4LQI8(Plan4Config(rate_hz=1000.0, noise=False, latency_ms=0.0, real_imu_convention=True))
         plan.reset(pitch=0.1, yaw=0.4)
         plan.sim.data.qvel[3:6] = [0.2, 0.3, 1.0]           # body-frame angular velocity of the free joint
         mujoco.mj_forward(plan.sim.model, plan.sim.data)
         obs_conv = plan._observe()                            # ARS / IMU-frame sample
-        plan_w = Plan4UpkieLQI6(Plan4Config(rate_hz=1000.0, noise=False, latency_ms=0.0, real_imu_convention=False))
+        plan_w = Plan4LQI8(Plan4Config(rate_hz=1000.0, noise=False, latency_ms=0.0, real_imu_convention=False))
         raw = plan.sim.observe()                              # world-frame sample of the same state
         self.assertIsNone(plan_w.mcu.imu)
         self.assertIsNotNone(plan.mcu.imu)
@@ -268,8 +268,8 @@ class ImuConventionTests(unittest.TestCase):
 class PredictionModelTests(unittest.TestCase):
     def test_manoeuvre_model_is_integrator_free_and_stable(self):
         from wbr.controllers.mpc_host import model as M
-        plan = Plan4UpkieLQI6(Plan4Config(rate_hz=1000.0, noise=False, latency_ms=10.0))
-        opts = M.lqi6_options(plan.law.ctrl, plan.params.L0)
+        plan = Plan4LQI8(Plan4Config(rate_hz=1000.0, noise=False, latency_ms=10.0))
+        opts = M.lqi8_options(plan.law.ctrl, plan.params.L0)
         self.assertFalse(opts["use_int"])
         self.assertIsNone(opts["att_gM"])
         self.assertFalse(opts["use_pos"])
@@ -285,12 +285,12 @@ class PredictionModelTests(unittest.TestCase):
         dc = cl.dc_gain()
         self.assertAlmostEqual(float(dc[cl.iy("v"), cl.iu("r")]), 1.0, delta=0.05)
         with self.assertRaises(ValueError):
-            M.lqi6_closed_loop(plan.plant, K, plan.params.L0, plan.law.ctrl.Ts, 10, use_int=False)   # wrong K shape
+            M.lqi8_closed_loop(plan.plant, K, plan.params.L0, plan.law.ctrl.Ts, 10, use_int=False)   # wrong K shape
 
     def test_plain_mode_freezes_integrators_while_accelerating(self):
-        from wbr.controllers.lqi6.lqi6 import LQI6
-        plan = Plan4UpkieLQI6(Plan4Config(rate_hz=1000.0, noise=False, latency_ms=0.0))
-        ctrl: LQI6 = plan.law.ctrl
+        from wbr.controllers.lqi8.lqi8 import LQI8
+        plan = Plan4LQI8(Plan4Config(rate_hz=1000.0, noise=False, latency_ms=0.0))
+        ctrl: LQI8 = plan.law.ctrl
         ctrl.reset()
         ctrl.set_reference_shaping(False)
         # host-shaped reference accelerating at 0.8 m/s^2 with a constant velocity error: once the low-passed reference
@@ -355,7 +355,7 @@ class MpcHostTests(unittest.TestCase):
         loop's feedback (modelled that way, 10 ms made the inner loop 'unstable' and switched the MPC off)."""
         from wbr.controllers.mpc_host import reference_mpc as RM
         for rate in (1000.0, 200.0):
-            plan = Plan4UpkieLQI6(Plan4Config(rate_hz=rate, noise=False, latency_ms=10.0))
+            plan = Plan4LQI8(Plan4Config(rate_hz=rate, noise=False, latency_ms=10.0))
             cfg0, cfg = RM.MpcConfig(), RM.MpcConfig(model_extra_latency_ms=20.0)
             m0 = RM.prediction_model(plan, 0.02, cfg0.order)
             m1 = RM.prediction_model(plan, 0.02, cfg.order, extra_latency_ms=20.0)
@@ -379,7 +379,7 @@ class MpcHostTests(unittest.TestCase):
         inner loop (prediction dropped, braking direction no longer from the prediction) used to happen while the body
         still rolled at 0.17-0.37 m/s and a few sent packets then exceeded a_max."""
         from wbr.bench.acceptance_mpc import _capture_packets, packet_violations
-        plan = Plan4UpkieLQI6(Plan4Config(rate_hz=200.0, noise=True, latency_ms=10.0, host="mpc"))
+        plan = Plan4LQI8(Plan4Config(rate_hz=200.0, noise=True, latency_ms=10.0, host="mpc"))
         plan.reset()
         packets = _capture_packets(plan)
         self.assertTrue(plan.run(0.5))
@@ -422,14 +422,14 @@ class HostTests(unittest.TestCase):
 
     def test_mpc_host_rejects_out_of_spec_configuration(self):
         from wbr.controllers.mpc_host.reference_mpc import MpcHost
-        plan = Plan4UpkieLQI6(Plan4Config(rate_hz=1000.0, noise=False, latency_ms=10.0))
+        plan = Plan4LQI8(Plan4Config(rate_hz=1000.0, noise=False, latency_ms=10.0))
         with self.assertRaises(ValueError):
             MpcHost(plan.link, plan, publish_hz=25.0)
         with self.assertRaises(ValueError):
             MpcHost(plan.link, plan, publish_hz=50.0, horizon_s=3.0)
 
     def test_target_deadband_and_send_fields(self):
-        plan = Plan4UpkieLQI6(Plan4Config(rate_hz=1000.0, noise=False, latency_ms=10.0, host="mpc"))
+        plan = Plan4LQI8(Plan4Config(rate_hz=1000.0, noise=False, latency_ms=10.0, host="mpc"))
         plan.reset()
         plan.host.set_command(forward=1e-4, roll=0.2, leg_split=0.1)
         self.assertEqual(plan.host._target(), 0.0)

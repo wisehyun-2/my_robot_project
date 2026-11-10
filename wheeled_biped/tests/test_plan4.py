@@ -1,10 +1,10 @@
-"""Unit tests of Plan 4: upkie serial hip-knee legs + LQI6 + DIABLO-style MCU.
+"""Unit tests of Plan 4: upkie serial hip-knee legs + LQI8 + DIABLO-style MCU.
 
 Run from the project root:  python -m unittest discover -s tests -v   (this module: ~20 s)
 
 The tests check properties that must hold whatever the controller gains are: kinematic identities of the
 serial leg, sign conventions of the MuJoCo model, the derived three-body plant against MuJoCo, closed-loop
-stability with the weights the plan actually runs (read from Plan4UpkieLQI6().law.ctrl), invariants of the
+stability with the weights the plan actually runs (read from Plan4LQI8().law.ctrl), invariants of the
 velocity reference shaping, short closed-loop smoke runs (noise off) and the acceptance-battery helpers.
 """
 from __future__ import annotations
@@ -20,9 +20,9 @@ import numpy as np
 
 from wbr import MODELS_DIR
 from wbr.common.servo import ServoCommand, ServoModel, ServoProperties, torque_command
-from wbr.controllers.lqi6.lqi6 import LQI6, c2d_zoh
-from wbr.controllers.lqi6.plant_serial import SerialPlant, SerialPlantParams
-from wbr.controllers.lqi6.serial_leg import UPKIE_JOINT_SIGNS, SerialLeg, SerialLegGeometry, du, u
+from wbr.controllers.lqi8.lqi8 import LQI8, c2d_zoh
+from wbr.controllers.lqi8.plant_serial import SerialPlant, SerialPlantParams
+from wbr.controllers.lqi8.serial_leg import UPKIE_JOINT_SIGNS, SerialLeg, SerialLegGeometry, du, u
 from wbr.models.upkie_params import set_leg_posture
 
 PLAN4_DIR = MODELS_DIR / "upkie_plan4"
@@ -50,21 +50,21 @@ def plan4_leg(knee_sign: float | None = None) -> SerialLeg:
 
 
 def make_plan(**cfg):
-    from wbr.plans.plan4_upkie_lqi6 import Plan4Config, Plan4UpkieLQI6
-    return Plan4UpkieLQI6(Plan4Config(**cfg))
+    from wbr.plans.plan4_lqi8 import Plan4Config, Plan4LQI8
+    return Plan4LQI8(Plan4Config(**cfg))
 
 
-def plan4_lqi6(rate_hz: float) -> LQI6:
-    """The LQI6 instance the Plan 4 assembly runs at this rate (its weights may be retuned at any time)."""
+def plan4_lqi8(rate_hz: float) -> LQI8:
+    """The LQI8 instance the Plan 4 assembly runs at this rate (its weights may be retuned at any time)."""
     ctrl = getattr(make_plan(rate_hz=rate_hz).law, "ctrl", None)
-    if isinstance(ctrl, LQI6):
+    if isinstance(ctrl, LQI8):
         return ctrl
-    # fallback if the plan stops exposing its LQI6: the documented Plan 4 weights
-    return LQI6(plan4_plant(), Ts=1.0 / rate_hz, q_int=0.3, r_hip_frac=0.3, r_wheel_frac=0.2, table_L0=(0.22, 0.34, 0.005))
+    # fallback if the plan stops exposing its LQI8: the documented Plan 4 weights
+    return LQI8(plan4_plant(), Ts=1.0 / rate_hz, q_int=0.3, r_hip_frac=0.3, r_wheel_frac=0.2, table_L0=(0.22, 0.34, 0.005))
 
 
 def augmented_discrete(ctrl, L0: float):
-    """Discrete closed-loop model of an LQI6 instance, rebuilt here from the plant linearisation and the documented
+    """Discrete closed-loop model of an LQI8 instance, rebuilt here from the plant linearisation and the documented
     integral states: xs = [theta, theta_dot, v, phi, phi_dot, int v] (+ optional z_att' = theta + phi + (Tp - T) /
     (g M(L0)) and z_pos' = int v when the controller has them, ctrl.n = 7 or 8)."""
     A, B = ctrl.plant.linearize(L0)
@@ -346,13 +346,13 @@ class SerialPlantTests(unittest.TestCase):
         self.assertAlmostEqual(r["Tp_eq_mujoco"] / r["Tp_eq_plant"], 1.0, delta=0.10)
 
 
-# ----------------------------------------------------------------------------- LQI6 on the serial plant
-class Plan4LQI6Tests(unittest.TestCase):
+# ----------------------------------------------------------------------------- LQI8 on the serial plant
+class Plan4LQI8Tests(unittest.TestCase):
     RATES = (1000.0, 200.0)
 
     @classmethod
     def setUpClass(cls):
-        cls.ctrl = {rate: plan4_lqi6(rate) for rate in cls.RATES}
+        cls.ctrl = {rate: plan4_lqi8(rate) for rate in cls.RATES}
 
     def assertClosedLoopStable(self, ctrl, label: str):
         for L0 in (0.25, L_STAND, 0.33):
@@ -385,11 +385,11 @@ class Plan4LQI6Tests(unittest.TestCase):
             self.assertTableMatchesDesign(self.ctrl[rate], f"plan default {rate:.0f} Hz")
 
     def test_extra_integral_states_keep_the_loop_stable(self):
-        # optional LQI6 states (static body tilt z_att, position z_pos): any positive weights must still give a
+        # optional LQI8 states (static body tilt z_att, position z_pos): any positive weights must still give a
         # stabilisable design model and a stabilising, well-interpolated gain table
         import inspect
-        if not {"q_att", "q_pos"} <= set(inspect.signature(LQI6.__init__).parameters):
-            self.skipTest("LQI6 has no q_att / q_pos options")
+        if not {"q_att", "q_pos"} <= set(inspect.signature(LQI8.__init__).parameters):
+            self.skipTest("LQI8 has no q_att / q_pos options")
         for rate in self.RATES:
             ctrl = make_plan(rate_hz=rate, lqi_kwargs=dict(q_att=0.05, q_pos=0.5)).law.ctrl
             self.assertEqual(ctrl.n, 8)
@@ -397,7 +397,7 @@ class Plan4LQI6Tests(unittest.TestCase):
             self.assertTableMatchesDesign(ctrl, f"q_att + q_pos {rate:.0f} Hz")
 
     @staticmethod
-    def shape(ctrl: LQI6, v_ref: float, seconds: float, L0: float = L_STAND) -> np.ndarray:
+    def shape(ctrl: LQI8, v_ref: float, seconds: float, L0: float = L_STAND) -> np.ndarray:
         """Step the controller with the robot held at the equilibrium (zero state); rows (v_ramp, v_filt, z)."""
         n = int(round(seconds / ctrl.Ts))
         out = np.zeros((n, 3))
@@ -408,7 +408,7 @@ class Plan4LQI6Tests(unittest.TestCase):
 
     def test_reference_shaping_ramp_prefilter_and_frozen_integrator(self):
         Ts = 1e-3
-        ctrl = LQI6(plan4_plant(), Ts=Ts, q_int=0.3, r_hip_frac=0.3, r_wheel_frac=0.2, table_L0=None,
+        ctrl = LQI8(plan4_plant(), Ts=Ts, q_int=0.3, r_hip_frac=0.3, r_wheel_frac=0.2, table_L0=None,
                     v_ramp_rate=2.0, v_ref_tau=0.3, freeze_int_on_ramp=True, v_ref_tau_brake=0.0)
         ramp, filt, z = self.shape(ctrl, 0.5, 3.0).T
         # 2 m/s^2 ramp: 0.2 m/s after 0.1 s, 0.5 m/s from 0.25 s on, never beyond the set-point
@@ -434,8 +434,8 @@ class Plan4LQI6Tests(unittest.TestCase):
 
     def test_shaped_reference_never_overshoots_whatever_the_settings(self):
         variants = [self.ctrl[rate] for rate in self.RATES]           # the plan's own settings
-        variants.append(LQI6(plan4_plant(), Ts=1e-3, table_L0=None, v_ramp_rate=2.0, v_ref_tau=0.15, v_ref_order=2))
-        variants.append(LQI6(plan4_plant(), Ts=1e-3, table_L0=None, v_ramp_rate=4.0))       # ramp only
+        variants.append(LQI8(plan4_plant(), Ts=1e-3, table_L0=None, v_ramp_rate=2.0, v_ref_tau=0.15, v_ref_order=2))
+        variants.append(LQI8(plan4_plant(), Ts=1e-3, table_L0=None, v_ramp_rate=4.0))       # ramp only
         for ctrl in variants:
             ctrl.reset()
             filt = self.shape(ctrl, 0.5, 3.0)[:, 1]
@@ -524,6 +524,34 @@ class Plan4SmokeTests(unittest.TestCase):
         self.assertEqual(set(cmds), set(JOINTS))
         self.assertTrue(all(c.feedforward_torque == 0.0 and c.maximum_torque == 0.0 for c in cmds.values()))
         self.assertFalse(plan.run(1.0))                 # the torque-free robot falls and is detected
+
+    # the next two moved here from tests/test_core.py on 2026-11-11 (they ran on the removed Plan 2 robot)
+    def test_transform_down_refused(self):
+        from wbr.controllers.diablo_arch.host_link import RobotMode
+        plan = make_plan()
+        plan.run(0.5)
+        plan.host.set_command(mode_mark=True, stand_mode=False)   # DIABLO teleop 'v'/'b' keys before 'z'
+        plan.run(0.3)
+        self.assertEqual(plan.mcu.mode, RobotMode.STAND)          # no auxiliary wheels: CAR is refused (review B3)
+        self.assertTrue(any("transform down ignored" in e for _, e in plan.mcu.events))
+
+    def test_disconnect_off_only_after_a_connection_and_latched(self):
+        plan = make_plan()
+        plan.mcu.p.disconnect_off_s = 1.0
+        plan.host.enabled = False                   # never connected: must not switch off at boot (review N2)
+        plan.mcu.reset()
+        plan.link.reset()
+        plan.run(2.0)
+        self.assertTrue(plan.mcu.armed)
+        plan.host.enabled = True
+        plan.run(0.5)                               # connects
+        plan.host.enabled = False
+        plan.run(2.0)                               # host timeout + 1.0 s -> motors off, latched
+        self.assertTrue(plan.mcu.off_latched)
+        self.assertFalse(plan.mcu.armed)
+        n_events = len(plan.mcu.events)
+        plan.run(0.5)
+        self.assertEqual(len(plan.mcu.events), n_events)   # no event flood while latched
         self.assertTrue(plan.fallen)
 
     def test_robustness_knobs_edit_the_model(self):

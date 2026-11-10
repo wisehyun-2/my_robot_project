@@ -1,7 +1,7 @@
 """Motor check of the v2 CAD robot (robot_cad_v2): AKE60-8 on all six joints, CAD link lengths, masses, COMs and
 inertias, 150 mm wheel; with and without a 5 kg payload on the top plate.
 
-The scenarios, controller (Plan 4 LQI6 re-identified on the model, MCU 1 kHz, noise + 2 ms latency) and motor model
+The scenarios, controller (Plan 4 LQI8 re-identified on the model, MCU 1 kHz, noise + 2 ms latency) and motor model
 (peak torque, voltage line, reflected rotor inertia, backdrive) are those of ake_sizing.run_case; only the model is
 built differently (build_cad_model):
 
@@ -167,7 +167,7 @@ def build_cad_model(case: CadCase, mdir: Path):
     if case.model == "urdf" and urdf_json.exists():
         return _build_from_urdf(case, mdir, urdf_json)
     import wbr.models.build_upkie as bu
-    from wbr.controllers.lqi6.serial_leg import SerialLeg, SerialLegGeometry
+    from wbr.controllers.lqi8.serial_leg import SerialLeg, SerialLegGeometry
     from wbr.models.upkie_params import _group_bodies, build_params, set_leg_posture
     cad = json.loads(Path(case.cad_json).read_text(encoding="utf-8"))
     pose = cad["pose"]
@@ -296,7 +296,7 @@ def outer_loop_gains(xml_path, m_b: float) -> dict:
             stretched the leg by 2 cm on a 15 deg slope and through full extension when stopping downhill with 5 kg:
             the knee flipped backward.
     A payload case is scaled with its own mass / inertia, like its LQI gains (the controller knows the payload)."""
-    import wbr.plans.plan4_upkie_lqi6 as p4
+    import wbr.plans.plan4_lqi8 as p4
     base = p4.Plan4Config()
     ky = AS.UPKIE_YAW_GAIN / AS.yaw_plant_gain(xml_path)["g"]
     kl = m_b / AS.UPKIE_BODY_MASS
@@ -327,13 +327,13 @@ YAW_KI_RATIO = 3.0              # ki_yaw x ratio: the heading comes back with (k
 
 def yaw_wheel_damping_gains(overrides: dict) -> dict:
     """McuParams.kw_yaw and the stiffer heading on top of the yaw PI of this case (a payload case keeps its own scale)."""
-    import wbr.plans.plan4_upkie_lqi6 as p4
+    import wbr.plans.plan4_lqi8 as p4
     base = p4.Plan4Config()
     return dict(kw_yaw=YAW_KW_RATIO * overrides.get("kp_yaw", base.kp_yaw), ki_yaw=YAW_KI_RATIO * overrides.get("ki_yaw", base.ki_yaw))
 
 
 # The v5 robot's outer loops and LQR weights, set from its own plant (no reference to another robot).  The numbers came from the
-# design work on the bench robots and were checked on v5 (TEST/README.md); here they are bandwidths and torque scales.
+# design work on the bench robots and were checked on v5 (v5_lqi/TEST/README.md); here they are bandwidths and torque scales.
 LEG_WN = 23.93                  # rad/s, leg-length mode sqrt(2 kp / m_b): clear of the balance poles
 LEG_ZETA = 0.598
 YAW_WC = 10.06                  # rad/s, g kp_yaw (g = yaw plant gain W / (2 R Izz))

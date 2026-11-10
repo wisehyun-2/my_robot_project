@@ -1,18 +1,18 @@
-"""Prediction model of the stage-2 MPC host: the stage-1 LQI6 closed loop, reduced to the velocity / pitch axes.
+"""Prediction model of the stage-2 MPC host: the stage-1 LQI8 closed loop, reduced to the velocity / pitch axes.
 
 Construction (docs/plan4_mpc_host.md, section 2):
 
 1. plant  ``plan.plant.linearize(L0)`` -> A (6x6, [theta, theta_dot, x, x_dot, phi, phi_dot]), B (6x2, [T, Tp]).
    The wheel position x does not enter the controller, so the 5-state plant s = [theta, theta_dot, v, phi, phi_dot]
-   is discretised with a zero-order hold at the MCU period Ts (the same c2d as ``LQI6.design``).
-2. controller exactly as ``LQI6.step`` executes it in MPC mode while the reference moves (no pre-filter, every
-   integrator frozen, ``lqi6_options`` -> use_int = False):
+   is discretised with a zero-order hold at the MCU period Ts (the same c2d as ``LQI8.design``).
+2. controller exactly as ``LQI8.step`` executes it in MPC mode while the reference moves (no pre-filter, every
+   integrator frozen, ``lqi8_options`` -> use_int = False):
        u_k = -K_5 [theta_m, theta_dot_m, v_m - r_k, phi_m, phi_dot_m]
    where the measured state m_k = s_{k-d} is the plant state delayed by the observation latency d (steps), kept in a
    delay chain.  K_5 = the first five columns of ``ctrl.gains(L0)`` (the MCU's own gain table, ``select_gains``).
    The integrator variants (use_int / att_gM / use_pos) remain available for the stand-still regime
    (``regime="rest"``), used only to compare the model with push responses.
-3. inputs  r (the velocity reference seen by the LQI6), F (horizontal force at the total COM, used to validate the
+3. inputs  r (the velocity reference seen by the LQI8), F (horizontal force at the total COM, used to validate the
    push response) and Tf (external wheel torque, e.g. joint dry friction: the process-noise direction of the host's
    observer); outputs v (wheel ground speed), v_base (torso origin, = the judged ``vx``), pitch (body, IMU sign),
    theta (virtual-leg angle deviation), T (total wheel torque), Tp (total hip torque deviation).
@@ -22,9 +22,9 @@ Construction (docs/plan4_mpc_host.md, section 2):
 6. ``reduce``: square-root balanced truncation with singular-perturbation DC matching (steady-state gains kept
    exactly), on the (r, Tf) channels (the MPC never sees F).
 
-No integrator is added by the host, and the manoeuvre-regime prediction has none at all (the LQI6's own integrators
+No integrator is added by the host, and the manoeuvre-regime prediction has none at all (the LQI8's own integrators
 are frozen while the host reference accelerates); only the rest-regime comparison model (``regime="rest"``) carries
-the LQI6's integrators, as part of its plant.
+the LQI8's integrators, as part of its plant.
 """
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ from typing import Dict, Sequence, Tuple
 import numpy as np
 import scipy.linalg as la
 
-from wbr.controllers.lqi6.lqi6 import c2d_zoh
+from wbr.controllers.lqi8.lqi8 import c2d_zoh
 
 OUTPUTS = ("v", "v_base", "pitch", "theta", "T", "Tp")
 
@@ -115,20 +115,20 @@ def push_input_column(plant, L0: float, total_mass_with_wheels: float | None = N
     return col
 
 
-def lqi6_closed_loop(plant, K: np.ndarray, L0: float, Ts: float, delay_steps: int = 0, h_base: float = 0.164,
+def lqi8_closed_loop(plant, K: np.ndarray, L0: float, Ts: float, delay_steps: int = 0, h_base: float = 0.164,
                      rate_lpf_tau: float = 0.0, wheel_radius: float | None = None, att_gM: float | None = None,
                      use_pos: bool = False, pred: tuple | None = None, use_int: bool = True) -> LTIModel:
-    """Discrete closed loop plant + LQI6 at the MCU period Ts, exactly as ``LQI6.step`` executes it in MPC mode
+    """Discrete closed loop plant + LQI8 at the MCU period Ts, exactly as ``LQI8.step`` executes it in MPC mode
     (no pre-filter).  Feedback vector xs = [theta, theta_dot, v - r, phi, phi_dot, (z), (z_att), (z_pos)],
     u = -K xs with K = 2 x len(xs).  use_int=False drops the velocity integrator z: the manoeuvre regime of the
-    stage-2 inner loop, whose integrators are all frozen while the host reference accelerates (lqi6_options).
+    stage-2 inner loop, whose integrators are all frozen while the host reference accelerates (lqi8_options).
 
     State X = [s_k (5), z, (z_att), (z_pos), (u_{k-1}, ..., u_{k-N} : 2 N), (f1, f2), s_{k-1} .. s_{k-d} (5 d)]
       z_k     = z_{k-1} + Ts (e_v - r)
       z_att_k = z_att_{k-1} + Ts (e_theta + e_phi + (Tp_{k-1} - T_{k-1}) / gM)          (q_att, att_gM = g M(L0))
       z_pos_k = z_pos_{k-1} + Ts z_k                                                   (q_pos)
       pred = (P = Ad^N, G = [Bd, Ad Bd, ...]): the feedback uses x_hat = P e + G [u_{k-1}; ...; u_{k-N}] for the five
-      balance states (LQI6 pred_steps); the integrators keep the measured signals.
+      balance states (LQI8 pred_steps); the integrators keep the measured signals.
     The measured e = s_{k-d} (observation latency d), with the optional encoder-rate low-pass rate_lpf_tau
     (body-frame leg rate f1 = LPF(theta_dot + phi_dot), wheel-carrier rate f2 = LPF(v / R + phi_dot)).
     Inputs [r, F, Tf], outputs OUTPUTS.  Saturations / clamps / conditional integration are not modelled.
@@ -147,7 +147,7 @@ def lqi6_closed_loop(plant, K: np.ndarray, L0: float, Ts: float, delay_steps: in
     N_u = max(N_pred, 1 if use_att else 0)
     nK = 5 + int(use_int) + int(use_att) + int(use_pos)
     if K.shape != (2, nK):
-        raise ValueError(f"gain matrix {K.shape} does not match the LQI6 options (expected (2, {nK}))")
+        raise ValueError(f"gain matrix {K.shape} does not match the LQI8 options (expected (2, {nK}))")
     if use_pos and not use_int:
         raise ValueError("z_pos integrates z: use_pos requires use_int")
     d = int(delay_steps)
@@ -342,7 +342,7 @@ def plant_with_damping(plan, wheel_damping: float | None = None):
     if wheel_damping is None:
         return plan.plant
     import copy
-    from wbr.controllers.lqi6.plant_serial import SerialPlant
+    from wbr.controllers.lqi8.plant_serial import SerialPlant
     p = copy.deepcopy(plan.params)
     p.c_w = float(wheel_damping)
     return SerialPlant(p)
@@ -350,8 +350,8 @@ def plant_with_damping(plan, wheel_damping: float | None = None):
 
 def plan_closed_loop(plan, L0: float | None = None, latency_ms: float | None = None,
                      wheel_damping: float | None = None, regime: str = "manoeuvre") -> LTIModel:
-    """Full-order MCU-rate closed loop of a Plan4UpkieLQI6 instance (design knowledge only: plant parameters, the
-    LQI6 gain table, the MCU period and the configured sensing latency -- no simulator state).  The controller gains
+    """Full-order MCU-rate closed loop of a Plan4LQI8 instance (design knowledge only: plant parameters, the
+    LQI8 gain table, the MCU period and the configured sensing latency -- no simulator state).  The controller gains
     are always the MCU's own (designed on the nominal plant); wheel_damping only changes the plant of the prediction."""
     L0 = float(plan.params.L0) if L0 is None else float(L0)
     ctrl = plan.law.ctrl
@@ -359,17 +359,17 @@ def plan_closed_loop(plan, L0: float | None = None, latency_ms: float | None = N
     lat = plan.cfg.latency_ms if latency_ms is None else latency_ms
     d = int(round(lat * 1e-3 / ctrl.Ts))
     lpf = float(getattr(plan.cfg, "rate_lpf_tau", 0.0) or 0.0)
-    opts = lqi6_options(ctrl, L0, regime)
-    cl = lqi6_closed_loop(plant_with_damping(plan, wheel_damping), select_gains(K, opts), L0, ctrl.Ts, d,
+    opts = lqi8_options(ctrl, L0, regime)
+    cl = lqi8_closed_loop(plant_with_damping(plan, wheel_damping), select_gains(K, opts), L0, ctrl.Ts, d,
                           h_base=plan.hip_above_base, rate_lpf_tau=lpf, **model_kwargs(opts))
     cl.info["wheel_damping"] = float(plan.params.c_w if wheel_damping is None else wheel_damping)
     return cl
 
 
-def lqi6_options(ctrl, L0: float, regime: str = "manoeuvre") -> dict:
-    """The LQI6 structure of the MCU's controller at L0 as it acts DURING A MANOEUVRE -- the regime the prediction
+def lqi8_options(ctrl, L0: float, regime: str = "manoeuvre") -> dict:
+    """The LQI8 structure of the MCU's controller at L0 as it acts DURING A MANOEUVRE -- the regime the prediction
     model is for.  z_att is gated on the low-passed reference acceleration (always frozen while the reference moves),
-    and with the plain-mode acceleration freeze (LQI6.freeze_int_on_accel_plain, Plan 4 stage 2) z and z_pos are
+    and with the plain-mode acceleration freeze (LQI8.freeze_int_on_accel_plain, Plan 4 stage 2) z and z_pos are
     frozen as well: the prediction is then the pure state-feedback loop (review r1 stage 2 M4: the model that kept
     integrating z_att over-predicted the step pitch peak, 1.8 deg vs 1.0 deg).  gain_cols = the columns of the MCU
     gain matrix the model uses (select_gains); pass the rest with model_kwargs()."""
@@ -395,14 +395,14 @@ def lqi6_options(ctrl, L0: float, regime: str = "manoeuvre") -> dict:
 
 
 def select_gains(K: np.ndarray, opts: dict) -> np.ndarray:
-    """Columns of the MCU gain matrix used by the prediction model (lqi6_options)."""
+    """Columns of the MCU gain matrix used by the prediction model (lqi8_options)."""
     cols = opts.get("gain_cols")
     K = np.asarray(K, dtype=float)
     return K if cols is None else K[:, cols]
 
 
 def model_kwargs(opts: dict) -> dict:
-    """lqi6_options() entries that lqi6_closed_loop() takes as keyword arguments."""
+    """lqi8_options() entries that lqi8_closed_loop() takes as keyword arguments."""
     return {k: v for k, v in opts.items() if k != "gain_cols"}
 
 

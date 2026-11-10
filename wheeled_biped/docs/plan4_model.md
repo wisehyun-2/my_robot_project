@@ -1,6 +1,6 @@
 # Plan 4 플랜트 모델: upkie 직렬 다리 3체 모델의 유도와 MuJoCo 대조
 
-작성 2026-10-22, 갱신 2026-10-23(검토 1라운드 M5·m9·m10 반영: 바퀴 로터 아마추어·감쇠를 관절 속도에, 대조는 강성 접촉으로, 표 전체 재생성). Plan 4(= upkie 하드웨어 + LQI6 + DIABLO식 호스트/MCU 분리)의 균형 제어기 설계에 쓰는 플랜트를 upkie 기구학에 맞게 다시 유도하고, MuJoCo 전체 모델과 대조한 기록이다. 코드는 `wbr/controllers/lqi6/serial_leg.py`(기구학), `wbr/controllers/lqi6/plant_serial.py`(동역학·선형화), `wbr/models/upkie_params.py`(파라미터 표), `wbr/models/verify_plan4_plant.py`(대조)이고, 수치 결과는 `results/plan4_model/`에 있다.
+작성 2026-10-22, 갱신 2026-10-23(검토 1라운드 M5·m9·m10 반영: 바퀴 로터 아마추어·감쇠를 관절 속도에, 대조는 강성 접촉으로, 표 전체 재생성). Plan 4(= upkie 하드웨어 + LQI8 + DIABLO식 호스트/MCU 분리)의 균형 제어기 설계에 쓰는 플랜트를 upkie 기구학에 맞게 다시 유도하고, MuJoCo 전체 모델과 대조한 기록이다. 코드는 `wbr/controllers/lqi8/serial_leg.py`(기구학), `wbr/controllers/lqi8/plant_serial.py`(동역학·선형화), `wbr/models/upkie_params.py`(파라미터 표), `wbr/models/verify_plan4_plant.py`(대조)이고, 수치 결과는 `results/plan4_model/`에 있다.
 
 ## 0. 요약
 
@@ -28,7 +28,7 @@
 
 ### upkie 관절 부호
 
-upkie의 관절은 좌우가 거울상이다. 왼쪽 엉덩이·무릎은 +각이 다리를 앞으로 흔들고(−y 회전), 오른쪽은 뒤로 흔든다. 왼쪽 바퀴의 +속도는 전진(+y 회전), 오른쪽은 후진이다. MCU는 위의 u 규약(양 = +y 회전)만 보도록, 플랜 조립 코드가 관측값과 토크 명령에 부호 어댑터 `UPKIE_JOINT_SIGNS = {left_hip −1, left_knee −1, left_wheel +1, right_hip +1, right_knee +1, right_wheel −1}`를 곱한다(`plan4_upkie_lqi6.py`). MuJoCo 모델에서 관절축을 월드로 변환해 확인했다(왼쪽 엉덩이 +0.2 rad → 바퀴축 +6.8 cm 전진 = 0.343·sin 0.2).
+upkie의 관절은 좌우가 거울상이다. 왼쪽 엉덩이·무릎은 +각이 다리를 앞으로 흔들고(−y 회전), 오른쪽은 뒤로 흔든다. 왼쪽 바퀴의 +속도는 전진(+y 회전), 오른쪽은 후진이다. MCU는 위의 u 규약(양 = +y 회전)만 보도록, 플랜 조립 코드가 관측값과 토크 명령에 부호 어댑터 `UPKIE_JOINT_SIGNS = {left_hip −1, left_knee −1, left_wheel +1, right_hip +1, right_knee +1, right_wheel −1}`를 곱한다(`plan4_lqi8.py`). MuJoCo 모델에서 관절축을 월드로 변환해 확인했다(왼쪽 엉덩이 +0.2 rad → 바퀴축 +6.8 cm 전진 = 0.343·sin 0.2).
 
 ## 2. 파라미터 표 (`upkie_params.py`, `models/upkie_plan4/plan4_params.json`)
 
@@ -119,11 +119,11 @@ upkie_description의 타이어 충돌 실린더 반경은 0.05 m이고, 발목 �
 - 타이어 반경 0.05 모델에서는 3.5° 이상 기울면 발목 하우징이 바닥에 닿아(접촉 4→8개) 응답이 모델과 갈라졌다. 이것이 4절의 타이어 반경 교정으로 이어졌다.
 - (검토 1라운드 m9) 바퀴 로터 아마추어(2×0.0003 kg m², I_w의 63 %)를 I_w에 합쳐 절대 회전 ẋ/R에 붙였었다. MuJoCo는 아마추어를 관절 좌표(바퀴 − 종아리)에 붙이므로 ½J_w(ẋ/R − θ̇)²로 따로 두고 바퀴 감쇠도 관절 속도로 바꿨다 → 빠른 극 오차 2.9 % → 0.02 %, B 성분 오차 7.2 % → 0.3 %. 게인 표는 자동으로 다시 만들어진다(`plan4_params.json`에 `J_w`).
 - (m10) 대조 때 접촉 임피던스를 강성으로 두고(base 잔차 1.18 → 0.16 N), B 오차를 성분별로, 응답 비교를 선형 구간으로도 보고한다.
-- 타이어 충돌체는 타원체(접점 하나)이고 검토 1라운드 뒤 `condim 4`(비틀림 마찰 0.005)로 바꿨다(`python -m wbr.models.build_upkie --out models/upkie_plan4 --tire-radius 0.056 --tire-shape ellipsoid --tire-condim 4`). 대조 결과에는 영향이 없고(평면 운동), 9번 요 항목의 유지 토크에 영향을 준다(`docs/plan4_lqi6.md`).
+- 타이어 충돌체는 타원체(접점 하나)이고 검토 1라운드 뒤 `condim 4`(비틀림 마찰 0.005)로 바꿨다(`python -m wbr.models.build_upkie --out models/upkie_plan4 --tire-radius 0.056 --tire-shape ellipsoid --tire-condim 4`). 대조 결과에는 영향이 없고(평면 운동), 9번 요 항목의 유지 토크에 영향을 준다(`docs/plan4_lqi8.md`).
 
 ## 6. 모델의 한계와 제어기에 미치는 영향
 
 - **다리 길이 PD**: 모델은 L0를 고정으로 본다. 실제로는 kp_leg = 800 N/m, kd_leg = 40 N s/m의 PD가 유지하므로 다리 길이 모드(≈√(800/2.5) ≈ 18 rad/s, 3 Hz)가 균형 모드(6~10 rad/s)와 완전히 분리되지는 않는다. 벤치마크에서 영향은 L0 흔들림 ±1 mm 수준.
 - **다리 힘 피드포워드**: 질량 없는 다리를 가정한 VMC에 로봇 전체 무게를 넣으면(5절 링크 MCU 기본식) 다리가 7 mm 과신장된다. 몸체 무게 + 다리 무게의 c/L0(≈42 %) 비율을 쓰면(18.2 N/다리) 1 mm 안으로 맞는다.
-- **건마찰**: 모델에 없다. 노이즈가 없을 때 피치 0.5° 오프셋이 남고, 노이즈가 있으면 디더링으로 사라지지만 x가 수 cm 느리게 왕복한다. 적분 가중치로 보상한다(`docs/plan4_lqi6.md`).
+- **건마찰**: 모델에 없다. 노이즈가 없을 때 피치 0.5° 오프셋이 남고, 노이즈가 있으면 디더링으로 사라지지만 x가 수 cm 느리게 왕복한다. 적분 가중치로 보상한다(`docs/plan4_lqi8.md`).
 - **접촉**: 미끄럼 없음 가정. 마찰 0.5에서의 거동은 합격 판정 매트릭스에서 확인한다. 모델의 접촉은 연하다(solimp 0.9/0.95: 정적 자세가 1.2 N만큼 평형에서 벗어나고 타이어가 수 mm 눌림). 제어기는 이것을 모르며 합격 판정 시뮬은 모델 기본값으로 돈다(강성 접촉은 대조 전용).

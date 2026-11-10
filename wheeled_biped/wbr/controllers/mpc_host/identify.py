@@ -8,7 +8,7 @@ fit errors) and results/plan4_mpc/model_fit.png, results/plan4_mpc/model_fit.jso
 Validation runs (the inner loop exactly as in MPC mode: Plan4Config(host="ramp", lqi_kwargs=dict(v_ramp_rate=4.0,
 v_ref_tau=0.0, freeze_int_on_ramp=False))):
   * velocity step 0 -> 0.5 m/s (held 2.5 s) -> 0, through the stage-1 HostEmulator + the MCU's 4 m/s^2 ramp; the
-    model is driven by the reference the LQI6 actually used (law.ctrl.v_filt, logged every MCU step)
+    model is driven by the reference the LQI8 actually used (law.ctrl.v_filt, logged every MCU step)
   * push 0.5 W (0.1 s at the total COM) while standing; the model is driven by the same force (input F)
   under three conditions: A = specification (noise off, latency 0), B = acceptance (noise on, latency 10 ms),
   C = B without joint dry friction (frictionloss 0, compensation off): isolates the model's main error source.
@@ -29,20 +29,20 @@ from wbr import MODELS_DIR, RESULTS_DIR
 from wbr.controllers.mpc_host import model as M
 from wbr.controllers.mpc_host import reference_mpc as R
 
-# the inner loop the host sees: MotionCtrl.host_shaped = True -> LQI6 plain tracking (4 m/s^2 ramp, no pre-filter) with
-# every integrator frozen while the low-passed reference acceleration exceeds 0.1 m/s^2 (LQI6.freeze_int_on_accel_plain)
+# the inner loop the host sees: MotionCtrl.host_shaped = True -> LQI8 plain tracking (4 m/s^2 ramp, no pre-filter) with
+# every integrator frozen while the low-passed reference acceleration exceeds 0.1 m/s^2 (LQI8.freeze_int_on_accel_plain)
 INNER_MPC_MODE = dict(host_shaped=True, plain_ramp_rate=4.0, integrators="frozen while |a_ref_lp| > 0.1 m/s^2")
 OUT_JSON = MODELS_DIR / "upkie_plan4" / "plan4_closed_loop.json"
 OUT_DIR = RESULTS_DIR / "plan4_mpc"
 
 
 def make_plan(rate: float, noise: bool, latency_ms: float, friction: bool = True, seed: int = 0):
-    from wbr.plans.plan4_upkie_lqi6 import Plan4Config, Plan4UpkieLQI6
+    from wbr.plans.plan4_lqi8 import Plan4Config, Plan4LQI8
     cfg = Plan4Config(rate_hz=rate, host="ramp", noise=noise, latency_ms=latency_ms, seed=seed)
     if not friction:
         cfg.friction_comp_Nm = 0.0
         cfg.friction_comp_wheel_Nm = 0.0
-    plan = Plan4UpkieLQI6(cfg)
+    plan = Plan4LQI8(cfg)
     if not friction:
         plan.sim.model.dof_frictionloss[:] = 0.0
         plan.mcu.p.friction_comp_Nm = 0.0
@@ -149,7 +149,7 @@ def order_table(plan, period: float = 0.02) -> list:
 def mass_sensitivity(plan, cfg: R.MpcConfig) -> list:
     """Per-unit-acceleration peaks with the plant masses scaled (controller nominal, as in the criteria matrix)."""
     import copy
-    from wbr.controllers.lqi6.plant_serial import SerialPlant
+    from wbr.controllers.lqi8.plant_serial import SerialPlant
     rows = []
     K = M._gains_no_side_effect(plan.law.ctrl, plan.params.L0)
     d = int(round(plan.cfg.latency_ms * 1e-3 / plan.law.ctrl.Ts))
@@ -161,8 +161,8 @@ def mass_sensitivity(plan, cfg: R.MpcConfig) -> list:
         p.I_b *= ms
         p.leg.m_l = p.leg.m_l * ms
         p.leg.I_l = p.leg.I_l * ms
-        opts = M.lqi6_options(plan.law.ctrl, plan.params.L0)
-        cl = M.lqi6_closed_loop(SerialPlant(p), M.select_gains(K, opts), plan.params.L0, plan.law.ctrl.Ts, d,
+        opts = M.lqi8_options(plan.law.ctrl, plan.params.L0)
+        cl = M.lqi8_closed_loop(SerialPlant(p), M.select_gains(K, opts), plan.params.L0, plan.law.ctrl.Ts, d,
                                 h_base=plan.hip_above_base, **M.model_kwargs(opts))
         full = cl.select(["r"], ["T", "pitch", "theta"])
         Ts = full.Ts
@@ -189,7 +189,7 @@ def plot(fit: dict, path: Path) -> None:
         ax[0, col].plot(trB["t"], trB["vx"], color="C3", lw=0.6, alpha=0.6, label="sim (B: noise on, latency 10 ms)")
         ax[0, col].plot(trB["t"], trB["v_model"], "C1--", lw=1.4, label="full-order model (B)")
         if key == "step":
-            ax[0, col].plot(tr["t"], tr["r"], "k:", lw=1.0, label="reference r (LQI6 v_filt)")
+            ax[0, col].plot(tr["t"], tr["r"], "k:", lw=1.0, label="reference r (LQI8 v_filt)")
             red = fit["1000"]["B"]["step_reduced"]["trace"]
             ax[0, col].plot(red["t"], red["v_model"], "C2.", ms=3, label="reduced 5-state host model (B, 50 Hz)")
         ax[0, col].set_ylabel("v_base [m/s]")
@@ -209,7 +209,7 @@ def plot(fit: dict, path: Path) -> None:
                  else "push 0.5 W (0.1 s) at t = 1.5 s (stand-still model: integrators active)")
         ax[0, col].set_title(f"{title}: rms v {A['rms_v']:.3f} / {B['rms_v']:.3f} m/s, pitch {A['rms_pitch_deg']:.2f} / "
                              f"{B['rms_pitch_deg']:.2f} deg (A / B)", fontsize=9)
-    fig.suptitle("Plan 4 MPC host: LQI6 closed-loop prediction model vs MuJoCo (1 kHz MCU, inner loop in MPC mode)", fontsize=11)
+    fig.suptitle("Plan 4 MPC host: LQI8 closed-loop prediction model vs MuJoCo (1 kHz MCU, inner loop in MPC mode)", fontsize=11)
     fig.tight_layout()
     fig.savefig(path, dpi=130)
     plt.close(fig)
@@ -266,7 +266,7 @@ def main(argv=None):
     summary = {key: {cond: {k: {kk: vv for kk, vv in v.items() if kk != "trace"} for k, v in fit[key][cond].items()}
                      for cond in fit[key]} for key in fit}
     (OUT_DIR / "model_fit.json").write_text(json.dumps(summary, indent=1), encoding="utf-8")
-    out = dict(description="Plan 4 MPC host prediction model: LQI6 closed loop (plan.plant.linearize + MCU gain table, "
+    out = dict(description="Plan 4 MPC host prediction model: LQI8 closed loop (plan.plant.linearize + MCU gain table, "
                            "ZOH at the MCU period, 10 ms observation latency), lifted to the 20 ms host period, balanced "
                            "truncation (DC matched) on the (r, Tf) -> (v_base, pitch, v, theta, T) channels",
                inner_loop=INNER_MPC_MODE, host_period_s=0.02, config={k: getattr(cfg, k) for k in ("order", "horizon_s")},

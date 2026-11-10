@@ -17,13 +17,13 @@ import numpy as np
 
 from wbr.common.rotations import quat_to_matrix, rot_y, roll_pitch_yaw
 from wbr.controllers.diablo_arch.mcu import DiabloMcu
-from wbr.controllers.lqi6.serial_leg import SerialLeg, SerialLegGeometry
+from wbr.controllers.lqi8.serial_leg import SerialLeg, SerialLegGeometry
 from wbr.models import build_v5 as BV
 from wbr.models.upkie_params import set_leg_posture
 from wbr.observers.body_attitude import BodyAttitude
 from wbr.observers.pi3hat_ars import G, Pi3HatAttitude, quat_from_euler, steady_covariance
 from wbr.observers.upkie_observers import BaseOrientation
-from wbr.plans import plan4_upkie_lqi6 as P4
+from wbr.plans import plan4_lqi8 as P4
 from wbr.plans.plan_v5 import PlanV5, PlanV5Config
 
 R_ARS_TO_WORLD = np.diag([1.0, -1.0, -1.0])
@@ -311,7 +311,7 @@ class StaticLegForceTests(unittest.TestCase):
         self.assertIsNotNone(plan.mcu.p.leg_force)
         L = plan.mcu.p.L_stand
         self.assertLess(plan.mcu.p.leg_force(L, math.radians(9.0)), plan.mcu.p.leg_force(L, math.radians(-1.0)))      # d' > 0, leg COM on the rear side
-        self.assertIsNone(P4.Plan4UpkieLQI6().mcu.p.leg_force)
+        self.assertIsNone(P4.Plan4LQI8().mcu.p.leg_force)
 
     def test_leg_holds_its_length_standing(self):
         plan = PlanV5(PlanV5Config.from_model(latency_ms=10.0))
@@ -335,7 +335,7 @@ class UnevenGroundTests(unittest.TestCase):
         self.assertEqual(v, mcu.p.max_forward)
 
     def test_plan4_has_no_limit(self):
-        p = P4.Plan4UpkieLQI6().mcu.p
+        p = P4.Plan4LQI8().mcu.p
         self.assertEqual(p.uneven_speed, 0.0)
         self.assertFalse(p.mean_follows_range)
         self.assertEqual(p.L_min_margin, 0.02)

@@ -1,7 +1,7 @@
 """Plan 4 acceptance battery: automatic pass / fail against docs/합격기준.md.
 
     python -m wbr.bench.acceptance [--rate 1000|200|both] [--matrix full|reduced|nominal] [--seeds 5]
-                                   [--host ramp|mpc] [--reference] [--jobs N] [--no-cache] [--tag NAME]
+                                   [--host ramp|mpc] [--jobs N] [--no-cache] [--tag NAME]
                                    [--items 1 2 ...]
 
 Every scenario runs with sensor noise (pitch 0.2 deg, gyro 0.5 deg/s, 14-bit encoders) and a 10 ms
@@ -220,44 +220,12 @@ def torque_metrics(plan, t_from: float = 0.0) -> dict:
 
 # ----------------------------------------------------------------------------- plan factory
 def make_plan(rate: float, seed: int, mass_scale: float, friction: float, host: str = "ramp", **extra):
-    from wbr.plans.plan4_upkie_lqi6 import Plan4Config, Plan4UpkieLQI6
+    from wbr.plans.plan4_lqi8 import Plan4Config, Plan4LQI8
     cfg = Plan4Config(rate_hz=rate, noise=True, latency_ms=LATENCY_MS, seed=seed, mass_scale=mass_scale, friction=friction,
                       host=host, **extra)
-    return Plan4UpkieLQI6(cfg)
+    return Plan4LQI8(cfg)
 
 
-def make_reference_plan(seed: int, **extra):
-    """upkie's own PI balancer on the same hardware (Plan 1, 1 kHz): shown as a reference column, not judged."""
-    from wbr.plans.plan1_upkie import Plan1Config, Plan1Upkie
-    plan = Plan1Upkie(Plan1Config(balancer="pid", noise=True, latency_ms=LATENCY_MS, seed=seed))
-    _augment_reference_log(plan)
-    return plan
-
-
-def _augment_reference_log(plan) -> None:
-    """Plan 1 logs fewer signals than Plan 4 (no true pitch, no right-leg torques, no joint velocities, no leg length),
-    so every reference run ended in KeyError('pitch_true').  The missing judged signals are added from the simulator
-    after each step; Plan 1 itself is not modified."""
-    import mujoco
-    from wbr.common.rotations import quat_to_matrix, roll_pitch_yaw
-    sim, base_step = plan.sim, plan.step
-    m, d = sim.model, sim.data
-    hip_j = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, "left_hip")
-    axle_b = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, "left_wheel_tire")
-    short = {"left_hip": "lh", "left_knee": "lk", "left_wheel": "lw", "right_hip": "rh", "right_knee": "rk", "right_wheel": "rw"}
-
-    def step(target_ground_velocity: float = 0.0, target_yaw_velocity: float = 0.0):
-        o = base_step(target_ground_velocity, target_yaw_velocity)
-        have = plan.log.rows
-        extra = {"pitch_true": roll_pitch_yaw(quat_to_matrix(d.xquat[sim.base_bid]))[1],
-                 "L0": float(np.hypot(*(d.xanchor[hip_j][[0, 2]] - d.xpos[axle_b][[0, 2]])))}
-        for n, k in short.items():
-            if f"tau_{k}" not in have or len(have[f"tau_{k}"]) < len(have["t"]):
-                extra[f"tau_{k}"] = float(d.actuator_force[sim.act_id[n]])
-            extra[f"qd_{k}"] = float(d.qvel[sim.dof_adr[n]])
-        plan.log.log(**extra)
-        return o
-    plan.step = step
 
 
 # ----------------------------------------------------------------------------- scenarios
@@ -465,10 +433,10 @@ def scenario_latency_sweep(rate: float, host: str = "ramp") -> dict:
     ROBUST margin -- noise on, 2 mm drop start, 0.5 W push at 1 s, 20 s -- the largest latency with no fall, a settled
     recovery and a quiet tail (last 5 s true-pitch rms < 0.5 deg), which catches the large-amplitude limit cycle the
     3 deg test cannot see."""
-    from wbr.plans.plan4_upkie_lqi6 import Plan4Config, Plan4UpkieLQI6
+    from wbr.plans.plan4_lqi8 import Plan4Config, Plan4LQI8
     results, best = {}, None
     for ms in (0, 5, 10, 15, 20, 25, 30, 40, 60, 80):
-        plan = Plan4UpkieLQI6(Plan4Config(rate_hz=rate, noise=False, latency_ms=float(ms), host=host, friction=NOMINAL[1]))
+        plan = Plan4LQI8(Plan4Config(rate_hz=rate, noise=False, latency_ms=float(ms), host=host, friction=NOMINAL[1]))
         plan.reset(pitch=math.radians(3))
         alive = plan.run(6.0)
         st = settle_time_true(plan.log, 0.0) if alive else None
@@ -479,7 +447,7 @@ def scenario_latency_sweep(rate: float, host: str = "ramp") -> dict:
             break
     robust, robust_runs = None, {}
     for ms in (0, 5, 8, 10, 12, 15, 20, 25, 30, 40):
-        plan = Plan4UpkieLQI6(Plan4Config(rate_hz=rate, noise=True, latency_ms=float(ms), host=host, friction=NOMINAL[1],
+        plan = Plan4LQI8(Plan4Config(rate_hz=rate, noise=True, latency_ms=float(ms), host=host, friction=NOMINAL[1],
                                           drop_height=0.002))
         plan.reset()
         alive = plan.run(1.0)
@@ -535,7 +503,6 @@ class Task:
     friction: float
     seed: int
     host: str = "ramp"
-    reference: bool = False
 
 
 def _item(item_id: int) -> Item:
@@ -558,10 +525,7 @@ def run_task(task: Task) -> dict:
             extra = {k: v for k, v in it.params.items() if k in ("pitch_bias_deg", "payload")}
             if "slope" in it.params and it.params["slope"]:
                 extra["slope_deg"] = it.params["slope"]
-            if task.reference:
-                plan = make_reference_plan(task.seed)
-            else:
-                plan = make_plan(task.rate, task.seed, task.mass_scale, task.friction, task.host, **extra)
+            plan = make_plan(task.rate, task.seed, task.mass_scale, task.friction, task.host, **extra)
             params = {k: v for k, v in it.params.items() if k not in ("pitch_bias_deg", "payload", "slope", "constraint_log")}
             res = SCENARIOS[it.scenario](plan, **params)
             if it.params.get("constraint_log") and hasattr(plan, "host") and hasattr(plan.host, "violations"):
@@ -597,7 +561,7 @@ def code_hash() -> str:
     import mujoco
     import scipy
     h.update(f"mujoco {mujoco.__version__} numpy {np.__version__} scipy {scipy.__version__}".encode())   # r2 n14 / r3 n8
-    skip = ("viewer", "video.py", "plots.py", "run_bench.py", "battery.py", "compare_hosts.py", "regression.py")
+    skip = ("viewer", "video.py", "compare_hosts.py", "regression.py")
     for p in sorted(root.rglob("*.py")):
         rel = p.relative_to(root).as_posix()
         if any(s in rel for s in skip) or "__pycache__" in rel:
@@ -666,14 +630,14 @@ def regression_row(summary: dict, stage1: dict) -> dict:
     failures = [dict(case=f"항목 {w['id']}", metric="margin_worse_10pct", value=w["stage2"], limit=1.1 * w["stage1"], op="<=") for w in worse]
     failures += [dict(case=f"항목 {i}", metric="regression_flips", value=1, limit=0, op="<=") for i in flips]
     return dict(id=20, name="회귀 없음(1~17: 1단계 통과 유지, 가장 빠듯한 지표 여유율 악화 < 10 %)", grade="settle",
-                passed=not flips and not worse, n_runs=compared, worst=worst, failures=failures, errors=[], reference=None)
+                passed=not flips and not worse, n_runs=compared, worst=worst, failures=failures, errors=[])
 
 
-def summarize(items: List[Item], runs: Dict[Task, dict], rate: float, reference: Dict[int, dict] | None,
+def summarize(items: List[Item], runs: Dict[Task, dict], rate: float,
               stage1: dict | None = None, code_hash_value: str | None = None) -> dict:
     summary = {"rate_hz": rate, "items": [], "passed": True, "code_hash": code_hash_value}
     for it in items:
-        tasks = [t for t in runs if t.item_id == it.id and t.rate == rate and not t.reference]
+        tasks = [t for t in runs if t.item_id == it.id and t.rate == rate]
         if not tasks:
             continue
         evals = {t: evaluate(it, runs[t]) for t in tasks}
@@ -691,7 +655,7 @@ def summarize(items: List[Item], runs: Dict[Task, dict], rate: float, reference:
                     for t, ev in evals.items() for metric, c in ev.items() if not c["passed"]]
         errors = [dict(case=f"m×{t.mass_scale:.2f} μ{t.friction:.2f} seed {t.seed}", error=runs[t]["error"]) for t in tasks if "error" in runs[t]]
         summary["items"].append(dict(id=it.id, name=it.name, grade=it.grade, passed=item_pass, n_runs=len(tasks), worst=worst,
-                                     failures=failures, errors=errors, reference=(reference or {}).get(it.id)))
+                                     failures=failures, errors=errors))
         # docs/합격기준.md 5: only the required grades (필수-정착 / 필수-생존) decide the verdict; "record" items (15)
         # keep their own pass / fail in the tables but do not flip the overall result
         if it.grade in ("settle", "survive") and not item_pass:
@@ -721,7 +685,6 @@ def summary_markdown(summary: dict, matrix_name: str, seeds: int, host: str) -> 
             case = info["case"]
         else:
             tight, case = "-", "-"
-        ref = it.get("reference")
         lines.append(f"| {it['id']} | {it['name']} | {GRADE_KO[it['grade']]} | {'통과' if it['passed'] else '**실패**'} | {it['n_runs']} | {tight} | {case} |")
     fails = [(it, f) for it in summary["items"] for f in it["failures"]]
     if fails:
@@ -736,10 +699,6 @@ def summary_markdown(summary: dict, matrix_name: str, seeds: int, host: str) -> 
     lines += ["", "## 항목별 전체 지표(최악값)", ""]
     for it in summary["items"]:
         lines.append(f"- **{it['id']} {it['name']}**: " + ", ".join(f"{m} {fmt(i['value'], 3)}{'' if i['passed'] else ' ✗'}" for m, i in it["worst"].items()))
-        if it.get("reference"):
-            r = it["reference"]
-            lines.append("  - 참고(plan1_pid, upkie 기본 PI, 1 kHz, 공칭): " + ", ".join(f"{k} {fmt(v, 3)}" for k, v in r.items()
-                                                                         if isinstance(v, (int, float)) and k not in ("wall_s",)))
     return "\n".join(lines) + "\n"
 
 
@@ -767,7 +726,6 @@ def main(argv=None):
     ap.add_argument("--seeds", type=int, default=5)
     ap.add_argument("--host", default="ramp", choices=("ramp", "mpc"))
     ap.add_argument("--stage2", action="store_true", help="add the stage-2 MPC items 19-23")
-    ap.add_argument("--reference", action="store_true", help="also run plan1_pid at nominal as a reference column")
     ap.add_argument("--jobs", type=int, default=max(1, cpu_count() - 2))
     ap.add_argument("--no-cache", action="store_true")
     ap.add_argument("--tag", default="default")
@@ -785,9 +743,6 @@ def main(argv=None):
     if args.items:
         items = [it for it in items if it.id in args.items]
     tasks = build_tasks(items, rates, matrix, seeds, args.host)
-    if args.reference:
-        tasks += [Task(it.id, 1000.0, NOMINAL[0], NOMINAL[1], 0, "ramp", True) for it in items
-                  if it.scenario in ("stand", "tilt", "push", "velocity", "yaw", "height") and "payload" not in it.params and "pitch_bias_deg" not in it.params]
     out_dir = Path(args.out)
     cache_dir = out_dir / "cache" / args.tag
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -812,13 +767,12 @@ def main(argv=None):
                 if (i + 1) % 25 == 0:
                     print(f"  {i + 1}/{len(todo)} done ({time.time() - t0:.0f} s)")
     print(f"finished in {time.time() - t0:.0f} s")
-    reference = {t.item_id: runs[t] for t in tasks if t.reference}
-    tag = "plan4_mpc" if args.host == "mpc" else "plan4"
+    tag ="plan4_mpc" if args.host == "mpc" else "plan4"
     all_pass = True
     for rate in rates:
         s1_path = out_dir / f"plan4_{rate:.0f}Hz.json"
         stage1 = json.loads(s1_path.read_text(encoding="utf-8")) if (args.host == "mpc" and s1_path.exists()) else None
-        summary = summarize(items, runs, rate, reference, stage1, chash)
+        summary = summarize(items, runs, rate, stage1, chash)
         all_pass &= summary["passed"]
         md = summary_markdown(summary, args.matrix, len(seeds), args.host)
         (out_dir / f"{tag}_{rate:.0f}Hz.md").write_text(md, encoding="utf-8")

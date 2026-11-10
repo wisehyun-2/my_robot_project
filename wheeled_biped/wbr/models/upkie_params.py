@@ -19,8 +19,8 @@ import mujoco
 import numpy as np
 
 from wbr import MODELS_DIR
-from wbr.controllers.lqi6.plant_serial import LegTable, SerialPlantParams
-from wbr.controllers.lqi6.serial_leg import UPKIE_JOINT_SIGNS, SerialLeg, SerialLegGeometry
+from wbr.controllers.lqi8.plant_serial import LegTable, SerialPlantParams
+from wbr.controllers.lqi8.serial_leg import UPKIE_JOINT_SIGNS, SerialLeg, SerialLegGeometry
 
 L_STAND = 0.31          # standing virtual leg length (knee ~51 deg; straight leg = 0.343 is singular)
 L_MIN, L_MAX = 0.24, 0.335

@@ -2,7 +2,7 @@
 acts only while speeding up; braking follows the ramp), executed by the host at its publish rate.
 
 Since review round 1 the host does NOT send this shaped reference: on a QP failure it hands the raw target to the
-MCU with ``host_shaped = False`` and the MCU runs the same stage-1 shaping itself (``LQI6`` shaped mode).  The host
+MCU with ``host_shaped = False`` and the MCU runs the same stage-1 shaping itself (``LQI8`` shaped mode).  The host
 keeps this shaper only to propagate its internal reference state while in fallback (resume decision), and as the
 reference generator when the prediction model is unavailable (unstable inner loop).
 """

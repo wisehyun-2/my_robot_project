@@ -1,12 +1,14 @@
-"""Live MuJoCo viewer running one of the plans in real time.
+"""Live MuJoCo viewer running the Plan 4 closed loop (upkie-hardware model) in real time.
+The v5 robot has its own course viewer: python -m wbr.viewer.course_v5.
 
-    python -m wbr.viewer.live --plan 1|2|3|4 [--balancer pid|mpc] [--speed 1.0] [--noise] [--latency-ms 0] [--rate 1000|200]
+    python -m wbr.viewer.live [--plan 4] [--balancer ramp|mpc] [--speed 1.0] [--noise] [--latency-ms 0] [--rate 1000|200]
 
 Keys (viewer window must have focus):
   Up/Down     forward velocity command +-0.1 m/s        Left/Right  yaw rate +-0.2 rad/s
   Space       zero the commands                          P           push the torso (20 N for 0.1 s)
   O           push backward                              R           reset the robot
-  H / J       height command +-0.02 m (plans 2/3)        T           10 deg tilt and release
+  H / J       height command +-0.02 m                    T           10 deg tilt and release
+(Plans 1-3 were removed on 2026-11-11.)
 """
 from __future__ import annotations
 
@@ -20,26 +22,15 @@ import numpy as np
 
 
 def make_plan(args):
-    if args.plan == 1:
-        from wbr.plans.plan1_upkie import Plan1Config, Plan1Upkie
-        return Plan1Upkie(Plan1Config(balancer=args.balancer, noise=args.noise, latency_ms=args.latency_ms))
-    if args.plan == 2:
-        from wbr.plans.plan2_diablo_lqi6 import Plan2Config, Plan2DiabloLQI6
-        return Plan2DiabloLQI6(Plan2Config(noise=args.noise, latency_ms=args.latency_ms))
-    if args.plan == 3:
-        from wbr.plans.plan3_diablo_upkie import Plan3Config, Plan3DiabloUpkie
-        return Plan3DiabloUpkie(Plan3Config(noise=args.noise, latency_ms=args.latency_ms))
-    if args.plan == 4:
-        from wbr.plans.plan4_upkie_lqi6 import Plan4Config, Plan4UpkieLQI6
-        return Plan4UpkieLQI6(Plan4Config(rate_hz=args.rate, noise=args.noise, latency_ms=args.latency_ms,
-                                          host="mpc" if args.balancer == "mpc" else "ramp"))
-    raise ValueError(args.plan)
+    from wbr.plans.plan4_lqi8 import Plan4Config, Plan4LQI8
+    return Plan4LQI8(Plan4Config(rate_hz=args.rate, noise=args.noise, latency_ms=args.latency_ms,
+                                 host="mpc" if args.balancer == "mpc" else "ramp"))
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--plan", type=int, default=1, choices=(1, 2, 3, 4))
-    ap.add_argument("--balancer", default="pid", choices=("pid", "mpc"))
+    ap.add_argument("--plan", type=int, default=4, choices=(4,), help="kept for old command lines; only Plan 4 is left")
+    ap.add_argument("--balancer", default="ramp", choices=("ramp", "mpc"), help="host: ramp (stage 1) or the MPC host (stage 2)")
     ap.add_argument("--rate", type=float, default=1000.0, help="plan 4: MCU rate (1000 or 200 Hz)")
     ap.add_argument("--speed", type=float, default=1.0, help="real-time factor")
     ap.add_argument("--noise", action="store_true")

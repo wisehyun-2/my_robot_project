@@ -120,7 +120,7 @@ v4run.load()['finalize'].exports()              # export/: f3d, 조립 STEP, 부
 
 ## 6. 모터 재검증 (MuJoCo)
 
-`wheeled_biped/results/ake_cad_v4/`(시나리오 28개 × 로봇만 / 짐 5 kg, Plan 4 LQI6, 잡음 + 2 ms 지연, 시드 0, 11-02 질량 — 배선
+`wheeled_biped/results/ake_cad_v4/`(시나리오 28개 × 로봇만 / 짐 5 kg, Plan 4 LQI8, 잡음 + 2 ms 지연, 시드 0, 11-02 질량 — 배선
 없음, 닫힌 칸은 비었다고 가정). 링크가 가벼워진 것(허벅지 쪽 0.73 → 0.65, 정강이 쪽 0.74 → 0.62 kg)만 들어간다 — **MuJoCo 링크는
 강체**라 레진 링크의 처짐(접지점 10.5 mm)은 시뮬에 없다.
 

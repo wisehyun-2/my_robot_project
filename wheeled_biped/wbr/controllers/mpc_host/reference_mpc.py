@@ -1,4 +1,4 @@
-"""Stage-2 host process of Plan 4: MPC velocity-reference generator above the MCU's LQI6 balancer.
+"""Stage-2 host process of Plan 4: MPC velocity-reference generator above the MCU's LQI8 balancer.
 
     MpcHost(link, plan, publish_hz=50)      drop-in replacement of HostEmulator (wbr.controllers.diablo_arch.host_link)
 
@@ -7,12 +7,12 @@ warm start, OSQP as backup) and sends the FIRST element of the optimal velocity-
 ``MotionCtrl.forward``; ``left`` (yaw rate) and ``up`` (height, clipped to the leg-length range) are passed through,
 ``pitch`` is never sent (``roll`` / ``leg_split`` are zeroed too).  The MPC has no integrator.
 
-Inner loop in MPC mode (``MotionCtrl.host_shaped = True``): the MCU's LQI6 tracks the host reference plainly and
-freezes ALL its integrators while the reference accelerates (``LQI6.freeze_int_on_accel_plain``); on a link timeout or
+Inner loop in MPC mode (``MotionCtrl.host_shaped = True``): the MCU's LQI8 tracks the host reference plainly and
+freezes ALL its integrators while the reference accelerates (``LQI8.freeze_int_on_accel_plain``); on a link timeout or
 when the QP fails the host sends the raw target with ``host_shaped = False`` and the MCU applies its own stage-1
 shaping (fallback, section 6 of docs/plan4_mpc_host.md).
 
-Prediction model (``wbr.controllers.mpc_host.model``): the integrator-free LQI6 state-feedback loop of that manoeuvre
+Prediction model (``wbr.controllers.mpc_host.model``): the integrator-free LQI8 state-feedback loop of that manoeuvre
 regime, built from the plant linearisation and the MCU's own gain table (ZOH at the MCU period, observation latency),
 lifted to the host period and reduced by balanced truncation (4-5 states) to the r -> (v_base, pitch) axes.
 
@@ -132,7 +132,7 @@ class MpcConfig:
     target_deadband: float = 0.02            # m/s: smaller targets are exactly zero (r1 M1: a 1e-4 m/s joystick residual
                                              # kept the telemetry correction active while standing)
     innovation_gate: float = 0.1             # m/s: larger prediction errors are disturbances (a push) for the inner loop,
-                                             # not model errors to correct (r1 M1: correcting them fought the LQI6)
+                                             # not model errors to correct (r1 M1: correcting them fought the LQI8)
     # telemetry correction of the prediction state (slow-mode Kalman observer, active only while manoeuvring)
     use_observer: bool = True
     obs_sigma_v: float = 0.01                # m/s   noise of the period-averaged telemetry speed (est.v)
@@ -145,7 +145,7 @@ class MpcConfig:
     friction_ff_Nm: float = 0.0             # 0 = off (tried 0.02-0.04 N m: overshoot -0.3 %, stop +2 cm)
     friction_v_s: float = 0.05
     handover: bool = True                    # when the correction stops at stand-still, hand the residual (inner
-                                             # integrator pay-back) to the LQI6: prediction state -> 0 (the reference
+                                             # integrator pay-back) to the LQI8: prediction state -> 0 (the reference
                                              # itself continues from its current value to 0 under the QP)
     obs_hold_s: float = 1.0                  # keep correcting (and the prediction state) at least this long after the
                                              # target returned to zero; r2 M1: 0.5 s handed over while the robot still
@@ -224,7 +224,7 @@ def prediction_model(plan, period: float, order: int, L0: Optional[float] = None
             if ev <= tol_v and ep <= tol_pitch_deg:
                 break
     red.info["order_errors"] = {str(k): v for k, v in order_errors.items()}
-    # direction of the LQI6 velocity integrator z (and z_att) in the reduced coordinates: process-noise direction of
+    # direction of the LQI8 velocity integrator z (and z_att) in the reduced coordinates: process-noise direction of
     # the host's observer (joint dry friction winds this integrator up more than the linear model predicts)
     dirs = {}
     for name in ("i_z", "i_z_att"):
@@ -244,7 +244,7 @@ def prediction_observer(red: M.LTIModel, sigma_v: float, sigma_w: float = 0.0, s
     """Steady-state Kalman gain for the measured wheel speed v (period-averaged telemetry est.v).
 
     Process noise (no disturbance STATE is added, so the host has no integral action):
-      sigma_z on the direction of the MCU's LQI6 velocity integrator z (projection of the full-order state onto the
+      sigma_z on the direction of the MCU's LQI8 velocity integrator z (projection of the full-order state onto the
               reduced coordinates): the joint dry friction of the robot makes z wind up and pay back more than the
               linear model predicts -- this is the physical error the correction has to absorb;
       sigma_w on the slowest reduced mode (basis normalised to 1 m/s of velocity), optional;
@@ -340,7 +340,7 @@ def derive_limits(plan, cfg: MpcConfig, L0: Optional[float] = None) -> dict:
                  pitch_step=(v_step, "pitch_deg", (cfg.pitch_limit_deg - cfg.pitch_reserve_deg) / cfg.pitch_model_factor),
                  pitch_full=(v_full, "pitch_deg", (cfg.pitch_limit_general_deg - cfg.pitch_reserve_deg) / cfg.pitch_model_factor),
                  lean=(v_full, "lean_deg", cfg.lean_fraction * cfg.lean_limit_deg))
-    # the MCU tracks a host-shaped reference with its PLAIN ramp (LQI6._plain, 4 m/s^2), not the stage-1 shaping ramp
+    # the MCU tracks a host-shaped reference with its PLAIN ramp (LQI8._plain, 4 m/s^2), not the stage-1 shaping ramp
     a_mcu = cfg.mcu_ramp_fraction * float(getattr(plan.law.ctrl, "_plain", (plan.law.ctrl.v_ramp_rate,))[0])
     cands = {}
     for name, (span, f, budget) in tests.items():
@@ -379,7 +379,7 @@ class ReferenceModel:
     the target; it has no integral action."""
 
     def __init__(self, period: float, omega_up: float, omega_down: float, horizon_steps: int):
-        from wbr.controllers.lqi6.lqi6 import c2d_zoh
+        from wbr.controllers.lqi8.lqi8 import c2d_zoh
         self.period = period
         self.N = int(horizon_steps)
         self.models = {}
@@ -834,7 +834,7 @@ class MpcHost:
         hold_more = self._was_active and y is not None and abs(y) > self.cfg.obs_hold_v and since_zero < self.cfg.obs_hold_max_s
         active = self.cfg.use_observer and (v_star != 0.0 or since_zero < self.cfg.obs_hold_s or hold_more)
         if self.cfg.handover and v_star == 0.0 and not active and self._was_active:
-            # end of the manoeuvre: what is left in the prediction state is the LQI6 integrator's pay-back of the
+            # end of the manoeuvre: what is left in the prediction state is the LQI8 integrator's pay-back of the
             # stop; the host does not fight it (no correction any more), so the plan restarts from rest
             self._x = np.zeros_like(self._x)
             self._U = None

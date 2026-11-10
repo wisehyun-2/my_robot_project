@@ -1,6 +1,6 @@
-"""Stage-2 host of Plan 4: MPC velocity-reference generator above the MCU's LQI6 (docs/plan4_mpc_host.md).
+"""Stage-2 host of Plan 4: MPC velocity-reference generator above the MCU's LQI8 (docs/plan4_mpc_host.md).
 
-    model.py          prediction model: the LQI6 closed loop (plant linearisation + MCU gain table), lifting, reduction
+    model.py          prediction model: the LQI8 closed loop (plant linearisation + MCU gain table), lifting, reduction
     reference_mpc.py  MpcHost (HostEmulator replacement), ReferenceQP (qpmpc + DAQP / OSQP), limits, observer, fallback
     fallback.py       stage-1 ramp shaping (last-resort fallback)
     identify.py       model validation against the simulation -> models/upkie_plan4/plan4_closed_loop.json, figures

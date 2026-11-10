@@ -1,5 +1,5 @@
 {
- "description": "Plan 4 MPC host prediction model: LQI6 closed loop (plan.plant.linearize + MCU gain table, ZOH at the MCU period, 10 ms observation latency), lifted to the 20 ms host period, balanced truncation (DC matched) on the (r, Tf) -> (v_base, pitch, v, theta, T) channels",
+ "description": "Plan 4 MPC host prediction model: LQI8 closed loop (plan.plant.linearize + MCU gain table, ZOH at the MCU period, 10 ms observation latency), lifted to the 20 ms host period, balanced truncation (DC matched) on the (r, Tf) -> (v_base, pitch, v, theta, T) channels",
  "inner_loop": {
   "host_shaped": true,
   "plain_ramp_rate": 4.0,

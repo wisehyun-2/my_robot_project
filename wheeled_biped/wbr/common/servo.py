@@ -47,6 +47,6 @@ class ServoModel:
 
 
 def torque_command(tau: float, tau_max: float) -> ServoCommand:
-    """Pure torque mode (DIABLO/LQI6 style): feedforward only."""
+    """Pure torque mode (DIABLO/LQI8 style): feedforward only."""
     return ServoCommand(position=math.nan, velocity=0.0, feedforward_torque=tau, kp_scale=0.0, kd_scale=0.0,
                         maximum_torque=tau_max)

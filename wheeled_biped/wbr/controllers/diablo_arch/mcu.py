@@ -1,12 +1,13 @@
-"""DIABLO-style real-time controller ("MCU program") for the DIABLO-lite robot.
+"""DIABLO-style real-time controller ("MCU program") of the serial-leg wheel biped (Plan 4 harness, v5 robot).
 
 Mirrors the DIABLO architecture (arXiv 2407.21500, diablo_ros2): a 1 kHz loop on the real-time
 board reads the IMU and the six motors, estimates the body/leg state, runs a mode state machine
-(CAR / TRANSITION_UP / STAND / TRANSITION_DOWN), applies the balance law (pluggable: the LQI6 of the
-design report for Plan 2, upkie's wheel balancer for Plan 3), the leg length controller (PD + weight
-feed-forward through the five-bar VMC), yaw rate control (differential wheel torque), roll control
-(leg length difference) and an anti-split PD between the legs, with command timeouts (host link).
+(CAR / TRANSITION_UP / STAND / TRANSITION_DOWN), applies the balance law (pluggable: the LQI8 law, or the
+v5_mpc law), the leg length controller (PD + weight feed-forward through the serial-leg VMC), yaw rate
+control (differential wheel torque), roll control (leg length difference) and an anti-split PD between
+the legs, with command timeouts (host link).
 The host (ROS 2) only provides MotionCtrl set-points; the robot stands even if the host dies.
+(Until 2026-11-11 it also ran Plans 2 / 3 on the DIABLO-lite five-bar legs; those were removed.)
 """
 from __future__ import annotations
 
@@ -20,12 +21,9 @@ from wbr.common.filters import Ramp, clamp, clamp_abs
 from wbr.common.rotations import quat_to_matrix, roll_pitch_yaw
 from wbr.common.servo import ServoCommand, torque_command
 from wbr.controllers.diablo_arch.host_link import HostLink, MotionCtrl, RobotMode
-from wbr.controllers.lqi6.fivebar import FiveBarLeg, LegGeometry
+from wbr.controllers.lqi8.serial_leg import SerialLeg
 from wbr.observers.body_attitude import BodyAttitude
 from wbr.observers.upkie_observers import BaseOrientation
-
-LEFT_JOINTS = ("left_hip", "left_crank", "left_wheel")
-RIGHT_JOINTS = ("right_hip", "right_crank", "right_wheel")
 
 
 @dataclass
@@ -63,7 +61,7 @@ class McuParams:
     ki_roll: float = 0.3                # m per rad s
     kd_roll: float = 0.03
     roll_int_limit: float = 0.02        # m
-    allow_transform_down: bool = False  # DIABLO-lite has no auxiliary wheels: refuse CAR (review B3)
+    allow_transform_down: bool = False  # the robot has no auxiliary wheels (unlike DIABLO): refuse CAR (review B3)
     disconnect_off_s: float = 0.0       # > 0: all motors off this long after the host link dropped (report 4.5);
                                         # 0 keeps DIABLO's behaviour (balance on the spot indefinitely)
     arm_pitch: float = math.radians(3)  # arm() only accepts an upright robot
@@ -77,7 +75,7 @@ class McuParams:
     tau_hip_max: float = 12.0
     tau_wheel_max: float = 5.0
     leg_rate: float = 0.25              # m/s leg length ramp
-    leg_joint: str = "crank"            # name suffix of the second leg joint ("crank" five-bar, "knee" serial leg)
+    leg_joint: str = "knee"             # name suffix of the second leg joint (serial hip-knee leg)
     F_ff_N: Optional[float] = None      # static leg force feed-forward per leg; None: 0.5 (mass_total - mass_wheels) g
     leg_force: Optional[Callable[[float, float], float]] = None     # static force per leg from (L0, world lean), replaces F_ff_N / cos(lean)
     friction_comp_Nm: float = 0.0       # hip stiction compensation: +fc * tanh((Tp - Tp_ff) / width) in the direction the
@@ -164,9 +162,11 @@ class Estimate:
 
 
 class DiabloMcu:
-    def __init__(self, law, params: McuParams | None = None, leg: FiveBarLeg | None = None, link: HostLink | None = None):
+    def __init__(self, law, params: McuParams | None = None, leg: SerialLeg | None = None, link: HostLink | None = None):
         self.p = params or McuParams()
-        self.leg = leg or FiveBarLeg(LegGeometry())
+        if leg is None:
+            raise ValueError("DiabloMcu needs the robot's leg kinematics (SerialLeg)")
+        self.leg = leg
         self.law = law
         self.link = link or HostLink()
         self.left_joints = ("left_hip", f"left_{self.p.leg_joint}", "left_wheel")
@@ -280,7 +280,7 @@ class DiabloMcu:
     # ------------------------------------------------------------- estimator
     def _filtered_servo(self, servo: Dict[str, dict]) -> Dict[str, dict]:
         """Replace the driver velocities by position differences over vel_window_s (Plan 4 jitter fix: the 14-bit
-        encoder differentiated over one 1 kHz step has +-0.38 rad/s quantisation noise which the LQI6 theta_dot gain
+        encoder differentiated over one 1 kHz step has +-0.38 rad/s quantisation noise which the LQI8 theta_dot gain
         turned into 0.1 N m rms wheel torque chatter; over 5 ms the noise is 5x lower at 2.5 ms extra delay)."""
         n = int(round(self.p.vel_window_s / self.p.dt))
         if n <= 1:
@@ -479,7 +479,7 @@ class DiabloMcu:
                 if p.allow_transform_down:
                     self._set_mode(RobotMode.TRANSITION_DOWN)
                 elif not getattr(self, "_down_refused", False):
-                    self.events.append((self.t, "transform down ignored (no auxiliary wheels on DIABLO-lite)"))
+                    self.events.append((self.t, "transform down ignored (no auxiliary wheels on this robot)"))
                     self._down_refused = True
         self.v_ref = clamp_abs(cmd.forward, p.max_forward)
         self.yaw_rate_ref = clamp_abs(cmd.left, p.max_yaw_rate)
