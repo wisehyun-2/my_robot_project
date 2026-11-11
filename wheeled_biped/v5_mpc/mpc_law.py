@@ -20,9 +20,12 @@ What makes it an MPC and not an LQR:
      the reference moves, as in the LQI8 (without the hold the position it lost during the start is caught up with a
      14-38 % velocity overshoot, whatever the lead: linear-model scan 11-10);
   2. constraints: every motor's torque over the first n_con moves -- wheel (T/2 +- tau_yaw/2), hip and knee (through
-     the leg's VMC map at the current joint angles, with the static leg force, the split torque and the knee's
-     wheel-reaction term of the other loops) -- within u_limit of the motor peak.  The QP (DAQP) is solved only when the
-     unconstrained optimum breaks one of them; otherwise the explicit solution is the answer (same result, no solver).
+     the leg's VMC map at the current joint angles, with the leg force the MCU's leg loops gave in the last period,
+     the split torque and the knee's wheel-reaction term of the other loops) -- within u_limit of the motor peak.  The
+     QP (DAQP) is solved only when the unconstrained optimum breaks one of them; otherwise the explicit solution is the
+     answer (same result, no solver).
+Over uneven ground the MCU slows the robot down and hands the law a lean (v_lean, as to the LQI8): the virtual leg's
+target leans back with the reference's deceleration, so the robot brakes with the reference and not after it.
 Horizon: blocks of Ts, Ts, 2 Ts, 4 Ts, then n_steps x dt_mpc (1 kHz: 0.31 s, 34 moves), stage costs weighted by the
 block length, terminal cost = the DARE solution at Ts.  The fine first blocks make the unconstrained first move the
 LQR feedback of the control period itself (a uniform 10 ms grid made the hip gains 30-40 % softer).
@@ -380,6 +383,11 @@ class MpcLaw:
             return {"T": 0.0, "Tp": 0.0}
         phi = -(est.pitch - refs.get("pitch_ref", 0.0))
         theta = est.theta_v_mean - self.theta_eq(est.L0_mean)
+        # Slowing down over uneven ground (McuParams.uneven_lean, as LQI8Law): the virtual leg's target leans back with
+        # the reference's deceleration, a / g.  Without it leaning back counts as an error in the cost, the speed error is
+        # cheap and the position integral is held there, so the MPC braked half as hard as the LQI8 (0.33 vs 0.60 m/s^2)
+        # and stayed above the reference: staged tests 2-20 (0.316 m/s on the bump) and 2-13 (19 cm sideways), 2026-11-11.
+        theta -= refs.get("v_lean", 0.0) * self.ctrl._a_ref_lp / 9.81
         lim = self.limits(est, refs, mcu) if self.u_limit > 0.0 else None
         T, Tp = self.ctrl.step(theta, est.theta_v_dot_mean, est.v, phi, -est.pitch_rate, est.L0_mean, refs["v_ref"],
                                rate=refs.get("v_brake", 0.0), brake_tau=refs.get("v_brake_tau", 0.0),

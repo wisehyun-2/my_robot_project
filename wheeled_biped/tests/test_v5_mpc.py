@@ -122,6 +122,25 @@ class TestPlanV5Mpc(unittest.TestCase):
         mcu.leg_force_cmd.update(saved)
         self.assertEqual(len(h1), len(h0) - 2)                           # the left knee is beyond the limit already: row left out
 
+    def test_the_lean_of_the_mcu_slow_down_reaches_the_mpc(self):
+        """2026-11-11 (staged tests 2-20, 2-13): over uneven ground the MCU slows the robot down and hands the law v_lean;
+        while the reference decelerates at a the virtual leg's target leans back by a / g (as in LQI8Law).  Without it the
+        MPC braked half as hard as the LQI8 and stayed above the reference."""
+        from v5_mpc.controller import make_plan
+        plan = make_plan(noise=False, seed=0, latency_ms=10.0)
+        plan.reset()
+        self.assertTrue(plan.run(0.5))
+        mcu, law = plan.mcu, plan.mcu.law
+        seen = []
+        law.ctrl.step = lambda theta, *a, **k: (seen.append(theta), (0.0, 0.0))[1]     # only the leg angle the MPC is given
+        law.ctrl._a_ref_lp = -0.8                                                       # the reference is slowing down
+        refs = dict(v_ref=0.2, tau_yaw=0.0, balance=True)
+        law.compute(mcu.est, dict(refs, v_lean=0.0), mcu)
+        law.compute(mcu.est, dict(refs, v_lean=1.0), mcu)
+        law.compute(mcu.est, refs, mcu)                                                 # no v_lean handed over: no lean
+        self.assertAlmostEqual(seen[1] - seen[0], 0.8 / 9.81, places=9)                 # leg target back by a / g
+        self.assertAlmostEqual(seen[2], seen[0], places=12)
+
     def test_no_lqi_settings_in_the_mpc_folder(self):
         from v5_mpc.controller import PlanV5Mpc, PlanV5MpcConfig
         with self.assertRaises(ValueError):
