@@ -223,6 +223,9 @@ class DiabloMcu:
         self.last_obs_time: Optional[float] = None
         self.est_hold = False
         self.servo_valid: Dict[str, dict] = {}       # last valid (filtered) servo sample: the VMC never reads raw NaNs
+        self.leg_force_cmd: Dict[str, float] = {}    # the force each leg was given in the last period (static + length PD + roll
+                                                     # + range wall + damper): what the leg loops put on the hip / knee motors,
+                                                     # read by a balance law that plans inside the motor limits (v5_mpc)
         self._rejected_seen = int(getattr(self.link, "rejected", 0))
         self.law.reset()
         self.link.reset()
@@ -559,6 +562,7 @@ class DiabloMcu:
             self.yaw_ref_limited = 0.0
             self.roll_int = 0.0
             self.roll_force_int = 0.0
+            self.leg_force_cmd = {}             # no leg force in the safe state
             self.telemetry ={"mode": int(self.mode), "fault": self.fault, "armed": self.armed, "L_ref": self.L_ref.value,
                               "v_ref": 0.0, "in_control": self.link.in_control, "tau_yaw": 0.0, "dL": 0.0, "T": 0.0, "Tp": 0.0,
                               "tau_split": 0.0, "d_theta": 0.0}
@@ -674,6 +678,7 @@ class DiabloMcu:
             else:
                 F = p.kp_leg * (L_ref_side[side] - e.L0[side]) - p.kd_leg * e.L0_dot[side]
             F += p.leg_force(e.L0[side], e.theta_v[side]) if p.leg_force is not None else F_ff / max(math.cos(e.theta_v[side]), 0.5)
+            self.leg_force_cmd[side] = F
             Tp_side = 0.5 * Tp + sign * 0.5 * tau_split
             sv = self.servo_valid if self.servo_valid else obs["servo"]        # held sample on invalid data (r2 M1)
             tau_hip, tau_crank = self.leg.vmc_torques(F, Tp_side, sv[f"{side}_hip"]["position"],

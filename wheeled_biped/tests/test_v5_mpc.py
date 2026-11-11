@@ -103,6 +103,25 @@ class TestPlanV5Mpc(unittest.TestCase):
         self.assertTrue(plan.run(3.0))
         self.assertLess(np.degrees(np.abs(plan.log["pitch_true"][plan.log["t"] > 1.0]).max()), 1.0)
 
+    def test_torque_limits_use_the_leg_force_the_mcu_commanded(self):
+        """2026-11-11 (staged test 2-19): what the leg loops really put on a leg, not the static force alone, decides what
+        is left for the balance torques; a row the leg loop alone has already broken is left out.  With the static force
+        the knee row of a leg on its range wall stayed in with almost no room and the body pitched to 10 deg."""
+        from v5_mpc.controller import make_plan
+        plan = make_plan(noise=False, seed=0, latency_ms=10.0)
+        plan.reset()
+        self.assertTrue(plan.run(0.5))
+        mcu, law = plan.mcu, plan.mcu.law
+        self.assertEqual(set(mcu.leg_force_cmd), {"left", "right"})      # the MCU keeps the force it gave each leg
+        refs = dict(tau_yaw=0.0)
+        _, h0 = law.limits(mcu.est, refs, mcu)
+        self.assertEqual(len(h0), 12)                                    # standing: wheel, hip and knee on both sides
+        saved = dict(mcu.leg_force_cmd)
+        mcu.leg_force_cmd["left"] = 4.0 * saved["left"]                  # the left leg pushed hard by its own loop
+        _, h1 = law.limits(mcu.est, refs, mcu)
+        mcu.leg_force_cmd.update(saved)
+        self.assertEqual(len(h1), len(h0) - 2)                           # the left knee is beyond the limit already: row left out
+
     def test_no_lqi_settings_in_the_mpc_folder(self):
         from v5_mpc.controller import PlanV5Mpc, PlanV5MpcConfig
         with self.assertRaises(ValueError):

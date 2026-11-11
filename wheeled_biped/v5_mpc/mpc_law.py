@@ -334,10 +334,16 @@ class MpcLaw:
     def limits(self, est, refs: dict, mcu):
         """(G, h): every motor torque the balance torques reach, G [T, Tp] <= h, at the joint angles of now.
         Per side (MCU signs: left -1, right +1): wheel T/2 + s tau_yaw/2; hip and knee through the VMC map of
-        (F, Tp/2 + s tau_split/2) with F the static leg force, plus the knee's wheel-reaction term.  A constraint the
-        other loops alone already break is left out (the balance torques cannot fix it)."""
+        (F, Tp/2 + s tau_split/2) plus the knee's wheel-reaction term.  F is the force the MCU's leg loops gave that leg
+        in the last period (DiabloMcu.leg_force_cmd: static + length PD + roll + range wall + damper); before the first
+        period, the static force.  A constraint the other loops alone already break is left out (the balance torques
+        cannot fix it).
+        The static force alone is not enough (2026-11-11, test 2-19): with a leg on its range wall the leg loop puts
+        10.5-12.5 N m on that knee while the static force gives 8.6-9.4, just under the 9.4 limit; the row then left
+        the balance torques almost no room, pushed the hip torque the wrong way and the body pitched to 10 deg."""
         p = mcu.p
         servo = mcu.servo_valid if getattr(mcu, "servo_valid", None) else mcu.last_obs["servo"]
+        F_cmd = getattr(mcu, "leg_force_cmd", None) or {}
         tau_yaw = refs.get("tau_yaw", 0.0)
         d_theta = est.theta_v_body["left"] - est.theta_v_body["right"]
         d_theta_dot = est.theta_v_dot["left"] - est.theta_v_dot["right"]
@@ -354,7 +360,9 @@ class MpcLaw:
 
         for side, s in (("left", -1.0), ("right", +1.0)):
             qh, qk = servo[f"{side}_hip"]["position"], servo[f"{side}_{p.leg_joint}"]["position"]
-            F = p.leg_force(est.L0[side], est.theta_v[side]) if p.leg_force is not None else F_ff / max(math.cos(est.theta_v[side]), 0.5)
+            F = F_cmd.get(side)                 # what the leg loops really put on this leg (one period old)
+            if F is None or not math.isfinite(F):
+                F = p.leg_force(est.L0[side], est.theta_v[side]) if p.leg_force is not None else F_ff / max(math.cos(est.theta_v[side]), 0.5)
             a_h, a_k = mcu.leg.vmc_torques(1.0, 0.0, qh, qk)
             b_h, b_k = mcu.leg.vmc_torques(0.0, 1.0, qh, qk)
             c_k = mcu.leg.wheel_reaction_ratio(qh, qk) if p.wheel_reaction_ff else 0.0
