@@ -52,7 +52,33 @@ source install/setup.bash
 | `https://github.com/mjbots/moteus` | aec0333 | moteus 프로토콜(`lib/cpp/mjbots/moteus`) |
 | `https://github.com/upkie/upkie` | ffa9e4d | pi3hat IMU 변환, 스파인 주기 참고 |
 | `https://github.com/DDTRobot/ddt_ros2_control` | beb05df | 제어기 골격(`rl_controller`), 키보드, 토픽 이름 |
-| `https://github.com/DDTRobot/TITA_ROS2_Control_Sim` | 3c782e4 | 시뮬 bringup 참고 |
+| `https://github.com/DDTRobot/TITA_ROS2_Control_Sim` | 3c782e4 | 시뮬 bringup 참고, `template_ros2_controller` |
+
+아래 다섯 개는 2026-11-12에 더한 것이다. 저장소 정보와 README만 확인했고 코드는 아직 읽지 않았다. 모두 Humble 기준이거나(위 DDT 포함) Jazzy 공식 예제다.
+
+| 저장소 | 받을 폴더 이름 | 라이선스 | 쓰는 곳 |
+|---|---|---|---|
+| `https://github.com/DDTRobot/tita_hardware_ros2_control` | `tita_hardware_ros2_control` | 파일 없음 | 실기 launch·`controllers.yaml` 틀(`hw_bringup`), `read()`·`write()`에서 통신을 부르는 자리. Humble |
+| `https://github.com/BartlomiejK2/pi3hat_hardware_interface` | `pi3hat_hw_bartlomiej` | **GPL-3.0** | 우리가 만들 플러그인과 가장 가깝다: moteus 전용, 관절별 CAN 버스·ID, `mode`·`fault`·전압·온도 상태, IMU z축 변환, 시험 코드. Ubuntu 22.04 실시간 커널 + Humble |
+| `https://github.com/CentroEPiaggio/pi3hat_robotic_systems` | `pi3hat_robotic_systems` | 파일 없음 | moteus + power dist(전압·전류)를 읽는 예. 우리 JC3의 power dist r4.5b |
+| `https://github.com/G-Levine/pi3hat_hardware_interface` | `pi3hat_hw_glevine` | MIT | root·DDS 문제 해결 메모. Mini Cheetah 프로토콜 전용, 2024-02 이후 갱신 없음 |
+| `https://github.com/ros-controls/ros2_control_demos` (브랜치 `jazzy`) | `ros2_control_demos` | Apache-2.0 | Jazzy 방식의 하드웨어·제어기 공식 예제. 예제 9가 시뮬·실물 전환(`hw_env`와 같은 구조) |
+
+```bash
+cd ~/references        # my_robot_project 옆의 references 폴더
+git clone https://github.com/DDTRobot/tita_hardware_ros2_control
+git clone https://github.com/BartlomiejK2/pi3hat_hardware_interface pi3hat_hw_bartlomiej
+git clone https://github.com/CentroEPiaggio/pi3hat_robotic_systems
+git clone https://github.com/G-Levine/pi3hat_hardware_interface pi3hat_hw_glevine
+git clone -b jazzy https://github.com/ros-controls/ros2_control_demos
+```
+
+참조 코드를 쓸 때의 규칙:
+
+- **GPL-3.0과 라이선스 파일이 없는 저장소는 읽고 구조만 참고한다. 코드를 복사하지 않는다.** GPL 코드를 복사하면 우리 패키지도 GPL이 되고, 라이선스가 없는 코드는 사용이 허락되지 않은 상태로 본다. 복사해도 되는 것은 MIT(G-Levine)와 Apache-2.0(ros-controls, 헤더에 Apache-2.0이 적힌 DDT 소스)이고, 그때는 출처 표기를 남긴다.
+- DDT 코드와 pi3hat 인터페이스 세 개는 모두 Humble API다. Jazzy에서 달라진 것(`get_value` → `get_optional`, `get_state` → `get_lifecycle_state`, `on_export_*`, 스포너의 `--param-file`)은 `ros2_control_demos`의 `jazzy` 브랜치를 기준으로 맞춘다.
+- pi3hat 인터페이스 세 개는 Ubuntu 22.04 + Humble에서 쓰던 것이다. 24.04 + Jazzy에서 도는지는 확인된 곳이 없다.
+- 쓰지 않는 것: DDT의 MuJoCo 브리지 3종(공식 `mujoco_ros2_control`로 대신함), `TITA-SDK-ROS2`·`TITA_CAN_Inerface`(TITA 보드의 CAN 규약), 강화학습 저장소(지금 범위 밖).
 
 ## 2. 정해진 것
 
