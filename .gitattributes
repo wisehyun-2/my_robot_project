@@ -1,0 +1,7 @@
+# Two computers work on this repository: Windows (CRLF) and Ubuntu (LF).
+# Text files are stored with LF; each computer checks them out in its own style.
+* text=auto
+
+# Files that Linux runs or parses keep LF even when they are written on Windows.
+*.sh text eol=lf
+wheeled_biped/ros2_ws/** text=auto eol=lf

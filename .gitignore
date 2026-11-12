@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+venv/
+
+# colcon output of the ROS 2 workspace (wheeled_biped/.gitignore also lists build / install / log)
+wheeled_biped/ros2_ws/build/
+wheeled_biped/ros2_ws/install/
+wheeled_biped/ros2_ws/log/
+
+# editors
+.vscode/
+*.swp
