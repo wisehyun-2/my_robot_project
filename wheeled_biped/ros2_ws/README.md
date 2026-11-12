@@ -9,7 +9,6 @@
 - 작업 브랜치는 **`ros2-v5`** 하나다. Windows PC와 Ubuntu 노트북이 같이 쓴다.
 - 역할은 나누지 않는다. 두 컴퓨터를 동시에 쓰지 않는다(2026-11-12 사용자).
 - 시작할 때 `git pull`, 끝낼 때 커밋하고 `git push`. 올리지 않고 다른 컴퓨터로 넘어가면 충돌이 난다.
-- Windows PC에는 ROS 2도 C++ 컴파일러도 없다. 그 PC에서는 Python(`wbr`)만 실행할 수 있고, C++은 작성만 된다. 빌드와 시험은 노트북에서 한다.
 - Claude Code의 메모는 컴퓨터마다 따로다. 다른 컴퓨터가 알아야 할 결정은 이 문서나 `CLAUDE.md`에 적는다.
 
 ## 1. 노트북(Ubuntu 24.04 + ROS 2 Jazzy) 준비
@@ -86,8 +85,8 @@ git clone -b jazzy https://github.com/ros-controls/ros2_control_demos
 |---|---|---|
 | ROS 배포판 | Jazzy (Ubuntu 24.04) | 11-08 사용자 |
 | 패키지 구조 | TITA `ros2_control` 구조, 균형 제어기 자리만 `wbr` 이식 | 11-08 사용자 |
-| 시뮬레이터 | MuJoCo와 Gazebo 둘 다. 공식 `mujoco_ros2_control` 먼저, Gazebo는 마지막 | 11-08 사용자, 순서는 11-12 제안 |
-| 제어기 출력 | 토크(effort)만. 세 환경(실물·MuJoCo·Gazebo)에서 같게 | 11-08 |
+| 시뮬레이터 | MuJoCo, Gazebo, **Isaac Sim** 셋 다. 공식 `mujoco_ros2_control` 먼저, Gazebo와 Isaac Sim은 그 뒤 | MuJoCo·Gazebo 11-08 사용자, Isaac Sim 11-12 사용자, 순서는 11-12 제안 |
+| 제어기 출력 | 토크(effort)만. 모든 환경(실물·MuJoCo·Gazebo·Isaac Sim)에서 같게 | 11-08 |
 | CAN 버스 | 왼쪽 다리 JC1, 오른쪽 다리 JC2, JC3은 power dist. ID는 후보 1·2·3 / 4·5·6 | 11-12 사용자 |
 | 범위 | **주행 중 균형 잡기만.** 시작 자세·스스로 일어서기는 나중에 정함 | 11-12 사용자 |
 | 상태 기계 | `idle → balance → fault`. 받침 위에서 세운 뒤 `arm()` (Python `DiabloMcu`와 같음) | 11-12 |
@@ -104,8 +103,9 @@ git clone -b jazzy https://github.com/ros-controls/ros2_control_demos
 ros2_ws/src/
 ├─ wbr_description/                      로봇 모델 + hw_env 전환
 │  ├─ urdf/wheelbiped_v5.urdf.xacro       models/wheelbiped_v5의 URDF에서 (build_v5가 생성, 손으로 안 고침)
-│  ├─ urdf/ros2_control.xacro             hw_env = real | mujoco | gazebo, 관절별 CAN 버스·ID, IMU 센서
-│  ├─ urdf/gazebo.xacro, worlds/flat.sdf  마지막 순서
+│  ├─ urdf/ros2_control.xacro             hw_env = real | mujoco | gazebo | isaac, 관절별 CAN 버스·ID, IMU 센서
+│  ├─ urdf/gazebo.xacro, worlds/flat.sdf  MuJoCo 다음 순서
+│  ├─ isaac/                              [추가] Isaac Sim용 파일(USD 등). 연결 방식은 아직 정하지 않음 (7절)
 │  ├─ mujoco/wheelbiped_v5.xml, scene.xml  [수정] meshdir 경로 (기립 키프레임은 나중)
 │  ├─ meshes/*.stl, rviz/v5.rviz
 ├─ wbr_hardware/                         실물 플러그인 (read / write)
@@ -127,7 +127,7 @@ ros2_ws/src/
 ├─ wbr_msgs/msg/BalanceStatus.msg        state, fault 사유, v, v_ref, pitch, roll, L0, 전압 …
 ├─ wbr_teleop/                           키보드 (DDT keyboard_controller 수정), 우선순위 낮음
 └─ wbr_bringup/
-   ├─ launch/robot.launch.py              hw_env 인자 하나로 실물·MuJoCo·Gazebo
+   ├─ launch/robot.launch.py              hw_env 인자 하나로 실물·MuJoCo·Gazebo·Isaac Sim
    ├─ launch/record.launch.py             rosbag2
    ├─ launch/hardware_check.launch.py     [추가] 제어기 없이 토크 0 + 상태 확인 (0단계 시험)
    ├─ config/controllers.yaml             주기, 제어기, 브로드캐스터, thread_priority·cpu_affinity
@@ -172,7 +172,7 @@ C++로 옮기지 않는 것: `wbr/observers/pi3hat_ars.py`(pi3hat 펌웨어 필�
 5. `wbr_msgs`, `wbr_teleop`, 기록.
 6. Pi 4: Ubuntu 24.04 + 실시간 커널, `cyclictest`, 가짜 하드웨어(`mock_components`)로 1 kHz.
 7. pi3hat + moteus가 온 뒤: `docs/bringup_step0.md` 9절의 주기 측정 → `wbr_hardware` → 받침 위 토크 0 → `arm()`.
-8. Gazebo.
+8. Gazebo, Isaac Sim.
 
 ## 7. 확인하지 못한 것, 정할 것
 
@@ -180,4 +180,5 @@ C++로 옮기지 않는 것: `wbr/observers/pi3hat_ars.py`(pi3hat 펌웨어 필�
 - JC1과 JC2는 pi3hat의 같은 프로세서가 맡는다. 주기에 영향이 있으면 오른쪽만 JC3으로 옮겨 비교한다.
 - CAN ID(후보 1·2·3 / 4·5·6), moteus 위치 한계 후보, 무릎 완전 신장 보호.
 - 시작 자세와 스스로 일어서기(나중).
+- Isaac Sim(11-12 사용자가 추가): `ros2_control`에 붙이는 방식, URDF에서 USD로 바꾸는 방법, 타이어 접촉과 IMU를 MuJoCo 모델과 맞추는 방법을 아직 조사하지 않았다. RTX 그래픽 카드가 있는 컴퓨터에서만 돈다.
 - 3절의 `[수정]`·`[추가]` 항목을 그대로 갈지.
