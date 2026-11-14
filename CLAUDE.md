@@ -1,10 +1,9 @@
 # my_robot_project — Claude Code 프로젝트 지침
 
-(Claude Code가 이 저장소에서 세션마다 통째로 읽는 파일이다. **지금 유효한 사실과 먼저 읽을 문서만** 적는다. 변경 이력은 각 폴더 README와 git 이력에 둔다. 2026-11-14 정리 이전 판은 `git show 89ba4b2:CLAUDE.md`.)
 
 ## 답변 규칙
 - 모든 답변·진행 상황·질문은 **한국어**로 쓴다. 코드·경로·명령어는 그대로 둔다.
-- **ROS 2 작업(`wheeled_biped/ros2_ws`, `wbr_hardware`·pi3hat·moteus 등)에서는 일반 지식으로 답하지 않는다(2026-11-14 사용자).** 11-14에 일반 지식으로 답한 내용 여덟 군데가 실물·코드와 달랐다.
+- **ROS 2 작업(`wheeled_biped/ros2_ws`, `wbr_hardware`·pi3hat·moteus 등)에서는 일반 지식으로 답하지 않는다.
   - 먼저 `wheeled_biped/ros2_ws/README.md`의 해당 절과 `wheeled_biped/docs/bringup_step0.md`를 읽는다. 날짜를 붙여 정한 것은 확정으로 보고, 다른 안을 다시 꺼내지 않는다.
   - 라이브러리·펌웨어에 대한 말은 `references/`(이 저장소의 서브모듈, `references/README.md`)의 원본 소스를 직접 열어 보고 `파일:줄`을 붙인다. 줄 번호는 서브모듈에 고정된 커밋 기준이다. 서브모듈을 받지 않았거나 커밋이 다르면 그렇다고 밝힌다.
   - README와 소스 어디에도 없는 것은 "확인하지 못함"이라고 쓴다. 기억이나 일반 지식으로 메우지 않는다.
