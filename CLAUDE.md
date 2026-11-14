@@ -23,9 +23,8 @@
 - `wbr` 코어는 ROS에 의존하지 않게 유지한다.
 - 제어기·모델을 바꾸면 다음을 한다(`wheeled_biped/`에서).
   - `python -m unittest discover -s tests`를 돌린다.
-  - 단계 시험(`v5_lqi/TEST/run_stages.py --stage 4 --keep-going`, MPC는 `v5_mpc/TEST/`)을 돌린다.
+  - 단계 시험을 돌린다.
   - 보고서(`v5_lqi/TEST/results/stage_report.md`)를 갱신한다.
-- Windows PC에서는 MuJoCo가 돌지 않는다. 거기서 고쳤으면 무엇을 확인하지 못했는지 밝히고, 노트북에서 돌리도록 남긴다.
 - **사용자 결정 없이 바꾸지 않는다**
   - 합격 기준 수치, 모터 한계, 노이즈(`docs/합격기준.md`, 단계 시험 기준)
 - **v5가 쓰지 않는 코드를 다시 들이지 않는다**(2026-11-14 사용자). 다음은 모두 지웠다.
