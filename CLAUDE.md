@@ -6,7 +6,7 @@
 - 모든 답변·진행 상황·질문은 **한국어**로 쓴다. 코드·경로·명령어는 그대로 둔다.
 - **ROS 2 작업(`wheeled_biped/ros2_ws`, `wbr_hardware`·pi3hat·moteus 등)에서는 일반 지식으로 답하지 않는다(2026-11-14 사용자).** 11-14에 일반 지식으로 답한 내용 여덟 군데가 실물·코드와 달랐다.
   - 먼저 `wheeled_biped/ros2_ws/README.md`의 해당 절과 `wheeled_biped/docs/bringup_step0.md`를 읽는다. 날짜를 붙여 정한 것은 확정으로 보고, 다른 안을 다시 꺼내지 않는다.
-  - 라이브러리·펌웨어에 대한 말은 `../references/`의 원본 소스를 직접 열어 보고 `파일:줄`을 붙인다. 줄 번호는 README 1절 (d)의 커밋 기준이다. 받아 둔 사본의 커밋이 다르면 그렇다고 밝힌다.
+  - 라이브러리·펌웨어에 대한 말은 `references/`(이 저장소의 서브모듈, `references/README.md`)의 원본 소스를 직접 열어 보고 `파일:줄`을 붙인다. 줄 번호는 서브모듈에 고정된 커밋 기준이다. 서브모듈을 받지 않았거나 커밋이 다르면 그렇다고 밝힌다.
   - README와 소스 어디에도 없는 것은 "확인하지 못함"이라고 쓴다. 기억이나 일반 지식으로 메우지 않는다.
 
 ## 지금 하는 일 (2026-11-14)
@@ -36,7 +36,7 @@
 - Claude Code 메모는 컴퓨터마다 따로다. 다른 컴퓨터가 알아야 할 결정은 해당 README에 날짜와 함께 적는다. 이 파일에는 한 줄 요약과 문서 위치만 적는다.
 - `wbr` 코어는 ROS에 의존하지 않게 유지한다. 제어기·모델을 바꾸면 `wheeled_biped/`에서 `python -m unittest discover -s tests`와 단계 시험을 다시 돌리고 보고서(`v5_lqi/TEST/results/stage_report.md`)를 갱신한다.
 - Windows PC에는 ROS 2와 C++ 컴파일러가 없다(`wheeled_biped/docs/HANDOFF.md` 5절). C++ 빌드와 ROS 실행은 노트북과 Pi에서 한다.
-- 참조 저장소는 저장소 밖(`../references/`)에 클론해 쓴다. 없으면 다시 클론한다. 플러그인·제어기에 쓰는 것의 커밋은 `wheeled_biped/ros2_ws/README.md` 1절 (d)의 표에 있다.
-  - 지금 쓰는 것(2026-11-14 사용자 정리): mjbots `pi3hat`·`moteus`·`power_dist`·`fdcanusb`·`moteus_ros2`, `upkie`, `ddt_ros2_control`·`TITA_ROS2_Control_Sim`·`TITA-Development-Manual`, `diablo_ros2`·`diablo_sdk`·`diablo-sdk-docs`, 그리고 README 1절 (d)의 11-12에 더한 다섯 개.
+- 참조 저장소는 **이 저장소의 `references/` 아래 git 서브모듈**로 둔다(2026-11-14 사용자: 여러 컴퓨터가 같은 커밋을 보게). 커밋이 고정되어 있고, 받는 법·목록·라이선스 규칙은 `references/README.md`에 있다. 받을 때는 `git submodule update --init`(전부) 또는 경로를 지정해 일부만 받는다. 서브모듈 안의 파일은 고치지 않는다. 예전 위치 `../references/`(저장소 밖)는 쓰지 않는다.
+  - 지금 쓰는 것(2026-11-14 사용자 정리): mjbots `pi3hat`·`moteus`·`power_dist`·`fdcanusb`·`moteus_ros2`, `upkie`, `ddt_ros2_control`·`TITA_ROS2_Control_Sim`·`TITA-Development-Manual`, `diablo_ros2`·`diablo_sdk`·`diablo-sdk-docs`, 그리고 README 1절 (d)의 11-12에 더한 다섯 개(`tita_hardware_ros2_control`, `pi3hat_hw_bartlomiej`, `pi3hat_robotic_systems`, `pi3hat_hw_glevine`, `ros2_control_demos`).
   - 11-14에 지운 것(다시 받지 않는다): `upkie_parts`(v1 CAD의 STEP은 `robot_cad/upkie_step`에 있음), `upkie_description`(저장소 안 `wheeled_biped/models/upkie_description`을 씀), `mjlab_upkie`·`Col_DIABLO_Issac_RL`(강화학습, 범위 밖), `diablo-sim-env`·`DiabloSTLSDF`(삭제된 Plan 2용), `TITA-SDK-ROS2`·`TITA_CAN_Inerface`(TITA 보드 CAN 규약, README 1절에서 "쓰지 않는 것").
 - 이 저장소의 사본은 과거 파일 내용을 필요할 때만 받는 부분 클론일 수 있다(`git config remote.origin.partialclonefilter`가 `blob:none`). 그런 사본에서는 이력 전체의 내용을 훑는 명령(`git log -S`, `git log -p`, `git rev-list --objects --all` 등)을 쓰지 않는다. 한꺼번에 내려받아 `.git`이 수백 MB 커진다.

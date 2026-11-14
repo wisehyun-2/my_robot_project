@@ -1,0 +1,69 @@
+[submodule "references/pi3hat"]
+	path = references/pi3hat
+	url = https://github.com/mjbots/pi3hat.git
+	shallow = true
+[submodule "references/moteus"]
+	path = references/moteus
+	url = https://github.com/mjbots/moteus.git
+	shallow = true
+[submodule "references/power_dist"]
+	path = references/power_dist
+	url = https://github.com/mjbots/power_dist.git
+	shallow = true
+[submodule "references/fdcanusb"]
+	path = references/fdcanusb
+	url = https://github.com/mjbots/fdcanusb.git
+	shallow = true
+[submodule "references/moteus_ros2"]
+	path = references/moteus_ros2
+	url = https://github.com/mjbots/moteus_ros2.git
+	shallow = true
+[submodule "references/upkie"]
+	path = references/upkie
+	url = https://github.com/upkie/upkie.git
+	shallow = true
+[submodule "references/ddt_ros2_control"]
+	path = references/ddt_ros2_control
+	url = https://github.com/DDTRobot/ddt_ros2_control.git
+	shallow = true
+[submodule "references/TITA_ROS2_Control_Sim"]
+	path = references/TITA_ROS2_Control_Sim
+	url = https://github.com/DDTRobot/TITA_ROS2_Control_Sim.git
+	shallow = true
+[submodule "references/TITA-Development-Manual"]
+	path = references/TITA-Development-Manual
+	url = https://github.com/DDTRobot/TITA-Development-Manual.git
+	shallow = true
+[submodule "references/diablo_ros2"]
+	path = references/diablo_ros2
+	url = https://github.com/DDTRobot/diablo_ros2.git
+	shallow = true
+[submodule "references/diablo_sdk"]
+	path = references/diablo_sdk
+	url = https://github.com/DDTRobot/diablo_sdk.git
+	shallow = true
+[submodule "references/diablo-sdk-docs"]
+	path = references/diablo-sdk-docs
+	url = https://github.com/DDTRobot/diablo-sdk-docs.git
+	shallow = true
+[submodule "references/tita_hardware_ros2_control"]
+	path = references/tita_hardware_ros2_control
+	url = https://github.com/DDTRobot/tita_hardware_ros2_control.git
+	shallow = true
+[submodule "references/pi3hat_hw_bartlomiej"]
+	path = references/pi3hat_hw_bartlomiej
+	url = https://github.com/BartlomiejK2/pi3hat_hardware_interface.git
+	shallow = true
+[submodule "references/pi3hat_robotic_systems"]
+	path = references/pi3hat_robotic_systems
+	url = https://github.com/CentroEPiaggio/pi3hat_robotic_systems.git
+	shallow = true
+[submodule "references/pi3hat_hw_glevine"]
+	path = references/pi3hat_hw_glevine
+	url = https://github.com/G-Levine/pi3hat_hardware_interface.git
+	shallow = true
+[submodule "references/ros2_control_demos"]
+	path = references/ros2_control_demos
+	url = https://github.com/ros-controls/ros2_control_demos.git
+	branch = jazzy
+	shallow = true

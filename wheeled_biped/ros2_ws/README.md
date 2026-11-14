@@ -46,7 +46,7 @@ colcon build --symlink-install
 source install/setup.bash
 ```
 
-(d) 참조 저장소. 저장소 밖 `../references/`(`my_robot_project`와 같은 폴더 아래)에 둔다. 아래 커밋에서 확인한 내용이다.
+(d) 참조 저장소. **2026-11-14부터 이 저장소의 `references/` 아래 git 서브모듈**로 둔다(사용자: 여러 컴퓨터가 같은 커밋을 보게). 서브모듈은 아래 커밋에 고정되어 있고, 받는 법과 전체 목록은 `references/README.md`에 있다(예전 위치 `../references/`는 쓰지 않는다). 아래 커밋에서 확인한 내용이다.
 
 | 저장소 | 커밋 | 쓰는 곳 |
 |---|---|---|
@@ -66,13 +66,11 @@ source install/setup.bash
 | `https://github.com/G-Levine/pi3hat_hardware_interface` | `pi3hat_hw_glevine` | MIT | root에서 FastDDS 공유 메모리가 안 되는 문제와 UDP 프로필 해결법. Mini Cheetah 프로토콜 전용. 코드는 2023-05 이후 그대로다(2024-02의 갱신은 LICENSE 추가) |
 | `https://github.com/ros-controls/ros2_control_demos` (브랜치 `jazzy`) | `ros2_control_demos` | Apache-2.0 | Jazzy 방식의 하드웨어·제어기 공식 예제. 예제 9가 시뮬·실물 전환(`hw_env`와 같은 구조) |
 
+이 다섯 개도 `references/` 아래 서브모듈이다(폴더 이름은 위 표). 받는 법:
+
 ```bash
-cd ~/references        # my_robot_project 옆의 references 폴더
-git clone https://github.com/DDTRobot/tita_hardware_ros2_control
-git clone https://github.com/BartlomiejK2/pi3hat_hardware_interface pi3hat_hw_bartlomiej
-git clone https://github.com/CentroEPiaggio/pi3hat_robotic_systems
-git clone https://github.com/G-Levine/pi3hat_hardware_interface pi3hat_hw_glevine
-git clone -b jazzy https://github.com/ros-controls/ros2_control_demos
+cd my_robot_project    # 저장소 맨 위
+git submodule update --init references/tita_hardware_ros2_control references/pi3hat_hw_bartlomiej references/pi3hat_robotic_systems references/pi3hat_hw_glevine references/ros2_control_demos
 ```
 
 참조 코드를 쓸 때의 규칙:
