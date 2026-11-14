@@ -1,5 +1,7 @@
 # my_robot_project — Claude Code 규칙
 
+모든 세션을 시작하기 전에 반드시 claude.md를 읽는다.
+
 프로젝트 개요, 지금 하는 일, 저장소 구성, 컴퓨터별 사정은 루트 `README.md`에 있다. 작업의 맥락이 필요할 때, 그것과 해당 폴더의 README를 먼저 읽는다.
 
 ## instructions
