@@ -36,6 +36,6 @@
 - `robot_cad_v5/v4/` 아래 v4 파일은 고치지 않는다(v5가 불러 쓴다).
 
 ## 참조 저장소
-- `references/` 아래 git 서브모듈로 둔다. 목록·커밋·받는 법·라이선스 규칙은 `references/README.md`에 있다.
+- `references/` 아래 git 서브모듈로 둔다. 목록·커밋·받는 법은 `references/README.md`에 있다.
 - 받을 때는 `git submodule update --init`(전부) 또는 경로를 지정해 일부만 받는다.
 - 서브모듈 안의 파일은 고치지 않는다.
