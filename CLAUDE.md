@@ -24,7 +24,7 @@
   - Plan 4 — upkie 하드웨어 모델(`models/upkie_plan4`) 위의 하네스(`wbr/plans/plan4_lqi8.py`)와 합격 판정(`docs/합격기준.md`). v5와 LQI8 코드를 같이 쓴다. **합격 기준 수치·모터 한계·노이즈는 사용자 결정 없이 바꾸지 않는다.**
   - 기록으로만 남은 것: Plan 1·2·3은 2026-11-11에 삭제했다(코드는 git 이력, 비교는 `docs/비교보고서.md`와 `results/bench`). 균형 제어기 이름은 11-10에 LQI6 → LQI8로 바꿨고, 날짜 붙은 기록과 `results/`의 키·파일 이름(`plan4_lqi6` 등)은 옛 이름 그대로다. `docs/HANDOFF.md`는 10-22~11-11의 인수인계 기록이라 브랜치·컴퓨터·확정안이 그때 기준이다.
 - `robot_cad_v5/` — 지금 로봇의 Fusion 모델. 허브 `WheelBiped_v5` 버전 18 = `export/`. 모든 부품을 PLA·PETG로 출력한다(11-09 사용자, 강도는 보지 않음). 모델 질량 11.610 kg은 금속 부품 기준이다. 제어기 모델은 `calc/*.json`과 `export/links_stl`에서 `python -m wbr.models.build_v5`로 만든다.
-  - `v4/fusion`은 v5가 불러 쓰는 v4 코드다(`fusion/v5run.py`가 불러서 덮어쓴다). v4 파일은 고치지 않는다. **11-14에 `robot_cad_v4/fusion`에서 옮긴 뒤 Fusion에서 `v5run.load()`를 아직 돌려 보지 않았다.**
+  - `v4/fusion`은 v5가 불러 쓰는 v4 코드다(`fusion/v5run.py`가 불러서 덮어쓴다). v4 파일은 고치지 않는다.
   - 몸통·셸·엔코더·배선의 바탕 설명은 지난 판 README에 있다: `docs/v4/README.md` → `docs/v3/README.md` → `docs/v2/README.md`. CAN 포트 배정은 `ros2_ws/README.md` 2절이 기준이다.
 - `references/` — 참조 저장소의 git 서브모듈(아래 작업 규칙, `references/README.md`).
 - **2026-11-14 사용자: 로봇 폴더는 `robot_cad_v5/`와 `wheeled_biped/`만 둔다.** `robot_cad`(v1)·`robot_cad_v2`·`v3`·`v4`·`balancing_robot_design`은 지웠고, 쓰는 것만 옮겼다: v4 코드·계산 → `robot_cad_v5/v4/`, v3의 `hlr_gmsh.py`와 v2 가공 도면·STEP → `robot_cad_v5/manufacturing/`, 세 README → `robot_cad_v5/docs/`, upkie 다리 STEP → `wheeled_biped/models/upkie_step/`, 2륜 보고서 두 편 → `wheeled_biped/docs/balancing_robot_design/`. 지운 나머지는 git 태그 `before-cleanup-2026-11-14`에 있다. `wbr.bench.ake_cad`의 기본 CAD는 v5다(`results/ake_cad`·`ake_cad_v3`·`ake_cad_v4`는 지운 판의 기록).
