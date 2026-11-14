@@ -97,7 +97,8 @@ git clone -b jazzy https://github.com/ros-controls/ros2_control_demos
 | 패키지 구조 | TITA `ros2_control` 구조, 균형 제어기 자리만 `wbr` 이식 | 11-08 사용자 |
 | 시뮬레이터 | MuJoCo, Gazebo, **Isaac Sim** 셋 다. 공식 `mujoco_ros2_control` 먼저, Gazebo와 Isaac Sim은 그 뒤 | MuJoCo·Gazebo 11-08 사용자, Isaac Sim 11-12 사용자, 순서는 11-12 제안 |
 | 제어기 출력 | 토크(effort)만. 모든 환경(실물·MuJoCo·Gazebo·Isaac Sim)에서 같게 | 11-08 |
-| CAN 버스 | 왼쪽 다리 JC1, 오른쪽 다리 JC2, JC3은 power dist. ID는 후보 1·2·3 / 4·5·6 | 11-12 사용자 |
+| CAN 버스 | 왼쪽 다리 JC1(프로세서 1), 오른쪽 다리 **JC4**(프로세서 2), JC3은 power dist(프로세서 2). 두 다리를 pi3hat의 두 프로세서에 나눈다(upkie와 같은 방식). ID는 후보 1·2·3 / 4·5·6, `--pi3hat-cfg "1=1,2,3;4=4,5,6"` | 11-12 사용자(JC1·JC2), 11-14 사용자(오른쪽을 JC4로) |
+| pi3hat 대기 값 | 라이브러리(v1.1.0) 기본값 그대로: `timeout_ns` 0, `min_tx_wait_ns` 200 µs, `rx_baseline_wait_ns` 1 ms, `rx_extra_wait_ns` 0. 바꿀 일이 생겨도 다시 빌드하지 않게 설정 파일에서 읽는다(제안) | 11-14 사용자 |
 | 범위 | **주행 중 균형 잡기만.** 시작 자세·스스로 일어서기는 나중에 정함 | 11-12 사용자 |
 | 상태 기계 | `idle → balance → fault`, 받침 위에서 세운 뒤 arm. Python에는 idle 상태가 따로 없고 `armed`·`fault` 플래그다. C++에서 정할 규칙은 4.4절 3번 | 11-12 |
 | 제어 주기 | **목표 1 kHz**, 주기는 파라미터. Pi에서 안 나오면 500 / 200 Hz로 내림(6절 C4의 주기 결정) | 11-12, Pi 실측 뒤 확정 |
@@ -177,10 +178,10 @@ C++로 옮기지 않는 것: `wbr/observers/pi3hat_ars.py`(pi3hat 펌웨어 필�
 ### 4.2 pi3hat
 
 1. **root.** 라이브러리는 `/dev/mem`을 직접 연다(`pi3hat.cc:361`). 한 번에 한 프로그램만 쓸 수 있다(잠금 파일 `/tmp/.pi3hat-lock`, `pi3hat.cc:1152`). `ros2_control_node`가 떠 있는 동안에는 `tview`, `pi3hat_tool`, `moteus_tool`을 쓸 수 없다. 드라이버 설정과 점검은 ROS를 끄고 한다.
-2. **넣을 값.** 설정 `attitude_rate_hz = 1000`(기본 400, `pi3hat.h:178`), `mounting_deg = 0, 0, 0`. 매 주기 입력에는 `request_attitude`와 `request_attitude_detail`. `Pi3HatMoteusTransport`는 `Attitude*`를 넘기면 `request_attitude`를 스스로 켜지만(`pi3hat_moteus_transport.h:201-202`) `request_attitude_detail`은 `Options::default_input`에 직접 넣어야 한다.
+2. **넣을 값.** 설정 `attitude_rate_hz = 1000`(기본 400, `pi3hat.h:178`), `mounting_deg = 0, 0, 0`. 매 주기 입력에는 `request_attitude`와 `request_attitude_detail`. `Pi3HatMoteusTransport`는 `Attitude*`를 넘기면 `request_attitude`를 스스로 켜지만(`pi3hat_moteus_transport.h:201-202`) `request_attitude_detail`은 `Options::default_input`에 직접 넣어야 한다. 플러그인에서 끄지 않고 항상 켠다(11-14 사용자): `opts.default_input.request_attitude_detail = true;` 이 값은 `Pi3Hat::Input`의 멤버라 C++에서만 켤 수 있고, `pi3hat_tool`과 Python `Pi3HatRouter`에는 이 옵션이 없다.
 3. **바이어스는 조용히 0이 된다.** 상세 요청 없이 읽으면 42바이트만 읽고 바이어스 칸은 이전 값(처음에는 0)을 그대로 복사한다(`pi3hat.cc:1268-1284`). NaN이 아니라서 제어기의 가드가 잡지 못한다. upkie `Pi3HatInterface.cpp`가 이 상태다.
 4. **표본 시각은 플러그인이 찍는다.** `Attitude`에는 시각이 없다(`pi3hat.h:105-113`). 새 표본이 왔는지는 `Output::attitude_present`로 안다. 플러그인은 새 표본일 때만 단조 시계로 시각을 찍는다. 새 표본이 없는 주기에는 시각을 갱신하지 않는다(그러면 제어기가 추정값을 유지하고, 50 ms 넘게 이어지면 FAULT). 매 주기 새 표본을 기다릴지(`wait_for_attitude`, upkie 방식)는 정한다.
-5. **대기 시간 기본값이 1 kHz를 막는다.** `rx_baseline_wait_ns`의 기본값은 1 ms, `min_tx_wait_ns`는 200 µs다(`pi3hat.h:220,233`). 주석은 CPU를 격리한 환경이면 `rx_baseline_wait_ns`를 200 µs까지 줄일 수 있다고 한다. 응답 하나가 빠지면 그만큼 기다린다. 6절 C4에서 이 값을 바꿔 가며 잰다.
+5. **대기 값은 라이브러리 기본값을 쓴다(11-14 사용자).** `min_tx_wait_ns` 200 µs, `rx_baseline_wait_ns` 1 ms, `rx_extra_wait_ns` 0, `timeout_ns` 0(`pi3hat.h:215-236`). 응답이 다 오면 최소 200 µs 뒤 바로 끝나므로 평소 주기에는 영향이 없다. 응답이 하나라도 빠지면 "계산된 전송 시간 + `rx_baseline_wait_ns`"까지 기다리므로(`pi3hat.cc:1619-1628, 1687-1693`) 그 주기는 1 ms를 넘는다. 그래서 7번의 처리가 필요하다. 주석은 CPU를 격리한 환경이면 `rx_baseline_wait_ns`를 200 µs까지 줄일 수 있다고 하지만, 바꾸려면 C++ 코드에서 넣어야 한다(`pi3hat_tool`, C++ 통신 계층의 명령줄, Python `Pi3HatRouter` 어디에도 이 옵션이 없다).
 6. **응답은 출처 ID로 짝짓는다.** `Cycle`은 보내기 전에 남아 있던 프레임을 먼저 거두어 같은 버퍼에 담는다(`pi3hat.cc:1707-1709`). 늦게 온 지난 주기의 응답이 이번 주기 값처럼 보일 수 있으므로 순서로 짝짓지 않는다. 트랜스포트의 첫 주기는 수신 버퍼가 5칸이라(`pi3hat_moteus_transport.h:178`) 6대 중 1대의 응답이 빠진다.
 7. **응답이 빠진 관절.** 그 관절 값을 NaN으로 두거나 표본 시각을 갱신하지 않는다. 지난 값을 새 값처럼 다시 내보내면 제어기의 가드가 무력해진다.
 8. **응답할 장치가 없는 버스로 보내지 않는다.** 옛 펌웨어는 아무도 응답하지 않는 프레임을 보내면 멈춘다(`pi3hat.h:290-295`의 주석). 연결하지 않은 포트뿐 아니라 전원이 꺼진 moteus도 해당한다. 플러그인은 시작할 때 `device_info().can_unknown_address_safe`를 검사하고, 설정에 있는 버스로만 보낸다.
@@ -310,7 +311,7 @@ C++로 옮기지 않는 것: `wbr/observers/pi3hat_ars.py`(pi3hat 펌웨어 필�
 | C1 | pi3hat 단독 점검. 전원을 끈 채 장착하고 켠다 | `/sys/firmware/devicetree/base/hat/product`가 `mjbots quad pi3 hat`으로 시작한다(라이브러리가 이 값을 검사하고, 아니면 `No pi3hat detected`로 멈춘다. `pi3hat.cc:964`). `sudo pi3hat_tool --info`에 프로세서 세 줄(CAN1, CAN2, AUX)이 나온다. `--read-att`로 IMU 부호가 `docs/bringup_step0.md` 8절 표와 같다(바로 놓으면 롤 ±180°가 정상) |
 | C2 | moteus 1대를 JC1에 연결 | 종단 저항을 꽂고 전원을 끈 상태에서 CANH–CANL 약 60 Ω. `tview`에서 값이 갱신된다 |
 | C3 | moteus 6대 설정. 순서를 바꾸지 않는다(`docs/bringup_step0.md` 3절에 시간 초과 설정을 더한 것): 펌웨어 → ID → 보정(링크 달기 전) → 감속비 0.125 → 조립 → 부호 → 위치 한계 → 영점 → 시간 초과(`servo.default_timeout_s`, `servo.timeout_mode`, `servo.timeout_max_torque_Nm`) → 덤프 보관 | `docs/bringup_step0.md` 4절의 기록표(관절별 부호)가 채워지고, 위치 한계와 영점 값을 적어 두고, 덤프가 `wbr_hardware/config/moteus/`에 있다 |
-| C4 | 통신 주기 측정(`docs/bringup_step0.md` 9절): JC1·JC2, IMU 포함. `rx_baseline_wait_ns`를 바꿔 가며 잰다. **여기서 제어 주기를 정한다** | 평균·99 %·최대 주기를 적는다. 1 kHz가 안 되면 500 / 200 Hz로 정하고 `WBR_TEST_RATE=<주기>`로 A0 → A1 → A4를 다시 한다(그 주기의 Python 단계 시험 보고서는 아직 없다) |
+| C4 | 통신 주기 측정(`docs/bringup_step0.md` 9절): JC1·JC4, IMU 포함. 대기 값은 라이브러리 기본값으로 잰다(2절). **여기서 제어 주기를 정한다** | 평균·99 %·최대 주기를 적는다. 1 kHz가 안 되면 500 / 200 Hz로 정하고 `WBR_TEST_RATE=<주기>`로 A0 → A1 → A4를 다시 한다(그 주기의 Python 단계 시험 보고서는 아직 없다) |
 | C5 | `wbr_hardware` + `hardware_check.launch.py`. 활성화 순서는 4.1절 4번(영점 전에는 질의만) | 관절·IMU·전압·`home_state`가 ROS로 올라온다. `can_unknown_address_safe`를 확인한다. ROS를 거쳐 A3의 부호 시험을 실물로 반복한다 |
 | C6 | Pi에서 전체 루프의 주기와 센서 → 토크 지연 측정. 지연은 전 주기 기록의 표본 시각과 `write()` 시각의 차로 잰다 | 주기는 B3의 후보 기준. 지연 8 ms 이하(`docs/bringup_step0.md` 9절의 후보) |
 | C7 | 실물 안전 시험. 받침 위, 바퀴를 띄운 채 낮은 토크 한계로 | 다섯 경우 각각 관절이 정한 대로 풀리거나 감쇠한다: launch 종료(Ctrl+C), 프로세스 강제 종료(moteus 시간 초과), 제어기 비활성화, CAN 케이블 뽑기, 명령 0.5 s 끊김. 전원을 끊는 스위치에 손이 닿는다 |
@@ -338,8 +339,8 @@ Gazebo → Isaac Sim → 시작 자세와 스스로 일어서기 → MPC(`v5_mpc
 
 확인하지 못한 것:
 
-- Ubuntu 24.04의 Pi 4B에서 pi3hat 라이브러리가 도는지(`/dev/mem`, 6절 B1), 모터 6개 + IMU 상세 읽기로 1 kHz가 나오는지. pi3hat과 moteus가 있어야 잴 수 있다.
-- JC1과 JC2는 pi3hat의 같은 프로세서가 맡는다. 주기에 영향이 있으면 오른쪽만 JC4(프로세서 2, JC3은 power dist가 씀)로 옮겨 비교한다.
+- 모터 6개 + IMU 상세 읽기로 1 kHz가 나오는지. moteus가 있어야 잴 수 있다. (Ubuntu 24.04의 Pi 4B에서 pi3hat 라이브러리가 `/dev/mem`으로 도는 것은 2026-11-14 확인: 기본 커널과 Ubuntu Pro 실시간 커널 `6.8.0-2056-raspi-realtime` 모두 `pi3hat_tool --info` 통과.)
+- 두 다리를 다른 프로세서에 나눈 배선(JC1·JC4)이 같은 프로세서(JC1·JC2)보다 실제로 나은지는 재 보지 않았다. 원리상 차이는 작다: 두 CAN 버스는 어느 쪽이든 동시에 돌고, 프로세서 1·2는 Pi의 같은 SPI1 선을 나눠 쓴다(CS만 다름). 비교가 필요하면 C4에서 오른쪽을 JC2로 옮겨 잰다.
 - 지연 한계가 11 ms인지 12 ms인지(5.4절). 다시 재야 한다.
 - 커밋된 `models/wheelbiped_v5`가 지금의 CAD 파일에서 만든 것과 같은지(6절 A1에서 확인).
 - `mujoco_ros2_control`에서 물리 0.5 ms와 제어 1 kHz가 어떻게 맞물리는지, 플러그인이 모르는 이름의 상태 인터페이스를 xacro에 적으면 어떻게 되는지.

@@ -319,7 +319,7 @@ WIRING = [  # (item, spec, need, order, note)
     ('XT30U 플러그 암(F), 16 AWG 납땜형', '전원 케이블 끝', 11, 13, '위 3개의 드라이버 쪽 끝 + hip → 무릎 → 바퀴 암-암 4개(양 끝)'),
     ('16 AWG 실리콘선 빨강', '전원', '약 2.7 m', '5 m', '어림: v2 모델 길이 2.4 m + 링크 25 cm로 다리마다 +0.15 m, 실물에서 재서 자름'),
     ('16 AWG 실리콘선 검정', '전원', '약 2.7 m', '5 m', '같음'),
-    ('mjbots JST PH3 Cable 30 cm', 'CAN-FD용 꼬은 3선, 1:1', 2, 2, 'pi3hat JC1 → 왼 hip, JC2 → 오른 hip (몸통 안)'),
+    ('mjbots JST PH3 Cable 30 cm', 'CAN-FD용 꼬은 3선, 1:1', 2, 2, 'pi3hat JC1 → 왼 hip, JC4 → 오른 hip (몸통 안)'),
     ('mjbots JST PH3 Cable 50 cm', '같음', 4, 4, 'hip → 무릎, 무릎 → 바퀴 × 좌우. 25 cm 링크의 다리 경로는 어림 45~55 cm(모델 없음): '
      '실물에 대 보고 모자라면 PHR-3 하우징 + SPH-002T 단자 + 26 AWG 꼬은선으로 직접 만든다'),
     ('mjbots JST PH3 Cable 10 cm', '같음', 1, 1, 'pi3hat JC3 → power dist CAN1 (자동 종료·전력 측정)'),
@@ -533,7 +533,7 @@ def write(R, c, leaves):
     L += ['', '①~⑦은 관절 단면도(`manufacturing/explain/hip_section.png`, `knee_section.png`, `wheel_section.png`)의 번호다.', '',
           '## 5. 배선·커넥터 (모델 없음)', '',
           '사용자 요청(11-01)으로 배선은 모델에 없다. 연결은 v2 README 8절과 같다: 전원보드 P5 → pi3hat, P3·P6 → 왼·오른 hip → 무릎 → 바퀴(XT30 데이지 체인, 16 AWG), '
-          'pi3hat JC1·JC2 → 각 다리 hip → 무릎 → 바퀴(CAN, 바퀴 CAN1에 종단 저항), pi3hat JC3 → power dist CAN1(11-08). '
+          'pi3hat JC1 → 왼 다리, JC4 → 오른 다리(11-14 사용자: 두 다리를 pi3hat의 두 프로세서에 나눔), 각 다리 hip → 무릎 → 바퀴(CAN, 바퀴 CAN1에 종단 저항), pi3hat JC3 → power dist CAN1(11-08). '
           'CAN은 mjbots 기성 케이블(11-08 사용자 주문), 전원선 길이는 어림이므로 실물에서 재서 자른다. '
           '한 번 깔아 본 v5 다리 경로는 git `5a01c18`(`fusion/harness_v5.py`, 17.5 cm 링크).', '',
           '| 품목 | 규격 | 필요 | 주문 권장 | 비고 |', '|---|---|---|---|---|']

@@ -12,7 +12,7 @@ v5 로봇(링크 25 cm, AKE60-8 × 6, moteus r4.11, pi3hat) 기준이다. 명령
 
 ## 2. ID와 배선
 
-**버스는 정해졌다(2026-11-12 사용자): 왼쪽 다리 JC1, 오른쪽 다리 JC2.** BOM 5절 배선과 같고, JC3은 power dist r4.5b의 CAN1이 쓴다. ID는 upkie와 같은 배치를 후보로 둔다. ID를 다르게 정하면 아래 명령의 ID와 `--pi3hat-cfg`도 바꾼다.
+**버스는 정해졌다: 왼쪽 다리 JC1, 오른쪽 다리 JC4.** 2026-11-12 사용자가 JC1·JC2로 정했고, 11-14 사용자가 오른쪽을 JC4로 옮겼다(두 다리를 pi3hat의 두 프로세서에 나눔, upkie와 같은 방식). BOM 5절 배선도 같이 고쳤다. JC3은 power dist r4.5b의 CAN1이 쓴다. ID는 upkie와 같은 배치를 후보로 둔다. ID를 다르게 정하면 아래 명령의 ID와 `--pi3hat-cfg`도 바꾼다.
 
 | 관절 | 왼쪽 ID | 오른쪽 ID |
 |---|---|---|
@@ -20,16 +20,16 @@ v5 로봇(링크 25 cm, AKE60-8 × 6, moteus r4.11, pi3hat) 기준이다. 명령
 | 무릎 | 2 | 5 |
 | 바퀴 | 3 | 6 |
 
-왼쪽은 JC1, 오른쪽은 JC2에 연결한다(`"1=1,2,3;2=4,5,6"`). 왼쪽·오른쪽은 로봇 기준이다(앞 = 스위치 쪽). 옛 v4 배선 코드(`harness.py`)는 앞 방향이 반대라서 그 코드의 JC1 쪽이 지금은 로봇 오른쪽이다. 그 코드의 배정은 쓰지 않는다. JC1과 JC2는 pi3hat의 같은 프로세서(프로세서 1)가 맡고 JC3·JC4는 프로세서 2가 맡는다(`references/pi3hat/docs/reference.md`).
+왼쪽은 JC1, 오른쪽은 JC4에 연결한다(`"1=1,2,3;4=4,5,6"`). 왼쪽·오른쪽은 로봇 기준이다(앞 = 스위치 쪽). 옛 v4 배선 코드(`harness.py`)는 앞 방향이 반대라서 그 코드의 JC1 쪽이 지금은 로봇 오른쪽이다. 그 코드의 배정은 쓰지 않는다. JC1·JC2는 pi3hat의 프로세서 1, JC3·JC4는 프로세서 2가 맡는다(`references/pi3hat/docs/reference.md`). 그래서 왼쪽 다리는 프로세서 1, 오른쪽 다리와 power dist는 프로세서 2가 맡는다. 두 프로세서는 Pi의 같은 SPI1 선을 나눠 쓴다(CS만 다름).
 
 ```bash
-sudo python3 -m moteus_gui.tview --pi3hat-cfg "1=1,2,3;2=4,5,6" -t 1,2,3,4,5,6
+sudo python3 -m moteus_gui.tview --pi3hat-cfg "1=1,2,3;4=4,5,6" -t 1,2,3,4,5,6
 ```
 
 아래의 `1>...` 명령은 tview 아래쪽 터미널에 입력한다. `1>`은 ID 1로 보낸다는 뜻이다.
 
 - `sudo python3`은 root의 Python을 쓴다. moteus 도구를 venv에만 설치했다면 pi3hat 문서의 방식대로 `sudo bash` 뒤에 venv를 켜고 `tview`를 실행한다(`references/pi3hat/docs/reference.md` 83~86행).
-- `--pi3hat-cfg`를 빼면 도구는 JC1만 쓴다(같은 문서 68~69행). 오른쪽 다리(JC2, ID 4·5·6)에 닿으려면 `moteus_tool`과 `tview` 모두 이 옵션이 있어야 한다.
+- `--pi3hat-cfg`를 빼면 도구는 JC1만 쓴다(같은 문서 68~69행). 오른쪽 다리(JC4, ID 4·5·6)에 닿으려면 `moteus_tool`과 `tview` 모두 이 옵션이 있어야 한다.
 
 ## 3. 설정 순서
 
@@ -45,7 +45,7 @@ sudo python3 -m moteus_gui.tview --pi3hat-cfg "1=1,2,3;2=4,5,6" -t 1,2,3,4,5,6
 | 6 | 부호 시험과 설정 | 4절 | |
 | 7 | 위치 한계 | 5절 | |
 | 8 | 영점 | 6절 | |
-| 9 | 저장과 백업 | `conf write`, `sudo moteus_tool --pi3hat-cfg "1=1,2,3;2=4,5,6" -t <ID> --dump-config` | 덤프를 저장소에 보관 |
+| 9 | 저장과 백업 | `conf write`, `sudo moteus_tool --pi3hat-cfg "1=1,2,3;4=4,5,6" -t <ID> --dump-config` | 덤프를 저장소에 보관 |
 
 **명령 시간 초과(결정 필요, 2026-11-13 추가):** 명령이 끊기면 moteus는 `servo.default_timeout_s`(기본 0.1 s) 뒤 시간 초과 상태로 들어간다. 이때 토크가 끊기는 것이 아니다. 기본 `servo.timeout_mode`는 12(속도 0을 유지하는 감쇠, 최대 `servo.timeout_max_torque_Nm` 5 N·m)이고, 0이 구동 해제, 15가 단락 제동이다(`fw/bldc_servo_structs.h:613-623`). 제어 프로그램이 죽었을 때 다리가 감쇠로 버틸지 풀릴지를 정해 8번과 9번 사이에 이 세 값을 설정한다. 시간 초과 상태는 `d stop`으로만 풀린다.
 
@@ -124,7 +124,7 @@ sudo python3 -m moteus_gui.tview --pi3hat-cfg "1=1,2,3;2=4,5,6" -t 1,2,3,4,5,6
 **영점 저장(조립 후 한 번, 분해하면 다시):** 축 중심을 기준으로 관절각을 아는 지그에 고정하고 그 각도를 회전 단위로 넣는다. 다리를 곧게 펼 필요는 없다(500 mm는 CAD 간섭 검사 범위 밖).
 
 ```bash
-sudo moteus_tool --pi3hat-cfg "1=1,2,3;2=4,5,6" -t 2 --set-offset -0.1282
+sudo moteus_tool --pi3hat-cfg "1=1,2,3;4=4,5,6" -t 2 --set-offset -0.1282
 ```
 
 | 기립 지그(다리 460 mm) 예시 | 도 | 회전 |
@@ -216,15 +216,15 @@ print(cmd.data.hex())
 **측정:** 위치 한계를 설정한 뒤, 받침 위에서 6개 모터 전체로 잰다. 형식은 `버스,16진수ID,16진수데이터,r`이고, 응답을 요청하는 ID 1의 프레임 ID는 `8001`이다.
 
 ```bash
-sudo pi3hat_tool --realtime 3 --attitude-rate 1000 -c "1,8001,<데이터>,r" -c "1,8002,<데이터>,r" -c "1,8003,<데이터>,r" -c "2,8004,<데이터>,r" -c "2,8005,<데이터>,r" -c "2,8006,<데이터>,r" --time-log cycle.txt -r > /dev/null
+sudo pi3hat_tool --realtime 3 --attitude-rate 1000 --can-rx-extra-wait-ns 0 -c "1,8001,<데이터>,r" -c "1,8002,<데이터>,r" -c "1,8003,<데이터>,r" -c "4,8004,<데이터>,r" -c "4,8005,<데이터>,r" -c "4,8006,<데이터>,r" --time-log cycle.txt -r > /dev/null
 ```
 
 `cycle.txt`의 나노초 값으로 평균 주기, 99 % 값, 최댓값을 계산한다.
 
 **조합:**
 - `--read-att` 있음 / 없음. 있으면 보드 자세 주기(1000 Hz)를 기다린다.
-- JC1·JC2(정해진 배선, 위 명령). 두 버스가 같은 프로세서를 쓴다. 주기가 기준을 넘으면 비교용으로 오른쪽 다리만 JC4에 옮겨(버스 번호 `4`, 프로세서 2) 다시 잰다. JC3은 power dist가 쓴다.
-- 플러그인이 쓸 대기 값도 바꿔 가며 잰다. 라이브러리 기본값은 `rx_baseline_wait_ns` 1 ms, `min_tx_wait_ns` 200 µs이고(`pi3hat.h:220,233`), 기본값 그대로면 응답 하나가 빠질 때 1 ms를 더 기다린다.
+- JC1·JC4(정해진 배선, 위 명령). 두 다리가 다른 프로세서를 쓴다(11-14 결정). 비교가 필요하면 오른쪽 다리를 JC2(버스 번호 `2`, 프로세서 1)에 옮겨 다시 잰다. JC3은 power dist가 쓴다.
+- 대기 값은 라이브러리 기본값을 그대로 쓴다(11-14 사용자 결정: `timeout_ns` 0, `min_tx_wait_ns` 200 µs, `rx_baseline_wait_ns` 1 ms, `rx_extra_wait_ns` 0, `pi3hat.h:215-236`). `pi3hat_tool`은 `rx_baseline_wait_ns`를 바꾸는 옵션이 없어 1 ms(= 기본값)로 고정이고, `rx_extra_wait_ns`만 도구 기본이 40 µs로 다르다(`pi3hat_tool.cc:249-251`). 그래서 위 명령에 `--can-rx-extra-wait-ns 0`을 붙여 플러그인과 같은 조건으로 잰다. 응답이 하나라도 빠진 주기는 약 1 ms 더 기다린다.
 - CPU 격리(isolcpus)와 실시간 우선순위를 켠 상태로 잰다.
 
 **이 측정의 한계:**
