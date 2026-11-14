@@ -1,59 +1,33 @@
-"""The user's robot with CubeMars AKE motors: MuJoCo check of the motor torques and of the usable wheel diameter,
-docs/ake_motor_sizing.md.
+"""CubeMars AKE motor model and the scenario runner of the CAD robot's motor check (wbr.bench.ake_cad) and of the staged
+tests (wbr.bench.stage_tests).
 
-Robot (the values saved in the knee-torque calculator, 2026-10-24): upkie_description leg geometry (Plan 4 builder:
-ellipsoid tire, condim 4), torso 2.5 kg with the 1.8 kg battery centred so that the torso COM is on the hip line,
-upkie link / wheel masses, hip and knee = AKE50-8 KV110 (0.19 kg), wheel = AKE60-8 KV80 (0.26 kg) unless a case picks
-other motors per joint (Case.hip_motor / knee_motor / wheel_motor; the motor masses follow).  Motor model:
-peak torque, the voltage line of the torque-speed curve (no-load speed at the rated 24 V, winding resistance) while
-motoring, reflected rotor inertia (rotor inertia x gear^2) as joint armature, backdrive torque as joint friction.
-Controller: Plan 4 (MCU 1 kHz, LQI8, noise + 2 ms latency) with the plant re-identified from this model; the LQI8
-torque budget is the Plan 4 tuning scaled by mass and wheel radius (the validated closed loop), the actuators clip at
-the real motor limits.  Plan 4 itself is not modified: its model folder, wheel radius and torque limits are patched for
-the duration of one case.  Besides the joint torques and speeds every step records the tire normal forces and the
-wheel slip (wheel-centre speed along the floor - rim speed), to see when a large wheel leaves the floor and spins.
+Motor model: peak torque, the voltage line of the torque-speed curve (no-load speed at the rated 24 V, winding resistance)
+while motoring, reflected rotor inertia (rotor inertia x gear^2) as joint armature, backdrive torque as joint friction.
+make_plan puts the torque-speed limit on top of the plan's servo model and records, besides the joint torques and speeds,
+the tire normal forces and the wheel slip (wheel-centre speed along the floor - rim speed) every step; run_case runs the
+scenario set of the motor check (stand, tilt, push, velocity, yaw, height range, slopes) on the robot built by
+ake_cad.build_cad_model.  yaw_plant_gain / roll_plant_gain: the plants the outer loops are scaled with (ake_cad.v5_gains).
 
-    python -m wbr.bench.ake_sizing                       # standard cases (16, ~70 s each, parallel) -> results/ake_sizing/
-    python -m wbr.bench.ake_sizing --only d150 d400
-    python -m wbr.bench.ake_sizing --diameter 180 --tag my_case [--seed 1] [--volt 22.2] [--no-limits]
-    python -m wbr.bench.ake_sizing --diameter 200 --torso 4 --knee-motor AKE60-8 --wheel-motor AKE50-8 --tag swap
-    python -m wbr.bench.ake_sizing --clearance [150 250 300]   # tire-to-leg gaps -> results/ake_sizing/clearance.md
-
-In upkie the wheel sits inboard of the shank, in the same lateral band as the thigh link and the knee-motor bracket on
-the thigh (a cylinder of ~50 mm radius around the knee axis, which stays 175 mm = shank length from the axle): from a
-250 mm wheel diameter the tire overlaps the bracket in every posture (the thigh link from ~300 mm), the wheel locks and
-the robot slides.  The simulation therefore lets the tire touch only the floor, i.e. it assumes a build in which the
-wheel clears the leg; `--clearance` reports the gaps of the upkie layout.
+Until 2026-11-14 this module was also the motor and wheel-diameter study of 10-24 on the upkie leg geometry
+(docs/ake_motor_sizing.md, results/ake_sizing: `python -m wbr.bench.ake_sizing`, `--clearance`); the upkie model, the study
+and its results were removed that day (git history).
 """
 from __future__ import annotations
 
-import argparse
 import contextlib
 import dataclasses
-import json
 import math
 import tempfile
 import time
 from dataclasses import dataclass
-from multiprocessing import Pool, cpu_count
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict
 
 import mujoco
 import numpy as np
 
-from wbr import MODELS_DIR, RESULTS_DIR
-
 G = 9.81
 JN = ["left_hip", "left_knee", "left_wheel", "right_hip", "right_knee", "right_wheel"]
-OUT_DIR = RESULTS_DIR / "ake_sizing"
-UPKIE_MASS = 5.33922            # Plan 4 model, the reference of the LQI8 tuning
-UPKIE_R = 0.056
-UPKIE_WHEEL_MARKERS = 0.002     # contact + wheel-centre marker bodies, counted in the 0.135 kg upkie wheel
-# References of the outer-loop tunings (Plan 4 model, models/upkie_plan4), used to scale them to another robot:
-UPKIE_BODY_MASS = 2.7945        # torso group m_b (plan4_params.json): the mass the leg-length PD carries
-UPKIE_YAW_GAIN = 25.14          # yaw plant gain W / (2 R Izz) [rad/s^2 per N m of yaw command]: tire centres 0.3048 m
-                                # apart, R 0.056 m, Izz 0.1082 kg m^2 (yaw_plant_gain(models/upkie_plan4/scene.xml))
 
 
 def yaw_plant_gain(xml_path) -> dict:
@@ -93,7 +67,6 @@ def roll_plant_gain(xml_path) -> dict:
     gl, gr = (mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, f"{s}_tire") for s in ("left", "right"))
     W = float(abs(d.geom_xpos[gl][1] - d.geom_xpos[gr][1]))
     return dict(W=W, Ixx=Ixx, g=W / Ixx)
-KNEE_REACH_DEG = 60.0           # tire clearance: smallest knee angle checked besides the Plan 4 leg lengths
 
 
 @dataclass(frozen=True)
@@ -141,16 +114,13 @@ MOTORS = {"AKE50-8": AKE50_8, "AKE60-8": AKE60_8}
 @dataclass
 class Case:
     tag: str
-    diameter_mm: float = 112.0
+    diameter_mm: float = 0.0     # wheel diameter: set by the model builder (ake_cad.build_cad_model)
     seed: int = 0
     volt: float = 24.0
     limits: bool = True          # False: motor torque / speed limits off (diagnosis)
-    torso_kg: float = 2.5        # motors excluded
-    battery_kg: float = 1.8      # centred over the hip
-    wheel_kg: float | None = None   # one wheel (hub + tire), motor excluded; None = upkie wheel (0.135 kg)
     quick: bool = False
-    hip_motor: str = "AKE50-8"   # keys of MOTORS
-    knee_motor: str = "AKE50-8"
+    hip_motor: str = "AKE60-8"   # keys of MOTORS
+    knee_motor: str = "AKE60-8"
     wheel_motor: str = "AKE60-8"
 
     @property
@@ -161,135 +131,24 @@ class Case:
         return MOTORS[{"hip": self.hip_motor, "knee": self.knee_motor, "wheel": self.wheel_motor}[kind]]
 
 
-STANDARD_CASES = [Case(f"d{d}", diameter_mm=float(d)) for d in (112, 125, 135, 150, 200, 250, 300, 400, 450, 500, 600)]
-STANDARD_CASES += [Case(f"d{d}_seed1", diameter_mm=float(d), seed=1) for d in (112, 150, 400)]
-STANDARD_CASES += [Case(f"d{d}_v22", diameter_mm=float(d), volt=22.2) for d in (125, 150)]     # 6S LiPo nominal
-
-
 # ----------------------------------------------------------------------------- model
 def build_model(case: Case, mdir: Path):
-    """Plan 4 upkie model with the user's masses and the AKE motors, in `mdir` (scene.xml, upkie.xml, plan4_params.json)."""
-    import wbr.models.build_upkie as bu
-    from wbr.models.upkie_params import build_params
-    R = case.radius
-    mesh_abs = str(MODELS_DIR / "upkie_description").replace("\\", "/")
-    orig = bu.patch_urdf
-    bu.patch_urdf = lambda text, meshdir: orig(text, mesh_abs)       # absolute mesh path: the model lives outside models/
-    try:
-        bu.build(mdir, verbose=False, tire_radius=R, tire_shape="ellipsoid", tire_condim=4)
-    finally:
-        bu.patch_urdf = orig
-    spec = mujoco.MjSpec.from_file(str(mdir / "upkie.xml"))
-    spec.meshdir = mesh_abs
-    B = {b.name: b for b in spec.bodies}
-
-    def set_mass(name: str, mass: float) -> None:
-        b = B[name]
-        ratio = mass / b.mass
-        b.mass = mass
-        b.inertia = [float(x) * ratio for x in b.inertia]
-
-    # torso: battery centred over the hip, Raspberry Pi + printed frame in the torso body -> torso COM on the hip line
-    B["battery"].pos = [0.0, float(B["battery"].pos[1]), float(B["battery"].pos[2])]
-    set_mass("battery", case.battery_kg)
-    set_mass("torso", case.torso_kg - case.battery_kg - (B["base"].mass + B["imu"].mass + B["handle"].mass))
-    for side in ("left", "right"):
-        set_mass(f"{side}_hip_qdd100_stator", case.motor("hip").mass - B[f"{side}_hip_qdd100_rotor"].mass)
-        set_mass(f"{side}_knee_qdd100_stator", case.motor("knee").mass - B[f"{side}_knee_qdd100_rotor"].mass)
-        set_mass(f"{side}_ankle_mj5208_stator", case.motor("wheel").mass - B[f"{side}_ankle_mj5208_rotor"].mass)
-        hub, tire = B[f"{side}_wheel_hub"], B[f"{side}_wheel_tire"]
-        if case.wheel_kg is not None:                   # hub + tire scaled to the wheel mass
-            k = (case.wheel_kg - UPKIE_WHEEL_MARKERS) / (hub.mass + tire.mass)
-            set_mass(hub.name, hub.mass * k)
-            set_mass(tire.name, tire.mass * k)
-        tire.inertia = [float(x) * (R / UPKIE_R) ** 2 for x in tire.inertia]  # tire shape kept: inertia ~ m R^2
-        for g in tire.geoms:                            # tire touches only the floor (see module doc)
-            if g.name == f"{side}_tire":
-                g.contype, g.conaffinity = 2, 0
-    big = 1e4
-    for j in spec.joints:
-        kind = j.name.split("_")[-1] if j.name.startswith(("left_", "right_")) else None
-        if kind in ("hip", "knee", "wheel"):
-            mtr = case.motor(kind)
-            j.armature = mtr.armature
-            j.frictionloss = mtr.backdrive
-            j.actfrcrange = [-mtr.peak, mtr.peak] if case.limits else [-big, big]
-    for a in spec.actuators:
-        mtr = case.motor(a.name.split("_")[-1])
-        a.ctrlrange = [-mtr.peak, mtr.peak] if case.limits else [-big, big]
-    spec.compile()
-    (mdir / "upkie.xml").write_text(spec.to_xml(), encoding="utf-8")
-    scene = (mdir / "scene.xml").read_text(encoding="utf-8")
-    (mdir / "scene.xml").write_text(scene.replace('<geom name="floor"', '<geom name="floor" contype="1" conaffinity="3"', 1),
-                                    encoding="utf-8")
-    params = build_params(mdir / "scene.xml", verbose=False)
-    k_m = params.extra["total_mass"] / UPKIE_MASS
-    params.tau_wheel_max = 1.7 * k_m * R / UPKIE_R             # Plan 4 tuning scaled: the validated closed loop
-    params.tau_hip_max = 16.0 * k_m
-    params.to_json(mdir / "plan4_params.json")
-    return params
-
-
-def tire_clearance(diameter_mm: float, samples: int = 60) -> dict:
-    """Smallest gap [mm] between the left tire and each left-leg part over the knee range, from the MuJoCo collision
-    shapes (mj_geomDistance, which ignores the tire-floor-only contact filter of build_model; negative = overlap, capped
-    at 100 mm), for the Plan 4 leg lengths and for knee angles >= KNEE_REACH_DEG (covers every balanced posture of the
-    user's robot, 62-180 deg at the hip limit), plus every part's lateral span |y| [mm]."""
-    from wbr.models.upkie_params import L_MAX, L_MIN
-    with tempfile.TemporaryDirectory() as tmp:
-        build_model(Case("clearance", diameter_mm), Path(tmp) / "model")
-        m = mujoco.MjModel.from_xml_path(str(Path(tmp) / "model" / "scene.xml"))
-    d = mujoco.MjData(m)
-    mujoco.mj_resetDataKeyframe(m, d, m.key("stand").id)
-    mujoco.mj_kinematics(m, d)
-    tire = m.geom("left_tire").id
-    hip, knee = m.joint("left_hip").id, m.joint("left_knee")
-
-    def span(g):
-        R = d.geom_xmat[g].reshape(3, 3)
-        c, h = d.geom_xpos[g] + R @ m.geom_aabb[g, :3], np.abs(R) @ m.geom_aabb[g, 3:]
-        return [1000 * (abs(c[1]) - h[1]), 1000 * (abs(c[1]) + h[1])]
-
-    parts: Dict[int, str] = {}
-    out = {"diameter_mm": diameter_mm, "tire_span_mm": span(tire), "parts": {}}
-    for g in range(m.ngeom):
-        body = mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_BODY, m.geom_bodyid[g]) or ""
-        if g != tire and (m.geom_contype[g] or m.geom_conaffinity[g]) and body.startswith("left_") and "wheel" not in body:
-            parts[g] = name = body[len("left_"):]
-            p = out["parts"].setdefault(name, {"span_mm": span(g), "plan4": None, "reach": None})
-            s = span(g)
-            p["span_mm"] = [min(p["span_mm"][0], s[0]), max(p["span_mm"][1], s[1])]
-    fromto = np.zeros(6)
-    for q in np.linspace(0.0, m.jnt_range[knee.id][0], samples):
-        d.qpos[knee.qposadr[0]] = q
-        mujoco.mj_kinematics(m, d)
-        leg = float(np.hypot(*(d.xanchor[hip] - d.xpos[m.geom_bodyid[tire]])[[0, 2]]))
-        bands = [b for b, inside in (("plan4", L_MIN <= leg <= L_MAX), ("reach", 180 - abs(math.degrees(q)) >= KNEE_REACH_DEG))
-                 if inside]
-        for g, name in parts.items():
-            gap = 1000 * mujoco.mj_geomDistance(m, d, tire, g, 0.1, fromto)
-            p = out["parts"][name]
-            for band in bands:
-                if p[band] is None or gap < p[band]:
-                    p[band] = gap
-    return out
+    """The robot of `case` in `mdir` (scene.xml, description.json, plant_params.json): wbr.bench.ake_cad.build_cad_model."""
+    from wbr.bench.ake_cad import build_cad_model
+    return build_cad_model(case, mdir)
 
 
 @contextlib.contextmanager
 def patched_plan4(case: Case, root: Path):
+    """wbr.plans.plan4_lqi8.MODELS_DIR -> root for the duration: the plan reads its model folder (make_plan's model_dir)
+    there.  (Until 2026-11-14 it also patched Plan 4's wheel radius, track and torque limits for the upkie route.)"""
     import wbr.plans.plan4_lqi8 as p4
-    saved = p4.MODELS_DIR, p4.WHEEL_RADIUS, p4.TAU_WHEEL_MAX, p4.TAU_LEG_MAX, p4.TRACK
+    saved = p4.MODELS_DIR
     try:
-        p4.MODELS_DIR, p4.WHEEL_RADIUS = root, case.radius
-        track = getattr(case, "track_m", None)        # CAD cases (ake_cad, lateral = "cad"): the CAD tyre centre distance
-        if track is not None:
-            p4.TRACK = track
-        # one leg limit for hip and knee in Plan 4: the larger peak; each joint is clipped at its own motor in make_plan
-        legs = max(case.motor("hip").peak, case.motor("knee").peak)
-        p4.TAU_WHEEL_MAX, p4.TAU_LEG_MAX = (case.motor("wheel").peak, legs) if case.limits else (1e4, 1e4)
+        p4.MODELS_DIR = root
         yield p4
     finally:
-        p4.MODELS_DIR, p4.WHEEL_RADIUS, p4.TAU_WHEEL_MAX, p4.TAU_LEG_MAX, p4.TRACK = saved
+        p4.MODELS_DIR = saved
 
 
 def available(case: Case, kind: str, tau: float, w: float) -> float:
@@ -300,11 +159,10 @@ def make_plan(p4, case: Case, model_dir: str, params_json: Path, slope: float = 
     kw = dict(model_dir=model_dir, params_json=str(params_json), latency_ms=2.0, noise=True, seed=case.seed,
               slope_deg=slope, friction_comp_Nm=0.8 * case.motor("hip").backdrive,
               friction_comp_wheel_Nm=0.8 * case.motor("wheel").backdrive)
-    # CAD cases: outer-loop gains scaled to the robot (ake_cad); the staged tests (v5_lqi/TEST, v5_mpc/TEST) also set lqi_kwargs / mpc_kwargs, the
+    # the robot's gains (ake_cad.v5_gains); the staged tests (v5_lqi/TEST, v5_mpc/TEST) also set lqi_kwargs / mpc_kwargs, the
     # latency and the disturbances here - an override replaces the default above
     kw.update(getattr(case, "plan_overrides", None) or {})
-    classes = case.plan_classes() if hasattr(case, "plan_classes") else None       # the CAD robot with its own URDF: wbr.plans.plan_v5
-    cfg_cls, plan_cls = classes or (p4.Plan4Config, p4.Plan4LQI8)
+    cfg_cls, plan_cls = case.plan_classes()         # the CAD robot with its own URDF: wbr.plans.plan_v5 (ake_cad.CadCase)
     plan = plan_cls(cfg_cls(**kw))
     sm = plan.sim.servo_model
     servo_torque = sm.torque
@@ -440,7 +298,7 @@ def run_case(case: Case) -> dict:
         root = Path(tmp)
         params = build_model(case, root / "model")
         with patched_plan4(case, root) as p4:
-            params_json = root / "model" / getattr(case, "params_file", "plan4_params.json")
+            params_json = root / "model" / case.params_file
             plan = make_plan(p4, case, "model", params_json)
             q = case.quick
             S: Dict[str, dict] = {}
@@ -477,13 +335,6 @@ def run_case(case: Case) -> dict:
                 scen=S, wall_s=time.perf_counter() - t0)
 
 
-def _run(case: Case):
-    try:
-        return case.tag, run_case(case)
-    except Exception as exc:          # keep the other cases running; the error is reported in the summary
-        return case.tag, {"error": repr(exc)}
-
-
 # ----------------------------------------------------------------------------- report
 def fmt(v, nd=2):
     return "-" if v is None else f"{v:.{nd}f}"
@@ -496,7 +347,7 @@ def _worst(S: dict, key: str):
 
 def summary_markdown(results: Dict[str, dict]) -> str:
     ok = {t: r for t, r in sorted(results.items(), key=lambda kv: (kv[1].get("radius", 0), kv[0])) if "error" not in r}
-    lines = ["# AKE motor check of the user's robot (`python -m wbr.bench.ake_sizing`)", ""]
+    lines = ["# AKE motor check of the CAD robot (`python -m wbr.bench.ake_cad`)", ""]
     for t, r in results.items():
         if "error" in r:
             lines.append(f"- ERROR {t}: {r['error']}")
@@ -540,71 +391,3 @@ def summary_markdown(results: Dict[str, dict]) -> str:
                          f"{fmt(s['wheel_peak'])} / {fmt(s['wheel_sat_pct'], 1)} / {fmt(s['wheel_speed_peak'], 1)} | "
                          f"{fmt(s['knee_peak'])} / {fmt(s['knee_sat_pct'], 1)} | {fmt(s['hip_peak'])} / {fmt(s['hip_sat_pct'], 1)} |")
     return "\n".join(lines) + "\n"
-
-
-def clearance_markdown(rows: List[dict]) -> str:
-    from wbr.models.upkie_params import L_MAX, L_MIN
-
-    def gap(v):
-        return "-" if v is None else "≥ 100" if v >= 99.9 else f"**{v:.0f}**" if v < 0 else f"{v:.0f}"
-
-    near = {n for r in rows for n, p in r["parts"].items() if p["reach"] is not None and p["reach"] < 99.9}
-    names = sorted(near, key=lambda n: rows[0]["parts"][n]["span_mm"][0])
-    t = rows[0]["tire_span_mm"]
-    lines = ["# Tire clearance to the leg, upkie layout (`python -m wbr.bench.ake_sizing --clearance`)", "",
-             f"Left tire lateral span |y| {t[0]:.0f}..{t[1]:.0f} mm: the wheel is inboard of the shank. Smallest gap [mm] "
-             f"between the tire and each part from the MuJoCo collision shapes, Plan 4 leg lengths {L_MIN}..{L_MAX} m / "
-             f"knee angle >= {KNEE_REACH_DEG:.0f} deg; **negative = overlap**. The simulation itself lets the tire pass "
-             "through the robot (tire-floor contact only).", "",
-             "| part | lateral span |y| [mm] | " + " | ".join(f"Ø{r['diameter_mm']:.0f}" for r in rows) + " |",
-             "|---|---|" + "---|" * len(rows)]
-    for n in names:
-        s = rows[0]["parts"][n]["span_mm"]
-        cells = [f"{gap(r['parts'][n]['plan4'])} / {gap(r['parts'][n]['reach'])}" for r in rows]
-        lines.append(f"| {n} | {s[0]:.0f}..{s[1]:.0f} | " + " | ".join(cells) + " |")
-    return "\n".join(lines) + "\n"
-
-
-def main(argv: List[str] | None = None) -> None:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--only", nargs="*", help="tags of the standard cases to run")
-    ap.add_argument("--tag", help="run one custom case with this tag")
-    ap.add_argument("--diameter", type=float, default=112.0, help="wheel diameter [mm] of the custom case")
-    ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--volt", type=float, default=24.0)
-    ap.add_argument("--no-limits", action="store_true", help="motor torque / speed limits off (diagnosis)")
-    ap.add_argument("--torso", type=float, default=2.5, help="torso mass [kg] of the custom case, motors excluded")
-    ap.add_argument("--wheel-kg", type=float, help="one wheel (hub + tire) [kg] of the custom case (default: upkie 0.135)")
-    for kind, default in (("hip", "AKE50-8"), ("knee", "AKE50-8"), ("wheel", "AKE60-8")):
-        ap.add_argument(f"--{kind}-motor", choices=sorted(MOTORS), default=default, help=f"{kind} motor of the custom case")
-    ap.add_argument("--quick", action="store_true")
-    ap.add_argument("--jobs", type=int, default=max(1, cpu_count() - 2))
-    ap.add_argument("--out", type=Path, default=OUT_DIR)
-    ap.add_argument("--clearance", type=float, nargs="*", help="only report the tire-to-leg gaps for these diameters [mm]")
-    args = ap.parse_args(argv)
-    if args.clearance is not None:
-        rows = [tire_clearance(D) for D in (args.clearance or (112, 150, 200, 240, 250, 260, 300, 400))]
-        args.out.mkdir(parents=True, exist_ok=True)
-        (args.out / "clearance.md").write_text(clearance_markdown(rows), encoding="utf-8")
-        print(clearance_markdown(rows))
-        return
-    if args.tag:
-        cases = [Case(args.tag, args.diameter, args.seed, args.volt, limits=not args.no_limits, torso_kg=args.torso,
-                      wheel_kg=args.wheel_kg, hip_motor=args.hip_motor, knee_motor=args.knee_motor, wheel_motor=args.wheel_motor)]
-    else:
-        cases = [c for c in STANDARD_CASES if not args.only or c.tag in args.only]
-    for c in cases:
-        c.quick = args.quick
-    args.out.mkdir(parents=True, exist_ok=True)
-    t0 = time.time()
-    with Pool(min(args.jobs, len(cases)), maxtasksperchild=1) as pool:
-        for tag, res in pool.imap_unordered(_run, cases):
-            (args.out / f"{tag}.json").write_text(json.dumps(res, indent=1), encoding="utf-8")
-            print(f"{tag}: {'ERROR ' + res['error'] if 'error' in res else 'done'} ({time.time() - t0:.0f} s)")
-    results = {f.stem: json.loads(f.read_text(encoding="utf-8")) for f in sorted(args.out.glob("*.json"))}
-    (args.out / "summary.md").write_text(summary_markdown(results), encoding="utf-8")
-    print(f"wrote {args.out / 'summary.md'}")
-
-
-if __name__ == "__main__":
-    main()

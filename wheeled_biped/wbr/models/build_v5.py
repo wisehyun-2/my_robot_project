@@ -368,7 +368,7 @@ def build(out_dir: Path = OUT_DIR, payload_kg: float = 0.0, payload_size=(0.20, 
           limits: bool = True, verbose: bool = False, mass_json: Path = MASS_JSON, urdf_json: Path = URDF_JSON) -> SerialPlantParams:
     """Writes the model into out_dir and returns the controller's plant parameters.  with_meshes=False: a simulation-only copy
     without the visual meshes (same dynamics).  payload_kg: a box on the top plate, known to the controller's plant."""
-    from wbr.models.upkie_params import build_params
+    from wbr.models.plant_params import build_params
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     g = V5Geometry(mass_json, urdf_json)
@@ -387,9 +387,8 @@ def build(out_dir: Path = OUT_DIR, payload_kg: float = 0.0, payload_size=(0.20, 
     spec = compile_spec(urdf, g, motor, limits, payload)
     _write_xml(spec, out_dir / f"{NAME}.xml", payload)
     (out_dir / "scene.xml").write_text(SCENE_XML.format(name=NAME), encoding="utf-8")
-    params = build_params(out_dir / "scene.xml", verbose=verbose, signs=JOINT_SIGNS, name="wheelbiped_v5", knee_sign=KNEE_SIGN, **leg_range(g.L1))
-    params.tau_wheel_max = motor.peak
-    params.tau_hip_max = motor.peak
+    params = build_params(out_dir / "scene.xml", verbose=verbose, signs=JOINT_SIGNS, name="wheelbiped_v5", knee_sign=KNEE_SIGN,
+                          tau_wheel_max=motor.peak, tau_hip_max=motor.peak, **leg_range(g.L1))
     params.to_json(out_dir / PARAMS_FILE)
     imu_pos, R_bi = g.imu()
     desc = dict(robot=NAME, wheel_radius=g.R, track=2.0 * g.tyre_y, tau_wheel_max=motor.peak, tau_leg_max=motor.peak, joint_signs=JOINT_SIGNS,

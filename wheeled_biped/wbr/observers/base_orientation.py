@@ -1,10 +1,9 @@
-"""Port of upkie's spine IMU frame observer (upkie/cpp/observers, Apache-2.0), used by the MCU as its IMU convention adapter.
+"""IMU frame adapter of the MCU: base orientation from the pi3hat's quaternion.  Port of upkie's spine observer
+BaseOrientation (upkie/cpp/observers/BaseOrientation.h, Apache-2.0).  This file was wbr/observers/upkie_observers.py
+until 2026-11-14.
 
 BaseOrientation : pitch of the base w.r.t. the world vertical (positive = leaning forward) and
                   body angular velocity, from an IMU quaternion (orientation of the IMU in the ARS frame)
-
-The other upkie observers (wheel contact, floor contact, wheel odometry) served only Plan 1 and were removed
-with Plans 1-3 on 2026-11-11 (git history).
 """
 from __future__ import annotations
 
@@ -14,16 +13,15 @@ from wbr.common.rotations import pitch_frame_in_parent, quat_to_matrix
 
 
 class BaseOrientation:
-    """R_base_to_world = R_ars_to_world @ R_imu_to_ars @ R_base_to_imu (upkie BaseOrientation.h).
+    """R_base_to_world = R_ars_to_world @ R_imu_to_ars @ R_base_to_imu.
 
-    Defaults are upkie's real-robot values: the pi3hat IMU is mounted rotated (R_base_to_imu =
-    diag(-1, 1, -1)) and reports its orientation in the ARS frame (x forward, y right, z down:
-    R_ars_to_world = diag(1, -1, -1)).  The MuJoCo plans pass identity matrices because their IMU
-    sensor already reports the base orientation in the world frame.
+    rotation_base_to_imu: the board's mount on the robot (v5: diag(-1, -1, 1), description.json; there is no default
+    mount: None = identity, the board axes along the base axes).  rotation_ars_to_world: the pi3hat reports its orientation
+    in the ARS frame (x forward, y right, z down), so the default is diag(1, -1, -1).
     """
 
     def __init__(self, rotation_base_to_imu: np.ndarray | None = None, rotation_ars_to_world: np.ndarray | None = None):
-        self.R_base_to_imu = np.diag([-1.0, 1.0, -1.0]) if rotation_base_to_imu is None else np.asarray(rotation_base_to_imu, float)
+        self.R_base_to_imu = np.eye(3) if rotation_base_to_imu is None else np.asarray(rotation_base_to_imu, float)
         self.R_ars_to_world = np.diag([1.0, -1.0, -1.0]) if rotation_ars_to_world is None else np.asarray(rotation_ars_to_world, float)
         self.pitch = 0.0
         self.angular_velocity = np.zeros(3)

@@ -1,5 +1,5 @@
-"""Three-body planar plant of a wheeled biped with SERIAL hip-knee legs (upkie, Plan 4), derived
-from the Lagrangian -- no parallelogram assumption (docs/plan4_model.md).
+"""Three-body planar plant of a wheeled biped with SERIAL hip-knee legs (the v5 robot; first derived for the upkie model of
+Plan 4, removed 2026-11-14), from the Lagrangian -- no parallelogram assumption (docs/plan4_model.md).
 
 Bodies (both legs lumped into one, all masses/inertias are totals):
   wheel  mass m_w, inertia I_w about the axle (tires, hubs, rotors + reflected rotor armature),
@@ -8,7 +8,7 @@ Bodies (both legs lumped into one, all masses/inertias are totals):
          treated as one rigid body: mass m_l(L0), COM at (d, c) in the leg frame (c along the
          virtual leg from the axle towards the hip, d perpendicular, positive forward when the
          leg is vertical), inertia I_l(L0) about its COM.  These depend on the knee angle, i.e.
-         on L0, and come from a table computed on the MuJoCo model (wbr.models.upkie_params).
+         on L0, and come from a table computed on the MuJoCo model (wbr.models.plant_params).
   body   torso + batteries + hip stators: mass m_b, COM at (b_x, b_z) from the hip in the body
          frame, inertia I_b about its COM.
 
@@ -136,10 +136,10 @@ class SerialPlantParams:
     L0: float                # standing length
     L_min: float
     L_max: float
+    tau_wheel_max: float     # per wheel (R weight of the LQR, torque clamp of the MCU): the motor's peak
+    tau_hip_max: float       # per joint
     J_w: float = 0.0             # wheel rotor armature (both wheels), on the wheel joint rate (review r1 m9)
-    tau_wheel_max: float = 1.7   # per wheel (R weight of the LQR, torque clamp of the MCU)
-    tau_hip_max: float = 16.0    # per joint
-    name: str = "upkie_serial"
+    name: str = "serial_leg"
     g: float = G
     extra: dict = field(default_factory=dict)
 
@@ -275,8 +275,8 @@ class SerialPlant:
 
 if __name__ == "__main__":
     from wbr import MODELS_DIR
-    plant = SerialPlant(SerialPlantParams.from_json(MODELS_DIR / "upkie_plan4" / "plan4_params.json"))
-    for L0 in (0.25, 0.28, 0.31, 0.33):
+    plant = SerialPlant(SerialPlantParams.from_json(MODELS_DIR / "wheelbiped_v5" / "plant_params.json"))
+    for L0 in (0.35, 0.40, 0.46, 0.48):
         A, B = plant.linearize(L0)
         print(f"L0={L0:.2f} theta_eq={np.degrees(plant.theta_eq(L0)):+.2f} deg  Tp_eq={plant.Tp_eq(L0):+.3f} Nm  "
               f"eig(A)={np.round(np.sort_complex(np.linalg.eigvals(A)), 3)}")

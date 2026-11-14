@@ -1,17 +1,20 @@
-"""Plan 4 -- upkie hardware (serial hip-knee legs, qdd100 / mj5208) + the LQI8 controller designed on
-the serial-leg three-body plant (plant_serial.py), inside the DIABLO-style host / MCU split.
+"""The closed-loop runtime shared by the robot plans: a robot's MuJoCo model + the LQI8 controller designed on the
+serial-leg three-body plant (plant_serial.py), inside the DIABLO-style host / MCU split.  The robot itself (model folder,
+joint signs, wheel radius, track, motor limits, IMU mount, payload placement) comes from a subclass: wbr.plans.plan_v5.PlanV5.
+
+Named after Plan 4, which ran this on the upkie model; the upkie model, Plan 4's acceptance battery and its stage-2 MPC
+host were removed on 2026-11-14 (git history).  The defaults of Plan4Config are the tuning PlanV5Config starts from.
 
 Runtime structure:
   MCU program (DiabloMcu, `rate_hz` = 1 kHz or 200 Hz): estimator -> LQI8 balance law (T, Tp) -> leg
-      length PD + weight feed-forward -> serial-leg VMC -> torque commands; mode machine, FAULT, host
-      link timeouts (unchanged from Plan 2, only the leg kinematics and the plant differ)
-  host  (HostEmulator at 50 Hz, or the stage-2 MPC reference generator): MotionCtrl set-points
-upkie's joints are mirrored left/right; a sign adapter (UPKIE_JOINT_SIGNS) converts observations and
-torque commands so that the MCU sees the symmetric "u-convention" of the leg model.
+      length PD + static leg force -> serial-leg VMC -> torque commands; FAULT, host link timeouts
+  host  (HostEmulator at 50 Hz): MotionCtrl set-points
+A sign adapter (the robot's joint signs) converts observations and torque commands so that the MCU sees the symmetric
+"u-convention" of the leg model.
 
-Robustness knobs used by the acceptance battery: mass_scale (all masses/inertias of the model, the
-controller keeps the nominal parameters), friction (floor + tires), slope_deg (floor pitched about +y,
-positive = uphill in +x), payload (extra point mass on the torso), pitch_bias_deg (IMU offset).
+Disturbances the controller does not know: slope_deg (floor pitched about +y, positive = uphill in +x), payload (extra point
+mass on the body), pitch_bias_deg (IMU offset), floor_bump / floor_humps (under one wheel).  (The mass and friction scales,
+the LQI8 state predictor and the switches of the v5 features were removed on 2026-11-14 as unused by v5.)
 """
 from __future__ import annotations
 
@@ -25,20 +28,17 @@ import numpy as np
 from wbr import MODELS_DIR
 from wbr.common.rotations import matrix_to_quat, quat_to_matrix, roll_pitch_yaw
 from wbr.common.servo import ServoCommand, ServoModel, ServoProperties
-from wbr.controllers.diablo_arch.host_link import HostEmulator, HostLink, HostLinkParams, RobotMode
+from wbr.controllers.diablo_arch.host_link import HostEmulator, HostLink, HostLinkParams
 from wbr.controllers.diablo_arch.mcu import DiabloMcu, McuParams
 from wbr.controllers.lqi8.law import LQI8Law
 from wbr.controllers.lqi8.plant_serial import SerialPlant, SerialPlantParams
-from wbr.controllers.lqi8.serial_leg import UPKIE_JOINT_SIGNS, SerialLeg, SerialLegGeometry
-from wbr.plans.common import Logger, ObservationDelay, SensorNoise, placed_base_pose
+from wbr.controllers.lqi8.serial_leg import SerialLeg, SerialLegGeometry
+from wbr.plans.common import Logger, ObservationDelay, placed_base_pose
 from wbr.sim.mujoco_sim import MujocoSim, SimConfig
 
 JOINTS = ["left_hip", "left_knee", "left_wheel", "right_hip", "right_knee", "right_wheel"]
 WHEELS = ["left_wheel", "right_wheel"]
-WHEEL_RADIUS = 0.056        # BOM 112 mm RC tire (models/upkie_plan4); upkie_description's 0.05 is used by Plan 1
-TRACK = 2 * 0.1984          # wheel centre distance (URDF)
-TAU_WHEEL_MAX = 1.7         # mj5208 (URDF effort)
-TAU_LEG_MAX = 16.0          # qdd100
+PARAMS_FILE = "plant_params.json"   # plant parameters in the model folder (wbr.models.build_v5.PARAMS_FILE)
 
 
 @dataclass
@@ -51,10 +51,8 @@ class Plan4Config:
     pitch_bias_deg: float = 0.0
     host_timeout_ms: float = 500.0
     scene: str = "scene.xml"
-    model_dir: str = "upkie_plan4"   # upkie_description with the BOM 112 mm tires (docs/plan4_model.md)
-    start_mode: RobotMode = RobotMode.STAND
+    model_dir: str = ""              # model folder under models/: set by the robot's config (PlanV5Config)
     lqi_kwargs: Optional[dict] = None
-    L_stand: Optional[float] = None  # default: plant params L0 (0.31 m)
     kp_leg: float = 800.0            # N/m   leg length PD (per leg)
     kd_leg: float = 40.0             # N s/m
     kp_yaw: float = 0.4              # N m per rad/s
@@ -63,51 +61,35 @@ class Plan4Config:
     kw_yaw: float = 0.0              # N m per rad/s of wheel-speed-difference yaw rate error (see McuParams)
     yaw_ref_rate: float = 3.0        # rad/s^2, see McuParams
     yaw_offset_tau: float = 0.0      # s, see McuParams (the v5 robot's pi3hat chain: wbr.plans.plan_v5)
-    attitude_tau: float = 0.0        # s, see McuParams (same)
-                                     # (sized with upkie_description's 40 mm cylinder tire, whose two rim contacts scrub
-                                     # when yawing: 0.5 rad capped it at 0.4 N m and the yaw rate stalled at 0.84 rad/s
-                                     # with mass x1.15 / friction 1.0; kept for the ellipsoid tire of models/upkie_plan4)
-    kp_split: float = 60.0           # anti-split PD (N m/rad): upkie's light serial legs must be held together
-    kd_split: float = 3.0            # firmly, otherwise differential wheel torque splits the legs instead of yawing
+    attitude_tau: float = 5.0        # s (> 0), see McuParams
+    kp_split: float = 60.0           # anti-split PD (N m/rad): light serial legs must be held together firmly, otherwise
+    kd_split: float = 3.0            # differential wheel torque splits the legs instead of yawing (v5: wbr.bench.ake_cad.v5_gains)
     friction_comp_Nm: float = 0.08   # hip stiction compensation per hip (model frictionloss 0.1 Nm)
     friction_comp_wheel_Nm: float = 0.016   # wheel stiction compensation per wheel (model 0.02 Nm)
     vel_window_s: float = 0.005      # MCU joint velocities from quantised-position differences over 5 ms (wheel-jitter fix:
                                      # the 1-step differentiated 14-bit encoder noise became 0.1 N m rms wheel torque chatter)
     friction_comp_static_tau: float = 1.0   # s, see McuParams: a payload / mass error changes the static hip torque;
                                      # comparing with the fixed Tp_ff then added a constant 0.16 N m (2 x 0.08)
-    predict_ms: float = 0.0          # LQI state-predictor horizon (design constant = nominal latency, not latency_ms);
-                                     # 10 ms: latency tolerance 15 -> 30 ms but the push pitch peaks double, so off
-                                     # by default (docs/plan4_lqi8.md 3.5)
-    wheel_reaction_ff: bool = False  # knee cancels the wheel motor's reaction on the shank (McuParams); off here so that
-                                     # the upkie results stay as judged, on for the CAD robots (wbr.bench.ake_cad)
-    roll_compliant: bool = False     # legs yield to a bump, the IMU roll levels the body (McuParams); off here, on for the CAD robots
-    kp_roll_force: float = 0.0       # N/rad, gains and limits of the compliant roll: wbr.bench.ake_cad.outer_loop_gains
+    kp_roll_force: float = 0.0       # N/rad, gains and limits of the compliant roll: wbr.bench.ake_cad.compliant_roll_gains
     ki_roll_force: float = 0.0
     kd_roll_force: float = 0.0
     roll_force_limit: Optional[float] = None   # None: the static leg force, where a wheel is just unloaded
     roll_force_int_limit: float = 0.0
     kp_leg_limit: float = 0.0
     kd_leg_limit: float = 0.0
-    friction_comp_rate_gate: float = 0.1    # rad/s: the stiction compensation fades with the body pitch rate (review r1
+    friction_comp_rate_gate: float = 0.1    # rad/s (> 0): the stiction compensation fades with the body pitch rate (review r1
                                      # M1: the relay term sustained a 13 Hz limit cycle from 12 ms latency; with the
-                                     # gate 12 ms recovers cleanly, standing quality unchanged); 0 = off
-    real_imu_convention: bool = True # feed the MCU the IMU sample the way the upkie spine reports it (ARS frame, IMU
-                                     # mounted rotated 180 deg about y) so that the MCU's frame adapter runs in every test
-    mass_scale: float = 1.0
-    friction: Optional[float] = None
+                                     # gate 12 ms recovers cleanly, standing quality unchanged)
     slope_deg: float = 0.0
-    payload: Optional[tuple] = None  # (mass [kg], x ahead of the axle [m], z above the axle [m] or None = torso COM height)
+    payload: Optional[tuple] = None  # (mass [kg], x ahead of the axle [m], z above the axle [m] or None = body COM height)
     L_min_margin: float = 0.02          # see McuParams
     L_max_margin: float = 0.0           # see McuParams
-    mean_follows_range: bool = False    # see McuParams
-    uneven_speed: float = 0.0           # see McuParams
+    uneven_speed: float = 0.2           # see McuParams
     uneven_d0: float = 0.01             # see McuParams
     uneven_d1: float = 0.04             # see McuParams
     uneven_brake: float = 0.0           # see McuParams
     uneven_lean: float = 0.0            # see McuParams
-    uneven_hold_int: bool = False       # see McuParams
     uneven_brake_tau: float = 0.0       # see McuParams
-    suspension: bool = False            # see McuParams
     suspension_share: float = 0.0       # see McuParams
     kd_leg_own: float = 0.0             # see McuParams
     floor_humps: tuple = ()             # curved speed bumps, each (height [m], side +1 left / -1 right / 0 both wheels, x start [m], length [m], half width [m])
@@ -115,20 +97,20 @@ class Plan4Config:
                                      # each ramp [m], length of the top [m], half width [m]), centred on that tire's track
     drop_height: float = 0.0005
     params_json: Optional[str] = None
-    host: str = "ramp"               # "ramp": plain MotionCtrl host; "mpc": stage-2 reference generator
 
 
 class Plan4LQI8:
+    """The shared runtime.  A robot plan (wbr.plans.plan_v5.PlanV5) supplies what is the robot's: default_config,
+    _robot_constants, _lqi_design, _make_noise, _observe (the IMU chain) and _add_payload."""
+
     def __init__(self, cfg: Plan4Config | None = None, law=None):
         self.cfg = cfg or self.default_config()
         c = self.cfg
         self.dt = 1.0 / c.rate_hz
         robot = self._robot_constants()
         self.wheel_radius, self.track = robot["wheel_radius"], robot["track"]
-        self.params = SerialPlantParams.from_json(c.params_json or MODELS_DIR / c.model_dir / "plan4_params.json")
+        self.params = SerialPlantParams.from_json(c.params_json or MODELS_DIR / c.model_dir / PARAMS_FILE)
         p = self.params
-        if c.L_stand is not None:
-            p.L0 = c.L_stand
         self.plant = SerialPlant(p)
         self.leg = SerialLeg(SerialLegGeometry(L1=p.extra["L1"], L2=p.extra["L2"], knee_sign=p.extra["knee_sign"]))
         self.signs = dict(robot["joint_signs"])
@@ -143,24 +125,21 @@ class Plan4LQI8:
         self.standing_base_z = None
 
         # controller -------------------------------------------------------------------------
-        # LQI8 weights of docs/plan4_lqi8.md: stronger velocity integral (position holding against joint stiction),
-        # more hip authority, wheel torque penalised for the 1.7 Nm mj5208; velocity reference shaped by a 2 m/s^2
+        # (tuned on Plan 4's upkie model; the robot plan's _lqi_design adds the gain-table grid table_L0 and the torque
+        # weights r_wheel_frac / r_hip_frac)
+        # LQI8 weights of docs/plan4_lqi8.md: stronger velocity integral (position holding against joint stiction);
+        # velocity reference shaped by a 2 m/s^2
         # ramp + 0.3 s pre-filter with the integrator frozen while the reference moves (overshoot < 10 %).
         # q_att: 7th state = integral of the static body tilt e_att (encoders + actuator torques, IMU-bias free), so
         # that the TRUE body pitch goes to zero with an IMU bias / payload / slope (items 16, 17: -1.37 / +0.95 deg
         # before); the wheel-channel gains change by < 5 %, the hip-channel theta_dot / v / z1 gains drop by 24-50 %
         # (z2 takes over part of the static hip work): push pitch peaks +1..1.5 deg, transient items still pass
         # q_int 0.2 / q_pos 0.5: velocity-integral + position-error integral hold the position against constant
-        # disturbance torques (5 deg slope, payload, IMU bias) without a 10-20 cm offset; r_wheel 0.2 keeps the
-        # 10 deg tilt recovery below the 1.36 Nm wheel margin and short of the slip limit on mu = 0.5 floors;
+        # disturbance torques (5 deg slope, payload, IMU bias) without a 10-20 cm offset;
         # freeze_tol 0.05 lets the integrators resume once the shaped reference is within 0.05 m/s of the target
         # (uphill velocity steps otherwise keep a 0.15 m/s error).  docs/plan4_lqi8.md
-        lqi_kwargs = dict(table_L0=(0.22, 0.34, 0.005), q_int=0.2, q_v=0.5, r_hip_frac=0.3, r_wheel_frac=0.2,
-                          v_ramp_rate=2.0, v_ref_tau=0.3, freeze_int_on_ramp=True, freeze_tol=0.05, q_att=0.2, q_pos=0.5)
-        if c.predict_ms > 0.0:
-            lqi_kwargs["pred_steps"] = int(round(c.predict_ms * 1e-3 * c.rate_hz))
-        # (the stage-2 MPC host flags MotionCtrl.host_shaped: the MCU then switches the LQI8 to plain tracking and
-        #  falls back to this shaping on a link timeout or when the host's QP fails)
+        lqi_kwargs = dict(q_int=0.2, q_v=0.5, v_ramp_rate=2.0, v_ref_tau=0.3, freeze_int_on_ramp=True, freeze_tol=0.05,
+                          q_att=0.2, q_pos=0.5)
         lqi_kwargs.update(self._lqi_design())
         lqi_kwargs.update(c.lqi_kwargs or {})
         self.law = law or self._make_law(lqi_kwargs)
@@ -173,43 +152,24 @@ class Plan4LQI8:
                                imu_position=robot.get("imu_position"),
                                kp_split=c.kp_split, kd_split=c.kd_split,
                                tau_hip_max=robot["tau_leg_max"], tau_wheel_max=robot["tau_wheel_max"],
-                               leg_joint="knee", F_ff_N=self._static_leg_force(), leg_force=self._leg_force_law(), friction_comp_Nm=c.friction_comp_Nm,
+                               leg_force=self.plant.static_leg_force, friction_comp_Nm=c.friction_comp_Nm,
                                friction_comp_wheel_Nm=c.friction_comp_wheel_Nm,
                                friction_comp_static_tau=c.friction_comp_static_tau, vel_window_s=c.vel_window_s,
                                friction_comp_rate_gate=c.friction_comp_rate_gate,
-                               wheel_reaction_ff=c.wheel_reaction_ff,
-                               roll_compliant=c.roll_compliant, kp_roll_force=c.kp_roll_force, ki_roll_force=c.ki_roll_force,
-                               kd_roll_force=c.kd_roll_force,
+                               kp_roll_force=c.kp_roll_force, ki_roll_force=c.ki_roll_force, kd_roll_force=c.kd_roll_force,
                                roll_force_limit=self._static_leg_force() if c.roll_force_limit is None else c.roll_force_limit,
                                roll_force_int_limit=c.roll_force_int_limit, kp_leg_limit=c.kp_leg_limit, kd_leg_limit=c.kd_leg_limit,
-                               L_min_margin=c.L_min_margin, L_max_margin=c.L_max_margin, mean_follows_range=c.mean_follows_range, uneven_speed=c.uneven_speed,
-                               uneven_d0=c.uneven_d0, uneven_d1=c.uneven_d1, uneven_brake=c.uneven_brake, uneven_lean=c.uneven_lean, uneven_hold_int=c.uneven_hold_int, uneven_brake_tau=c.uneven_brake_tau, suspension=c.suspension, suspension_share=c.suspension_share, kd_leg_own=c.kd_leg_own,
-                               imu_rotation_base_to_imu=robot["R_base_to_imu"] if c.real_imu_convention else None,
-                               imu_rotation_ars_to_world=self.R_ARS_TO_WORLD if c.real_imu_convention else None)
+                               L_min_margin=c.L_min_margin, L_max_margin=c.L_max_margin, uneven_speed=c.uneven_speed,
+                               uneven_d0=c.uneven_d0, uneven_d1=c.uneven_d1, uneven_brake=c.uneven_brake, uneven_lean=c.uneven_lean, uneven_brake_tau=c.uneven_brake_tau, suspension_share=c.suspension_share, kd_leg_own=c.kd_leg_own,
+                               imu_rotation_base_to_imu=robot["R_base_to_imu"], imu_rotation_ars_to_world=self.R_ARS_TO_WORLD)
         self.mcu = DiabloMcu(self.law, mcu_params, self.leg, self.link)
         self.noise = self._make_noise()
         self.delay = ObservationDelay(int(math.ceil(c.latency_ms * 1e-3 * c.rate_hz - 1e-9)), dt=self.dt)   # never round a latency away
         self.up_cmd = 0.0
         self.reset()
 
-    # ------------------------------------------------------------------ what differs from robot to robot (plan_v5.PlanV5)
-    torso_body = "torso"            # the body a push acts on
-
-    def _leg_force_law(self):
-        """McuParams.leg_force: None keeps F_ff / cos(lean) (upkie's verdicts were made with it)."""
-        return None
-
-    @staticmethod
-    def default_config():
-        return Plan4Config()
-
-    def _robot_constants(self) -> dict:
-        """The module constants are read here, at construction: wbr.bench.ake_sizing.patched_plan4 patches them for scaled robots."""
-        return dict(wheel_radius=WHEEL_RADIUS, track=TRACK, tau_wheel_max=TAU_WHEEL_MAX, tau_leg_max=TAU_LEG_MAX, joint_signs=UPKIE_JOINT_SIGNS,
-                    imu_site="base", R_base_to_imu=self.R_BASE_TO_IMU)
-
-    def _lqi_design(self) -> dict:
-        return {}
+    # ------------------------------------------------------------------ the balance law and the model variants
+    torso_body = "base"             # the body a push acts on
 
     def _make_law(self, lqi_kwargs: dict):
         """The balance law inside the MCU: the LQI8 here; a subclass may put another controller in its place
@@ -219,25 +179,16 @@ class Plan4LQI8:
     def _needs_spec_edit(self) -> bool:
         return bool(self.cfg.payload or self.cfg.floor_bump or self.cfg.floor_humps)
 
-    def _make_noise(self) -> SensorNoise:
-        c = self.cfg
-        return SensorNoise(enabled=c.noise, seed=c.seed, pitch_bias=math.radians(c.pitch_bias_deg))
-
     def _static_leg_force(self) -> float:
-        """Static force along one virtual leg: the body weight plus the part of the leg weight carried at
-        the leg COM height (c / L0 ~ 0.42 for upkie), see docs/plan4_model.md; a massless-leg VMC with the
-        full robot weight would over-extend the leg by ~7 mm."""
+        """Static force along one virtual leg at the standing length, upright: the body weight plus the part of the leg
+        weight carried at the leg COM height (c / L0), see docs/plan4_model.md.  The default roll force limit (a wheel
+        just unloaded); the leg loop itself uses SerialPlant.static_leg_force at the actual length and lean."""
         p = self.params
         leg = p.leg.at(p.L0)
         return 0.5 * (p.m_b + (leg["c"] / p.L0) * leg["m_l"]) * p.g
 
     def _make_host(self):
-        """Host process: plain MotionCtrl publisher (stage 1) or the MPC reference generator (stage 2).  Both expose
-        set_command(**fields) / tick(t) / enabled, the MPC host additionally violations, solve_times_ms,
-        fallback_used and force_fail (wbr.controllers.mpc_host.reference_mpc.MpcHost)."""
-        if self.cfg.host == "mpc":
-            from wbr.controllers.mpc_host.reference_mpc import MpcHost
-            return MpcHost(self.link, self, publish_hz=self.cfg.host_hz)
+        """Host process: plain MotionCtrl publisher (set_command(**fields) / tick(t) / enabled)."""
         return HostEmulator(self.link, publish_hz=self.cfg.host_hz)
 
     # ------------------------------------------------------------------ model variants
@@ -296,41 +247,8 @@ class Plan4LQI8:
             g.condim = floor.condim
             g.rgba = [0.75, 0.6, 0.2, 1.0]
 
-    def _add_payload(self, spec) -> None:
-        mass, x_ahead, z_above = self.cfg.payload
-        axle = self._axle_in_base(self.params.L0)
-        torso = next(b for b in spec.bodies if b.name == "torso")
-        # torso frame = base frame shifted by (0, 0, -0.1); torso-group COM is 0.119 m below the base origin
-        z = (-0.119 + 0.1) if z_above is None else (axle[2] + z_above + 0.1)
-        body = torso.add_body(name="payload", pos=[axle[0] + x_ahead, 0.0, z])
-        body.mass = mass
-        body.ipos = [0.0, 0.0, 0.0]
-        body.inertia = [1e-5, 1e-5, 1e-5]
-        body.explicitinertial = True
-        g = body.add_geom(name="payload_vis", type=mujoco.mjtGeom.mjGEOM_SPHERE, size=[0.03, 0, 0], rgba=[1, 0.2, 0.2, 0.8])
-        g.contype = 0
-        g.conaffinity = 0
-        g.mass = 0.0
-
     def _model_edit(self, m) -> None:
         c = self.cfg
-        if c.mass_scale != 1.0:
-            # robot bodies only: the item-17 payload is a test load defined as exactly 0.3 kg
-            scale = np.full(m.nbody, c.mass_scale)
-            scale[0] = 1.0
-            pid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, "payload")
-            if pid >= 0:
-                scale[pid] = 1.0
-            m.body_mass[:] *= scale
-            m.body_inertia[:] *= scale[:, None]
-            # recompute the derived constants (body_subtreemass = sim.total_mass(), used for the push force
-            # W = total mass x g; invweight0 of the constraint solver) as the compiler would for these masses;
-            # without this the subtree mass stayed at the nominal 5.34 kg for every mass scale
-            mujoco.mj_setConst(m, mujoco.MjData(m))
-        if c.friction is not None:
-            for name in ("floor", "left_tire", "right_tire"):
-                gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, name)
-                m.geom_friction[gid, 0] = c.friction
         if c.slope_deg != 0.0:
             a = -math.radians(c.slope_deg)       # plane normal tilted towards -x: floor rises with +x
             gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, "floor")
@@ -365,7 +283,7 @@ class Plan4LQI8:
                 "right_hip": qh * self.signs["right_hip"], "right_knee": qk * self.signs["right_knee"]}
 
     def reset(self, pitch: float = 0.0, yaw: float = 0.0, joint_positions: Optional[Dict[str, float]] = None,
-              base_linvel=None, mode: Optional[RobotMode] = None) -> None:
+              base_linvel=None) -> None:
         p = self.mcu.p
         L0 = float(np.clip(p.L_stand + p.height_gain * self.up_cmd, p.L_min, p.L_max))
         if joint_positions is None:
@@ -380,7 +298,7 @@ class Plan4LQI8:
         self.sim.reset(base_pos=pos, base_quat=quat, joint_positions=joint_positions, base_linvel=base_linvel)
         if self.standing_base_z is None:
             self.standing_base_z = float(pos[2])
-        self.mcu.reset(mode or self.cfg.start_mode)
+        self.mcu.reset()
         self.host = self._make_host()
         self.host.set_command(forward=0.0, left=0.0, up=self.up_cmd, stand_mode=True)
         self.delay = ObservationDelay(self.delay.delay_steps, dt=self.dt)
@@ -388,25 +306,9 @@ class Plan4LQI8:
         self.k = 0
         self.observation = self._observe()
 
-    # upkie's pi3hat IMU: mounted rotated 180 deg about y on the torso (imu body quat 0 0 1 0) and reporting its
-    # orientation in the ARS frame (x forward, y right, z down).  The simulator's IMU sensors sit on the base site
-    # (world-frame base orientation, base-frame rates); the sample is re-expressed the way the spine reports it and
-    # the MCU runs the same BaseOrientation adapter as the real robot (review r1 M3).
+    # The pi3hat reports its orientation in the ARS frame (x forward, y right, z down); the robot plan's _observe delivers the
+    # IMU sample that way and the MCU runs the same BaseOrientation adapter as the real robot (review r1 M3).
     R_ARS_TO_WORLD = np.diag([1.0, -1.0, -1.0])
-    R_BASE_TO_IMU = np.diag([-1.0, 1.0, -1.0])
-
-    def _observe(self) -> dict:
-        raw = self.sim.observe()
-        noisy = self.noise.apply(raw, self.dt)            # noise / bias in the base frame, then the IMU convention
-        if self.cfg.real_imu_convention:
-            imu = noisy["imu"]
-            R_bw = quat_to_matrix(imu["orientation"])
-            imu["orientation"] = matrix_to_quat(self.R_ARS_TO_WORLD.T @ R_bw @ self.R_BASE_TO_IMU.T)
-            imu["angular_velocity"] = self.R_BASE_TO_IMU @ np.asarray(imu["angular_velocity"], dtype=float)
-            imu["linear_acceleration"] = self.R_BASE_TO_IMU @ np.asarray(imu["linear_acceleration"], dtype=float)
-        obs = self.delay.push(noisy)
-        obs["sim"] = raw["sim"]
-        return obs
 
     def set_height_offset(self, dh: float) -> None:
         self.up_cmd = dh / self.mcu.p.height_gain
@@ -439,7 +341,6 @@ class Plan4LQI8:
                      qd_rh=sv["right_hip"]["velocity"], qd_rk=sv["right_knee"]["velocity"],
                      mode=tm.get("mode", 0), in_control=float(tm.get("in_control", False)),
                      v_cmd=target_ground_velocity, w_cmd=target_yaw_velocity)
-        o["base_orientation"] = {"pitch": e.pitch, "angular_velocity": np.array([e.roll_rate, e.pitch_rate, e.yaw_rate])}
         return o
 
     @property

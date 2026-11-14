@@ -3,6 +3,8 @@
 2026-11-11: Plans 1-3 were removed; their tests (five-bar leg, Plan 1-3 smoke runs, the Plan 1 crouch, the benchmark's
 settle_time) went with them, the LQI8 tests now run on the v5 robot's plant, and the two MCU behaviour tests that used
 the Plan 2 robot (transform-down refusal, motors off after a host-link loss) moved to tests/test_plan4.py.
+2026-11-14: the upkie model of Plan 4 was removed; tests/test_plan4*.py became tests/test_leg_plant.py (no MuJoCo) and
+tests/test_runtime_v5.py (MuJoCo), both on the v5 robot.
 """
 from __future__ import annotations
 
@@ -72,7 +74,7 @@ class FilterTests(unittest.TestCase):
 
 class LQI8Tests(unittest.TestCase):
     """The 6-state form (q_att = q_pos = None) on the v5 plant; the 8-state weights the robot runs are checked with
-    MuJoCo in tests/test_plan4.py and tests/test_robot_v5.py."""
+    MuJoCo in tests/test_runtime_v5.py and tests/test_robot_v5.py."""
 
     def test_closed_loop_stable_for_all_leg_lengths(self):
         plant = v5_plant()

@@ -4,7 +4,7 @@ with table_L0=None the controller re-designs online whenever the leg length chan
 State xs = [theta, theta_dot, v - v_ref, phi, phi_dot, z1 (, z2, z3)], z1 = int(v - v_ref) (the position error),
 z2 = int(static body tilt) (q_att), z3 = int(z1) (q_pos); outputs u = [T, Tp] = -K xs (total wheel torque, total hip torque).
 With q_att = q_pos = None it is the 6-state controller of the design report (section 8, "MineLQI6"), as Plan 2 runs it;
-Plan 4 and the v5 robot run all 8 states.  Named LQI6 until 2026-11-10.
+the v5 robot runs all 8 states (as Plan 4 did on the upkie model, removed 2026-11-14).  Named LQI6 until 2026-11-10.
 """
 from __future__ import annotations
 
@@ -31,16 +31,15 @@ def c2d_zoh(A: np.ndarray, B: np.ndarray, Ts: float):
 class LQI8:
     def __init__(self, plant: "SerialPlant", Ts: float = 1e-3, q_theta=0.3, q_thetad=3.0, q_v=1.0, q_phi=0.15, q_phid=3.0,
                  q_int=1.0, r_wheel_frac=0.25, r_hip_frac=0.15, v_ramp_rate=1.0, int_limit=1.0,
-                 reschedule_dL=0.01, table_L0=(0.10, 0.28, 0.01), a_ff=0.0, v_ref_tau=0.0, v_ref_order=1,
+                 reschedule_dL=0.01, table_L0=(0.10, 0.28, 0.01), v_ref_tau=0.0,
                  freeze_int_on_ramp=False, v_ref_tau_brake=0.0, q_att=None, q_pos=None, att_gM=None,
-                 att_limit=0.2, pos_limit=0.5, pred_steps=0, freeze_tol=1e-3, quiet_boost_att=1.0,
-                 quiet_boost_pos=1.0, plain_ramp_rate=4.0, att_accel_tau=0.1, att_accel_thresh=0.1,
-                 freeze_int_on_accel_plain=True, freeze_hold_s=0.1):
+                 att_limit=0.2, pos_limit=0.5, freeze_tol=1e-3, att_accel_tau=0.1, att_accel_thresh=0.1,
+                 freeze_hold_s=0.1):
         """table_L0 = (min, max, step): gains are designed once on this leg-length grid and interpolated
         at run time (no Riccati solve inside the 1 kHz loop, as a Teensy-class MCU would do it);
-        None keeps the online re-design of the report.
+        None keeps the online re-design of the report (the unit tests use it).
 
-        Optional extra integral states (Plan 4; None = off, the 6-state LQI of the report):
+        Optional extra integral states (None = off, the 6-state LQI of the report; v5_lqi/TEST stages 1-3):
           q_att  z2 = int(e_att),  e_att = theta + phi + (Tp - T) / (g M(L0)): the static body tilt seen by the
                  encoders and the actuator torques.  At rest the total COM satisfies sum(m x) = T / g and the hip
                  holds the body moment, which gives  phi_true = d(theta_body) + (dTp - T) / (g M) with
@@ -48,16 +47,12 @@ class LQI8:
                  theta + phi), of a body COM offset (payload) and of a slope.  Driving it to zero levels the body.
           q_pos  z3 = int(z1) = int(position error): constant force / torque disturbances (slope, payload, IMU
                  bias) are absorbed without a steady position offset (z1 alone ends displaced by T_d / K_z).
-        pred_steps > 0: state predictor over a FIXED horizon of that many control periods (the nominal sensor ->
-                 torque latency of the target system, a design constant -- not the actual latency of a run):
-                 x_hat(k) = Ad^N x_meas(k) + sum_{j=1..N} Ad^(j-1) Bd u(k-j) on the 5 balance states with the last N
-                 outputs (finite-spectrum assignment).  The feedback acts on x_hat; the integrators keep integrating the
-                 measured (delayed) signals, so a constant model error cannot bias their steady state.
-        Plan 4 uses q_att and q_pos; pred_steps is kept (default off) for the trade-off studies of
-        docs/plan4_lqi8.md (position-offset-free disturbance rejection, latency compensation)."""
+        The v5 robot runs both (docs/plan4_lqi8.md).  Removed on 2026-11-14 as unused by v5 (git history): the state
+        predictor (pred_steps), the plain tracking of a host-shaped reference (Plan 4's MPC host), the reference
+        acceleration feed-forward (a_ff), the second-order pre-filter (v_ref_order) and the faster integration while
+        standing still (quiet_boost_*)."""
         self.plant = plant
         self.Ts = Ts
-        self.pred_steps = int(pred_steps)
         self.q_att, self.q_pos, self.att_gM = q_att, q_pos, att_gM
         self.att_limit, self.pos_limit = att_limit, pos_limit
         if q_att is not None and att_gM is None:
@@ -72,37 +67,19 @@ class LQI8:
         self.i_pos = (7 if q_att is not None else 6) if q_pos is not None else None
         self.Q = np.diag(q_diag)
         self.R = np.diag([1 / (r_wheel_frac * plant.tau_wheel_max)**2, 1 / (r_hip_frac * plant.tau_hip_max)**2])
+        self.v_ramp_rate_base = v_ramp_rate    # the MCU's own ramp; v_ramp_rate may be lowered at run time (law.py: uneven ground)
         self.v_ramp_rate = v_ramp_rate
-        self.a_ff = a_ff                 # wheel torque feed-forward per m/s^2 of reference acceleration (N m s^2/m)
         self.v_ref_tau = v_ref_tau       # pre-filter time constant on the ramped reference (s); 0 = off
-        self.v_ref_order = v_ref_order   # 1: first order, 2: two cascaded first-order stages (smoother onset)
         self.freeze_int_on_ramp = freeze_int_on_ramp   # do not integrate while the reference is still ramping
         self.freeze_tol = freeze_tol     # m/s: the reference counts as 'ramping' until the pre-filter is this close to the ramp
         self.v_ref_tau_brake = v_ref_tau_brake   # pre-filter time constant while slowing down (0 = follow the ramp)
-        # reference shaping can be switched off at run time when the host flags that it shaped the reference itself
-        # (MotionCtrl.host_shaped, stage-2 MPC): then a fast ramp without pre-filter / integrator freeze is used
-        self._shaped = (v_ramp_rate, v_ref_tau, freeze_int_on_ramp)
-        self._plain = (plain_ramp_rate, 0.0, False)
-        self.shaping_on = True
-        # integration of the slow static-tilt / position integrators is `quiet_boost` times faster while the robot stands
-        # still near its equilibrium (|v| < 0.1 m/s, |theta|, |phi| < 1.5 deg, reference constant): a payload or an IMU
-        # bias is then taken up in a few seconds instead of tens of seconds, without touching the dynamic response
-        self.quiet_boost_att = quiet_boost_att
-        self.quiet_boost_pos = quiet_boost_pos
         # the static-tilt integrator is frozen while the (low-passed) reference acceleration exceeds att_accel_thresh:
         # a commanded acceleration a leans the robot by ~a/g and loads the hips, which e_att would read as a static
-        # tilt (stage-2 item 19).  A host-shaped reference is piecewise constant (new value every host period), so
-        # the acceleration is low-passed (att_accel_tau) instead of looking at single-step changes; cruising at
-        # constant speed and disturbance recoveries keep integrating (slope item 13, push item 5)
+        # tilt.  The acceleration is low-passed (att_accel_tau) instead of looking at single-step changes; cruising at
+        # constant speed and disturbance recoveries keep integrating
         self.att_accel_tau = att_accel_tau
         self.att_accel_thresh = att_accel_thresh
         self._a_ref_lp = 0.0
-        # plain tracking of a host-shaped reference (stage-2 MPC): freeze ALL integrators while the low-passed
-        # reference acceleration is above att_accel_thresh, exactly like the stage-1 ramp freeze.  Otherwise z winds
-        # up during every manoeuvre and pays back afterwards: a 0.2 m roll-back after each stop and a 10-30 %
-        # overshoot when the host hands over mid-manoeuvre (review r1 stage 2 M2 / M3).  The MPC prediction model
-        # is the integrator-free loop accordingly (mpc_host.model.lqi8_options).
-        self.freeze_int_on_accel_plain = freeze_int_on_accel_plain
         # r2 m4: the low-passed reference acceleration passes through zero when the manoeuvre changes sign (speed up ->
         # brake); without a hold-off the integrators ran for 20-40 ms on a 0.2 m/s error there
         self._freeze_hold_steps = int(round(freeze_hold_s / Ts))
@@ -114,24 +91,14 @@ class LQI8:
         self.K = None
         self.L0_last = None
         self.table = None
-        self.pred = None                 # (P = Ad^N, G = [Ad^0 Bd, ..., Ad^(N-1) Bd]) at the last designed L0
-        self.aux_table = None            # (P, G, gM) on the gain-table grid (only with the Plan 4 extensions)
+        self.gM_table = None             # att_gM on the gain-table grid (with q_att)
         if table_L0 is not None:
             self.build_table(*table_L0)
         self.reset()
 
-    def set_reference_shaping(self, on: bool) -> None:
-        """Stage-1 shaping (ramp + pre-filter + integrator freeze) on, or plain tracking (host-shaped reference)."""
-        if on == self.shaping_on:
-            return
-        self.shaping_on = on
-        self.v_ramp_rate, self.v_ref_tau, self.freeze_int_on_ramp = self._shaped if on else self._plain
-        self.v_ramp = self.v_filt1 = self.v_filt      # bumpless: the reference the loop sees does not jump (r2 m6)
-
     def reset(self) -> None:
-        self.shaping_on = True                 # review r1 n7: a reset restores the MCU's own shaping
         self.hold_integrators = False
-        self.v_ramp_rate, self.v_ref_tau, self.freeze_int_on_ramp = self._shaped
+        self.v_ramp_rate = self.v_ramp_rate_base
         self._last_out = (0.0, 0.0)
         self.nonfinite_steps = 0
         self._freeze_countdown = 0
@@ -139,30 +106,23 @@ class LQI8:
         self.z_att = 0.0
         self.z_pos = 0.0
         self.u_prev = np.zeros(2)
-        self.U = np.zeros(2 * max(self.pred_steps, 1))     # u(k-1), u(k-2), ... for the predictor
         self.v_ramp = 0.0
         self.v_filt = 0.0
-        self.v_filt1 = 0.0
         self._a_ref_lp = 0.0
 
     def build_table(self, L_min: float, L_max: float, step: float) -> None:
         grid = np.arange(L_min, L_max + 0.5 * step, step)
-        Ks, aux = [], []
+        Ks = []
         for L0 in grid:
             try:
                 Ks.append(self.design(float(L0)).copy())
-                aux.append(self.pred)
             except (np.linalg.LinAlgError, ValueError):
                 if not Ks:
                     raise
                 Ks.append(Ks[-1])
-                aux.append(aux[-1])
         self.table = (grid, np.array(Ks))        # (n_grid, 2, n)
-        if self.pred_steps > 0 or self.att_gM is not None:
-            Ps = np.array([a[0] for a in aux]) if self.pred_steps > 0 else None
-            Gs = np.array([a[1] for a in aux]) if self.pred_steps > 0 else None
-            gMs = np.array([self.att_gM(float(L)) for L in grid]) if self.att_gM is not None else None
-            self.aux_table = (Ps, Gs, gMs)
+        if self.att_gM is not None:
+            self.gM_table = np.array([self.att_gM(float(L)) for L in grid])
 
     def design(self, L0: float) -> np.ndarray:
         A, B = self.plant.linearize(L0)
@@ -185,31 +145,17 @@ class LQI8:
         P = la.solve_discrete_are(Ad, Bd, self.Q, self.R)
         self.K = np.linalg.solve(self.R + Bd.T @ P @ Bd, Bd.T @ P @ Ad)
         self.L0_last = L0
-        if self.pred_steps > 0:
-            Ad5, Bd5 = c2d_zoh(A5, B5, self.Ts)
-            N = self.pred_steps
-            G = np.zeros((5, 2 * N))
-            Apow = np.eye(5)
-            for j in range(N):                   # column block j <-> u(k-1-j): Ad^j Bd
-                G[:, 2 * j:2 * j + 2] = Apow @ Bd5
-                Apow = Apow @ Ad5
-            self.pred = (Apow, G)                # Apow = Ad^N
         return self.K
 
-    def _aux(self, L0: float):
-        """(P, G, gM) at L0: linear blend of the two neighbouring grid points (no per-element np.interp)."""
-        if self.aux_table is None or self.table is None:
-            gM = self.att_gM(L0) if self.att_gM is not None else None
-            return (self.pred[0], self.pred[1], gM) if self.pred is not None else (None, None, gM)
+    def _gM(self, L0: float) -> float:
+        """att_gM at L0: linear blend of the two neighbouring grid points of the gain table (no per-element np.interp)."""
+        if self.gM_table is None or self.table is None:
+            return self.att_gM(L0)
         grid = self.table[0]
         x = (min(max(L0, grid[0]), grid[-1]) - grid[0]) / (grid[1] - grid[0])
         i = min(int(x), len(grid) - 2)
         w = x - i
-        Ps, Gs, gMs = self.aux_table
-        P = None if Ps is None else (1 - w) * Ps[i] + w * Ps[i + 1]
-        G = None if Gs is None else (1 - w) * Gs[i] + w * Gs[i + 1]
-        gM = None if gMs is None else (1 - w) * gMs[i] + w * gMs[i + 1]
-        return P, G, gM
+        return (1 - w) * self.gM_table[i] + w * self.gM_table[i + 1]
 
     def gains(self, L0: float) -> np.ndarray:
         if self.table is not None:
@@ -238,16 +184,11 @@ class LQI8:
         if self.v_ref_tau > 0.0 and abs(self.v_ramp) > abs(self.v_filt):
             # pre-filter only while speeding up (limits the velocity overshoot); braking follows the ramp
             # directly so that the stopping distance is not stretched
-            if self.v_ref_order >= 2:
-                self.v_filt1 += (self.v_ramp - self.v_filt1) * self.Ts / self.v_ref_tau
-                self.v_filt += (self.v_filt1 - self.v_filt) * self.Ts / self.v_ref_tau
-            else:
-                self.v_filt += (self.v_ramp - self.v_filt) * self.Ts / self.v_ref_tau
+            self.v_filt += (self.v_ramp - self.v_filt) * self.Ts / self.v_ref_tau
         elif self.v_ref_tau_brake > 0.0 and abs(self.v_ramp) < abs(self.v_filt):
             self.v_filt += (self.v_ramp - self.v_filt) * self.Ts / self.v_ref_tau_brake
-            self.v_filt1 = self.v_filt
         else:
-            self.v_filt = self.v_filt1 = self.v_ramp
+            self.v_filt = self.v_ramp
         ev = v - self.v_filt
         z_prev, za_prev, zp_prev = self.z, self.z_att, self.z_pos
         ramping = abs(dv) > 1e-9 or abs(self.v_filt - self.v_ramp) > self.freeze_tol
@@ -259,33 +200,22 @@ class LQI8:
             self._freeze_countdown -= 1
             accelerating = True                      # hold-off across the sign change of the reference acceleration
         att_ramping = accelerating or abs(self.v_filt - self.v_ramp) > self.freeze_tol
-        frozen = (self.freeze_int_on_ramp and ramping) or \
-                 (self.freeze_int_on_accel_plain and not self.shaping_on and accelerating) or self.hold_integrators
+        frozen = (self.freeze_int_on_ramp and ramping) or self.hold_integrators
         if not frozen:
             self.z = float(np.clip(self.z + ev * self.Ts, -self.int_limit, self.int_limit))
-        Pm = Gm = gM = None
-        if self.pred_steps > 0 or self.i_att is not None:
-            Pm, Gm, gM = self._aux(L0)
-        if self.pred_steps > 0:      # feedback on the predicted current state, integrators on the measurement
-            xh = Pm @ np.array([theta, theta_dot, v, phi, phi_dot]) + Gm @ self.U
-            xs = [xh[0], xh[1], xh[2] - self.v_filt, xh[3], xh[4], self.z]
-        else:
-            xs = [theta, theta_dot, ev, phi, phi_dot, self.z]
-        quiet = (not att_ramping) and abs(v) < 0.1 and abs(theta) < 0.026 and abs(phi) < 0.026
+        xs = [theta, theta_dot, ev, phi, phi_dot, self.z]
         if self.i_att is not None:
             # static body tilt (bias-free: the IMU cancels in theta + phi), previous outputs (D-term).  Only valid
             # quasi-statically: never while the reference moves (a commanded acceleration shows up as hip torque and
-            # would be read as a tilt -- stage-2 item 19); disturbance recoveries keep integrating (push item 5 needs
-            # the tilt correction right after the slip), faster while standing still
+            # would be read as a tilt); disturbance recoveries keep integrating (a push needs the tilt correction right
+            # after the slip)
             if not frozen and not att_ramping:
-                e_att = theta + phi + (self.u_prev[1] - self.u_prev[0]) / gM
-                gain = self.quiet_boost_att if quiet else 1.0
-                self.z_att = float(np.clip(self.z_att + gain * e_att * self.Ts, -self.att_limit, self.att_limit))
+                e_att = theta + phi + (self.u_prev[1] - self.u_prev[0]) / self._gM(L0)
+                self.z_att = float(np.clip(self.z_att + e_att * self.Ts, -self.att_limit, self.att_limit))
             xs.append(self.z_att)
         if self.i_pos is not None:
             if not frozen and abs(self.z) < self.int_limit:   # conditional integration: not while z1 is clamped
-                gain = self.quiet_boost_pos if quiet else 1.0
-                self.z_pos = float(np.clip(self.z_pos + gain * self.z * self.Ts, -self.pos_limit, self.pos_limit))
+                self.z_pos = float(np.clip(self.z_pos + self.z * self.Ts, -self.pos_limit, self.pos_limit))
             xs.append(self.z_pos)
         xs = np.array(xs)
         u = -K @ xs
@@ -299,12 +229,8 @@ class LQI8:
                 xs[self.i_pos] = self.z_pos
             u = -K @ xs
         self.u_prev = u.copy()
-        T_out = float(u[0] + self.a_ff * dv / self.Ts)
+        T_out = float(u[0])
         self._last_out = (T_out, float(u[1]))
-        if self.pred_steps > 0:      # input history of the predictor (as applied: clamped to the actuator range)
-            self.U[2:] = self.U[:-2].copy()
-            self.U[0] = min(max(T_out, -2 * self.plant.tau_wheel_max), 2 * self.plant.tau_wheel_max)
-            self.U[1] = min(max(float(u[1]), -2 * self.plant.tau_hip_max), 2 * self.plant.tau_hip_max)
         return T_out, float(u[1])
 
 

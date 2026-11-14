@@ -127,7 +127,7 @@ ros2_ws/src/
 │  └─ config/moteus/*.cfg                 [추가] 드라이버 6개 설정과 덤프
 ├─ wbr_controller/                       update(): 추정 → 균형 → 바깥 루프 → 관절 토크
 │  ├─ core/                               [추가] ROS 없는 C++ 라이브러리 (Eigen만)
-│  │    estimator      ← diablo_arch/mcu.py(추정부) + observers/body_attitude.py + upkie_observers.py
+│  │    estimator      ← diablo_arch/mcu.py(추정부) + observers/body_attitude.py + base_orientation.py
 │  │    serial_leg     ← controllers/lqi8/serial_leg.py
 │  │    lqi            ← controllers/lqi8/lqi8.py, law.py (전체 제어기, 상태 8개)
 │  │    outer_loops    ← mcu.py의 다리 길이·요·롤·벌어짐·VMC·마찰 보상·감속·다리 범위 벽
@@ -202,18 +202,18 @@ C++로 옮기지 않는 것: `wbr/observers/pi3hat_ars.py`(pi3hat 펌웨어 필�
 - 펌웨어는 `rate = 원시 자이로 + bias`로 정의한다(`fw/attitude_reference.h:142-144`). 원시 z 자이로(`rate − bias`)는 제어기가 만든다. 플러그인이 미리 빼면 z축은 두 번 빠지고 x·y축은 보정이 사라진다.
 - IMU는 IMU 축 그대로 내보낸다. 몸통 좌표로 바꾸는 일(`R_base_to_imu` = diag(−1, −1, 1), URDF `imu_fix`)은 제어기가 한다. 시뮬레이터도 IMU 축으로 내보내기 때문이다(MJCF의 `imu` 사이트가 보드 축이다). 11-08 메모(`전체 로봇 구조도`)는 플러그인이 몸통 좌표로 바꾼다고 적었지만 이 문서가 기준이다.
 - **Jazzy에는 "있으면 쓰는" 선택 인터페이스가 없다.** 제어기가 요청한 상태 인터페이스가 하나라도 없으면 활성화가 실패한다(`controller_manager.cpp`의 "Unable to activate controller … is not available"). 그래서 제어기 파라미터로 요청 목록 자체를 바꾼다(실물: 바이어스·표본 시각·`home_state` 등 포함, 시뮬: 표준 값만). 시뮬에서는 래퍼가 바이어스 0과 `update()`의 시각을 넣는다.
-- 실물에서 표본 시각, 가속도, 바이어스는 선택 사항이 아니다. 시각이 없으면 오래된 표본 가드가 꺼지고 자세 필터가 고정 dt로 돈다(`mcu.py:372`). 가속도가 없거나 받던 바이어스가 빠지면 FAULT다(`mcu.py:319-326`).
+- 실물에서 표본 시각, 가속도, 바이어스는 선택 사항이 아니다. 시각이 없으면 오래된 표본 가드가 꺼지고 자세 필터가 고정 dt로 돈다(`mcu.py:352`). 가속도가 없거나 받던 바이어스가 빠지면 FAULT다(`mcu.py:300-306`).
 
 ### 4.4 제어기 쪽
 
-1. **명령.** DDT의 세 토픽을 쓴다: `command/cmd_twist`(전진 속도 [m/s], 요 속도 [rad/s]), `command/cmd_pose`(높이·롤·피치), `command/cmd_key`. Python의 환산: 전진은 ±1.0 m/s, 요는 ±2.0 rad/s로 자른다. 높이는 `L_target = L_stand + 0.06 × up`을 다리 범위로 자른다. 롤·피치 기준은 rad이고 ±0.3으로 자른다(`mcu.py:487-500`, `McuParams`).
-2. **명령이 끊겼을 때(`host_link.py`의 규칙).** 0.5 s 넘게(`>`) 명령이 없으면 전진·요는 0, 속도 모드 입력은 0, 각도 모드 값과 모드 플래그는 유지한다. 균형은 계속한다(`disconnect_off_s` = 0). 유한하지 않은 값이 든 명령은 버리고 수신으로 세지 않는다.
+1. **명령.** DDT의 세 토픽을 쓴다: `command/cmd_twist`(전진 속도 [m/s], 요 속도 [rad/s]), `command/cmd_pose`(높이·롤·피치), `command/cmd_key`. Python의 환산: 전진은 ±1.0 m/s, 요는 ±2.0 rad/s로 자른다. 높이는 `L_target = L_stand + 0.06 × up`을 다리 범위로 자른다. 롤·피치 기준은 rad이고 ±0.3으로 자른다(`mcu.py:452-465`, `McuParams`).
+2. **명령이 끊겼을 때(`host_link.py`의 규칙).** 0.5 s 넘게(`>`) 명령이 없으면 전진·요는 0, 속도 모드 입력은 0, 각도 모드 값과 모드 플래그는 유지한다. 균형은 계속한다(연결이 끊긴 뒤 모터를 끄는 `disconnect_off_s`는 v5가 쓰지 않아 2026-11-14에 지웠다). 유한하지 않은 값이 든 명령은 버리고 수신으로 세지 않는다.
 3. **arm과 상태(정해야 함).** arm / disarm을 부르는 수단이 구조도에 없었다. 제안: 거부 사유를 문자열로 돌려주는 서비스(`std_srvs/Trigger`)와 `cmd_key`. Python의 동작은 이렇다.
    - 하네스는 `reset(armed=True)`로 무장한 채 시작한다. 실기 진입점은 `armed=False`다(`docs/HANDOFF.md` 2.1절).
-   - `arm()`은 측정값이 없을 때, 피치 3° 이상, hip·무릎의 `home_state`가 2가 아닐 때, 다리 길이가 326~485 mm 밖, 다리 각이 ±20° 밖이면 거부한다(`mcu.py:248-276`).
+   - `arm()`은 측정값이 없을 때, 피치 3° 이상, hip·무릎의 `home_state`가 2가 아닐 때, 다리 길이가 326~485 mm 밖, 다리 각이 ±20° 밖이면 거부한다(`mcu.py:231-257`).
    - FAULT가 나도 `armed`는 그대로다. `arm()`이 fault를 지우고 바로 균형으로 돌아간다.
    - 무장하지 않은 동안에도 다리 길이 기준 `L_ref`는 목표(기본 460 mm)로 간다. 다른 길이에서 arm하면 다리 길이 PD에 계단 입력이 들어간다.
-   - 무장하지 않았거나 FAULT인 동안 LQI8은 매 주기 초기화된다(`law.py:48-50`).
+   - 무장하지 않았거나 FAULT인 동안 LQI8은 매 주기 초기화된다(`law.py:45-47`).
    - C++에서 정할 것: fault에서 나가는 규칙, arm할 때 `L_ref`를 지금 다리 길이로 맞출지. Python과 다르게 하려면 Python을 먼저 바꾸고 단계 시험을 다시 돌린다.
 4. **FAULT와 안전 상태(Python과 같게).** 몸통 피치·롤 34° 초과, NaN 표본이 5주기 초과, 오래된 표본이 50 ms 초과, 균형 법칙 입력이 유한하지 않은 상태가 5주기 초과, 유한하지 않은 토크 명령이면 FAULT이고 모든 관절 토크 0이다.
 5. **제어기를 끌 때 토크 0을 쓴다.** ros2_control은 제어기를 비활성화해도 명령 인터페이스의 마지막 값을 지우지 않고, 하드웨어의 `write()`는 계속 돈다(표준 `forward_command_controller`도 마지막 값을 남긴다). `wbr_controller`의 `on_deactivate`에서 effort 6개에 0을 쓴다. 플러그인은 effort를 잡은 제어기가 없어지면(`perform_command_mode_switch`) `stop`을 보낸다.
@@ -226,28 +226,28 @@ C++로 옮기지 않는 것: `wbr/observers/pi3hat_ars.py`(pi3hat 펌웨어 필�
 ### 5.1 파라미터와 표
 
 - **출처는 여러 곳이다. 손으로 옮기지 않는다.** `models/wheelbiped_v5/description.json`(`plan_overrides`의 게인과 마찰 보상 크기 0.096, 바퀴 반경·윤거·토크 한계·IMU 위치·`R_base_to_imu`), `plant_params.json`(다리 범위, 기립 길이, 질량), `PlanV5Config`(서스펜션·감속), `Plan4Config`(속도 창, 마찰 보상의 시간 상수와 속도 문턱, 요 적분 한계), `McuParams` 기본값(`height_gain`, `arm_pitch`, `fall_pitch`, `max_forward` 등), LQI8 가중치(`plan4_lqi8.py`의 `lqi_kwargs` + `PlanV5._lqi_design` + `ake_cad`의 `LQR_R_*`)와 `LQI8` 생성자 기본값.
-- **만든 직후의 객체에서 모두 내보낸다.** `plan.mcu.p`, `plan.mcu.attitude`(`BodyAttitude`의 `deriv_tau` 0.02, `reject` 1.0, `quiet` 3.0), `plan.law`(`Tp_ff`, `theta_eq`), `plan.law.ctrl`(K 표, gM 표, 설정), `plan.leg.g`(L1 = L2 = 0.25), `plan.plant`(`tau_*_max`, 정적 다리 힘에 쓰는 표와 질량), `plan.link.p`(명령 타임아웃), `R_ARS_TO_WORLD`. `law.ctrl`의 `v_ramp_rate`, `v_ref_tau_brake`, `hold_integrators`는 실행 중에 바뀌므로(`law.py:56-59`) 한 스텝도 돌리기 전에 내보낸다.
-- **코드에 박힌 상수는 내보내기로 안 나온다.** 소스에서 옮기고 목록으로 관리한다: 요 오프셋 학습의 0.1 s 저역 통과와 0.1 rad/s 문턱(`mcu.py:469-470`), 롤·피치 기준 제한 0.3 rad, 마찰 보상의 `2.0 × tanh`(`mcu.py:646`), 쿼터니언 크기 허용 0.1(`mcu.py:315`), 정지 판정 0.1 m/s와 0.026 rad(`lqi8.py:274`), `1e-9` 문턱(`lqi8.py:253`, `mcu.py:350`), 포화 판정의 토크 한계 × 2(`lqi8.py:293`).
-- **표.** 다리 길이 격자는 0.312~0.497 m, 5 mm 간격, 38점이다. LQI8 게인 K(2 × 8)는 원소마다 선형 보간하고 격자 끝에서 자른다(`lqi8.py:214-220`). gM은 균일 격자의 선형 섞기다(`lqi8.py:199-212`). `theta_eq(L0)`는 표, `Tp_ff`는 기립 길이에서의 상수 하나다. 정적 다리 힘(`SerialPlant.static_leg_force`)은 c와 d의 기울기 표(`np.gradient`), 평균 `m_l`, `m_b`, `g`로 계산하고 다리마다 세계 다리각을 넣는다(`plant_serial.py:210-219`, `mcu.py:680`). 게인은 주기(`Ts`)마다 다르다.
-- **스텝 수는 Python이 계산한 정수를 내보낸다.** 속도 창 스텝은 매 주기 `int(round(vel_window_s / dt))`로 계산한다(`mcu.py:288`). 5 ms 창은 500 Hz에서 2.5스텝인데 Python `round`는 2, C++ `std::round`는 3이다. 200 Hz에서는 1스텝이 되어 창이 꺼지고 드라이버 속도를 그대로 쓴다.
+- **만든 직후의 객체에서 모두 내보낸다.** `plan.mcu.p`, `plan.mcu.attitude`(`BodyAttitude`의 `deriv_tau` 0.02, `reject` 1.0, `quiet` 3.0), `plan.law`(`Tp_ff`, `theta_eq`), `plan.law.ctrl`(K 표, gM 표, 설정), `plan.leg.g`(L1 = L2 = 0.25), `plan.plant`(`tau_*_max`, 정적 다리 힘에 쓰는 표와 질량), `plan.link.p`(명령 타임아웃), `R_ARS_TO_WORLD`. `law.ctrl`의 `v_ramp_rate`, `v_ref_tau_brake`, `hold_integrators`는 실행 중에 바뀌므로(`law.py:52-55`) 한 스텝도 돌리기 전에 내보낸다.
+- **코드에 박힌 상수는 내보내기로 안 나온다.** 소스에서 옮기고 목록으로 관리한다: 요 오프셋 학습의 0.1 s 저역 통과와 0.1 rad/s 문턱(`mcu.py:440-441`), 롤·피치 기준 제한 0.3 rad, 마찰 보상의 `2.0 × tanh`(`mcu.py:544`), 쿼터니언 크기 허용 0.1(`mcu.py:296`), `1e-9` 문턱(`lqi8.py:194`, `mcu.py:330`), 포화 판정의 토크 한계 × 2(`lqi8.py:223`).
+- **표.** 다리 길이 격자는 0.312~0.497 m, 5 mm 간격, 38점이다. LQI8 게인 K(2 × 8)는 원소마다 선형 보간하고 격자 끝에서 자른다(`lqi8.py:160-166`). gM은 균일 격자의 선형 섞기다(`lqi8.py:150-158`). `theta_eq(L0)`는 표, `Tp_ff`는 기립 길이에서의 상수 하나다. 정적 다리 힘(`SerialPlant.static_leg_force`)은 c와 d의 기울기 표(`np.gradient`), 평균 `m_l`, `m_b`, `g`로 계산하고 다리마다 세계 다리각을 넣는다(`plant_serial.py:210-219`, `mcu.py:569`). 게인은 주기(`Ts`)마다 다르다.
+- **스텝 수는 Python이 계산한 정수를 내보낸다.** 속도 창 스텝은 매 주기 `int(round(vel_window_s / dt))`로 계산한다(`mcu.py:269`). 5 ms 창은 500 Hz에서 2.5스텝인데 Python `round`는 2, C++ `std::round`는 3이다. 200 Hz에서는 1스텝이 되어 창이 꺼지고 드라이버 속도를 그대로 쓴다.
 - **단계 시험과 같은 제어기인지 확인한다.** 단계 시험은 커밋된 `models/wheelbiped_v5`를 쓰지 않고, CAD 파일(`robot_cad_v5/calc/*.json`)에서 임시 모델과 게인을 그 자리에서 다시 만든다(`stage_tests.py:101-124`). 내보낼 때 두 경로의 값이 같은지 비교한다(6절 A1).
 - **실물 질량을 잰 뒤에도 yaml을 손으로 고치지 않는다.** `robot_cad_v5/calc/mass_properties.json`(Fusion의 `save_mass_json()`이 쓰는 파일)을 잰 값으로 맞춘 뒤 `python -m wbr.models.build_v5` → 내보내기 순서로 다시 만든다. 다리 힘 피드포워드(`F_ff`)가 틀리면 다리 길이가 어긋난다: 몸통 질량 오차 1 kg에 약 3.3 mm(다리 하나에 0.5 × 9.81 N, `kp_leg` 1503 N/m로 나눈 값).
 - **저게인 세트가 필요하다.** 실물의 첫 자립은 토크 가중치 R을 키운 낮은 게인으로 하고 단계적으로 올린다(사용자 절차 5-3, 5-4). 내보내기 도구가 이름 붙인 게인 세트를 여러 개 만들 수 있어야 한다.
 
 ### 5.2 숨은 상태와 순서
 
-- **C++가 그대로 가져야 할 상태.** MCU: 시계 `t`, `L_ref`·`L_target`, `yaw_int`, `yaw_ref_limited`, `yaw_offset`, `wheel_yaw_lp`, `roll_force_int`, `roll_ref_limited`, `v_limit`·`v_limit_hold`, `fc_hip_lp`·`fc_wheel_lp`, `position`, 위치 이력(속도 창), `bad_samples`·`stale_samples`, 표본 시각 두 개, 마지막 유효 서보 값, `home_state`(`mcu.py:182-234`). 자세 필터: `up`, `gyro_lp`, `f_lp`, `vh_lp`, `a_hip`, `lateral`. LQI8: `z`, `z_att`, `z_pos`, `u_prev`, `v_ramp`, `v_filt`, `v_filt1`, 기준 가속도 저역 통과, 동결 카운터, 마지막 출력.
+- **C++가 그대로 가져야 할 상태.** MCU: 시계 `t`, `L_ref`·`L_target`, `yaw_int`, `yaw_ref_limited`, `yaw_offset`, `wheel_yaw_lp`, `roll_force_int`, `roll_ref_limited`, `v_limit`·`v_limit_hold`, `fc_hip_lp`·`fc_wheel_lp`, `position`, 위치 이력(속도 창), `bad_samples`·`stale_samples`, 표본 시각 두 개, 마지막 유효 서보 값, `home_state`(`mcu.py:171-218`). 자세 필터: `up`, `gyro_lp`, `f_lp`, `vh_lp`, `a_hip`, `lateral`. LQI8: `z`, `z_att`, `z_pos`, `u_prev`, `v_ramp`, `v_filt`, 기준 가속도 저역 통과, 동결 카운터, 마지막 출력.
 - **첫 표본.** 속도는 드라이버 값으로 시작하고 창이 한 스텝씩 늘어난다. `up`은 보드 쿼터니언에서 시작한다. 요 오프셋은 `−bias_z`로 시작한다. 시각 간격은 공칭 `dt`다.
 - **순서.** 추정이 명령 적용보다 먼저 돈다. 그래서 요 오프셋 학습은 전 주기의 요 기준을 본다. 자세 필터는 전 표본에서 구한 hip 가속도를 쓴다.
-- **시각 간격을 쓰는 곳과 고정 `dt`를 쓰는 곳.** 표본 시각 간격은 자세 필터, 요 오프셋 학습, hip 속도 미분에 쓴다(`mcu.py:426,456,461`). 위치 적분은 고정 `dt`다(`mcu.py:453`). Python과 같게 둔다(`docs/bringup_step0.md` 9절).
-- **신호 경로.** 피치·롤 속도는 보드의 `rate`를 몸통 좌표로 바꾼 값이다. 요 속도는 원시 z 자이로(`rate − bias`)에서 제어기가 배운 오프셋을 뺀 뒤, 세 축을 세계 수직 방향에 투영한 값이다(`mcu.py:417-428`). 피치·롤 각은 자세 필터에서 나온다. 보드의 자세각은 필터의 시작값으로만 쓰지만(`docs/bringup_step0.md` 8절) 쿼터니언은 매 주기 검사한다(NaN이거나 크기가 1에서 0.1 넘게 벗어나면 잘못된 표본).
-- **`upkie_observers.py`의 기본값을 복사하지 않는다.** `BaseOrientation`의 기본 `R_base_to_imu` = diag(−1, 1, −1)은 upkie의 값이다. v5는 diag(−1, −1, 1)을 넘긴다.
+- **시각 간격을 쓰는 곳과 고정 `dt`를 쓰는 곳.** 표본 시각 간격은 자세 필터, 요 오프셋 학습, hip 속도 미분에 쓴다(`mcu.py:401,428,432`). 위치 적분은 고정 `dt`다(`mcu.py:425`). Python과 같게 둔다(`docs/bringup_step0.md` 9절).
+- **신호 경로.** 피치·롤 속도는 보드의 `rate`를 몸통 좌표로 바꾼 값이다. 요 속도는 원시 z 자이로(`rate − bias`)에서 제어기가 배운 오프셋을 뺀 뒤, 세 축을 세계 수직 방향에 투영한 값이다(`mcu.py:393-403`). 피치·롤 각은 자세 필터에서 나온다. 보드의 자세각은 필터의 시작값으로만 쓰지만(`docs/bringup_step0.md` 8절) 쿼터니언은 매 주기 검사한다(NaN이거나 크기가 1에서 0.1 넘게 벗어나면 잘못된 표본).
+- **`base_orientation.py`의 기본값을 복사하지 않는다.** `BaseOrientation`의 기본 `R_base_to_imu`는 단위 행렬이다(11-14까지는 `upkie_observers.py`에 upkie 값 diag(−1, 1, −1)이 기본이었다). v5는 diag(−1, −1, 1)을 넘긴다(`description.json`).
 
 ### 5.3 기준 기록과 일치 시험
 
 - **`core`는 Python `obs`와 같은 입력을 받는다(제안).** 관절 위치·속도·토크, IMU 자세(ARS 좌표의 쿼터니언, 순서 w x y z), IMU 축의 `rate`·원시 가속도·바이어스, 표본 시각, 있으면 `home_state`. ROS 규약에서 이 규약으로 바꾸는 일은 래퍼가 한다: 쿼터니언 순서(x y z w → w x y z)와 x축 180° 회전 하나(쿼터니언 곱). 값의 자리와 부호만 바뀌므로 오차가 없다.
 - **기준 기록에 넣을 것.** 스텝마다: `mcu.tick`에 들어간 `obs`(지연선과 부호 변환을 지난 것), 그 스텝에 실제로 적용된 명령(`link.poll`이 돌려준 `MotionCtrl` 전체: 값과 모드 플래그), 관절 토크 6개, 내부 상태(`z`, `z_att`, `z_pos`, `up`, `yaw_offset`, `position`, `L_ref`), 그리고 reset·arm·disarm이 일어난 스텝 번호.
-- **명령 타임아웃은 `core` 밖에서 시험한다.** `tick(obs, host_cmd)`에 적용된 명령을 직접 넣으면 링크의 시계가 빠진다. 하네스는 명령 수신 시각을 시뮬 시각으로, 타임아웃 판정을 MCU의 시계로 한다(`plan4_lqi8.py:418`, `mcu.py:515`). 타임아웃 규칙은 래퍼의 시험으로 따로 확인한다.
+- **명령 타임아웃은 `core` 밖에서 시험한다.** `tick(obs, host_cmd)`에 적용된 명령을 직접 넣으면 링크의 시계가 빠진다. 하네스는 명령 수신 시각을 시뮬 시각으로, 타임아웃 판정을 MCU의 시계로 한다(`plan4_lqi8.py:320`, `mcu.py:474`). 타임아웃 규칙은 래퍼의 시험으로 따로 확인한다.
 - **arm 경로가 든 기록을 따로 만든다.** 하네스는 무장한 채 시작하므로 보통의 기록에는 `arm()`이 한 번도 나오지 않는다. 무장하지 않은 채 시작해 arm하는 기록, FAULT가 나는 기록을 더한다.
 - **토크만 비교하지 않는다.** 문턱(`1e-9`)이나 조건부 적분이 한 번 다르게 갈리면 적분기가 계속 벌어진다. 내부 상태도 스텝마다 비교한다.
 - **기준 기록과 파라미터 파일은 같은 실행에서 만들어 같이 커밋한다.** 따로 만들면 Python·numpy·scipy 버전 차이로 게인이 조금 달라질 수 있다. 파일 머리에 만든 날짜, 커밋, 패키지 버전을 적는다.

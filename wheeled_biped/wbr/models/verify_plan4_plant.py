@@ -1,6 +1,7 @@
-"""Verify the serial-leg three-body plant against the MuJoCo upkie model (docs/plan4_model.md, sec. 5).
+"""Verify the serial-leg three-body plant against the robot's MuJoCo model (the method of docs/plan4_model.md, sec. 5;
+the v5 robot: docs/robot_v5_model.md).
 
-    python -m wbr.models.verify_plan4_plant [--L0 0.31 0.25 0.33] [--out results/plan4_model]
+    python -m wbr.models.verify_plan4_plant [--L0 0.46 0.40] [--out results/wheelbiped_v5_model]
 
 For every leg length L0 (knee locked = virtual leg rigid, the assumption of the reduced plant):
   1. equilibrium: posture IK(L0, theta_eq), body level; vertical settling; static joint torques from
@@ -10,7 +11,8 @@ For every leg length L0 (knee locked = virtual leg rigid, the assumption of the 
   3. A check : continuous eigenvalues of mjd_transitionFD (log(A_d)/dt) whose eigenvectors lie in the
                symmetric planar subspace, vs. eig(A) of the plant
   4. response: 3 deg rigid tilt, open loop (static torques held), 0.3 s, MuJoCo vs. plant (RK4)
-Outputs results/plan4_model/linearization.json and openloop_3deg.png.
+Outputs <out>/linearization.json, linearization.md and openloop_3deg.png.  (results/plan4_model, the check of
+the upkie model of Plan 4, was removed on 2026-11-14 with that model.)
 """
 from __future__ import annotations
 
@@ -25,20 +27,21 @@ import scipy.linalg as la
 
 from wbr import MODELS_DIR, RESULTS_DIR
 from wbr.controllers.lqi8.plant_serial import SerialPlant, SerialPlantParams
-from wbr.controllers.lqi8.serial_leg import UPKIE_JOINT_SIGNS, SerialLeg, SerialLegGeometry
-from wbr.models.upkie_params import set_leg_posture
+from wbr.controllers.lqi8.serial_leg import SerialLeg, SerialLegGeometry
+from wbr.models import build_v5 as BV
+from wbr.models.plant_params import set_leg_posture
 
 KNEE_LOCK_ARMATURE = 1.0e3     # kg m^2 on the knee dofs: the knee cannot move (rigid virtual leg)
-SIGNS = UPKIE_JOINT_SIGNS      # joint signs of the model under test (--model)
+SIGNS = dict(BV.JOINT_SIGNS)   # joint signs of the model under test (main: from its description.json)
 
 
 class MjPlanar:
-    """Helpers mapping the planar plant coordinates to the MuJoCo upkie model."""
+    """Helpers mapping the planar plant coordinates to the robot's MuJoCo model (default: models/wheelbiped_v5)."""
 
     def __init__(self, params: SerialPlantParams, xml_path: Path | None = None, stiff_contact: bool = True):
         self.p = params
         self.signs = SIGNS
-        self.m = mujoco.MjModel.from_xml_path(str(xml_path or MODELS_DIR / "upkie_plan4" / "scene.xml"))
+        self.m = mujoco.MjModel.from_xml_path(str(xml_path or BV.OUT_DIR / "scene.xml"))
         self.d = mujoco.MjData(self.m)
         m = self.m
         self.leg = SerialLeg(SerialLegGeometry(L1=params.extra["L1"], L2=params.extra["L2"], knee_sign=params.extra["knee_sign"]))
@@ -49,8 +52,8 @@ class MjPlanar:
         self.aid = {n: mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_ACTUATOR, n) for n in self.jid if n != "base_freejoint"}
         self.base = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, "base")
         self.armature0 = m.dof_armature.copy()
-        # The linear plant has no Coulomb friction: the joint frictionloss of the model (hip/knee 0.1 Nm,
-        # wheel 0.02 Nm) would hold the joints against the tiny finite-difference perturbations and make
+        # The linear plant has no Coulomb friction: the joint frictionloss of the model (the motors' backdrive
+        # torque) would hold the joints against the tiny finite-difference perturbations and make
         # the hips look locked.  It is switched off for the comparison (documented simplification).
         self.frictionloss0 = m.dof_frictionloss.copy()
         m.dof_frictionloss[:] = 0.0
@@ -315,20 +318,20 @@ def plot_responses(results, out_png: Path):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--L0", type=float, nargs="*", default=[0.31, 0.25, 0.28, 0.33])
-    ap.add_argument("--out", default=str(RESULTS_DIR / "plan4_model"),
-                    help="output directory (default overwrites the repository's results/plan4_model)")
+    ap.add_argument("--L0", type=float, nargs="*", default=None,
+                    help="leg lengths [m] (default: standing, 0.40, lowest and highest, as in results/wheelbiped_v5_model)")
+    ap.add_argument("--out", default=str(RESULTS_DIR / "wheelbiped_v5_model"),
+                    help="output directory (default overwrites the repository's results/wheelbiped_v5_model)")
     ap.add_argument("--soft-contact", action="store_true", help="keep the model's soft contact impedance for the comparison")
-    ap.add_argument("--model", default="upkie_plan4", help="model directory under models/ (wheelbiped_v5: the v5 robot's own URDF model)")
+    ap.add_argument("--model", default=BV.OUT_DIR.name, help="model directory under models/ (with description.json and plant_params.json)")
     args = ap.parse_args()
     out_dir = Path(args.out); out_dir.mkdir(parents=True, exist_ok=True)
     mdir = MODELS_DIR / args.model
-    if (mdir / "description.json").exists():    # a robot with its own model: its joint signs and parameter file
-        global SIGNS
-        SIGNS = json.loads((mdir / "description.json").read_text(encoding="utf-8"))["joint_signs"]
-        params = SerialPlantParams.from_json(mdir / "plant_params.json")
-    else:
-        params = SerialPlantParams.from_json(mdir / "plan4_params.json")
+    global SIGNS                                # the robot's joint signs and parameter file
+    SIGNS = json.loads((mdir / BV.DESCRIPTION_FILE).read_text(encoding="utf-8"))["joint_signs"]
+    params = SerialPlantParams.from_json(mdir / BV.PARAMS_FILE)
+    if args.L0 is None:
+        args.L0 = [params.L0, 0.40, params.L_min, params.L_max]
     plant = SerialPlant(params)
     mp = MjPlanar(params, mdir / "scene.xml", stiff_contact=not args.soft_contact)
     results = []

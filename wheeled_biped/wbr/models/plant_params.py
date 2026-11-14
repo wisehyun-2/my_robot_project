@@ -1,13 +1,11 @@
-"""Plan 4 plant parameters of the upkie MuJoCo model: lumped leg table over the virtual leg length,
-body / wheel parameters, standing posture (docs/plan4_model.md, section 2).
+"""Plant parameters of the controller computed on a MuJoCo model: lumped leg table over the virtual leg length,
+body / wheel parameters, standing posture (the method of docs/plan4_model.md, section 2).  Called by wbr.models.build_v5,
+which passes the robot's joint signs, knee side, leg-length range and table grid.  (Until 2026-11-14 this was
+wbr/models/upkie_params.py with the upkie model's values as defaults; the upkie model was removed that day.)
 
-    python -m wbr.models.upkie_params [--model upkie_plan4]   # writes models/<model>/plan4_params.json
-
-Bodies are grouped by the last joint on their path from the base: base group (torso, battery,
-handle, hip stators) = body; hip group (hip rotor, horn, femur, knee stator) = thigh; knee group
-(knee rotor, horn, tibia, ankle, mj5208 stator) = shank; wheel group (mj5208 rotor, hub, tire).
-For each L0 the legs are set to the IK posture with the virtual leg vertical (theta_v = 0), so the
-leg frame coincides with the world frame: c = COM height above the axle, d = COM forward offset.
+Bodies are grouped by the last joint on their path from the base: base group = body, hip group = thigh, knee group =
+shank, wheel group = wheel.  For each L0 the legs are set to the IK posture with the virtual leg vertical (theta_v = 0),
+so the leg frame coincides with the world frame: c = COM height above the axle, d = COM forward offset.
 """
 from __future__ import annotations
 
@@ -18,13 +16,8 @@ from typing import Dict
 import mujoco
 import numpy as np
 
-from wbr import MODELS_DIR
 from wbr.controllers.lqi8.plant_serial import LegTable, SerialPlantParams
-from wbr.controllers.lqi8.serial_leg import UPKIE_JOINT_SIGNS, SerialLeg, SerialLegGeometry
-
-L_STAND = 0.31          # standing virtual leg length (knee ~51 deg; straight leg = 0.343 is singular)
-L_MIN, L_MAX = 0.24, 0.335
-TABLE_GRID = np.round(np.arange(0.22, 0.3401, 0.005), 4)
+from wbr.controllers.lqi8.serial_leg import SerialLeg, SerialLegGeometry
 
 
 def _group_bodies(m: mujoco.MjModel) -> Dict[str, list]:
@@ -57,8 +50,8 @@ def _planar_inertia(m: mujoco.MjModel, d: mujoco.MjData, bodies, about=None):
     return mass, com, float(I)
 
 
-def set_leg_posture(m, d, leg: SerialLeg, L0: float, theta_v: float, pitch: float = 0.0, wheel_radius: float = 0.05,
-                    signs: Dict[str, float] = UPKIE_JOINT_SIGNS):
+def set_leg_posture(m, d, leg: SerialLeg, L0: float, theta_v: float, pitch: float = 0.0, *, wheel_radius: float,
+                    signs: Dict[str, float]):
     """Set both legs to IK(L0, theta_v) (u-convention -> the model's joint signs) and place the base so that
     the axle is at x = 0, z = wheel_radius and the base is pitched by `pitch` (about +y)."""
     key = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_KEY, "stand")
@@ -85,15 +78,13 @@ def set_leg_posture(m, d, leg: SerialLeg, L0: float, theta_v: float, pitch: floa
     return qh, qk
 
 
-def build_params(xml_path: Path | None = None, grid=TABLE_GRID, verbose: bool = True, signs: Dict[str, float] = UPKIE_JOINT_SIGNS,
-                 name: str = "upkie_serial", knee_sign: float = -1.0, L_stand: float = L_STAND, L_min: float = L_MIN,
-                 L_max: float = L_MAX) -> SerialPlantParams:
+def build_params(xml_path: Path, *, grid, signs: Dict[str, float], name: str, knee_sign: float, L_stand: float, L_min: float,
+                 L_max: float, tau_wheel_max: float, tau_hip_max: float, verbose: bool = True) -> SerialPlantParams:
     """The plant parameters computed on a MuJoCo model; signs: its joint signs (the v5 model's are all +1), knee_sign: the side of
-    its knees (SerialLegGeometry; upkie's are in front, the v5 model's behind); grid, L_stand, L_min, L_max: its leg lengths [m]."""
-    xml_path = xml_path or MODELS_DIR / "upkie_plan4" / "scene.xml"
+    its knees (SerialLegGeometry; the v5 model's are behind); grid, L_stand, L_min, L_max: its leg lengths [m];
+    tau_wheel_max, tau_hip_max: the motors' peak torques [N m]."""
     m = mujoco.MjModel.from_xml_path(str(xml_path))
     d = mujoco.MjData(m)
-    leg = SerialLeg(SerialLegGeometry(knee_sign=-1.0))
     groups = _group_bodies(m)
     jid = lambda n: mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, n)
 
@@ -138,7 +129,7 @@ def build_params(xml_path: Path | None = None, grid=TABLE_GRID, verbose: bool = 
     table = LegTable(L0=rows[:, 0], m_l=rows[:, 1], c=rows[:, 2], d=rows[:, 3], I_l=rows[:, 4])
     params = SerialPlantParams(R=wheel_radius, m_w=m_w, I_w=I_w, m_b=m_b, b_x=b_x, b_z=b_z, I_b=I_b, J_h=J_h, c_h=c_h,
                                c_w=c_w, J_w=J_w, hip_above_base=hip_above_base, leg=table, L0=L_stand, L_min=L_min, L_max=L_max,
-                               tau_wheel_max=1.7, tau_hip_max=16.0, name=name,
+                               tau_wheel_max=tau_wheel_max, tau_hip_max=tau_hip_max, name=name,
                                extra=dict(L1=L1, L2=L2, knee_sign=knee_sign, total_mass=float(m.body_subtreemass[base]),
                                           hip_joint_z_straight=float(hip[2])))
     if verbose:
@@ -148,18 +139,3 @@ def build_params(xml_path: Path | None = None, grid=TABLE_GRID, verbose: bool = 
         for r in rows:
             print("  %.3f  %.4f  %.4f  %+.4f  %.5f" % tuple(r))
     return params
-
-
-def main():
-    import argparse
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default="upkie_plan4", help="model directory under models/")
-    args = ap.parse_args()
-    params = build_params(MODELS_DIR / args.model / "scene.xml")
-    out = MODELS_DIR / args.model / "plan4_params.json"
-    params.to_json(out)
-    print("wrote", out)
-
-
-if __name__ == "__main__":
-    main()

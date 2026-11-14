@@ -19,10 +19,10 @@ from wbr.common.rotations import quat_to_matrix, rot_y, roll_pitch_yaw
 from wbr.controllers.diablo_arch.mcu import DiabloMcu
 from wbr.controllers.lqi8.serial_leg import SerialLeg, SerialLegGeometry
 from wbr.models import build_v5 as BV
-from wbr.models.upkie_params import set_leg_posture
+from wbr.models.plant_params import set_leg_posture
+from wbr.observers.base_orientation import BaseOrientation
 from wbr.observers.body_attitude import BodyAttitude
 from wbr.observers.pi3hat_ars import G, Pi3HatAttitude, quat_from_euler, steady_covariance
-from wbr.observers.upkie_observers import BaseOrientation
 from wbr.plans import plan4_lqi8 as P4
 from wbr.plans.plan_v5 import PlanV5, PlanV5Config
 
@@ -306,12 +306,11 @@ class StaticLegForceTests(unittest.TestCase):
             return t.g * (leg["m_l"] * (-leg["d"] * math.sin(th) + leg["c"] * math.cos(th)) + t.m_b * L0 * math.cos(th))
         self.assertAlmostEqual(p.static_leg_force(L, th), 0.5 * (V(L + e) - V(L - e)) / (2 * e), delta=0.05)
 
-    def test_v5_uses_it_and_plan4_does_not(self):
+    def test_v5_uses_it(self):
         plan = PlanV5(PlanV5Config.from_model())
         self.assertIsNotNone(plan.mcu.p.leg_force)
         L = plan.mcu.p.L_stand
         self.assertLess(plan.mcu.p.leg_force(L, math.radians(9.0)), plan.mcu.p.leg_force(L, math.radians(-1.0)))      # d' > 0, leg COM on the rear side
-        self.assertIsNone(P4.Plan4LQI8().mcu.p.leg_force)
 
     def test_leg_holds_its_length_standing(self):
         plan = PlanV5(PlanV5Config.from_model(latency_ms=10.0))
@@ -333,12 +332,6 @@ class UnevenGroundTests(unittest.TestCase):
         for _ in range(int(1.0 / dt)):
             v = mcu._uneven_limit(0.0, dt)
         self.assertEqual(v, mcu.p.max_forward)
-
-    def test_plan4_has_no_limit(self):
-        p = P4.Plan4LQI8().mcu.p
-        self.assertEqual(p.uneven_speed, 0.0)
-        self.assertFalse(p.mean_follows_range)
-        self.assertEqual(p.L_min_margin, 0.02)
 
     def test_speed_bump_the_leg_gives_way_and_the_body_stays_low(self):
         plan = PlanV5(PlanV5Config.from_model(latency_ms=10.0, floor_humps=((0.10, 1.0, 0.6, 1.0, 0.15),)))
@@ -364,7 +357,6 @@ class SplitPdTests(unittest.TestCase):
         k = plan.leg.g.L1 / 0.175           # with the link length (11-07)
         self.assertAlmostEqual(plan.mcu.p.kp_split, 80.0 * k, places=9)
         self.assertAlmostEqual(plan.mcu.p.kd_split, 2.0 * k, places=9)
-        self.assertEqual((P4.Plan4Config().kp_split, P4.Plan4Config().kd_split), (60.0, 3.0))      # upkie's verdicts stand
 
     def test_turning_does_not_open_the_legs(self):
         plan = PlanV5(PlanV5Config.from_model(latency_ms=10.0))

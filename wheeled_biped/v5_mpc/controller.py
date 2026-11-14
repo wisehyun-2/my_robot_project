@@ -51,8 +51,6 @@ class PlanV5Mpc(PlanV5):
         c = self.cfg
         if c.lqi_kwargs:
             raise ValueError("v5_mpc has no LQI8: use mpc_kwargs")
-        if c.host != "ramp":
-            raise ValueError("v5_mpc: the MPC in the MCU is the only controller (no MPC host)")
         design = self._lqi_design()        # torque weights from the robot's weight and size + the plant's leg-length grid (same rule as v5_lqi)
         kw = dict(MPC_DEFAULTS, r_wheel_frac=design["r_wheel_frac"], r_hip_frac=design["r_hip_frac"], table_L0=design["table_L0"])
         kw.update(getattr(c, "mpc_kwargs", None) or {})

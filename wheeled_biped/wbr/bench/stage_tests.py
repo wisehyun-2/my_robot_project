@@ -111,9 +111,8 @@ class Robot:
 
     @contextlib.contextmanager
     def plan(self, stage: str, seed: int = 0, slope: float = 0.0, **cfg):
-        """A Plan 4 closed loop of this robot with the balance law of `stage`.  The module patch of ake_sizing (model
-        folder, wheel radius, motor limits, track) stays active inside the with-block: plan.reset() reads the wheel
-        radius when it places the robot on the floor."""
+        """The closed loop of this robot (wbr.plans.plan_v5 on the plan4_lqi8 runtime) with the balance law of `stage`.
+        The module patch of ake_sizing (the model folder) stays active inside the with-block."""
         st = STAGES[stage]
         case = dataclasses.replace(self.case, seed=seed)
         case.plan_overrides = dict(self.case.plan_overrides, **{k: (dict(v) if isinstance(v, dict) else v) for k, v in st.overrides.items()},
@@ -131,13 +130,13 @@ def robot() -> Robot:
 
 # ----------------------------------------------------------------------------- metrics
 def _extras(plan, out: dict) -> dict:
-    """Leg extension / knee side and the motor torques (acceptance.torque_metrics; its saturation figures refer to
-    upkie's 1.7 N m wheel motor and are dropped)."""
+    """Leg extension / knee side and the motor torques (acceptance.torque_metrics; its joint speed peaks have no limit here
+    and are dropped)."""
     L0 = np.maximum(plan.log["L0_left"], plan.log["L0_right"])  # the longer leg: the legs differ under a roll or a bump
     out["knee_flipped"] = int(AS.knee_flipped(plan))
     out["leg_max_mm"] = float(1000 * np.max(L0))
     out["leg_margin_mm"] = float(1000 * (plan.leg.g.L0_max - np.max(L0)))
-    for k in ("wheel_sat_duty", "wheel_sat_s", "wheel_speed_peak", "leg_speed_peak"):
+    for k in ("wheel_speed_peak", "leg_speed_peak"):
         out.pop(k, None)
     out["alive"] = int(bool(out.get("alive", True)))
     return out
@@ -274,7 +273,7 @@ def _leg_error_mm(plan) -> np.ndarray:
 
 def leg_on_slope(stage: str, seed: int = 0, slope: float = 10.0, T: float = 6.0, **cfg) -> dict:
     """Standing on a slope the wheels hold a constant torque; the knee must keep its reaction on the shank out of the
-    leg length (McuParams.wheel_reaction_ff).  leg_err_mm: |L0 - L_ref| over the last second."""
+    leg length (the wheel-reaction feed-forward of DiabloMcu).  leg_err_mm: |L0 - L_ref| over the last second."""
     with robot().plan(stage, seed, slope=slope, **cfg) as plan:
         plan.reset()
         alive = plan.run(T)
@@ -303,7 +302,7 @@ def leg_under_push(stage: str, seed: int = 0, frac: float = 0.5, **cfg) -> dict:
 
 def leg_over_bump(stage: str, seed: int = 0, h: float = 0.04, V: float = 0.5, side: float = 1.0, **cfg) -> dict:
     """One wheel drives over a bump (30 cm ramps, 50 cm top, 14 cm wide): the body stays level because the pressed leg
-    yields (McuParams.roll_compliant).  roll_top_deg: |mean roll| on the top; yield_pct: leg-length difference there as a
+    yields (the compliant roll of DiabloMcu).  roll_top_deg: |mean roll| on the top; yield_pct: leg-length difference there as a
     share of the bump height."""
     x0, ramp, top = 0.4, 0.3, 0.5
     with robot().plan(stage, seed, floor_bump=(h, side, x0, ramp, top, 0.07), **cfg) as plan:

@@ -12,7 +12,7 @@
 **현재 판정(11-07, 링크 25 cm): 단계 4 시험 27개 중 7개가 일부 기준을 넘는다(5절 앞 "링크 25 cm 결과"). 넘어지거나 무릎이 꺾인 경우는 없다. 기준 숫자는 바꾸지 않았다.**
 IMU는 실제 칩 위치에서 재고, pi3hat 펌웨어 필터 → MCU 자세 필터를 거쳐 제어기에 들어간다.
 시나리오와 측정 정의는 기존 합격 판정(`docs/합격기준.md`, `wbr/bench/acceptance.py`)의 것을 그대로 쓴다.
-기존 단위 테스트(`tests/`)와는 별개다. `WBR_TEST_CAD`로 전용 URDF가 없는 CAD 버전(v2~v4)을 주면 예전 upkie 경로로 돈다.
+기존 단위 테스트(`tests/`)와는 별개다. `WBR_TEST_CAD`로 다른 CAD 내보내기를 줄 수 있지만 옆에 `urdf_data.json`이 있어야 한다(전용 URDF가 없는 판을 upkie 모델로 돌리던 경로는 2026-11-14에 지웠다).
 
 ## 1. 단계
 
@@ -96,7 +96,7 @@ PowerShell 예: `$env:WBR_TEST_SEEDS = "0,1,2"; python v5_lqi/TEST/run_stages.py
 ## 4. 합격기준.md와 다른 점
 
 - **모터 한계**: upkie의 qdd100·mj5208 대신 AKE60-8(피크 12.5, 정격 5 N m). 포화 지속·관절 속도 기준은 넣지 않았다.
-- **센서 노이즈**: 합격 기준의 노이즈는 upkie 하네스의 "참 자세 + 흰 잡음"이고 Plan 4 판정(`wbr/bench/acceptance.py`)은 그대로 그것을 쓴다. 이 폴더는 v5 시험이라 칩 위치의 자이로·가속도 노이즈를 펌웨어 필터 포팅과 MCU 자세 필터에 통과시킨다. 그래서 1-1의 피치 rms를 합격 기준 수치와 바로 비교할 수 없다.
+- **센서 노이즈**: 합격 기준의 노이즈는 upkie 하네스의 "참 자세 + 흰 잡음"이었다(Plan 4 판정, 2026-11-14에 지움). 이 폴더는 v5 시험이라 칩 위치의 자이로·가속도 노이즈를 펌웨어 필터 포팅과 MCU 자세 필터에 통과시킨다. 그래서 1-1의 피치 rms를 합격 기준 수치와 바로 비교할 수 없다.
 - **정지 시험 길이**: 기본 30 s(합격 기준은 60 s). `WBR_TEST_LONG=1`로 60 s.
 - **속도 스텝의 정지 뒤 정착**: 합격 판정은 정지 뒤 3 s만 돌리고 마지막 위반이 끝 1 s 안이면 미정착이라, 사실상 2 s 안에
   정착해야 한다. v5는 정지할 때 25~29 cm 나갔다가 0.13~0.16 m/s로 되돌아와 **2.1~2.2 s**가 걸린다(세 단계 모두). 이 시험은
@@ -180,6 +180,7 @@ PowerShell 예: `$env:WBR_TEST_SEEDS = "0,1,2"; python v5_lqi/TEST/run_stages.py
 ### 시험이 실제로 걸러내는가
 
 기능을 끈 제어기에 해당 시험을 걸었을 때의 값이다(전체 제어기, 시드 0. 적분 두 줄은 힘 식·벌어짐 PD를 바꾸기 전, 시드 0~4의 범위).
+2026-11-14 사용자 결정으로 v5가 쓰지 않는 스위치(`exact_leg_force`, `wheel_reaction_ff`, `roll_compliant`, `suspension`, 감속 끔, `attitude_tau=0`)를 지웠다. 이 표는 그때의 기록이고 지금 코드로는 다시 만들 수 없다(`kw_yaw`, `yaw_offset_tau`는 게인이라 남았다).
 
 | 시험을 건 제어기 | 시험 | 결과 |
 |---|---|---|
@@ -205,12 +206,12 @@ PowerShell 예: `$env:WBR_TEST_SEEDS = "0,1,2"; python v5_lqi/TEST/run_stages.py
 | `knee_flipped`, `leg_margin_mm` | 다리 길이 PD가 로봇 무게에 비해 무르다(`kp_leg`, `kd_leg`). 몸통 질량 비로 환산한다 |
 | 2-2, 2-4의 요 오차 | 요 PI(`kp_yaw`, `ki_yaw`). 제어 대상 이득 W / (2 R I_zz) 비로 환산한다 |
 | 2-4의 다리각 차 | 다리 벌어짐 PD(`kp_split`, `kd_split`). **`kp_split`을 낮추지 않는다**: 80에서 2.4°, 60에서 3.4°, 50에서 5.7°이고 30이면 회전 중 다리가 85°까지 벌어진다 |
-| 2-5, 2-6 | `exact_leg_force`와 `wheel_reaction_ff`가 켜졌는지, 관절 부호. 무릎 토크에 `τ_h/2 + τ_w/2`가 **+y축 기준 같은 부호**로 들어가야 한다(`−τ_h/2`면 밀기 때 22 mm까지 벌어진다) |
-| 2-7, 2-8 | `roll_compliant`가 켜졌는지, 롤 부호(양의 오차 = 왼쪽 다리 늘림). 턱 위 롤만 크면 평균 길이 대신 다리별 길이 PD가 돌고 있다 |
-| 2-14, 2-15 | `attitude_tau`가 켜졌는지(MCU 자세 필터), `imu_position`이 칩 위치와 맞는지, 가속도 보정 게이트(`reject`, `quiet`). 오차가 1.5~2°면 보드 자세를 그대로 쓰고 있는 것이다 |
+| 2-5, 2-6 | 정적 다리 힘(`SerialPlant.static_leg_force`)과 무릎 결합 보상이 들어갔는지, 관절 부호. 무릎 토크에 `τ_h/2 + τ_w/2`가 **+y축 기준 같은 부호**로 들어가야 한다(`−τ_h/2`면 밀기 때 22 mm까지 벌어진다) |
+| 2-7, 2-8 | 순응 롤이 들어갔는지, 롤 부호(양의 오차 = 왼쪽 다리 늘림). 턱 위 롤만 크면 평균 길이 대신 다리별 길이 PD가 돌고 있다 |
+| 2-14, 2-15 | MCU 자세 필터가 도는지(`attitude_tau`), `imu_position`이 칩 위치와 맞는지, 가속도 보정 게이트(`reject`, `quiet`). 오차가 1.5~2°면 보드 자세를 그대로 쓰고 있는 것이다 |
 | 2-16 | `yaw_offset_tau`가 켜졌는지(요에 원시 자이로), 보드의 `rate_dps`를 그대로 쓰지 않는지. 정지 뒤 0.7 rad/s가 남으면 보드 요 속도를 쓰고 있는 것이다 |
-| 2-17~2-19 | `suspension`, `suspension_share`, `kd_leg_own`이 켜졌는지. 몸통이 턱 높이의 절반만큼 오르면 평균 길이 제어로 돌고 있다. 무릎 피크가 크면 다리 범위 벽(`L_min_margin`, `L_max_margin`, `LEG_WALL_SCALE`) |
-| 2-20, 2-21 | `uneven_speed`, `uneven_brake`, `uneven_lean`, `uneven_hold_int`. 턱 뒤에서 속도가 다시 오르면 위치 적분이 멈추지 않은 것이다 |
+| 2-17~2-19 | 서스펜션(더 긴 다리를 잡는 높이 제어), `suspension_share`, `kd_leg_own`이 들어갔는지. 몸통이 턱 높이의 절반만큼 오르면 평균 길이 제어로 돌고 있다. 무릎 피크가 크면 다리 범위 벽(`L_min_margin`, `L_max_margin`, `LEG_WALL_SCALE`) |
+| 2-20, 2-21 | `uneven_speed`, `uneven_brake`, `uneven_lean`, 다리 길이가 다를 때의 적분 정지. 턱 뒤에서 속도가 다시 오르면 위치 적분이 멈추지 않은 것이다 |
 | 2-9, 2-3 | 다리 범위 벽(`kp_leg_limit`, `kd_leg_limit`), 차동 힘 한계(`roll_force_limit`) |
 | 2-10 | 롤 적분(`ki_roll_force`, `roll_force_int_limit`) |
 | 2-11~2-13 | `kw_yaw`가 켜졌는지, 바퀴 속도 부호(`v_우 − v_좌` > 0이 왼쪽 회전), MCU `track`. 방향 최대만 크면 바퀴 항, 정지 뒤 방향만 크면 `ki_yaw`를 본다. 자이로 게인을 키우지 않는다(`kp_yaw` × 3이면 다리와 물려 흔들린다) |
@@ -224,9 +225,9 @@ PowerShell 예: `$env:WBR_TEST_SEEDS = "0,1,2"; python v5_lqi/TEST/run_stages.py
 - 실기에는 "실제 피치"가 없다. IMU 추정 피치만 있으므로 4-2(IMU 오차)는 실물에서 직접 볼 수 없다. 수평계를 몸통에 올리거나,
   짐(4-3)과 경사(4-1)로 확인한다.
 - 위치는 바퀴 오도메트리로 잰다. 바닥에 출발선을 표시해 두면 3-x를 눈으로도 확인할 수 있다.
-- 요·다리 길이 게인은 이 시뮬레이션과 같은 환산값을 MCU 설정에 넣어야 한다(`ake_cad.outer_loop_gains`).
-- 무릎 결합 보상도 켜야 한다(`wheel_reaction_ff=True`, 2-5·2-6의 조건). 끈 채로는 경사에서 다리가 늘어난 자세로 선다.
-- 순응 롤도 켜야 한다(`roll_compliant=True`와 `ake_cad.compliant_roll_gains`의 값, 2-7~2-10의 조건). 처음에는 턱 없이 2-3부터 확인한다.
+- 요·다리 길이 게인은 이 시뮬레이션과 같은 값을 MCU 설정에 넣어야 한다(`ake_cad.v5_gains`, `models/wheelbiped_v5/description.json`).
+- 무릎 결합 보상도 넣어야 한다(2-5·2-6의 조건). 빼면 경사에서 다리가 늘어난 자세로 선다.
+- 순응 롤도 넣어야 한다(`ake_cad.compliant_roll_gains`의 값, 2-7~2-10의 조건). 처음에는 턱 없이 2-3부터 확인한다.
 - 바퀴 속도 차 요도 켜야 한다(`kw_yaw`, `ki_yaw`, `ake_cad.yaw_wheel_damping_gains`의 값, 2-11~2-13의 조건). 처음에는 턱 없이 2-2, 2-4부터 확인한다. 실제 공기 타이어는 시뮬레이션의 단단한 타이어보다 턱을 잘 넘을 수 있으므로 낮은 턱부터 올린다.
 - IMU: pi3hat은 `mounting_deg` 0, `attitude_rate_hz` 1000으로 둔다. 로봇의 앞은 로커 스위치 쪽이다. 원시 축은 +x 로봇 뒤, +y 로봇 오른쪽, +z 위이고(`R_base_to_imu` = diag(−1, −1, 1)), 수평에서 보드는 롤 180°로 읽는 것이 정상이다(hat이 위, `R_ars_to_world` = diag(1, −1, −1)). 필터에 넣을 원시값은 보드 출력에서 복원한다: 자이로 = `rate_dps − bias_dps`, 가속도 = `accel_mps2 + 9.81 × 중력(자세)`. 켜기 전에 로봇을 손으로 스위치 쪽으로 기울여 피치 부호부터 확인한다(앞으로 기울이면 + 피치).
 

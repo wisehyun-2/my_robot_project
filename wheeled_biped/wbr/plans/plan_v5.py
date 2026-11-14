@@ -32,14 +32,10 @@ class PlanV5Config(P4.Plan4Config):
     model_dir: str = BV.OUT_DIR.name
     yaw_offset_tau: float = 20.0    # s: yaw rate from the raw gyro, offset learned against the wheels at standstill (McuParams)
     attitude_tau: float = 5.0       # s: the MCU's complementary filter with the IMU position in it (wbr.observers.body_attitude)
-    imu_model: str = "pi3hat"       # "pi3hat": the firmware filter on the simulated chip; "ideal": true attitude + white noise
     imu_position_mm: Optional[tuple] = None     # study: another IMU position in the base frame, instead of the chip on the hat
     pitch_noise_deg: float = 0.0    # extra white noise on the filter's output (the design report's 0.2 deg, on top of the real chain)
-    exact_leg_force: bool = True    # static leg force from the plant at the actual lean (SerialPlant.static_leg_force), False: F_ff / cos(lean)
     L_min_margin: float = 0.046     # soft wall of one leg 46 mm below L_min: 326 mm, above the Fusion interference check's lowest pose (286 mm)
     L_max_margin: float = 0.0       # soft wall at L_max = 485 mm, 15 mm from straight (500 mm); a wall too near straight lets the knee flip through it
-    mean_follows_range: bool = True # the mean leg length goes down when the difference needs it (a tall bump under one wheel)
-    suspension: bool = True         # over a speed bump the leg on it folds, the body keeps its height (McuParams.suspension)
     suspension_share: float = 0.05  # m: above this leg difference the other leg takes part, so neither leg reaches its end suddenly
     kd_leg_own: float = 30.0        # N s/m: each leg's own damper; the leg torque peak at a sharp 4 cm step at 1 m/s 12.4 -> 8.7 N m
     uneven_speed: float = 0.2       # m/s while the legs differ by uneven_d1 or more
@@ -48,7 +44,6 @@ class PlanV5Config(P4.Plan4Config):
     uneven_brake: float = 0.8       # m/s^2: gentle
     uneven_brake_tau: float = 0.2   # s: no jerk at the start of the braking
     uneven_lean: float = 1.0        # the leg leans back with the braking, so the speed follows the reference
-    uneven_hold_int: bool = True    # no chasing of the position reference after a bump
 
     @classmethod
     def from_model(cls, **kw) -> "PlanV5Config":
@@ -65,9 +60,6 @@ class PlanV5(P4.Plan4LQI8):
     @staticmethod
     def default_config():
         return PlanV5Config.from_model()
-
-    def _leg_force_law(self):
-        return self.plant.static_leg_force if self.cfg.exact_leg_force else None
 
     def _robot_constants(self) -> dict:
         d = json.loads((P4.MODELS_DIR / self.cfg.model_dir / BV.DESCRIPTION_FILE).read_text(encoding="utf-8"))
@@ -114,8 +106,6 @@ class PlanV5(P4.Plan4LQI8):
     def _make_noise(self) -> SensorNoise:
         """Gyro, accelerometer and encoder noise of the design report; the attitude noise comes out of the filter."""
         c = self.cfg
-        if c.imu_model == "ideal":
-            return SensorNoise(enabled=c.noise, seed=c.seed)
         return SensorNoise(enabled=c.noise, seed=c.seed, pitch_std=math.radians(c.pitch_noise_deg))
 
     def reset(self, *args, **kw) -> None:
@@ -144,16 +134,13 @@ class PlanV5(P4.Plan4LQI8):
         imu["orientation"] = np.array([1.0, 0.0, 0.0, 0.0])     # (SensorNoise rotates it by the extra noise only)
         noisy = self.noise.apply(raw, self.dt)
         R_extra = quat_to_matrix(noisy["imu"]["orientation"])
-        if c.imu_model == "ideal":
-            noisy["imu"]["orientation"] = P4.matrix_to_quat(self.R_ARS_TO_WORLD.T @ R_wi @ R_extra)
-        else:
-            if self._ars is None:                       # a board that has been on for a while, at the robot's start attitude
-                self._ars = Pi3HatAttitude(self.dt)
-                self._ars.start_converged(self._board_start_attitude(R_wi))
-            self._ars.process(noisy["imu"]["angular_velocity"], noisy["imu"]["linear_acceleration"])
-            noisy["imu"]["orientation"] = P4.matrix_to_quat(quat_to_matrix(self._ars.quaternion) @ R_extra)
-            noisy["imu"]["angular_velocity"] = self._ars.rate_rps
-            noisy["imu"]["bias_rps"] = self._ars.bias_rps
+        if self._ars is None:                           # a board that has been on for a while, at the robot's start attitude
+            self._ars = Pi3HatAttitude(self.dt)
+            self._ars.start_converged(self._board_start_attitude(R_wi))
+        self._ars.process(noisy["imu"]["angular_velocity"], noisy["imu"]["linear_acceleration"])
+        noisy["imu"]["orientation"] = P4.matrix_to_quat(quat_to_matrix(self._ars.quaternion) @ R_extra)
+        noisy["imu"]["angular_velocity"] = self._ars.rate_rps
+        noisy["imu"]["bias_rps"] = self._ars.bias_rps
         obs = self.delay.push(noisy)
         obs["sim"] = raw["sim"]
         return obs

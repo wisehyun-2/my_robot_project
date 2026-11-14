@@ -351,7 +351,6 @@ class MpcLaw:
         d_theta = est.theta_v_body["left"] - est.theta_v_body["right"]
         d_theta_dot = est.theta_v_dot["left"] - est.theta_v_dot["right"]
         tau_split = p.kp_split * d_theta + p.kd_split * d_theta_dot
-        F_ff = p.F_ff_N if p.F_ff_N is not None else 0.5 * (p.mass_total - p.mass_wheels) * 9.81
         Lw, Lh = self.u_limit * p.tau_wheel_max, self.u_limit * p.tau_hip_max
         rows, rhs = [], []
 
@@ -362,13 +361,13 @@ class MpcLaw:
             rhs.extend([L - off, L + off])
 
         for side, s in (("left", -1.0), ("right", +1.0)):
-            qh, qk = servo[f"{side}_hip"]["position"], servo[f"{side}_{p.leg_joint}"]["position"]
+            qh, qk = servo[f"{side}_hip"]["position"], servo[f"{side}_knee"]["position"]
             F = F_cmd.get(side)                 # what the leg loops really put on this leg (one period old)
             if F is None or not math.isfinite(F):
-                F = p.leg_force(est.L0[side], est.theta_v[side]) if p.leg_force is not None else F_ff / max(math.cos(est.theta_v[side]), 0.5)
+                F = p.leg_force(est.L0[side], est.theta_v[side])
             a_h, a_k = mcu.leg.vmc_torques(1.0, 0.0, qh, qk)
             b_h, b_k = mcu.leg.vmc_torques(0.0, 1.0, qh, qk)
-            c_k = mcu.leg.wheel_reaction_ratio(qh, qk) if p.wheel_reaction_ff else 0.0
+            c_k = mcu.leg.wheel_reaction_ratio(qh, qk)     # the knee's wheel-reaction feed-forward
             tp_off = 0.5 * self.Tp_ff + 0.5 * s * tau_split          # this side's hip torque beyond u[1] / 2
             add([0.5, 0.0], 0.5 * s * tau_yaw, Lw)
             add([0.0, 0.5 * b_h], a_h * F + b_h * tp_off, Lh)
@@ -378,7 +377,7 @@ class MpcLaw:
         return np.array(rows, dtype=float), np.array(rhs, dtype=float)
 
     def compute(self, est, refs: dict, mcu) -> dict:
-        if not refs.get("balance", True):       # CAR / transitions / FAULT: start again from rest
+        if not refs.get("balance", True):       # disarmed / FAULT: start again from rest
             self.ctrl.reset()
             return {"T": 0.0, "Tp": 0.0}
         phi = -(est.pitch - refs.get("pitch_ref", 0.0))

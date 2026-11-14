@@ -3,7 +3,7 @@
     MCU (1 kHz):  estimator -> LQI8 (T, Tp) -> height / yaw / roll / split loops -> serial-leg VMC -> joint torques
     host:         plain MotionCtrl set-points (wbr.controllers.diablo_arch.host_link.HostEmulator), no reference generator
 
-Where the code is (shared with Plans 2 / 4, so it stays in wbr):
+Where the code is (in wbr; first written for Plans 2 / 4, both removed):
     wbr/controllers/lqi8/lqi8.py    LQI8: discrete LQR on [theta, theta_dot, v - v_ref, phi, phi_dot, z1 (, z2, z3)],
                                     gain table on the leg-length grid, velocity ramp + pre-filter, integrator freeze
     wbr/controllers/lqi8/law.py     the MCU adapter (estimate -> plant states, + static hip torque)
@@ -31,6 +31,4 @@ def make_plan(stage: str = FULL_STAGE, **cfg) -> PlanV5:
     """The committed v5 model (models/wheelbiped_v5, gains from description.json) with the LQI8 of `stage`.
     cfg: further PlanV5Config fields (noise, seed, latency_ms, floor_humps, ...)."""
     st = {s.key: s for s in STAGES}[stage]
-    if cfg.get("host", "ramp") != "ramp":
-        raise ValueError("v5_lqi: the LQI8 is the only controller here (no MPC host)")
     return PlanV5(PlanV5Config.from_model(**st.overrides, **cfg))

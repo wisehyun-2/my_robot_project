@@ -1,4 +1,4 @@
-"""LQI8 balance law plugged into the DIABLO-style MCU (Plan 4 harness, v5 robot).
+"""LQI8 balance law plugged into the DIABLO-style MCU (the v5 robot; wbr.plans.plan4_lqi8 assembles it).
 
 Converts the MCU estimate into the plant state convention of the design report (plant_serial):
   theta = world virtual-leg angle (positive: hip ahead of the wheel)  -> est.theta_v_mean
@@ -18,7 +18,7 @@ class LQI8Law:
         # theta_eq: callable L0 -> equilibrium leg angle of the real robot (body level, total COM
         # above the contact point); zero for the symmetric plant of the report.
         # Tp_ff: constant static hip torque (plant convention) holding the body level when its COM is
-        # not above the hip (Plan 4: m_b g b_x); a constant does not change the linearised plant.
+        # not above the hip (m_b g b_x); a constant does not change the linearised plant.
         if lqi_kwargs.get("q_att") is not None and lqi_kwargs.get("att_gM") is None:
             lqi_kwargs = dict(lqi_kwargs, att_gM=self.static_gM(plant, theta_eq or (lambda L0: 0.0)))
         self.ctrl = LQI8(plant, Ts=Ts, **lqi_kwargs)
@@ -41,21 +41,17 @@ class LQI8Law:
     def reset(self) -> None:
         self.ctrl.reset()
 
-    def set_reference_shaping(self, on: bool) -> None:
-        self.ctrl.set_reference_shaping(on)
-
     def compute(self, est, refs: dict, mcu) -> dict:
-        if not refs.get("balance", True):      # CAR / transitions / FAULT: freeze the integrator and ramp
+        if not refs.get("balance", True):      # disarmed / FAULT: freeze the integrator and ramp
             self.ctrl.reset()
             return {"T": 0.0, "Tp": 0.0}
         phi = -(est.pitch - refs.get("pitch_ref", 0.0))
         phi_dot = -est.pitch_rate
         theta = est.theta_v_mean - self.theta_eq(est.L0_mean)
-        if self.ctrl.shaping_on:                # slowing down over uneven ground (McuParams.uneven_brake, uneven_lean)
-            brake = refs.get("v_brake", 0.0)
-            self.ctrl.v_ramp_rate = brake if brake > 0.0 else self.ctrl._shaped[0]
-            self.ctrl.v_ref_tau_brake = refs.get("v_brake_tau", 0.0)
-            theta -= refs.get("v_lean", 0.0) * self.ctrl._a_ref_lp / 9.81
+        brake = refs.get("v_brake", 0.0)        # slowing down over uneven ground (McuParams.uneven_brake, uneven_lean)
+        self.ctrl.v_ramp_rate = brake if brake > 0.0 else self.ctrl.v_ramp_rate_base
+        self.ctrl.v_ref_tau_brake = refs.get("v_brake_tau", 0.0)
+        theta -= refs.get("v_lean", 0.0) * self.ctrl._a_ref_lp / 9.81
         self.ctrl.hold_integrators = bool(refs.get("hold_integrators", False))
         T, Tp = self.ctrl.step(theta, est.theta_v_dot_mean, est.v, phi, phi_dot, est.L0_mean,
                                refs["v_ref"] if refs.get("balance", True) else 0.0)

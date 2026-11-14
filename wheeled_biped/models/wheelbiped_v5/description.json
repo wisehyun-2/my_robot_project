@@ -47,8 +47,6 @@
   "kd_leg": 75.1114921362,
   "kp_split": 114.28571428571429,
   "kd_split": 2.857142857142857,
-  "wheel_reaction_ff": true,
-  "roll_compliant": true,
   "friction_comp_Nm": 0.096,
   "friction_comp_wheel_Nm": 0.096,
   "kp_roll_force": 576.8248120042151,

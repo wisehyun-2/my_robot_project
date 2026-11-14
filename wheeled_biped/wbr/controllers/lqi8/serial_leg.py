@@ -1,4 +1,4 @@
-"""Kinematics and virtual model control (VMC) of a serial hip-knee leg (upkie geometry for Plan 4, the v5 robot).
+"""Kinematics and virtual model control (VMC) of a serial hip-knee leg (the v5 robot: L1 = L2 = 250 mm, knees behind).
 
 Same conventions and interface as the five-bar leg of the removed DIABLO-lite plans (``fivebar.py``, git history
 before 2026-11-11), which the DIABLO-style MCU program was written for:
@@ -12,11 +12,9 @@ link end backwards (hip ahead of the link end).
 The virtual leg is the hip -> axle segment: length L0 = |p|, angle theta_v = atan2(-p_x, -p_z)
 (positive when the hip is ahead of the wheel, the convention of the three-body plant).
 
-Joint sign convention: the "u-convention" above is what the controller sees.  On upkie the real
-joints are mirrored left/right (a positive left hip/knee angle swings the leg forward, a positive
-right one backwards; a positive left wheel velocity drives forward, a positive right one backwards),
-so the plan assembly multiplies the real joint positions/velocities/torques by UPKIE_JOINT_SIGNS
-before they enter the MCU and the commanded torques by the same signs on the way out.
+Joint sign convention: the "u-convention" above is what the controller sees.  The plan assembly multiplies the
+model's joint positions/velocities/torques by the robot's joint signs before they enter the MCU and the commanded
+torques by the same signs on the way out (the v5 model's joint axes are all +y: every sign is +1, description.json).
 
 VMC: a leg force F along the virtual leg (positive = extension) and a hip torque Tp applied on the
 leg about +y (positive rotates the hip forward over the wheel; reaction -Tp on the body) are mapped
@@ -24,7 +22,7 @@ to joint torques through tau = J^T F_cart with F_cart = F u(theta_v) + (Tp / L0)
 
 Singularities: at full extension (q_knee = 0, L0 = L1 + L2) the Jacobian loses rank -- the leg
 length cannot be controlled and the knee bending direction is undefined.  ``inverse`` therefore
-clips L0 to L0_max - 1 mm and the standing length of Plan 4 keeps the knee bent (L_stand < L0_max).
+clips L0 to L0_max - 1 mm and the standing length keeps the knee bent (L_stand < L0_max).
 """
 from __future__ import annotations
 
@@ -33,18 +31,12 @@ from dataclasses import dataclass
 
 import numpy as np
 
-# multiply upkie joint positions / velocities / torques by these to obtain the u-convention
-UPKIE_JOINT_SIGNS = {"left_hip": -1.0, "left_knee": -1.0, "left_wheel": +1.0,
-                     "right_hip": +1.0, "right_knee": +1.0, "right_wheel": -1.0}
-
 
 @dataclass
 class SerialLegGeometry:
-    L1: float = 0.168           # hip -> knee (upkie URDF: hip z 0.393, knee z 0.225)
-    L2: float = 0.175           # knee -> wheel axle (knee z 0.225, axle z 0.050)
+    L1: float                   # hip -> knee [m]
+    L2: float                   # knee -> wheel axle [m]
     knee_sign: float = +1.0     # +1: knee behind the hip->axle line (u-convention: thigh angle > theta_v), -1: knee in front
-    q_hip_range: tuple = (-1.26, 1.26)      # URDF joint limits (u-convention has the same magnitude)
-    q_knee_range: tuple = (-2.51, 2.51)
 
     @property
     def L0_max(self) -> float:
@@ -67,8 +59,8 @@ class SerialLeg:
     """Hip-knee serial leg with the MCU's leg interface (forward / jacobian / virtual_rates / inverse /
     vmc_torques / shank_rate)."""
 
-    def __init__(self, geom: SerialLegGeometry | None = None):
-        self.g = geom or SerialLegGeometry()
+    def __init__(self, geom: SerialLegGeometry):
+        self.g = geom
 
     # ------------------------------------------------------------------ kinematics
     def angles(self, q_hip: float, q_knee: float):
@@ -136,15 +128,10 @@ class SerialLeg:
         _, L0, theta_v = self.forward(q_hip, q_knee)
         return self.g.L1 * math.cos(q_hip - theta_v) / max(L0, 1e-3)
 
-    def within_limits(self, q_hip: float, q_knee: float, margin: float = 0.0) -> bool:
-        lo, hi = self.g.q_hip_range
-        klo, khi = self.g.q_knee_range
-        return (lo + margin <= q_hip <= hi - margin) and (klo + margin <= q_knee <= khi - margin)
-
 
 if __name__ == "__main__":
-    leg = SerialLeg()
-    for L0 in (0.25, 0.30, 0.32, 0.335):
+    leg = SerialLeg(SerialLegGeometry(L1=0.25, L2=0.25, knee_sign=+1.0))      # the v5 leg
+    for L0 in (0.33, 0.40, 0.46, 0.485):
         q = leg.inverse(L0, 0.0)
         p, L0b, th = leg.forward(*q)
         print(f"L0={L0:.3f}: q_hip={q[0]:+.4f} q_knee={q[1]:+.4f}  -> L0={L0b:.4f} theta_v={th:+.2e}  "

@@ -89,7 +89,7 @@ MuJoCo 사이트 imu(칩 위치, 원시 축) → 자이로·가속도(지렛대 
 → pi3hat 펌웨어 필터 포팅(wbr/observers/pi3hat_ars.py, UKF 7상태, 같은 잡음 값) → 지연 10 ms → MCU
 ```
 
-`wbr/plans/plan_v5.py`. 예전에는 참 자세에 흰 잡음 0.2°를 얹었다(`imu_model="ideal"`로 비교 가능). 합격기준의 흰 잡음은 Plan 4(upkie) 판정에 그대로 남겼다.
+`wbr/plans/plan_v5.py`. 예전에는 참 자세에 흰 잡음 0.2°를 얹었다(`imu_model="ideal"`로 비교할 수 있었는데, 11-14에 그 선택지를 지웠다). 합격기준의 흰 잡음은 Plan 4(upkie) 판정에 그대로 남겼다.
 
 펌웨어 필터를 넣자 두 가지가 드러났다.
 
@@ -246,7 +246,7 @@ IMU 경로는 지연 여유를 줄이지 않는다(위 두 줄이 같다). 모�
 | 항목 | 예전 | 지금 |
 |---|---|---|
 | 모델 | upkie URDF의 링크를 늘리고 질량을 덮어씀(몸체 34개 +34 g, upkie 충돌 상자) | v5 URDF |
-| 관절 부호 | `UPKIE_JOINT_SIGNS` | 전부 +1 |
+| 관절 부호 | `UPKIE_JOINT_SIGNS`(11-14에 지움) | 전부 +1 |
 | 베이스 원점 | upkie `base` | hip 축 중앙 |
 | IMU 회전 | `diag(−1, 1, −1)` | `diag(−1, −1, 1)`(Fusion 측정 + 앞이 스위치 쪽, URDF `imu_fix`) |
 | IMU 위치 | `base` 사이트, 효과 없음 | 칩 실제 위치, 필터에 사용 |
@@ -265,6 +265,8 @@ IMU 경로는 지연 여유를 줄이지 않는다(위 두 줄이 같다). 모�
 
 코드에 upkie 이름이 남은 곳은 하네스 클래스 상속(`PlanV5` ← `Plan4LQI8`), 파라미터 계산 함수 위치(`wbr/models/upkie_params.py`)다. v5 경로에서 upkie 값은 쓰지 않는다(`tests/test_robot_v5.py`가 확인).
 Plan 2·4 기본값 궤적은 이번 변경 전과 차이 0.0이다. v2~v4 CAD와 `--model upkie`는 예전 경로로 그대로 돈다.
+
+2026-11-14 사용자(새 하드웨어라 upkie는 필요 없음): upkie 모델과 Plan 4 하네스·합격 판정 배터리·MPC 호스트, `ake_cad`의 upkie 경로(`--model`·`--lateral`·`--outer-gains upkie`)를 지웠다. 파라미터 계산은 `wbr/models/plant_params.py`, IMU 프레임 변환은 `wbr/observers/base_orientation.py`로 이름을 바꿨다. `Plan4LQI8`은 이제 로봇 없이 혼자 돌지 않는 공용 런타임이고(로봇 상수·짐 위치는 `PlanV5`가 준다), 이름만 남았다. 위 두 줄은 그 전의 기록이다. 같은 날 사용자 결정으로 v5가 쓰지 않는 코드도 지웠다: MCU의 CAR·전환 모드와 연결 끊김 뒤 모터 끄기, 다리 길이 차 롤, `F_ff / cos θ`, v5 기능의 스위치(`exact_leg_force`, `wheel_reaction_ff`, `roll_compliant`, `suspension`, `mean_follows_range`, `uneven_hold_int`, `imu_model`, 자세 필터 끄기). 이 문서에 남은 그 이름들은 그때의 기록이다(`wheeled_biped/README.md`).
 
 ## 9. 실기로 확인할 것
 

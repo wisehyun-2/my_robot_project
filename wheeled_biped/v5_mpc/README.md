@@ -1,7 +1,7 @@
 # v5_mpc — MPC 하나만 쓰는 v5 로봇
 
 v5 로봇(`models/wheelbiped_v5`, AKE60-8 × 6, 링크 25 cm)의 균형 제어기를 **MPC 하나**로 두는 폴더다(2026-11-10 사용자 요청).
-LQI8은 이 폴더 어디에도 없다. Plan 4의 MPC 호스트(`wbr/controllers/mpc_host`, LQI 위에서 속도 기준만 만드는 것)도 쓰지 않는다.
+LQI8은 이 폴더 어디에도 없다. Plan 4의 MPC 호스트(`wbr/controllers/mpc_host`, LQI 위에서 속도 기준만 만드는 것)와는 다른 것이다(그 호스트는 2026-11-14에 지웠다).
 MPC가 MCU 안에서 LQI8 자리에 들어가 바퀴·hip 토크를 직접 낸다. 같은 일을 LQI8로 하는 폴더는 `../v5_lqi/`다.
 
 ```
