@@ -16,7 +16,7 @@ MCU(1 kHz): 상태 추정 ─▶ LQI8 (T, Tp) ─▶ 높이·요·롤·벌어짐
 |---|---|
 | `controller.py` | 이 폴더의 제어기: 단계 정의(`STAGES`), 지금 쓰는 단계(`FULL_STAGE` = LQR + ∫위치 + ∫기울기), `make_plan()` |
 | `TEST/` | 단계별 통과 시험(전에는 `wheeled_biped/TEST/`). 안내는 `TEST/README.md` |
-| `../wbr/controllers/lqi8/` | LQI8 코드(`lqi8.py` 게인표·기준 성형·적분, `law.py` MCU 연결). Plan 2·4와 같이 써서 `wbr`에 둔다 |
+| `../wbr/controllers/lqi8/` | LQI8 코드(`lqi8.py` 게인표·기준 성형·적분, `law.py` MCU 연결). Plan 2·4 때 만든 코드라 `wbr`에 있다 |
 | `../wbr/plans/plan_v5.py` | v5 폐루프(URDF, IMU 경로, 게인). 균형 제어기는 `Plan4LQI8._make_law`가 만드는 LQI8 |
 
 로봇 모델, 시뮬레이터, IMU 경로, MCU와 바깥 루프 네 개는 MPC 폴더와 같은 코드다. 두 폴더는 MCU 안의 균형 제어기만 다르다.
