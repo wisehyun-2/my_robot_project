@@ -10,7 +10,7 @@ import sys
 from unittest import mock
 HERE = pathlib.Path(__file__).resolve().parent
 V5 = HERE.parents[1]
-sys.path.insert(0, str(V5.parent / 'robot_cad_v4' / 'fusion'))
+sys.path.insert(0, str(V5 / 'v4' / 'fusion'))
 sys.path.insert(0, str(V5 / 'fusion'))
 # legs.py / layout.py / legs_v5.py import cadlib, which loads the Fusion API at import time; only their pure-Python
 # levels, hole sizes and frames are used here, so outside Fusion a stub stands in for adsk (no geometry is built)

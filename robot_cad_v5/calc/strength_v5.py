@@ -5,7 +5,7 @@ PETG): fork thigh and shank (closed boxes + Warren ribs, plan A spar), the 6061 
 
     python calc/strength_v5.py        # -> calc/strength_v5.md
 
-Loads, load cases and formulas are those of robot_cad_v4/calc/strength_v4.py (= v3 strength.py): contact 60 N static
+Loads, load cases and formulas are those of ../v4/calc/strength_v4.py (= v3 strength.py; from robot_cad_v4/calc): contact 60 N static
 per wheel, design 300 N, check 600 N (SF 2), lateral 0.5 x, motor torque 12.5 / 25 N m; stresses at the check load,
 deflections at the design load.  Geometry: fusion/legs_v5.py and the v4 params lengthened by fusion/link_length.py (no Fusion needed: a
 stub stands in for adsk, as in manufacturing/explain).  Part volumes: Fusion report() of 11-07 (links 250 mm, ribs 3.0 x 9 / 10).
@@ -17,7 +17,7 @@ from unittest import mock
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 V5 = os.path.dirname(HERE)
-sys.path.insert(0, os.path.join(os.path.dirname(V5), 'robot_cad_v4', 'fusion'))
+sys.path.insert(0, os.path.join(V5, 'v4', 'fusion'))
 sys.path.insert(0, os.path.join(V5, 'fusion'))
 for _m in ('adsk', 'adsk.core', 'adsk.fusion'):
     sys.modules.setdefault(_m, mock.MagicMock())
@@ -257,7 +257,7 @@ def main():
     out.append('사용자 결정: 11-01 허벅지·정강이를 MJF PA12 대신 **PETG(FDM)** 로 계산, 11-02 **PETG로 출력하기로 함**, 11-07 **링크 25 cm + 리브 3.0**.  형상은 '
                'v5 (`fusion/legs_v5.py`, 링크 %.0f mm): 바깥 막대 y %.1f ~ %.1f, 갈래 틈 %.1f, 허벅지 상자 폭 %.1f, 정강이 기본층 '
                'y %.0f ~ %.0f(무릎 판과 틈 %.1f), 바퀴는 바깥쪽(타이어 중심면 y %.1f, 11-02 바퀴 묶음 2.5 mm 바깥으로), hub 인서트는 '
-               '6061 받침 링으로 PETG 벽을 끼워 고정(11-02).  하중·식은 v4(`robot_cad_v4/calc/strength_v4.py`)와 같다: 정지 %.0f N/바퀴, '
+               '6061 받침 링으로 PETG 벽을 끼워 고정(11-02).  하중·식은 v4(`v4/calc/strength_v4.py`)와 같다: 정지 %.0f N/바퀴, '
                '설계 %.0f N, 검토 %.0f N(안전계수 2), 옆 %.0f / %.0f N, 관절 토크 설계 12.5 / 검토 25 N·m.  응력은 검토 하중, 처짐은 '
                '설계 하중.\n'
                % (P.L1, LV.SPAR[0], LV.SPAR[1], LV.SPAR[0] - LV.Y_TO, LV.SPAR[1] - LV.Y_TF, LV.Y_SI, LV.Y_SO, LV.KNEE_GAP, YTC,

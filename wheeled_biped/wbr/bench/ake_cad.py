@@ -1,4 +1,5 @@
-"""Motor check of the v2 CAD robot (robot_cad_v2): AKE60-8 on all six joints, CAD link lengths, masses, COMs and
+"""Motor check of a CAD robot (written for v2; the default is robot_cad_v5 since 2026-11-14, when the v2 - v4 CAD
+folders were removed - git tag before-cleanup-2026-11-14): AKE60-8 on all six joints, CAD link lengths, masses, COMs and
 inertias, 150 mm wheel; with and without a 5 kg payload on the top plate.
 
 The scenarios, controller (Plan 4 LQI8 re-identified on the model, MCU 1 kHz, noise + 2 ms latency) and motor model
@@ -17,10 +18,9 @@ built differently (build_cad_model):
   roll 4 %);
 * the payload is a 5 kg box (200 x 150 x 100 mm) on the top plate, its COM 50 mm above the plate.
 
-    python -m wbr.bench.ake_cad                      # both cases -> results/ake_cad/
+    python -m wbr.bench.ake_cad                      # both cases, robot_cad_v5 -> results/ake_cad_v5/
     python -m wbr.bench.ake_cad --only robot --quick
-    python -m wbr.bench.ake_cad --cad ../robot_cad_v3/calc/mass_properties.json --out results/ake_cad_v3   # v3 (6061 legs)
-    python -m wbr.bench.ake_cad --cad ../robot_cad_v5/calc/mass_properties.json --out results/ake_cad_v5   # v5 (outboard wheels)
+    python -m wbr.bench.ake_cad --cad <mass_properties.json> --out results/<folder>   # another CAD version
     python -m wbr.bench.ake_cad --lateral upkie --outer-gains upkie --wheel-reaction off ...  # the set-up before 11-05
 
 Outer loops (11-05, user decision): the yaw PI and the leg-length PD are scaled from the upkie tuning to the CAD robot
@@ -55,8 +55,8 @@ import numpy as np
 from wbr import MODELS_DIR, RESULTS_DIR
 from wbr.bench import ake_sizing as AS
 
-CAD_JSON = Path(__file__).resolve().parents[3] / "robot_cad_v2" / "calc" / "mass_properties.json"
-OUT_DIR = RESULTS_DIR / "ake_cad"
+CAD_JSON = Path(__file__).resolve().parents[3] / "robot_cad_v5" / "calc" / "mass_properties.json"
+OUT_DIR = RESULTS_DIR / "ake_cad_v5"       # results/ake_cad, ake_cad_v3, ake_cad_v4: records of the removed v2 - v4 CAD
 MASSLESS = 1e-4
 CARRIER = {"base": "torso", "left_hip": "left_femur", "left_knee": "left_tibia", "left_wheel": "left_wheel_tire",
            "right_hip": "right_femur", "right_knee": "right_tibia", "right_wheel": "right_wheel_tire"}
@@ -409,7 +409,7 @@ def main(argv=None):
     ap.add_argument("--out", type=Path, default=OUT_DIR)
     ap.add_argument("--static", action="store_true", help="only the model facts (masses, standing torques)")
     ap.add_argument("--cad", type=Path, default=CAD_JSON,
-                    help="mass_properties.json of the CAD robot (default robot_cad_v2; v3: robot_cad_v3/calc/...)")
+                    help="mass_properties.json of the CAD robot (default robot_cad_v5)")
     ap.add_argument("--lateral", choices=("cad", "upkie"), default="cad",
                     help="lateral COMs / tyre centre / track from the CAD (default) or upkie's (results before 11-05)")
     ap.add_argument("--outer-gains", choices=("scaled", "upkie"), default="scaled",

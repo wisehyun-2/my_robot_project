@@ -1,4 +1,4 @@
-"""v5-only values over the v4 params (robot_cad_v4/fusion/params.py keeps the v4 ones).  No Fusion import: applied right
+"""v5-only values over the v4 params (../v4/fusion/params.py keeps the v4 ones).  No Fusion import: applied right
 after the params import by v5run.load() and by the scripts that read the geometry outside Fusion (part drawings,
 sections, strength), next to link_length.lengthen().
 

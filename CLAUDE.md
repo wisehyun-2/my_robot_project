@@ -24,11 +24,12 @@
   - `docs/robot_v5_model.md` — v5 모델, IMU 경로, 바깥 루프의 기록과 남은 일.
   - Plan 4 — upkie 하드웨어 모델(`models/upkie_plan4`) 위의 하네스(`wbr/plans/plan4_lqi8.py`)와 합격 판정(`docs/합격기준.md`). v5와 LQI8 코드를 같이 쓴다. **합격 기준 수치·모터 한계·노이즈는 사용자 결정 없이 바꾸지 않는다.**
   - 기록으로만 남은 것: Plan 1·2·3은 2026-11-11에 삭제했다(코드는 git 이력, 비교는 `docs/비교보고서.md`와 `results/bench`). 균형 제어기 이름은 11-10에 LQI6 → LQI8로 바꿨고, 날짜 붙은 기록과 `results/`의 키·파일 이름(`plan4_lqi6` 등)은 옛 이름 그대로다. `docs/HANDOFF.md`는 10-22~11-11의 인수인계 기록이라 브랜치·컴퓨터·확정안이 그때 기준이다.
-- `robot_cad_v5/` — 지금 로봇의 Fusion 모델. 허브 `WheelBiped_v5` 버전 18 = `export/`. 모든 부품을 PLA·PETG로 출력한다(11-09 사용자, 강도는 보지 않음). 모델 질량 11.610 kg은 금속 부품 기준이다. 코드는 `../robot_cad_v4/fusion`을 불러 쓰고(`fusion/v5run.py`) v4 파일은 고치지 않는다. 제어기 모델은 `calc/*.json`과 `export/links_stl`에서 `python -m wbr.models.build_v5`로 만든다.
-- `robot_cad_v4/` — v5가 불러 쓰는 코드다. 지우지 않는다.
-- `robot_cad_v3/`, `robot_cad_v2/` — 지난 판. v5 도면 스크립트가 v3의 `manufacturing/hlr_gmsh.py`와 v2의 도면·STEP을 쓰고, `wbr.bench.ake_cad`의 `--cad` 기본값이 v2다. 몸통·엔코더·배선의 바탕 설명은 `robot_cad_v2/README.md`에 있다(CAN 포트 배정은 `ros2_ws/README.md` 2절이 기준).
-- `robot_cad/` — 첫 판(v1, 10-26). 2026-11-14 사용자: `upkie_step/`(upkie 다리 부품 STEP 5개)만 남기고 지웠다(다른 폴더가 쓰지 않음). 지운 내용은 git 이력에 있다(`89ba4b2`까지).
-- `balancing_robot_design/` — 10-21의 2륜 자가균형 로봇 설계보고서(`설계보고서.md`)와 제어기 전수 비교(`제어기_비교보고서.md`, SIL 하네스 `sil/`·`sim6/`). 그때의 "내가 만든 제어기"는 `sim6/controllers6.py`의 `MineLQI6`다(제어기_비교보고서 8절). 다른 폴더의 코드는 이 폴더를 쓰지 않는다.
+- `robot_cad_v5/` — 지금 로봇의 Fusion 모델. 허브 `WheelBiped_v5` 버전 18 = `export/`. 모든 부품을 PLA·PETG로 출력한다(11-09 사용자, 강도는 보지 않음). 모델 질량 11.610 kg은 금속 부품 기준이다. 제어기 모델은 `calc/*.json`과 `export/links_stl`에서 `python -m wbr.models.build_v5`로 만든다.
+  - `v4/fusion`은 v5가 불러 쓰는 v4 코드다(`fusion/v5run.py`가 불러서 덮어쓴다). v4 파일은 고치지 않는다. **11-14에 `robot_cad_v4/fusion`에서 옮긴 뒤 Fusion에서 `v5run.load()`를 아직 돌려 보지 않았다.**
+  - 몸통·셸·엔코더·배선의 바탕 설명은 지난 판 README에 있다: `docs/v4/README.md` → `docs/v3/README.md` → `docs/v2/README.md`. CAN 포트 배정은 `ros2_ws/README.md` 2절이 기준이다.
+- `references/` — 참조 저장소의 git 서브모듈(아래 작업 규칙, `references/README.md`).
+- **2026-11-14 사용자: 로봇 폴더는 `robot_cad_v5/`와 `wheeled_biped/`만 둔다.** `robot_cad`(v1)·`robot_cad_v2`·`v3`·`v4`·`balancing_robot_design`은 지웠고, 쓰는 것만 옮겼다: v4 코드·계산 → `robot_cad_v5/v4/`, v3의 `hlr_gmsh.py`와 v2 가공 도면·STEP → `robot_cad_v5/manufacturing/`, 세 README → `robot_cad_v5/docs/`, upkie 다리 STEP → `wheeled_biped/models/upkie_step/`, 2륜 보고서 두 편 → `wheeled_biped/docs/balancing_robot_design/`. 지운 나머지는 git 태그 `before-cleanup-2026-11-14`에 있다. `wbr.bench.ake_cad`의 기본 CAD는 v5다(`results/ake_cad`·`ake_cad_v3`·`ake_cad_v4`는 지운 판의 기록).
+- `wheeled_biped/docs/balancing_robot_design/` — 10-21의 2륜 자가균형 로봇 `설계보고서.md`와 `제어기_비교보고서.md`. 그때의 "내가 만든 제어기"는 `MineLQI6`다(제어기_비교보고서 8절, 코드는 위 태그의 `balancing_robot_design/sim6/controllers6.py`).
 
 ## 작업 규칙
 - 브랜치는 `ros2-v5` 하나다. Windows PC, Ubuntu 노트북, Pi 4가 같이 쓰고 동시에 쓰지 않는다. 작업을 시작하기 전에 `git pull`로 다른 컴퓨터의 변경을 받는다.
@@ -38,5 +39,5 @@
 - Windows PC에는 ROS 2와 C++ 컴파일러가 없다(`wheeled_biped/docs/HANDOFF.md` 5절). C++ 빌드와 ROS 실행은 노트북과 Pi에서 한다.
 - 참조 저장소는 **이 저장소의 `references/` 아래 git 서브모듈**로 둔다(2026-11-14 사용자: 여러 컴퓨터가 같은 커밋을 보게). 커밋이 고정되어 있고, 받는 법·목록·라이선스 규칙은 `references/README.md`에 있다. 받을 때는 `git submodule update --init`(전부) 또는 경로를 지정해 일부만 받는다. 서브모듈 안의 파일은 고치지 않는다. 예전 위치 `../references/`(저장소 밖)는 쓰지 않는다.
   - 지금 쓰는 것(2026-11-14 사용자 정리): mjbots `pi3hat`·`moteus`·`power_dist`·`fdcanusb`·`moteus_ros2`, `upkie`, `ddt_ros2_control`·`TITA_ROS2_Control_Sim`·`TITA-Development-Manual`, `diablo_ros2`·`diablo_sdk`·`diablo-sdk-docs`, 그리고 README 1절 (d)의 11-12에 더한 다섯 개(`tita_hardware_ros2_control`, `pi3hat_hw_bartlomiej`, `pi3hat_robotic_systems`, `pi3hat_hw_glevine`, `ros2_control_demos`).
-  - 11-14에 지운 것(다시 받지 않는다): `upkie_parts`(v1 CAD의 STEP은 `robot_cad/upkie_step`에 있음), `upkie_description`(저장소 안 `wheeled_biped/models/upkie_description`을 씀), `mjlab_upkie`·`Col_DIABLO_Issac_RL`(강화학습, 범위 밖), `diablo-sim-env`·`DiabloSTLSDF`(삭제된 Plan 2용), `TITA-SDK-ROS2`·`TITA_CAN_Inerface`(TITA 보드 CAN 규약, README 1절에서 "쓰지 않는 것").
+  - 11-14에 지운 것(다시 받지 않는다): `upkie_parts`(v1 CAD의 STEP은 `wheeled_biped/models/upkie_step`에 있음), `upkie_description`(저장소 안 `wheeled_biped/models/upkie_description`을 씀), `mjlab_upkie`·`Col_DIABLO_Issac_RL`(강화학습, 범위 밖), `diablo-sim-env`·`DiabloSTLSDF`(삭제된 Plan 2용), `TITA-SDK-ROS2`·`TITA_CAN_Inerface`(TITA 보드 CAN 규약, README 1절에서 "쓰지 않는 것").
 - 이 저장소의 사본은 과거 파일 내용을 필요할 때만 받는 부분 클론일 수 있다(`git config remote.origin.partialclonefilter`가 `blob:none`). 그런 사본에서는 이력 전체의 내용을 훑는 명령(`git log -S`, `git log -p`, `git rev-list --objects --all` 등)을 쓰지 않는다. 한꺼번에 내려받아 `.git`이 수백 MB 커진다.

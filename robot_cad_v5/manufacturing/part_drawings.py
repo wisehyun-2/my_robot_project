@@ -15,8 +15,8 @@ Source: the Fusion export ../export/parts_step/<name>.step (robot frame, Fusion 
   * the other designed parts (v4 parts used unchanged: cups, hub flange, rim, shells, top plate, tray, deck, saddles,
     splice tabs, hip plate, spine bars, rails, stator clamp ring, magnet spacer): one sheet each, three hidden-line views
     along the robot axes with the overall sizes, material / process from the v4 notes.  The machined ones also have the
-    fully dimensioned v2 drawings (robot_cad_v2/manufacturing/drawings), copied when the solid is unchanged.
-Views are hidden-line projections (robot_cad_v3/manufacturing/hlr_gmsh.py); dimensions, tables and notes are written
+    fully dimensioned v2 drawings (v2/drawings, from robot_cad_v2/manufacturing), copied when the solid is unchanged.
+Views are hidden-line projections (hlr_gmsh.py, from robot_cad_v3/manufacturing); dimensions, tables and notes are written
 here.  Explanatory production drawings for quotes; the STEP is the master geometry.
 """
 import argparse
@@ -41,9 +41,8 @@ from matplotlib.path import Path  # noqa: E402
 
 HERE = pathlib.Path(__file__).resolve().parent
 V5 = HERE.parent
-ROOT = V5.parent
-sys.path.insert(0, str(ROOT / 'robot_cad_v3' / 'manufacturing'))     # hlr_gmsh
-sys.path.insert(0, str(ROOT / 'robot_cad_v4' / 'fusion'))
+sys.path.insert(0, str(HERE))                        # hlr_gmsh (moved here from robot_cad_v3/manufacturing on 2026-11-14)
+sys.path.insert(0, str(V5 / 'v4' / 'fusion'))
 sys.path.insert(0, str(V5 / 'fusion'))
 for _m in ('adsk', 'adsk.core', 'adsk.fusion'):
     sys.modules.setdefault(_m, mock.MagicMock())
@@ -62,7 +61,7 @@ import gmsh  # noqa: E402
 SRC = V5 / 'export' / 'parts_step'
 STEP_DIR = HERE / 'step'
 PDF_DIR = HERE / 'drawings'
-V2_DRAW = ROOT / 'robot_cad_v2' / 'manufacturing'
+V2_DRAW = HERE / 'v2'                                 # the v2 drawings / STEPs of V2_COPY (from robot_cad_v2/manufacturing)
 DATE = '2026-11-08'
 PROJECT = 'WheelBiped v5'
 

@@ -19,8 +19,9 @@
   - 실제 모델을 세 관절 축으로 잘라 **실제 단면도**를 새로 그렸고, 그 단면으로 겹침·틈을 검사했다(`manufacturing/explain/`).
 - **11-07 (사용자)**: 허벅지·정강이 17.5 → **25 cm**. 관절 사이만 늘리고 모터 자리는 건드리지 않으며, 옆면은 한 직선이다. 리브를 25 cm에 맞게 다시 배치하고 2.0 → 3.0 mm로 두껍게 했다(0절 끝 "링크 25 cm").
 
-몸통·셸·hip 판·척추 봉·레일·모터·드라이버 컵·허브·림·타이어·체결 부품은 v4 코드(`../robot_cad_v4/fusion`)로 그대로 만든다.
-이 폴더의 코드는 링크를 바꾸고 바퀴를 돌리는 일만 한다. 나머지는 `../robot_cad_v4/README.md`를 본다.
+몸통·셸·hip 판·척추 봉·레일·모터·드라이버 컵·허브·림·타이어·체결 부품은 v4 코드(`v4/fusion`, 2026-11-14에 `robot_cad_v4/fusion`에서 옮김)로 그대로 만든다.
+이 폴더의 코드는 링크를 바꾸고 바퀴를 돌리는 일만 한다. 나머지는 `docs/v4/README.md`를 본다(v4 → `docs/v3/README.md` → `docs/v2/README.md` 순으로 이어진다).
+2026-11-14 사용자: `robot_cad_v2`·`v3`·`v4` 폴더를 지우고 v5가 쓰는 것만 이 폴더로 옮겼다 — v4 코드 `v4/fusion`, v4 계산 `v4/calc`, `manufacturing/hlr_gmsh.py`(v3), `manufacturing/v2/`(v2 가공 도면·STEP), 세 README와 그 그림 `docs/v2`·`v3`·`v4`. 지운 나머지(옛 판의 export·도면·그림)는 git 태그 `before-cleanup-2026-11-14`에 있다.
 
 Fusion 허브 **`WheelBiped_v5`**(`Default Project` 최상위). `export/WheelBiped_v5.f3d`에 같은 모델(파라메트릭, 조인트 6개)이 있다.
 - 버전 1: 배선을 넣었던 git `5a01c18`의 f3d(10.61 kg).

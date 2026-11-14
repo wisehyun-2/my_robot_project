@@ -61,7 +61,7 @@ import v5_params as VP  # noqa: E402
 assert VP.__file__.lower().startswith(HERE.lower()), VP.__file__
 
 BASE = os.path.dirname(HERE)
-V4 = os.path.join(os.path.dirname(BASE), 'robot_cad_v4', 'fusion')
+V4 = os.path.join(BASE, 'v4', 'fusion')              # the v4 code, moved here from robot_cad_v4/fusion on 2026-11-14
 IMG = os.path.join(BASE, 'images')
 EXP = os.path.join(BASE, 'export')
 TAG = ('wbv5', 'tag', 'wbv5_robot')

@@ -12,7 +12,7 @@ printed part does not fit the bed in the orientation given here.
 
     python manufacturing/bom.py        # -> ../BOM.md, ../BOM.csv (run from robot_cad_v5)
 
-Specs of the parts the v4 code builds: robot_cad_v4/fusion/finalize.py (PRINT_NOTE, MACHINED, PURCHASED) and fasteners.py (specs);
+Specs of the parts the v4 code builds: ../v4/fusion/finalize.py (PRINT_NOTE, MACHINED, PURCHASED) and fasteners.py (specs);
 v5 parts and joint screws: fusion/legs_v5.py, manufacturing/part_drawings.py, manufacturing/explain/real_sections.py.
 """
 import csv
@@ -312,7 +312,7 @@ def spare(item, k):
     return k
 
 
-# wiring: not in the model (user 11-01); topology of robot_cad_v2 README 8 (= v4 / the v5 route of git 5a01c18)
+# wiring: not in the model (user 11-01); topology of docs/v2/README.md 8 (= v4 / the v5 route of git 5a01c18)
 WIRING = [  # (item, spec, need, order, note)
     ('XT30U 플러그 수(M), 16 AWG 납땜형', '전원 케이블 끝', 3, '— (동봉)', '전원보드 P5 → pi3hat, P3 → 왼 hip, P6 → 오른 hip: 수-암 케이블 3개의 보드 쪽 끝 '
      '(power dist r4.5b에 6개 동봉)'),
