@@ -6,10 +6,10 @@ BOM allows in PLA are computed with them too.
 
     python calc/strength_v5.py        # -> calc/strength_v5.md
 
-Loads, load cases and formulas are those of ../v4/calc/strength_v4.py (= v3 strength.py; from robot_cad_v4/calc): contact 60 N static
+Loads, load cases and formulas are those of the v3 / v4 strength calculations (removed; git show 208c955:robot_cad_v5/v4/calc/strength_v4.py): contact 60 N static
 per wheel, design 300 N, check 600 N (SF 2), lateral 0.5 x, motor torque 12.5 / 25 N m; stresses at the check load,
 deflections at the design load.  Where v4 compared a machined part with a metal limit, the same stress is compared here
-with the PETG value (within a layer or across the layers, by the print orientation of BOM.md 2).  Geometry: fusion/legs_v5.py and the v4 params lengthened by fusion/link_length.py (no Fusion needed: a
+with the PETG value (within a layer or across the layers, by the print orientation of BOM.md 2).  Geometry: fusion/legs_v5.py and the base params (fusion_base) lengthened by fusion/link_length.py (no Fusion needed: a
 stub stands in for adsk, as in manufacturing/explain).  Part volumes: Fusion report() of 11-07 (links 250 mm, ribs 3.0 x 9 / 10).
 """
 import math
@@ -19,7 +19,7 @@ from unittest import mock
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 V5 = os.path.dirname(HERE)
-sys.path.insert(0, os.path.join(V5, 'v4', 'fusion'))
+sys.path.insert(0, os.path.join(V5, 'fusion_base'))
 sys.path.insert(0, os.path.join(V5, 'fusion'))
 for _m in ('adsk', 'adsk.core', 'adsk.fusion'):
     sys.modules.setdefault(_m, mock.MagicMock())
@@ -79,7 +79,7 @@ def ok(v, lim):
 
 # ----------------------------------------------------------------------------- sections
 def box(yin, yout, h_, t):
-    """Closed box y yin .. yout, in-plane depth h_, all walls t (v4 strength_v4.box) + a Warren rib crossed by the
+    """Closed box y yin .. yout, in-plane depth h_, all walls t + a Warren rib crossed by the
     section (rib / sin 45 across the cavity: area and lateral bending only)."""
     assert yout - yin > 2 * t + 1.0, (yin, yout)  # every v5 box has a cavity (tine 26, spar 25 wide at least)
     r = [(yin, yin + t, -h_ / 2, h_ / 2), (yout - t, yout, -h_ / 2, h_ / 2),
@@ -206,7 +206,7 @@ def plate_buckling(t, b, E, nu, k=8.0):
 
 def annular(b, a, t, M, E=E_PETG, nu=NU_PETG, outer='clamped'):
     """Max radial bending stress of an annular plate (inner edge r = b fixed to a rigid boss tilted by the moment M,
-    outer edge r = a clamped or simply supported), n = 1 Fourier mode (v4 strength_v4.annular)."""
+    outer edge r = a clamped or simply supported), n = 1 Fourier mode."""
     f = [lambda r: r, lambda r: r ** 3, lambda r: 1 / r, lambda r: r * math.log(r)]
     d1 = [lambda r: 1.0, lambda r: 3 * r ** 2, lambda r: -1 / r ** 2, lambda r: math.log(r) + 1]
     d2 = [lambda r: 0.0, lambda r: 6 * r, lambda r: 2 / r ** 3, lambda r: 1 / r]
@@ -265,7 +265,7 @@ def main():
                '강도는 보지 않는다**, 11-15 금속 부품은 없다.  형상은 '
                'v5 (`fusion/legs_v5.py`, 링크 %.0f mm): 바깥 막대 y %.1f ~ %.1f, 갈래 틈 %.1f, 허벅지 상자 폭 %.1f, 정강이 기본층 '
                'y %.0f ~ %.0f(무릎 판과 틈 %.1f), 바퀴는 바깥쪽(타이어 중심면 y %.1f, 11-02 바퀴 묶음 2.5 mm 바깥으로), hub 인서트는 '
-               '받침 링으로 PETG 벽을 끼워 고정(11-02).  하중·식은 v4(`v4/calc/strength_v4.py`)와 같다: 정지 %.0f N/바퀴, '
+               '받침 링으로 PETG 벽을 끼워 고정(11-02).  하중·식은 v4 때와 같다: 정지 %.0f N/바퀴, '
                '설계 %.0f N, 검토 %.0f N(안전계수 2), 옆 %.0f / %.0f N, 관절 토크 설계 12.5 / 검토 25 N·m.  응력은 검토 하중, 처짐은 '
                '설계 하중.\n'
                % (P.L1, LV.SPAR[0], LV.SPAR[1], LV.SPAR[0] - LV.Y_TO, LV.SPAR[1] - LV.Y_TF, LV.Y_SI, LV.Y_SO, LV.KNEE_GAP, YTC,

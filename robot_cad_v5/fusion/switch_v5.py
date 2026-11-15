@@ -23,13 +23,13 @@ def frame(M):
 
 def patch(M):
     P, SH, A, C = M['params'], M['shell'], M['assembly'], M['cadlib']
-    v4_openings = SH.openings
+    base_openings = SH.openings
 
     def openings(h):
         z = P.SWITCH_Z
         P.SWITCH_Z = FAR
         try:
-            v4_openings(h)
+            base_openings(h)
         finally:
             P.SWITCH_Z = z
         B = C.Builder()

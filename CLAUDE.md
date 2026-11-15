@@ -34,7 +34,7 @@
   - v5 기능을 끄는 스위치
   - Plan 1~4 전용 코드
 - 작업하는 폴더는 `robot_cad_v5/`와 `wheeled_biped/`에만 둔다(2026-11-14 사용자).
-- `robot_cad_v5/v4/` 아래 v4 파일은 고치지 않는다(v5가 불러 쓴다).
+- `robot_cad_v5/fusion_base/` 아래 파일(v4에서 물려받은 바탕 코드)은 고치지 않는다(v5가 불러 쓴다).
 
 ## 참조 저장소
 - `references/` 아래 git 서브모듈로 둔다. 목록·커밋·받는 법은 `references/README.md`에 있다.

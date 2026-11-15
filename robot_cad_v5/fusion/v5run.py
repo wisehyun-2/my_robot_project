@@ -1,4 +1,4 @@
-"""robot_cad_v5 = the v4 robot (the v4 code in ../v4/fusion) with the wheels turned outboard and printed PETG legs
+"""robot_cad_v5 = the base robot (the code in ../fusion_base, taken over from v4) with the wheels turned outboard and printed PETG legs
 (legs_v5.py, concept A "monolith", chosen by the user 11-01).  The torso, hip plates, motors, cups, wheels and
 fasteners are built by the v4 code; this module swaps the links and applies the v5 patches (power board, two-piece tray / deck,
 switch on the top).  No wiring in the model (user 11-01: all cables removed; the external leg route that was tried is
@@ -62,7 +62,7 @@ import v5_params as VP  # noqa: E402
 assert VP.__file__.lower().startswith(HERE.lower()), VP.__file__
 
 BASE = os.path.dirname(HERE)
-V4 = os.path.join(BASE, 'v4', 'fusion')              # the v4 code, moved here from robot_cad_v4/fusion on 2026-11-14
+FUSION_BASE = os.path.join(BASE, 'fusion_base')      # the base code (torso, shell, bought parts, wheels), taken over from v4
 IMG = os.path.join(BASE, 'images')
 EXP = os.path.join(BASE, 'export')
 TAG = ('wbv5', 'tag', 'wbv5_robot')
@@ -82,19 +82,19 @@ POSES = tuple((L0 * LL.SCALE, hip) for L0, hip in ((310, 0), (200, 0), (240, -60
                                                  # the poses of the 175 mm link at the same knee angles
 
 
-def _v4_loader(v4run):
-    """v4run.load with the v5 link length: same modules and order, params lengthened before the modules that read them at import.  The
-    v4 files stay as they are, and v4run is dropped from sys.modules afterwards, so a v4 script in this Fusion session gets a plain one."""
+def _base_loader(baserun):
+    """baserun.load with the v5 link length: same modules and order, params lengthened before the modules that read them at import.  The
+    base files stay as they are, and baserun is dropped from sys.modules afterwards."""
     def loader(names=None):
-        if v4run.PATH not in sys.path:
-            sys.path.insert(0, v4run.PATH)
+        if baserun.PATH not in sys.path:
+            sys.path.insert(0, baserun.PATH)
         out = {}
-        for n in v4run.MODS:
+        for n in baserun.MODS:
             m = sys.modules.get(n)
-            if m is not None and v4run.PATH.lower() not in (getattr(m, '__file__', '') or '').lower():
+            if m is not None and baserun.PATH.lower() not in (getattr(m, '__file__', '') or '').lower():
                 del sys.modules[n]
-        for n in v4run.MODS:
-            if os.path.exists(os.path.join(v4run.PATH, n + '.py')):
+        for n in baserun.MODS:
+            if os.path.exists(os.path.join(baserun.PATH, n + '.py')):
                 out[n] = importlib.reload(importlib.import_module(n))
                 if n == 'params':
                     LL.lengthen(out[n])
@@ -104,22 +104,22 @@ def _v4_loader(v4run):
 
 
 def load():
-    """v4 modules (v4run.load, v5 link length) + legs_v5; this folder and the v4 one first on sys.path, files checked."""
-    for p in (HERE, V4):
+    """Base modules (baserun.load, v5 link length) + legs_v5; this folder and fusion_base first on sys.path, files checked."""
+    for p in (HERE, FUSION_BASE):
         while p in sys.path:
             sys.path.remove(p)
-    sys.path.insert(0, V4)
+    sys.path.insert(0, FUSION_BASE)
     sys.path.insert(0, HERE)
-    sys.modules.pop('v4run', None)
-    import v4run
-    sys.modules.pop('v4run', None)
-    v4run.load = _v4_loader(v4run)
-    M = v4run.load()
+    sys.modules.pop('baserun', None)
+    import baserun
+    sys.modules.pop('baserun', None)
+    baserun.load = _base_loader(baserun)
+    M = baserun.load()
     sys.modules.pop('legs_v5', None)
     import legs_v5
-    M['legs_v5'], M['v4run'] = legs_v5, v4run
+    M['legs_v5'], M['baserun'] = legs_v5, baserun
     for k in ('params', 'cadlib', 'legs'):
-        assert M[k].__file__.lower().startswith(V4.lower()), (k, M[k].__file__)
+        assert M[k].__file__.lower().startswith(FUSION_BASE.lower()), (k, M[k].__file__)
     assert legs_v5.__file__.lower().startswith(HERE.lower()), legs_v5.__file__
     M['torso'].centre_imu()                        # v5's electronics layout (11-07); v4 keeps the Pi on the -y side
     sys.modules.pop('pdist_v5', None)
@@ -168,10 +168,10 @@ def _new_doc():
 _OTHER = {'L': 'R', 'R': 'L', 'F': 'B', 'B': 'F', 'front': 'rear', 'rear': 'front'}
 
 
-def robot_name(v4_name):
-    """The name in this robot of a part, body or joint the v4 code calls v4_name: shell_front_L -> shell_rear_R, femur_L -> femur_R,
+def robot_name(base_name):
+    """The name in this robot of a part, body or joint the base code calls base_name: shell_front_L -> shell_rear_R, femur_L -> femur_R,
     'thigh_L main' -> 'thigh_R main', rail_F -> rail_B.  Names that say neither stay."""
-    n = re.sub(r'_([LR])(?=$|[ _])', lambda m: '_' + _OTHER[m.group(1)], v4_name)
+    n = re.sub(r'_([LR])(?=$|[ _])', lambda m: '_' + _OTHER[m.group(1)], base_name)
     n = re.sub(r'^shell_(front|rear)(?=_)', lambda m: 'shell_' + _OTHER[m.group(1)], n)
     return re.sub(r'^(rail|spine_tube)_([FB])(?=$| )', lambda m: m.group(1) + '_' + _OTHER[m.group(2)], n)
 
@@ -270,12 +270,12 @@ def turn_wheels(M):
 def build():
     _new_doc()
     M = load()
-    M['v4run'].build(with_harness=False, rear_round=True, centre_imu=True)   # no wiring (user 11-01), round shell corners at the front (CAD -x)
+    M['baserun'].build(with_harness=False, rear_round=True, centre_imu=True)   # no wiring (user 11-01), round shell corners at the front (CAD -x)
                                                    # (11-02), the IMU on the centre line (11-07)
-    C, LV = M['cadlib'], M['legs_v5']             # (v4run.build reloaded the v4 modules in place)
+    C, LV = M['cadlib'], M['legs_v5']             # (baserun.build reloaded the base modules in place)
     M['finalize'].show_all()
     rename_to_robot()                              # before SIDES is used on the v4 parts
-    Ms = load()                                    # fresh modules (v4run.build reloaded them without the v5 patches)
+    Ms = load()                                    # fresh modules (baserun.build reloaded them without the v5 patches)
     Ms['split_v5'].apply(Ms)                       # tray / deck in two pieces (11-09 user)
     _reshell(Ms)                                   # shell with the switch hole on the top (11-09 user) ...
     _move_switch(Ms)                               # ... and the switch there
@@ -292,7 +292,7 @@ def build():
                 and o.assemblyContext.component.name != '_library':
             dropped.append(o.component.name)
             o.deleteMe()
-    _add_legs(C, LV)                               # (the rocker switch: v4run.build places it, 11-02)
+    _add_legs(C, LV)                               # (the rocker switch: baserun.build places it, 11-02)
     C.design().rootComponent.partNumber = 'WheelBiped_v5'
     return dict(dropped=dropped)
 

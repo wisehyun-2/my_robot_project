@@ -153,7 +153,7 @@ def edge_normal(a, b, side_n):
 FEMUR_EDGE = -1
 TIBIA_EDGE = -1
 GROOVE_DEPTH = 8.0                    # v2 edge groove / v3 duct line: only the optional harness (harness.py,
-FEMUR_GROOVE = (42.0, P.L1 - 50.0)    # v4run.build(with_harness=True)) still refers to them - the links have no
+FEMUR_GROOVE = (42.0, P.L1 - 50.0)    # baserun.build(with_harness=True)) still refers to them - the links have no
 TIBIA_GROOVE = (60.0, P.L2 - 52.0)    # cable openings since 11-02
 DUCT_IN = 8.0                         # cables entered / left the box this far inside the old groove ends
 DUCT_S = {'femur': (FEMUR_GROOVE[0] + DUCT_IN, FEMUR_GROOVE[1] - DUCT_IN),

@@ -42,7 +42,7 @@ from matplotlib.path import Path  # noqa: E402
 HERE = pathlib.Path(__file__).resolve().parent
 V5 = HERE.parent
 sys.path.insert(0, str(HERE))                        # hlr_gmsh (moved here from robot_cad_v3/manufacturing on 2026-11-14)
-sys.path.insert(0, str(V5 / 'v4' / 'fusion'))
+sys.path.insert(0, str(V5 / 'fusion_base'))
 sys.path.insert(0, str(V5 / 'fusion'))
 for _m in ('adsk', 'adsk.core', 'adsk.fusion'):
     sys.modules.setdefault(_m, mock.MagicMock())
@@ -718,7 +718,7 @@ def _other_page(stem, fn, files, page, pdf, png_dir):
     S.dim((VS.box[0], VS.box[2]), (VS.box[1], VS.box[2]), VS.box[2] - 12, '%.1f (y)' % sx)
     notes = ['단위 mm, 3각법이 아닌 CAD 축 방향 그림(그림 이름 참고, 로봇 앞 = -x).  전체 크기만 적었다 — 형상의 원본은 STEP (export/parts_step/%s.step, '
              'CAD 좌표).' % ', '.join(files),
-             '부피 %.1f cm³.  %s(robot_cad_v5/v4 코드로 만듦).' % (vol / 1000, V4_CHANGED.get(stem, 'v4와 같은 부품'))]
+             '부피 %.1f cm³.  %s(robot_cad_v5/fusion_base 코드로 만듦).' % (vol / 1000, V4_CHANGED.get(stem, 'v4와 같은 부품'))]
     if sides == 'RL':
         notes.append('왼쪽 부품은 거울상 — export/parts_step/%s_L.step으로 따로 만든다.' % stem)
     if stem in V2_DRAWING:

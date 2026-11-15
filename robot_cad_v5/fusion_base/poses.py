@@ -59,7 +59,7 @@ def show_all():
 
 
 def has_harness():
-    """The model was built with the harness (v4run.build(with_harness=True)); since 11-02 it is not."""
+    """The model was built with the harness (baserun.build(with_harness=True)); since 11-02 it is not."""
     return any(o.component.name.startswith('harness_') for o in C.design().rootComponent.allOccurrences)
 
 

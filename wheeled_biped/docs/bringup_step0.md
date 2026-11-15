@@ -21,7 +21,7 @@ v5 로봇(링크 25 cm, AKE60-8 × 6, moteus r4.11, pi3hat) 기준이다. 명령
 | 무릎 | 2 | 5 |
 | 바퀴 | 3 | 6 |
 
-왼쪽은 JC1, 오른쪽은 JC4에 연결한다(`"1=1,2,3;4=4,5,6"`). 왼쪽·오른쪽은 로봇 기준이다(앞 = CAD −x, 1절). 옛 v4 배선 코드(`robot_cad_v5/v4/fusion/harness.py`)는 앞 방향이 반대라서 그 코드의 JC1 쪽이 지금은 로봇 오른쪽이다. 그 코드의 배정은 쓰지 않는다. JC1·JC2는 pi3hat의 프로세서 1, JC3·JC4는 프로세서 2가 맡는다(`references/pi3hat/docs/reference.md`). 그래서 왼쪽 다리는 프로세서 1, 오른쪽 다리와 power dist는 프로세서 2가 맡는다. 두 프로세서는 Pi의 같은 SPI1 선을 나눠 쓴다(CS만 다름).
+왼쪽은 JC1, 오른쪽은 JC4에 연결한다(`"1=1,2,3;4=4,5,6"`). 왼쪽·오른쪽은 로봇 기준이다(앞 = CAD −x, 1절). 옛 v4 배선 코드(`robot_cad_v5/fusion_base/harness.py`)는 앞 방향이 반대라서 그 코드의 JC1 쪽이 지금은 로봇 오른쪽이다. 그 코드의 배정은 쓰지 않는다. JC1·JC2는 pi3hat의 프로세서 1, JC3·JC4는 프로세서 2가 맡는다(`references/pi3hat/docs/reference.md`). 그래서 왼쪽 다리는 프로세서 1, 오른쪽 다리와 power dist는 프로세서 2가 맡는다. 두 프로세서는 Pi의 같은 SPI1 선을 나눠 쓴다(CS만 다름).
 
 ```bash
 sudo python3 -m moteus_gui.tview --pi3hat-cfg "1=1,2,3;4=4,5,6" -t 1,2,3,4,5,6

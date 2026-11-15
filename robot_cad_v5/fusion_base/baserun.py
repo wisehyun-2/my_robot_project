@@ -1,5 +1,5 @@
-"""Module loader for scripts run through the Fusion MCP: reloads the v4 modules in dependency order and drops
-same-named modules of other folders (robot_cad and robot_cad_v2 use the same names)."""
+"""Module loader for scripts run through the Fusion MCP: reloads the base modules of this folder (torso, shell, bought
+parts, wheels: the code the v5 robot took over from v4) in dependency order and drops same-named modules of other folders."""
 import importlib
 import os
 import sys

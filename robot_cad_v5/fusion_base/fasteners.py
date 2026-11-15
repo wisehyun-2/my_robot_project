@@ -329,7 +329,7 @@ def _frame(origin, ez, ex=None):
 
 
 def build_all():
-    """Masters + instances.  Run after the links, shell and harness exist (v4run.build)."""
+    """Masters + instances.  Run after the links, shell and harness exist (baserun.build)."""
     import assembly as AS
     sp = specs()
     masters = {}

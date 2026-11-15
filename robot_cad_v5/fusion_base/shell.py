@@ -54,7 +54,7 @@ def slope_point(which, x, y):
 
 
 REAR_ROUND = False      # v5 (user 11-02): rear plan corners rounded, r PLAN_CORNER, instead of the 45 deg chamfers;
-                        # set by v4run.build(rear_round=True) after its module reload
+                        # set by baserun.build(rear_round=True) after its module reload
 
 
 def end_plan():

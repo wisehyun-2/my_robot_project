@@ -12,7 +12,7 @@ part does not fit the bed in the orientation given here.
 
     python manufacturing/bom.py        # -> ../BOM.md, ../BOM.csv (run from robot_cad_v5)
 
-Specs of the parts the v4 code builds: ../v4/fusion/finalize.py (PRINT_NOTE, MACHINED, PURCHASED) and fasteners.py (specs);
+Specs of the parts the base code builds: ../fusion_base/finalize.py (PRINT_NOTE, MACHINED, PURCHASED) and fasteners.py (specs);
 v5 parts and joint screws: fusion/legs_v5.py, manufacturing/part_drawings.py, manufacturing/explain/real_sections.py.
 """
 import csv

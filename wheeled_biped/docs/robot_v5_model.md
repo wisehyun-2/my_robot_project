@@ -242,32 +242,14 @@ IMU 경로는 지연 여유를 줄이지 않는다(위 두 줄이 같다). 모�
 
 날카로운 턱에는 불리한 점도 있다. 4 cm 턱을 0.3 m/s로 들어가면 바퀴가 끼여 방향이 44° 틀어진다(이전에도 같음, 시험 범위 밖).
 
-## 8. upkie 값 점검표
+## 8. 모델에 남은 가정
 
-| 항목 | 예전 | 지금 |
-|---|---|---|
-| 모델 | upkie URDF의 링크를 늘리고 질량을 덮어씀(몸체 34개 +34 g, upkie 충돌 상자) | v5 URDF |
-| 관절 부호 | `UPKIE_JOINT_SIGNS`(11-14에 지움) | 전부 +1 |
-| 베이스 원점 | upkie `base` | hip 축 중앙 |
-| IMU 회전 | `diag(−1, 1, −1)` | `diag(−1, −1, 1)`(Fusion 측정 + 앞 = CAD −x, URDF `imu_fix`) |
-| IMU 위치 | `base` 사이트, 효과 없음 | 칩 실제 위치, 필터에 사용 |
-| 자세 입력 | 참값 + 흰 잡음 | 펌웨어 필터 → MCU 상보 필터 |
-| 바닥에 닿는 부분 | upkie 발목 상자(약 57 mm) | 바퀴 모터 하우징 r 46.4(바닥에서 54.6 mm), 링크 치수 |
-| 모터 한계 | upkie 값 패치 | AKE60-8 12.5 N·m(`description.json`) |
-| LQR 토크 가중치 | upkie 한계 × 질량·반경 비 | `m g R`의 11.6 %, `m g × 0.31 m`의 29.6 %(10절) |
-| 적분 멈춤 토크 | 2 × 6.3 / 2 × 32.9 N·m(upkie 환산) | 2 × 12.5 N·m(모터 피크) |
-| 요·다리 길이 게인 | upkie 값 × 환산비 | 대역폭 상수 `YAW_WC` 10.06, `LEG_WN` 23.93 rad/s 등(값은 거의 같다) |
-| 마찰 보상 | upkie 0.08 / 0.016 N·m | AKE60 추정 백드라이브의 0.8배 |
-| 다리 벌어짐 PD 60 / 3 | upkie 튜닝 | 80 / 2 × 링크 길이 비(v5에서 측정해 결정, 6·10절) |
-| 다리 정적 힘 | `F_ff / cos θ` | `static_leg_force(L0, θ)`(v5 플랜트, 6절) |
-| 관절 점성 0.02 / 0.001 | upkie 값 | **유지(가정)**: AKE60 자료가 없다 |
-| L_min 240, L_max 335 | upkie에서 온 값 | 링크 길이에서 계산(`build_v5.leg_range`, 372 / 460 / 485 mm, 10절), CAD 간섭 검사 범위(286~479 mm와 460·372 mm) 안 |
-| 엔코더 14비트 | 설계 보고서 값 | **유지**: 실제는 로터 14비트 + 8:1이라 더 좋다(보수적) |
+v5 모델과 제어기의 값은 모두 Fusion 모델과 AKE60-8에서 온다(`tests/test_robot_v5.py`가 확인). 근거 없이 둔 값은 둘이다.
 
-v5 경로에서 upkie 값은 쓰지 않는다(`tests/test_robot_v5.py`가 확인). 11-07에는 upkie·Plan 2·4·v2~v4 CAD 경로가 그대로 남아 있었고(기본값 궤적 차이 0.0), 그 뒤 아래와 같이 지우고 이름을 바꿨다.
+- 관절 점성 0.02 / 0.001: AKE60 자료가 없어 그대로 둔 가정이다.
+- 엔코더 14비트: 실제는 로터 14비트 + 8:1이라 더 좋다(보수적인 값).
 
-- 2026-11-14 사용자(새 하드웨어라 upkie는 필요 없음): upkie 모델과 Plan 4 하네스·합격 판정 배터리·MPC 호스트, `ake_cad`의 upkie 경로(모델·좌우 치수·바깥 루프 게인을 upkie 것으로 고르던 옵션)를 지웠다. 파라미터 계산은 `wbr/models/plant_params.py`(전 `upkie_params.py`), IMU 프레임 변환은 `wbr/observers/base_orientation.py`로 이름을 바꿨다. 같은 날 v5가 쓰지 않는 코드도 지웠다: MCU의 CAR·전환 모드와 연결 끊김 뒤 모터 끄기, 다리 길이 차 롤, `F_ff / cos θ`, v5 기능을 끄는 스위치(`exact_leg_force`, `wheel_reaction_ff`, `roll_compliant`, `suspension`, `mean_follows_range`, `uneven_hold_int`, `imu_model`, 자세 필터 끄기). 이 문서에 남은 그 이름들은 그때의 기록이다(`wheeled_biped/README.md`).
-- 2026-11-15: Plan 4에서 온 이름을 바꿨다. 공용 런타임은 `wbr/plans/closed_loop.py`의 `ClosedLoop`·`ClosedLoopConfig`(전 `plan4_lqi8.py`의 `Plan4LQI8`·`Plan4Config`)이고 로봇 상수·짐 위치는 `PlanV5`가 준다. 플랜트 대조는 `wbr/models/verify_plant.py`(전 `verify_plan4_plant.py`)다.
+옛 upkie 값과 견준 점검표와 이름을 바꾼 이력은 11-15에 뺐다(`git show 208c955:wheeled_biped/docs/robot_v5_model.md` 8절).
 
 ## 9. 실기로 확인할 것
 
@@ -294,7 +276,7 @@ v5 경로에서 upkie 값은 쓰지 않는다(`tests/test_robot_v5.py`가 확인
 
 나머지 게인은 같은 식으로 새 모델에서 다시 계산된다: 요 PI 1.76 / 10.58, `kw_yaw` 8.82, 다리 길이 PD 1503 / 75, 롤 577 / 346 / 71.9. 전체 값은 `models/wheelbiped_v5/description.json`이고, **실기 MCU에도 같은 값을 넣어야 한다.**
 
-**벤치(`results/ake_cad_v5`, 시나리오 28개, 잡음):**
+**벤치(11-08 실행, 시나리오 28개, 잡음. 저장된 결과 `results/ake_cad_v5`는 11-14 이전 것이라 11-15에 지웠다):**
 
 | 경우 | 지연 | 회복 | 최대 토크 hip / 무릎 / 바퀴 [N·m] | 무릎 정지 토크, 최저 / 기립 |
 |---|---|---|---|---|

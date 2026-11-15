@@ -55,16 +55,16 @@ ROS에 의존하지 않는 Python 패키지 `wbr`이 중심이다. `README.md`�
 - 허브 `WheelBiped_v5` 버전 18 = `export/`.
 - 모든 부품을 PLA·PETG로 출력한다(11-09 사용자, 강도는 보지 않음). 금속 가공 부품은 쓰지 않는다(11-15 사용자). 모델 질량 11.610 kg과 제어기 모델의 11.597 kg은 아직 금속 밀도로 계산된 값이라 실제보다 약 0.89 kg 무겁다(`robot_cad_v5/README.md` 5절, Fusion에서 다시 뽑아야 한다).
 - 제어기 모델은 `calc/*.json`과 `export/links_stl`에서 `python -m wbr.models.build_v5`로 만든다.
-- `v4/fusion`은 v5가 불러 쓰는 v4 코드다(`fusion/v5run.py`가 불러서 덮어쓴다).
+- `fusion_base/`는 몸통·셸·구매품·바퀴를 만드는 바탕 코드다(v4에서 물려받음, 11-15에 `v4/fusion`에서 이름을 바꿈). `fusion/v5run.py`가 불러서 v5 코드로 덮어쓴다.
   - 11-14에 `robot_cad_v4/fusion`에서 옮긴 뒤 같은 날 Fusion에서 확인했다.
     - 허브 `WheelBiped_v5` 버전 18이 열린다: v5 태그 있음, 부품 536개, 몸체 801개 중 숨김 0, as-built 회전 조인트 6개(hip·knee·wheel × 좌우), 외부 참조 0.
-    - `v5run.load()`가 v4 모듈을 모두 `robot_cad_v5/v4/fusion`에서, v5 모듈을 `robot_cad_v5/fusion`에서 불러온다.
+    - `v5run.load()`가 바탕 모듈을 모두 바탕 코드 폴더에서, v5 모듈을 `robot_cad_v5/fusion`에서 불러온다.
     - `v5run.report()`가 돈다(다리 몸체 16개).
-  - `build()`와 허브 문서를 바꾸는 단계는 돌려 보지 않았다.
+  - `build()`와 허브 문서를 바꾸는 단계는 돌려 보지 않았다. 11-15의 폴더 이름 변경 뒤에는 Fusion에서 아직 아무것도 돌려 보지 않았다(Fusion 밖에서 `load()`가 도는 것만 확인).
 - 지난 판(v2~v4) README는 11-15에 지웠다. 아직 맞는 내용(엔코더 정렬, 포트 이름 규칙, 몸통 하중 경로)은 `robot_cad_v5/README.md` 2절에 있다.
 - CAN 포트 배정은 `wheeled_biped/ros2_ws/README.md` 2절이 기준이다.
 - 11-14에 옛 CAD 폴더를 지울 때 쓰는 것만 옮겼다.
-  - v4 코드·계산 → `robot_cad_v5/v4/`
+  - v4 코드 → 지금의 `robot_cad_v5/fusion_base/`(v4 계산 파일은 11-15에 지움)
   - v3의 `hlr_gmsh.py`와 치수 참고용 v2 도면·STEP → `robot_cad_v5/manufacturing/`
   - 세 README → `robot_cad_v5/docs/`(11-15에 지움, `git show e16135d:robot_cad_v5/docs/v2/README.md`)
   - 지운 나머지는 git 태그 `before-cleanup-2026-11-14`에 있다.

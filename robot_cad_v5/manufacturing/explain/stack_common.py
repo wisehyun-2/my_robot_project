@@ -1,4 +1,4 @@
-"""Shared part of the v5 joint section figures (real_sections.py): the v4 params and legs_v5 loaded outside Fusion, the
+"""Shared part of the v5 joint section figures (real_sections.py): the base params (fusion_base) and legs_v5 loaded outside Fusion, the
 font, the loads, the colours and the annotation helpers (dimension, label, tag, the countersunk screw ⑥ that is not in
 the model, the text blocks).  Robot y on the horizontal axis, radius from the joint axis vertically; csk_screw takes
 the half s (+1 upper, -1 lower).
@@ -8,7 +8,7 @@ import sys
 from unittest import mock
 HERE = pathlib.Path(__file__).resolve().parent
 V5 = HERE.parents[1]
-sys.path.insert(0, str(V5 / 'v4' / 'fusion'))
+sys.path.insert(0, str(V5 / 'fusion_base'))
 sys.path.insert(0, str(V5 / 'fusion'))
 # legs_v5.py imports cadlib, which loads the Fusion API at import time; only its pure-Python dimensions are used
 # here, so outside Fusion a stub stands in for adsk (no geometry is built)
@@ -33,7 +33,7 @@ for F in ('C:/Windows/Fonts/malgun.ttf', '/usr/share/fonts/truetype/wqy/wqy-zenh
         break
 plt.rcParams['axes.unicode_minus'] = False
 
-F_DES, F_CHK = 300.0, 600.0                      # 5 / 10 x 60 N static (brief, v4 strength_v4.py)
+F_DES, F_CHK = 300.0, 600.0                      # 5 / 10 x 60 N static (brief, calc/strength_v5.py)
 FL_DES, FL_CHK = P.LATERAL * F_DES, P.LATERAL * F_CHK         # 150 / 300 N
 CSK3_DK = 6.72                                   # ISO 10642 M3 head diameter
 

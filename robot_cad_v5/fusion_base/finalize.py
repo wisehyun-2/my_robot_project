@@ -1,6 +1,6 @@
 """Finishing steps of the v4 model: part numbers, images, BOM, as-built joints and exports.
 
-Run each step in its own MCP script after v4run.load() (a failed script rolls the whole step back):
+Run each step in its own MCP script after baserun.load() (a failed script rolls the whole step back):
     finalize.set_part_numbers()
     finalize.images()        # direct design, poses set with poses.apply
     finalize.link_images(); finalize.truss_images()   # v4 links outside / cut (27, 28)
