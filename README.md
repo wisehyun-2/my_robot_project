@@ -61,12 +61,12 @@ ROS에 의존하지 않는 Python 패키지 `wbr`이 중심이다. `README.md`�
     - `v5run.load()`가 v4 모듈을 모두 `robot_cad_v5/v4/fusion`에서, v5 모듈을 `robot_cad_v5/fusion`에서 불러온다.
     - `v5run.report()`가 돈다(다리 몸체 16개).
   - `build()`와 허브 문서를 바꾸는 단계는 돌려 보지 않았다.
-- 몸통·셸·엔코더·배선의 바탕 설명은 지난 판 README에 있다: `docs/v4/README.md` → `docs/v3/README.md` → `docs/v2/README.md`.
+- 지난 판(v2~v4) README는 11-15에 지웠다. 아직 맞는 내용(엔코더 정렬, 포트 이름 규칙, 몸통 하중 경로)은 `robot_cad_v5/README.md` 2절에 있다.
 - CAN 포트 배정은 `wheeled_biped/ros2_ws/README.md` 2절이 기준이다.
 - 11-14에 옛 CAD 폴더를 지울 때 쓰는 것만 옮겼다.
   - v4 코드·계산 → `robot_cad_v5/v4/`
   - v3의 `hlr_gmsh.py`와 치수 참고용 v2 도면·STEP → `robot_cad_v5/manufacturing/`
-  - 세 README → `robot_cad_v5/docs/`
+  - 세 README → `robot_cad_v5/docs/`(11-15에 지움, `git show e16135d:robot_cad_v5/docs/v2/README.md`)
   - 지운 나머지는 git 태그 `before-cleanup-2026-11-14`에 있다.
 
 ### `references/` — 참조 저장소의 git 서브모듈

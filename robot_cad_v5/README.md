@@ -2,7 +2,7 @@
 
 6모터 휠 이족 로봇 v5의 CAD 폴더다. Fusion 허브 문서 **`WheelBiped_v5` 버전 18**(11-09)이 기준이고, `export/WheelBiped_v5.f3d`가 같은 모델이다(회전 조인트 6개, 배선 없음).
 v4 로봇에서 바퀴를 바깥쪽으로 돌리고 허벅지·정강이를 출력용 갈래 다리로 바꿨다. 몸통·셸·모터 자리·바퀴는 v4 코드(`v4/fusion`)가 만들고, `fusion/`의 v5 코드가 그 위에 덮어쓴다.
-몸통·셸·엔코더·배선의 바탕 설명은 지난 판 README에 있다: `docs/v4/README.md` → `docs/v3/README.md` → `docs/v2/README.md`.
+지난 판(v2~v4) README는 지금 로봇과 어긋나는 내용이 많아 11-15에 지웠다. 아직 맞는 내용은 2절에 옮겼다. 전문: `git show e16135d:robot_cad_v5/docs/v2/README.md`(v3, v4도 같은 경로).
 
 ![로봇](images/05_robot_iso.png) ![윗면 스위치](images/switch_top.png)
 
@@ -52,6 +52,9 @@ v4 로봇에서 바퀴를 바깥쪽으로 돌리고 허벅지·정강이를 출�
 - Pi·pi3hat은 전장 데크 가운데에 있다. 모델의 IMU 위치는 BMI088 자리로 CAD (0.5, 2.45) mm, hip 축 아래 35.5 mm다(`calc/urdf_data.json`). 실물에는 ICM-42688-P가 실려 있어(11-14 확인) 모델을 옮기는 일이 남았다(`wheeled_biped/docs/robot_v5_model.md` 9절). pi3hat이 위, CAN·HDMI는 CAD +x(로봇 뒤), USB는 CAD +y(로봇 오른쪽)를 본다.
 - power dist r4.5b는 데크의 CAD −y 쪽(중심 (0, −61))에 있고, XT90이 앞쪽(CAD −x)을 본다(`fusion/pdist_v5.py`).
 - 로커 스위치는 몸통 윗면(CAD x +78, y 0)에 있다. 앞면에는 구멍이 없다(`fusion/switch_v5.py`).
+- 엔코더 정렬: moteus의 AS5047P는 장착 구멍 중심에서 커넥터 반대쪽으로 4 mm 벗어나 있다. 칩이 모터 축 위에 오게 보드를 놓고, 고정 쪽에 붙은 드라이버 컵의 스탠드오프 4개에 고정한다. AKE 부속 자석(Ø6 × 2.5)은 자석 스페이서(Ø9 × 5.35)의 포켓에 붙인다. 자석 윗면에서 기판 면까지 2.55 mm이고 허용 범위는 2.34~2.76 mm다(`v4/fusion/params.py`의 `MAGNET_PCB`). 조립 뒤 moteus 보정에서 엔코더 신호를 확인한다.
+- 포트 이름 규칙: moteus의 J1·J2(XT30)와 CAN1·CAN2(PH-3)는 각각 병렬이다. 들어오는 쌍을 J1·CAN2, 나가는 쌍을 J2·CAN1로 쓴다(hip → 무릎 → 바퀴 순서, 바퀴 CAN1에 120 Ω 종단 저항, 바퀴 J2에 보호 캡). 실물 보드에 이 규칙대로 표시한다.
+- 몸통의 하중 경로: 배터리 받침 → 척추 봉 → hip 판 → hip 모터 → 다리. 셸은 하중을 받지 않는다.
 
 ## 3. 정한 것
 
@@ -125,6 +128,5 @@ v5run.build()           # 새 문서에 처음부터 만든다(열려 있던 v5 
 | `manufacturing/` | `drawings/` 도면 PDF(치수 참고용), `step/` v5 새 부품 STEP, `v2/` 치수 참고용 v2 도면·STEP, `hlr_gmsh.py` 은선 제거 코드 |
 | `manufacturing/explain/` | 관절 단면도 3장, `assembly/`(조립 그림·영상) |
 | `images/` | 01~04 다리, 05~07 로봇, 08~10 단면, 11~13 전장·IMU 축 |
-| `docs/v2/`, `docs/v3/`, `docs/v4/` | 지난 판 README와 그림 |
 
 줄이기 전 전문: `git show 39e448f:robot_cad_v5/README.md`
