@@ -1,14 +1,14 @@
 ---
-name: code_grammer
+name: code_grammar
 description: >-
   Explain C and C++ syntax in a given code file at a beginner-friendly level
   with simple standalone examples and real-world ROS 2 (rclcpp) usage patterns,
   referencing https://cppreference.com/ and https://github.com/ros2/rclcpp. Use
-  when the user invokes /code_grammer or asks for easy C/C++ grammar
+  when the user invokes /code_grammar or asks for easy C/C++ grammar
   explanations with simple examples and ROS 2 rclcpp examples.
 ---
 
-# Code Grammar (`/code_grammer`)
+# Code Grammar (`/code_grammar`)
 
 사용자가 제공한 C 또는 C++ 코드 파일 속 문법을 입문자도 이해할 수 있게 쉽게 풀어 설명하고, 단순한 별도 예시 코드와 실제 ROS 2(`rclcpp`) 활용 예시를 함께 제시하는 스킬입니다.
 
