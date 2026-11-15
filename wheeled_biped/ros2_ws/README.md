@@ -111,6 +111,8 @@ wheeled_biped/wbr/tools/   아직 없음: export_params.py(5.1절), dump_golden.
 
 ### 4.2 pi3hat
 
+**보드 펌웨어는 v1.1.0이다**(11-16 사용자 확인). `sudo pi3hat_tool --info`에 나온 해시가 `references/pi3hat`의 커밋 `12ab9af`와 같다. 그래서 보드의 STM32 세 개에서 도는 코드가 `references/pi3hat/fw/`이고, 펌웨어를 올릴 필요가 없다. 응답 없는 CAN 프레임에 프로세서가 멈추는 옛 펌웨어 문제도 없다(`pi3hat.h:290-295`).
+
 1. **root로 돌고 한 번에 한 프로그램만 쓴다.** `ros2_control_node`가 떠 있으면 `tview`, `pi3hat_tool`, `moteus_tool`을 못 쓴다.
 2. **넣을 값.** `attitude_rate_hz = 1000`, `mounting_deg = 0, 0, 0`. `opts.default_input.request_attitude_detail = true`를 항상 켠다(11-14 사용자, C++에서만 켤 수 있다).
 3. **바이어스는 조용히 0이 된다.** 상세 요청 없이 읽으면 바이어스 칸이 0으로 남고, NaN이 아니라 가드가 잡지 못한다.

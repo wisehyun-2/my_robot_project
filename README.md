@@ -85,6 +85,11 @@ ROS에 의존하지 않는 Python 패키지 `wbr`이 중심이다. `README.md`�
   - `diablo-sim-env`, `DiabloSTLSDF`: 삭제된 Plan 2용.
   - `TITA-SDK-ROS2`, `TITA_CAN_Inerface`: TITA 보드 CAN 규약. README 1절에서 "쓰지 않는 것"으로 정했다.
 
+### `.claude/skills/` — Claude Code 스킬
+
+- `orchestrator`, `code_grammar`, `code_schema` 세 개가 있다.
+- 11-15에 루트 `skills/`에서 옮겼다. Claude Code는 `.claude/skills/`만 읽는다. 새 세션부터 뜬다.
+
 ## 컴퓨터
 
 Windows PC, Ubuntu 노트북, Pi 4가 브랜치 `ros2-v5` 하나를 같이 쓰고, 동시에 쓰지 않는다. 작업은 `ros2-v5`에서만 하고, 프로젝트가 끝나면 `main`에 합친다(11-15 사용자).
