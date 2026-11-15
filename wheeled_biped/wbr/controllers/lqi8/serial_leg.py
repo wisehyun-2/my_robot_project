@@ -1,7 +1,6 @@
 """Kinematics and virtual model control (VMC) of a serial hip-knee leg (the v5 robot: L1 = L2 = 250 mm, knees behind).
 
-Same conventions and interface as the five-bar leg of the removed DIABLO-lite plans (``fivebar.py``, git history
-before 2026-11-11), which the DIABLO-style MCU program was written for:
+Conventions (the DIABLO-style MCU program is written for them):
 
 Hip frame: x forward, z up, rotations about +y.  A link of length L pointing "down" rotated by the
 absolute angle t has direction u(t) = (-sin t, -cos t) in (x, z), i.e. a positive angle swings the

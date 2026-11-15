@@ -13,7 +13,7 @@
   "right_wheel": 1.0
  },
  "knee_sign": 1.0,
- "front": "rocker switch side (CAD -x)",
+ "front": "CAD -x",
  "imu": {
   "chip": "BMI088",
   "position_in_base": [

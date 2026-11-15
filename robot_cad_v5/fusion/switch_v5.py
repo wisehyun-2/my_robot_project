@@ -1,4 +1,4 @@
-"""v5 rocker switch on the top of the torso (11-09, user: "스위치는 앞이 아니라 윗면 ... 정중앙"), instead of the switch-side face.
+"""v5 rocker switch on the top of the torso (11-09, user: "스위치는 앞이 아니라 윗면 ... 정중앙"), instead of the front (CAD -x) face.
 
 The exact top centre is the payload plate, with the battery 16.6 mm under it (the switch body is 24 mm deep), so the user chose the
 top of the hip shell section just behind the payload plate, on the robot's centre line: x +78 (knee side, midway between the payload

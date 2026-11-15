@@ -1,5 +1,4 @@
-"""Staged tests of the MPC controller (v5_mpc): the same order as v5_lqi -- the MPC alone, the outer loops, then the
-integral states (README.md).
+"""Staged tests of the MPC controller (v5_mpc), the full controller (README.md).
 
 The scenarios, metrics, limits and the report live in wbr/bench/stage_tests.py and are the same as v5_lqi/TEST's; this
 file only registers the MPC stages (v5_mpc/controller.py) and re-exports the shared names for the test modules.

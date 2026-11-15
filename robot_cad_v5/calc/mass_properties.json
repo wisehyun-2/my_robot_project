@@ -1,5 +1,5 @@
 {
- "units": "mm, kg, kg mm^2 about the COM, CAD axes (+x knee side, +y the _R parts, z up, floor origin; the robot's front is the rocker switch side = -x, wbr.models.build_v5 turns them)",
+ "units": "mm, kg, kg mm^2 about the COM, CAD axes (+x knee side, +y the _R parts, z up, floor origin; the robot's front is -x, wbr.models.build_v5 turns them)",
  "pose": {
   "L0": 442.85714285714283,
   "L1": 250.0,

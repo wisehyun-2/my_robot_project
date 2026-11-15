@@ -1,12 +1,9 @@
-"""The closed-loop runtime (wbr.plans.plan4_lqi8 + the DIABLO-style MCU) on the v5 model: the model's kinematics and plant
+"""The closed-loop runtime (wbr.plans.closed_loop + the DIABLO-style MCU) on the v5 model: the model's kinematics and plant
 against MuJoCo, the gain table the plan runs, closed-loop smoke runs, the MCU's sensor / command guards and faults, and
 the mechanisms of the wheel-reaction feed-forward, the compliant roll and the yaw wheel damping.
 
-Moved here on 2026-11-14 from tests/test_plan4.py and tests/test_plan4_safety.py, which ran the same checks on the upkie
-model of Plan 4 (removed that day).  Left out with the upkie model: its mirrored joint signs and IMU mount (the v5 ones are
-in tests/test_robot_v5.py), the joint ranges of upkie's URDF (the v5 model's are +-pi), the stage-2 MPC host and the
-acceptance battery.  What the mechanisms do on slopes, bumps and steps is judged by the staged tests (v5_lqi/TEST 2-5,
-2-7, 2-8, 2-11 to 2-13).  The checks without MuJoCo are in tests/test_leg_plant.py.
+The joint signs and the IMU mount are checked in tests/test_robot_v5.py.  What the mechanisms do on slopes, bumps and steps is
+judged by the staged tests (v5_lqi/TEST 2-5, 2-7, 2-8, 2-11 to 2-13).  The checks without MuJoCo are in tests/test_leg_plant.py.
 
 Needs the mujoco package (a Windows PC with Smart App Control on blocks its DLLs: run these on the Ubuntu laptop).
 Run from wheeled_biped/:  python -m unittest tests.test_runtime_v5
@@ -178,7 +175,7 @@ class PlantAgainstMujocoTests(unittest.TestCase):
         self.assertLess(abs(math.degrees(plant.theta_eq(p.L0) - 0.5 * (lo + hi))), 0.1)
 
     def test_plant_matches_mujoco_at_the_standing_length(self):
-        from wbr.models.verify_plan4_plant import MjPlanar, check_L0
+        from wbr.models.verify_plant import MjPlanar, check_L0
         p = v5_params()
         r = check_L0(MjPlanar(p), v5_plant(), p.L0)
         up = r["unstable_poles"]
@@ -340,9 +337,9 @@ class SmokeTests(unittest.TestCase):
         plan = make_plan()
         self.assertTrue(plan.run(0.5, v=0.3))
         plan.host.enabled = False
-        self.assertTrue(plan.run(3.0, v=0.3))       # the commands no longer reach the MCU
-        self.assertFalse(plan.link.in_control)
-        self.assertTrue(plan.mcu.armed)
+        self.assertTrue(plan.run(4.0, v=0.3))       # the commands no longer reach the MCU: the link times out after 0.5 s,
+        self.assertFalse(plan.link.in_control)      # then the robot stops and rolls back to where the reference stopped,
+        self.assertTrue(plan.mcu.armed)             # which takes about 3 s (staged test 1-4: settled within 3 s of the stop)
         self.assertLess(abs(mean_last(plan, "vx", 0.5)), 0.05)
         self.assertUpright(plan, 3.0)
 

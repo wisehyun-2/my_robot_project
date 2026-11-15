@@ -1,11 +1,7 @@
-"""Scenarios and metrics of the acceptance criteria (docs/합격기준.md), used by the v5 staged tests (wbr.bench.stage_tests).
+"""Scenarios and metrics of the v5 staged tests (wbr.bench.stage_tests; the limits are in v5_lqi/TEST/README.md, section 3).
 
 Every scenario runs on a plan (wbr.plans.plan_v5) with sensor noise and latency as the caller set them.  Pitch criteria use
 the TRUE body pitch of the simulator.  Check: one pass / fail criterion with its margin.
-
-Until 2026-11-14 this module was also Plan 4's acceptance battery on the upkie model (items 1-24 with upkie's motor limits,
-the mass x friction matrix, the stage-2 MPC items, results/acceptance/); the upkie model, the battery and its results
-were removed that day (git history).
 """
 from __future__ import annotations
 
@@ -86,8 +82,7 @@ def torque_metrics(plan, t_from: float = 0.0) -> dict:
     legs = np.stack([L["tau_lh"][sel], L["tau_lk"][sel], L["tau_rh"][sel], L["tau_rk"][sel]])
     wspeed = np.stack([L["qd_lw"][sel], L["qd_rw"][sel]])
     lspeed = np.stack([L["qd_lh"][sel], L["qd_lk"][sel], L["qd_rh"][sel], L["qd_rk"][sel]])
-    # per motor (r1 m6): the worst leg joint's rms.  (The wheel saturation duty / time against upkie's 1.7 N m wheel
-    # motor were dropped on 2026-11-14; the staged tests judge the peaks against the AKE60-8 instead.)
+    # per motor: the worst leg joint's rms
     return dict(wheel_peak=float(np.abs(wheels).max()),
                 wheel_rms10=float(max(moving_rms_max(w, plan.dt) for w in wheels)),
                 leg_peak=float(np.abs(legs).max()), leg_rms=float(np.sqrt(np.mean(legs ** 2, axis=1)).max()),

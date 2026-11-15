@@ -1,4 +1,4 @@
-"""LQI8 balance law plugged into the DIABLO-style MCU (the v5 robot; wbr.plans.plan4_lqi8 assembles it).
+"""LQI8 balance law plugged into the DIABLO-style MCU (the v5 robot; wbr.plans.closed_loop assembles it).
 
 Converts the MCU estimate into the plant state convention of the design report (plant_serial):
   theta = world virtual-leg angle (positive: hip ahead of the wheel)  -> est.theta_v_mean

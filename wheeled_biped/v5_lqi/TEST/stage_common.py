@@ -1,4 +1,4 @@
-"""Staged tests of the LQI8 controller (v5_lqi): LQR first, integrators later (README.md).
+"""Staged tests of the LQI8 controller (v5_lqi), the full controller (README.md).
 
 The scenarios, metrics, limits and the report live in wbr/bench/stage_tests.py and are the same for v5_mpc/TEST;
 this file only registers the LQI stages (v5_lqi/controller.py) and re-exports the shared names for the test modules.

@@ -5,11 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "wbr"
 version = "0.1.0"
-description = "Wheeled biped robot (6-motor) controllers, MuJoCo simulation and ROS2-independent core for plans 1-3"
+description = "Wheeled biped robot v5 (6-motor): controllers, MuJoCo simulation and ROS-independent core"
 requires-python = ">=3.10"
 dependencies = [
-  "mujoco>=3.2", "numpy", "scipy", "sympy", "pyyaml", "matplotlib",
-  "imageio", "imageio-ffmpeg", "qpsolvers", "qpmpc", "osqp", "daqp",
+  "mujoco>=3.2", "numpy", "scipy", "sympy", "matplotlib", "qpsolvers", "daqp", "fast-simplification",
 ]
 
 [tool.setuptools.packages.find]

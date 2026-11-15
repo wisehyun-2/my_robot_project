@@ -12,20 +12,18 @@ smallest gap between parts that move against each other (torso / thigh / shank /
 import gzip
 import itertools
 import json
-import math
 import sys
-from collections import defaultdict
 from functools import reduce
 
-from matplotlib.patches import PathPatch
+from matplotlib.patches import PathPatch, Rectangle
 from matplotlib.path import Path
 from shapely import set_precision
 from shapely.affinity import scale
 from shapely.geometry import GeometryCollection, LineString, MultiLineString, MultiPolygon, Polygon, box
 from shapely.ops import linemerge
 
-from stack_common import (CSK3_DK, F_CHK, F_DES, FL_CHK, FL_DES, HATCH, HATCH_AL, HERE, LG, LV, NEW, P, ROBOT_KG,
-                          Rectangle, csk_screw, dim_h, fits_block, g, label, plt, rows_block, tag)
+from stack_common import (F_CHK, F_DES, FL_CHK, FL_DES, HERE, LV, NEW, P, csk_screw, dim_h, fits_block, g, label, plt,
+                          rows_block, tag)
 
 sys.path.insert(0, str(HERE.parents[1] / 'calc'))
 import strength_v5 as SV                         # noqa: E402  (loads, moments and bolt circle of the hand calculation)
@@ -111,32 +109,32 @@ def check(recs, joint, gap=1.6):
 
 
 # ----------------------------------------------------------------------------- colours / names
-STYLE = [   # (key in 'component body', colour, hatch, name)
-    ('thigh_R main', g['thigh'], None, 'PETG 허벅지'), ('shank_R main', g['shank'], None, 'PETG 정강이'),
-    ('_R insert', g['al'], HATCH_AL, '6061 hub 인서트'), ('_R ring', '#7fa7d6', HATCH_AL, '6061 받침 링'),
-    ('kneecap', g['cap'], HATCH_AL, '6061 무릎 캡'), ('kneebearing', g['bearing'], None, '61807'),
-    ('AKE60-8_KV80_stator', g['stator'], None, 'AKE60-8 고정자'), ('AKE60-8_KV80_output', g['out'], None, 'AKE 출력부'),
-    ('FX DIN 125', g['washer'], None, '와셔'), ('FX ISO 8734', g['pin'], None, '평행핀'),
-    ('FX insert', g['insert'], None, '황동 열압입 인서트'), ('FX ', g['screw'], None, '나사'),
-    ('clamp ring', g['ring'], None, 'SUS 고정 링'), ('cup_', g['cup'], None, '드라이버 컵 (PETG)'),
-    ('moteus', g['pcb'], None, 'moteus r4.11'), ('magnet', g['spacer'], None, '자석 스페이서'),
-    ('hub_flange', g['flange'], None, 'PETG 허브 플랜지'), ('rim_', g['rim'], None, 'PETG 림'),
-    ('tyre', g['tyre'], None, '타이어 M365'), ('hip_plate', g['plate'], HATCH, '6061 hip 판'),
-    ('XT30', '#c8a000', None, 'XT30 캡'), ('CAN', '#c8a000', None, 'CAN 종단'),
+STYLE = [   # (key in 'component body', colour, name); every designed part is printed (user 11-09 / 11-15)
+    ('thigh_R main', g['thigh'], 'PETG 허벅지'), ('shank_R main', g['shank'], 'PETG 정강이'),
+    ('_R insert', g['insert_hub'], 'hub 인서트'), ('_R ring', '#7fa7d6', '받침 링'),
+    ('kneecap', g['cap'], '무릎 캡'), ('kneebearing', g['bearing'], '61807'),
+    ('AKE60-8_KV80_stator', g['stator'], 'AKE60-8 고정자'), ('AKE60-8_KV80_output', g['out'], 'AKE 출력부'),
+    ('FX DIN 125', g['washer'], '와셔'), ('FX ISO 8734', g['pin'], '평행핀'),
+    ('FX insert', g['insert'], '황동 열압입 인서트'), ('FX ', g['screw'], '나사'),
+    ('clamp ring', g['ring'], '클램프 링'), ('cup_', g['cup'], '드라이버 컵 (PETG)'),
+    ('moteus', g['pcb'], 'moteus r4.11'), ('magnet', g['spacer'], '자석 스페이서'),
+    ('hub_flange', g['flange'], 'PETG 허브 플랜지'), ('rim_', g['rim'], 'PETG 림'),
+    ('tyre', g['tyre'], '타이어 M365'), ('hip_plate', g['plate'], 'hip 판'),
+    ('XT30', '#c8a000', 'XT30 캡'), ('CAN', '#c8a000', 'CAN 종단'),
 ]
-OTHER = ('#ececec', None, '몸통 부품')
+OTHER = ('#ececec', '몸통 부품')
 
 
 def style(r):
     key = r['comp'] + ' ' + r['body']
-    for k, c, h, n in STYLE:
+    for k, c, n in STYLE:
         if k in key:
-            return c, h, n
+            return c, n
     return OTHER
 
 
 def name(r):
-    return style(r)[2] if not r['comp'].startswith('FX ') else r['comp'][3:]
+    return style(r)[1] if not r['comp'].startswith('FX ') else r['comp'][3:]
 
 
 def polys(gm):
@@ -157,7 +155,7 @@ def lines(gm):
 
 def draw(ax, H, lw=0.6):
     for r in H:
-        c, h, _n = style(r)
+        c, _n = style(r)
         z = 1.0 if c in (g['thigh'], g['shank'], OTHER[0], g['plate'], g['tyre']) else 2.0
         for pg in polys(r['geom']):
             verts, codes = [], []
@@ -165,7 +163,7 @@ def draw(ax, H, lw=0.6):
                 xy = list(ring.coords)
                 verts += xy
                 codes += [Path.MOVETO] + [Path.LINETO] * (len(xy) - 2) + [Path.CLOSEPOLY]
-            ax.add_patch(PathPatch(Path(verts, codes), fc=c, ec='k', lw=lw, zorder=z, **(h or {})))
+            ax.add_patch(PathPatch(Path(verts, codes), fc=c, ec='k', lw=lw, zorder=z))
         for ln in lines(r['geom']):
             x, y = ln.xy
             ax.plot(x, y, color='#6b6b6b', lw=0.8, zorder=2.5)
@@ -205,8 +203,8 @@ def panel(fig, rect_, H, view, title, ylabel=True):
 
 
 def flange_bolt(ax, y_link_in, s=-1):
-    """⑥ ISO 10642 M3 x 16 12.9 (not modelled): head flush in the insert flange's motor-side face, through the PETG
-    wall into the 6061 backing ring's tap, r FLANGE_BOLT_R."""
+    """⑥ ISO 10642 M3 x 16 (not modelled): head flush in the insert flange's motor-side face, through the PETG
+    wall into the backing ring's tap, r FLANGE_BOLT_R."""
     csk_screw(ax, y_link_in, LV.y_ring(y_link_in) + LV.RING[2], LV.FLANGE_BOLT_R, s=s, z=4)
 
 
@@ -234,11 +232,11 @@ def legend_box(fig, rect_, keys):
     ax.axis('off')
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
-    ax.text(0.0, 0.97, '색  (빗금 = 금속, 회색 선 = 구매품 STEP의 면 몸체)', fontsize=14, weight='bold', va='top')
+    ax.text(0.0, 0.97, '색  (회색 선 = 구매품 STEP의 면 몸체)', fontsize=14, weight='bold', va='top')
     for k, key in enumerate(keys):
-        c, h, n = next((st[1], st[2], st[3]) for st in STYLE if st[3] == key) if key != OTHER[2] else OTHER
+        c, n = next((st[1], st[2]) for st in STYLE if st[2] == key) if key != OTHER[1] else OTHER
         cx, cy = (k % 5) * 0.2, 0.68 - (k // 5) * 0.27
-        ax.add_patch(Rectangle((cx, cy - 0.09), 0.04, 0.18, fc=c, ec='k', lw=0.6, **(h or {})))
+        ax.add_patch(Rectangle((cx, cy - 0.09), 0.04, 0.18, fc=c, ec='k', lw=0.6))
         ax.text(cx + 0.05, cy, n, fontsize=12, va='center')
 
 
@@ -246,9 +244,9 @@ WHY = [   # (both names contain, note): why a listed gap / overlap is as designe
     (('61807', '무릎 캡'), '61807 안륜이 캡 관에 끼워짐 — 정상'),
     (('hub 인서트', 'hip 판'), 'Ø28 보스 ↔ hip 판 Ø30 구멍 — 설계값'),
     (('hub 인서트', 'PETG 허벅지'), 'Ø28 보스 ↔ 무릎 판 Ø30 구멍 — 설계값'),
-    (('hub 인서트', 'SUS 고정 링'), 'Ø28 보스 ↔ 고정 링 Ø30 — 설계값'),
+    (('hub 인서트', '클램프 링'), 'Ø28 보스 ↔ 클램프 링 Ø30 — 설계값'),
     (('허브 플랜지', 'PETG 정강이'), '허브 Ø28 보스 ↔ 바퀴 판 Ø30 구멍 — 설계값'),
-    (('허브 플랜지', 'SUS 고정 링'), '허브 보스 ↔ 고정 링 Ø30 — 설계값'),
+    (('허브 플랜지', '클램프 링'), '허브 보스 ↔ 클램프 링 Ø30 — 설계값'),
     (('허브 플랜지', 'M2.5x8 stator'), '고정자 나사 머리 ↔ 허브 플랜지 — 설계값'),
     (('AKE60-8 고정자', '3x10'), '핀 끝 ↔ 모터 몸체 (AKE 형상)'),
     (('AKE60-8 고정자', 'M3x1'), '출력 나사 끝 ↔ 모터 몸체 (AKE 형상)'),
@@ -295,8 +293,8 @@ def fig_hip(recs):
                  fontsize=20, x=0.01, ha='left', y=0.995)
     ax = panel(fig, [0.04, 0.52, 0.55, 0.45], H, ((118, 296), (-100, 100)), '(a) 전체 — 몸통 hip 판부터 허벅지 바깥 면까지')
     flange_bolt(ax, TF)
-    for txt, key, xt, pick in (('PETG 허벅지 (닫힌 상자 벽 3.5, 리브 2.0)', 'thigh_R main', (215, 88), 'max'),
-                               ('6061 hip 판 (몸통)', 'hip_plate', (130, 92), 'max'),
+    for txt, key, xt, pick in (('PETG 허벅지 (닫힌 상자 벽 %.1f, 리브 %.1f)' % (LV.WALL, LV.RIB), 'thigh_R main', (215, 88), 'max'),
+                               ('hip 판 (몸통)', 'hip_plate', (130, 92), 'max'),
                                ('AKE60-8 (hip)', 'AKE60-8_KV80_stator', (125, 60), None),
                                ('드라이버 컵 + moteus', 'cup_', (122, -80), None)):
         p = where(H, key, pick)
@@ -319,9 +317,9 @@ def fig_hip(recs):
         if p:
             tag(bx, n, xy, to=p)
     tag(bx, '6', (195, -24), c=NEW, to=(TF + 9, -LV.FLANGE_BOLT_R))
-    label(bx, '6061 받침 링 Ø%.0f/Ø%.0f × %.0f\n(M3 탭 6개, r %.0f)' % (2 * LV.RING[1], 2 * LV.RING[0], LV.RING[2],
+    label(bx, '받침 링 Ø%.0f/Ø%.0f × %.0f\n(M3 탭 6개, r %.0f)' % (2 * LV.RING[1], 2 * LV.RING[0], LV.RING[2],
           LV.FLANGE_BOLT_R), (YR + 3, -LV.RING[1] + 1), (189, -8), fs=11)
-    label(bx, 'hub 인서트 (6061)', (TF - 4, 10), (160, 26), fs=11)
+    label(bx, 'hub 인서트', (TF - 4, 10), (160, 26), fs=11)
     mh = {k: mx_out('hip', F, Fl) for k, F, Fl in (('설계', F_DES, FL_DES), ('검토', F_CHK, FL_CHK))}
     fb = {k: SV.bolt_circle_max(v, 6, LV.FLANGE_BOLT_R) for k, v in mh.items()}
     f2 = {k: SV.bolt_circle_max(v, 6, P.AKE_PCD_OUT / 2) for k, v in mh.items()}
@@ -331,9 +329,9 @@ def fig_hip(recs):
         ('2', '#1f4e9c', 'ISO 4762 M3 × 16 12.9 + 와셔 DIN 125   × 6',
          'hub 인서트 → 모터 출력부 (PCD 20), 와셔 자리 = 출력면 + 11.2.  렌치는 허벅지 바깥 면 Ø44 구멍으로\n'
          '(바깥 면 → 머리 약 %.0f mm: 2.5 mm 육각 볼드라이버 120 mm 이상)' % (TOF - (OUT + P.BEARING_FACE + 0.5 + 3.0))),
-        ('3', '#c0392b', '평행핀 ISO 8734 Ø3 × 10 m6   × 3', '인서트 Ø3 N7 × 7.5 바닥까지 압입 → 2.5 나와 출력부 구멍으로'),
+        ('3', '#c0392b', '평행핀 ISO 8734 Ø3 × 10 m6   × 3', '인서트 구멍 Ø3 × %.1f 바닥까지 압입 → %.1f 나와 출력부 구멍으로' % (P.DOWEL_HOLE, 10 - P.DOWEL_HOLE)),
         ('6', NEW, 'ISO 10642 M3 × 16 12.9 접시   × 6  — 11-02 새로, 모델에 없음',
-         '인서트 플랜지(접시 Ø7, 면과 같게) → PETG 벽 %.0f mm → 6061 받침 링 탭 6 mm (r %.0f).  열압입 인서트 없앰'
+         '인서트 플랜지(접시 Ø7, 면과 같게) → PETG 벽 %.0f mm → 받침 링의 손 탭 6 mm (r %.0f).  열압입 인서트 없앰'
          % (LV.WALL_J, LV.FLANGE_BOLT_R)),
     ]
     fits = [('A', 'Ø11.8 × %.1f 스피곳 (인서트) → 출력부 Ø12 × 1.5 홈 (바닥에서 %.1f 뜸)' % (LV.INSERT_SPIGOT[1], 1.5 - LV.INSERT_SPIGOT[1])),
@@ -341,18 +339,18 @@ def fig_hip(recs):
             ('C', '인서트 플랜지 Ø48 → 허벅지 자리 Ø48.3 × 6 (반경 0.15)'),
             ('D', '받침 링 Ø43 → 접근 구멍 Ø44 (반경 0.5, 위에서 떨어뜨려 넣음)')]
     steps = ['1) (작업대) 허벅지 바깥 면 Ø44 구멍으로 받침 링을 넣어 벽(y %.0f) 위에 얹고 구멍 6개를 맞춘다(Ø2.5 막대로)' % YR,
-             '2) hub 인서트를 안쪽 면 자리(C)에 넣고 ⑥ 6개를 링 탭에 조인다 — 약 0.7 N·m + 나사 고정제, 핀 ③ 압입',
+             '2) hub 인서트를 안쪽 면 자리(C)에 넣고 ⑥ 6개를 링 탭에 조인다 — 플라스틱 나사산: 나사 고정제 없이 손으로 가볍게, 핀 ③ 압입',
              '3) 허벅지를 hip 출력부에 끼운다(A, 핀) → ② 6개를 Ø44 구멍으로 넣어 조인다(와셔 먼저, 자석 드라이버)',
              '4) PETG 크리프: 처음 몇 주 ⑥ · ②를 다시 조인다']
     chk, gaps, laps = check_lines(recs, 'hip')
     notes = ['• hip 출력면 옆 모멘트 설계 %.0f / 검토 %.0f N·m (타이어 중심 y %.0f, 팔 %.0f mm)'
              % (mh['설계'] / 1000, mh['검토'] / 1000, SV.YTC, SV.YTC - OUT),
-             '• ⑥ 볼트 하나 외력 설계 %.0f / 검토 %.0f N (+ 예압 1 kN, 보증 4879) — 링크 25 cm: 설계 통과, 검토 초과; PETG 벽 압축 검토 약 44 MPa (50)'
-             % (fb['설계'], fb['검토']),
+             '• ⑥ 볼트 하나 외력 설계 %.0f / 검토 %.0f N — 받침 링의 플라스틱 나사산은 계산하지 않음; PETG 벽 압축 검토 %.0f MPa (50)'
+             % (fb['설계'], fb['검토'], SV.flange_wall_pressure(mh['검토'])),
              '• ② 출력 M3 하나 설계 %.0f / 검토 %.0f N (보증 4879) — 검토 하중에서 초과: AKE60 출력부 한계(다리 설계 무관)'
              % (f2['설계'], f2['검토'])] + chk
     text_column(fig, [0.62, 0.02, 0.37, 0.58], rows, fits, steps, notes)
-    legend_box(fig, [0.04, 0.005, 0.55, 0.075], ['PETG 허벅지', '6061 hub 인서트', '6061 받침 링', '6061 hip 판', 'AKE60-8 고정자', 'AKE 출력부',
+    legend_box(fig, [0.04, 0.005, 0.55, 0.075], ['PETG 허벅지', 'hub 인서트', '받침 링', 'hip 판', 'AKE60-8 고정자', 'AKE 출력부',
                     '드라이버 컵 (PETG)', 'moteus r4.11', '나사', '와셔', '평행핀', '몸통 부품'])
     # (c) the thigh along the beam (lower half) in more detail: wall, ring, bore
     cx = panel(fig, [0.04, 0.10, 0.55, 0.38], H, ((170, 292), (-60, 25)),
@@ -383,7 +381,7 @@ def fig_knee(recs):
                                ('PETG 정강이 (기본층 30 + 머리 패드 15)', 'shank_R main', (255, -88), 'min'),
                                ('AKE60-8 (무릎)', 'AKE60-8_KV80_stator', (146, 60), None),
                                ('드라이버 컵 + moteus', 'cup_', (143, -75), None),
-                               ('6061 무릎 캡 (관 Ø35이 61807 안륜에)', 'kneecap', (262, 60), None),
+                               ('무릎 캡 (관 Ø35이 61807 안륜에)', 'kneecap', (262, 60), None),
                                ('61807', 'kneebearing', (262, 40), None)):
         p = where(H, key, pick)
         if p:
@@ -407,7 +405,7 @@ def fig_knee(recs):
         if p:
             tag(bx, n, xy, to=p)
     tag(bx, '6', (228, -12), c=NEW, to=(SI + 9, -LV.FLANGE_BOLT_R))
-    label(bx, '6061 받침 링 (r %.1f ~ %.1f)' % (LV.RING[0], LV.RING[1]), (YR + 3, -LV.RING[1] + 1), (222, -22), fs=11)
+    label(bx, '받침 링 (r %.1f ~ %.1f)' % (LV.RING[0], LV.RING[1]), (YR + 3, -LV.RING[1] + 1), (222, -22), fs=11)
     # (c) outer support
     cx = panel(fig, [0.04, 0.10, 0.55, 0.38], H, ((236, 292), (-34, 34)),
                '(c) 확대 — 바깥 지지: 61807 (정강이 패드) + 무릎 캡 (바깥 막대에 꼭 맞음)')
@@ -415,20 +413,20 @@ def fig_knee(recs):
     dim_h(cx, SH, LV.SPAR[0], 30, '%.1f' % (LV.SPAR[0] - SH), (None, None), fs=11, above=True)
     label(cx, '턱 r %.0f ~ %.1f: 61807 바깥륜만 앉음\n(안륜은 Ø%.0f 구멍 위에서 자유)' % (LV.BORE_R, LV.BRG[1] / 2, 2 * LV.BORE_R),
           (SH - LV.BRG[2] - 0.3, -LV.BORE_R - 0.7), (238, -30), fs=11)
-    label(cx, '캡 관 Ø35 g6 ↔ 막대 구멍 Ø35 H7 (꼭 맞음, 11-02)', (LV.SPAR[0] + 6, -LV.CAP_R[1]), (255, -12), fs=11)
+    label(cx, '캡 관 Ø35 ↔ 막대 구멍 Ø35 (꼭 맞게 다듬음, 11-02)', (LV.SPAR[0] + 6, -LV.CAP_R[1]), (255, -12), fs=11)
     tag(cx, '7', (285, 31), c=NEW, to=(LV.SPAR[1] - 1.5, LV.CAP_R[2] - 2))
     mk = {k: mx_out('knee', F, Fl) for k, F, Fl in (('설계', F_DES, FL_DES), ('검토', F_CHK, FL_CHK))}
     fb = {k: SV.bolt_circle_max(v, 6, LV.FLANGE_BOLT_R) for k, v in mk.items()}
     reach = LV.SPAR[1] - (OUT + P.BEARING_FACE + 0.5 + 3.0)
     rows = [
-        ('1', '#1f4e9c', 'M2.5 × 8 저두 볼트 DIN 7984 8.8   × 6  + SUS304 고정 링 Ø45 / Ø30 × 2t',
+        ('1', '#1f4e9c', 'M2.5 × 8 저두 볼트 DIN 7984 8.8   × 6  + 클램프 링 Ø45 / Ø30 × 2',
          '허벅지 무릎 판(PETG 9) → AKE 고정자 링 (PCD 36.5), 바깥 면 홈 Ø45.6 × 3.7 안 — v4와 같음'),
         ('2', '#1f4e9c', 'M3 × 16 ISO 4762 12.9 + 와셔   × 6',
-         '6061 hub 인서트 → 출력부 (PCD 20).  캡을 떼고 바깥 막대 구멍 · 61807 · Ø44 → 렌치 깊이 약 %.0f' % reach),
+         'hub 인서트 → 출력부 (PCD 20).  캡을 떼고 바깥 막대 구멍 · 61807 · Ø44 → 렌치 깊이 약 %.0f' % reach),
         ('3', '#c0392b', '평행핀 ISO 8734 Ø3 × 10   × 3', '인서트 구멍 바닥까지 압입 → 2.5 나옴'),
         ('5', '#1f4e9c', 'M2.5 × 18 ISO 4762   × 3 + 황동 인서트', '드라이버 컵 → 허벅지 하우징 끝면(y 174) — v4와 같음'),
         ('6', NEW, 'M3 × 16 접시 ISO 10642 12.9   × 6  — 11-02 새로, 모델에 없음',
-         '인서트 플랜지 → 정강이 PETG 벽 %.0f → 6061 받침 링 탭 (r %.0f).  열압입 인서트 없앰' % (LV.WALL_J, LV.FLANGE_BOLT_R)),
+         '인서트 플랜지 → 정강이 PETG 벽 %.0f → 받침 링의 손 탭 (r %.0f).  열압입 인서트 없앰' % (LV.WALL_J, LV.FLANGE_BOLT_R)),
         ('7', NEW, 'M2.5 × 8 저두 DIN 7984   × 3 + 황동 인서트 — 모델에 없음',
          '무릎 캡 플랜지 → 바깥 막대 (r %.1f).  캡 관이 구멍에 꼭 맞아 예압만 받음' % LV.CAP_BOLT_R),
         ('8', '#8f8f8f', '깊은 홈 볼 베어링 61807 (Ø35 × Ø47 × 7)   × 1', '정강이 패드 바깥 면 자리, 무릎 캡 관에 안륜'),
@@ -436,10 +434,10 @@ def fig_knee(recs):
     fits = [('A', 'Ø11.8 스피곳 → 출력부 Ø12 홈, Ø28 보스 → 무릎 판 Ø30 구멍 (반경 1.0)'),
             ('B', '무릎 판 바깥 면 ↔ 정강이 안쪽 면 %.1f (11-02, 전 1.5)' % (SI - TO)),
             ('C', '61807 바깥륜 → 패드 자리 Ø47 압입, 턱 r 22 ~ 23.5'),
-            ('D', '캡 관 Ø35 g6 → 61807 안륜 · 바깥 막대 구멍 Ø35 H7 (출력은 작게 뽑고 리머)'),
+            ('D', '캡 관 Ø35 → 61807 안륜 · 바깥 막대 구멍 Ø35 (구멍은 작게 뽑고 리머, 관은 사포로 맞춤)'),
             ('E', '받침 링 Ø43 → Ø44 구멍 (반경 0.5)')]
-    steps = ['1) 무릎 모터를 허벅지 하우징에 넣고 ① 6개(바깥 면 홈의 SUS 링 위), 컵 · moteus ⑤',
-             '2) (작업대) 정강이: 받침 링을 61807 자리 쪽 Ø44 구멍으로 넣어 벽(y %.0f)에 얹음 → hub 인서트 + ⑥ 6개(0.7 N·m)'
+    steps = ['1) 무릎 모터를 허벅지 하우징에 넣고 ① 6개(바깥 면 홈의 클램프 링 위), 컵 · moteus ⑤',
+             '2) (작업대) 정강이: 받침 링을 61807 자리 쪽 Ø44 구멍으로 넣어 벽(y %.0f)에 얹음 → hub 인서트 + ⑥ 6개(손으로 가볍게)'
              % YR,
              '   → 핀 ③ → 61807을 패드 자리에 압입(턱에 닿게)',
              '3) 정강이를 9.5 mm 바깥으로 띄워 갈래에 넣고(핀 끝 ↔ 무릎 판 1.0, 패드 ↔ 바깥 막대 1.0) 안쪽으로 밀어',
@@ -449,11 +447,11 @@ def fig_knee(recs):
     chk, gaps, laps = check_lines(recs, 'knee')
     notes = ['• 무릎 출력면 옆 모멘트 설계 %.0f / 검토 %.0f N·m (모터가 다 받을 때); 61807이 짝힘으로 나눠 받음'
              % (mk['설계'] / 1000, mk['검토'] / 1000),
-             '• ⑥ 볼트 하나 외력 설계 %.0f / 검토 %.0f N (+ 예압 1 kN, 보증 4879) — 통과' % (fb['설계'], fb['검토']),
+             '• ⑥ 볼트 하나 외력 설계 %.0f / 검토 %.0f N — 받침 링의 플라스틱 나사산은 계산하지 않음' % (fb['설계'], fb['검토']),
              '• 캡 구멍 면압 검토 약 26 MPa (50) — 통과; 61807 반경 하중 검토 2.64 kN (C0 3.35)'] + chk
     text_column(fig, [0.62, 0.02, 0.37, 0.58], rows, fits, steps, notes)
-    legend_box(fig, [0.04, 0.005, 0.55, 0.075], ['PETG 허벅지', 'PETG 정강이', '6061 hub 인서트', '6061 받침 링', '6061 무릎 캡', '61807',
-                    'AKE60-8 고정자', 'AKE 출력부', 'SUS 고정 링', '드라이버 컵 (PETG)', 'moteus r4.11', '나사', '와셔',
+    legend_box(fig, [0.04, 0.005, 0.55, 0.075], ['PETG 허벅지', 'PETG 정강이', 'hub 인서트', '받침 링', '무릎 캡', '61807',
+                    'AKE60-8 고정자', 'AKE 출력부', '클램프 링', '드라이버 컵 (PETG)', 'moteus r4.11', '나사', '와셔',
                     '평행핀', '황동 열압입 인서트'])
     fig.savefig(HERE / 'knee_section.png', dpi=80)
     plt.close(fig)
@@ -494,7 +492,7 @@ def fig_wheel(recs):
         if p:
             tag(bx, n, xy, to=p)
     rows = [
-        ('1', '#1f4e9c', 'M2.5 × 8 저두 DIN 7984 8.8   × 6  + SUS 고정 링',
+        ('1', '#1f4e9c', 'M2.5 × 8 저두 DIN 7984 8.8   × 6  + 클램프 링',
          '정강이 바퀴 판(PETG 9, 바깥 면 홈) → AKE 고정자 링 — 허브 플랜지보다 먼저'),
         ('2', '#1f4e9c', 'M3 × 14 ISO 4762 12.9 + 와셔   × 6', 'PETG 허브 플랜지 → 바퀴 출력부 (PCD 20)'),
         ('3', '#c0392b', '평행핀 Ø3 × 10   × 3', '허브 플랜지 구멍 Ø3 × %.1f 바닥까지 → %.1f 나와 출력부 구멍(3)으로 (11-08)' % (P.HUB_DOWEL_HOLE, 10 - P.HUB_DOWEL_HOLE)),
@@ -504,17 +502,17 @@ def fig_wheel(recs):
     fits = [('A', '허브 Ø28 보스 → 바퀴 판 Ø30 구멍 (반경 1.0)'),
             ('B', '컵 립 Ø88.1 → 바퀴 하우징 Ø88 (정강이 안쪽 면과 같은 높이, 11-02)'),
             ('C', '정강이 바깥 면 ↔ 타이어 %.0f' % P.GAP_TYRE)]
-    steps = ['1) 바퀴 모터를 정강이 하우징에 안쪽에서 넣고 ① 6개를 바깥 면에서(SUS 링 위)',
+    steps = ['1) 바퀴 모터를 정강이 하우징에 안쪽에서 넣고 ① 6개를 바깥 면에서(클램프 링 위)',
              '2) 컵 · moteus를 하우징 안쪽 끝(y %.0f)에 ⑤' % SI,
              '3) 허브 플랜지를 출력부에(보스 A, 핀 ③) ② 6개',
              '4) 타이어를 림에 끼우고 림을 허브 플랜지에 ④ 6개']
     chk, gaps, laps = check_lines(recs, 'wheel')
     mw = {k: mx_out('wheel', F, Fl) for k, F, Fl in (('설계', F_DES, FL_DES), ('검토', F_CHK, FL_CHK))}
-    notes = ['• 바퀴 출력면 옆 모멘트 설계 %.0f / 검토 %.0f N·m; PETG 바퀴 판 · 고정 링 통과 (calc/strength_v5.md 2절)'
+    notes = ['• 바퀴 출력면 옆 모멘트 설계 %.0f / 검토 %.0f N·m; PETG 바퀴 판 · 클램프 링 통과 (calc/strength_v5.md 2절)'
              % (mw['설계'] / 1000, mw['검토'] / 1000),
              '• 11-02: 바퀴 묶음을 2.5 mm 바깥으로 → 정강이 안쪽 면 평평(출력 바닥면), 폭 30 유지, 로봇 폭 594'] + chk
     text_column(fig, [0.62, 0.02, 0.37, 0.58], rows, fits, steps, notes)
-    legend_box(fig, [0.04, 0.005, 0.55, 0.075], ['PETG 정강이', 'AKE60-8 고정자', 'AKE 출력부', 'SUS 고정 링', '드라이버 컵 (PETG)', 'moteus r4.11',
+    legend_box(fig, [0.04, 0.005, 0.55, 0.075], ['PETG 정강이', 'AKE60-8 고정자', 'AKE 출력부', '클램프 링', '드라이버 컵 (PETG)', 'moteus r4.11',
                     'PETG 허브 플랜지', 'PETG 림', '타이어 M365', '나사', '와셔', '평행핀', '황동 열압입 인서트'])
     cx = panel(fig, [0.04, 0.10, 0.55, 0.38], H, ((196, 226), (30, 52)),
                '(c) 확대 — 컵 립이 바퀴 하우징 끝(y %.0f)에 걸림: 정강이 안쪽 면과 같은 높이 (11-02)' % SI)

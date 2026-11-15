@@ -1,9 +1,8 @@
-"""Stage 4 - MPC + position integral + static-tilt integral states (z2, q_att): the full MPC controller.
+"""The full MPC controller: MPC + position integral + static-tilt integral states.
 
-    python -m unittest discover -s v5_mpc/TEST -p "test_stage4*.py" -v
+    python v5_mpc/TEST/run_stages.py --stage 4 --keep-going        (from wheeled_biped/)
 
-Pass = under the same three constant disturbances the TRUE body pitch ends within 0.5 deg of level, and every test of
-stages 1 to 3 still passes (same tests and limits as v5_lqi stage 4).
+Same tests and limits as v5_lqi/TEST.
 """
 from stage_common import BalanceTests, OuterLoopTests, PositionIntegralTests, StageTestCase, TiltIntegralTests
 

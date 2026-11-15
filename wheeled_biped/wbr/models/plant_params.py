@@ -1,7 +1,6 @@
 """Plant parameters of the controller computed on a MuJoCo model: lumped leg table over the virtual leg length,
-body / wheel parameters, standing posture (the method of docs/plan4_model.md, section 2).  Called by wbr.models.build_v5,
-which passes the robot's joint signs, knee side, leg-length range and table grid.  (Until 2026-11-14 this was
-wbr/models/upkie_params.py with the upkie model's values as defaults; the upkie model was removed that day.)
+body / wheel parameters, standing posture.  Called by wbr.models.build_v5, which passes the robot's joint signs, knee
+side, leg-length range and table grid.
 
 Bodies are grouped by the last joint on their path from the base: base group = body, hip group = thigh, knee group =
 shank, wheel group = wheel.  For each L0 the legs are set to the IK posture with the virtual leg vertical (theta_v = 0),

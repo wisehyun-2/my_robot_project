@@ -1,5 +1,5 @@
-"""Three-body planar plant of a wheeled biped with SERIAL hip-knee legs (the v5 robot; first derived for the upkie model of
-Plan 4, removed 2026-11-14), from the Lagrangian -- no parallelogram assumption (docs/plan4_model.md).
+"""Three-body planar plant of a wheeled biped with SERIAL hip-knee legs (the v5 robot), from the Lagrangian -- no
+parallelogram assumption.
 
 Bodies (both legs lumped into one, all masses/inertias are totals):
   wheel  mass m_w, inertia I_w about the axle (tires, hubs, rotors + reflected rotor armature),
@@ -226,14 +226,6 @@ class SerialPlant:
         assert abs(gradV[1] - gradV[2]) < 1e-4 * max(1.0, abs(gradV[2])), "equilibrium inconsistency"
         return float(gradV[2])      # = m_b g b_x at phi = 0
 
-    def com_height(self, L0: float | None = None) -> float:
-        P = self.params(L0)
-        R, m_w, I_w, m_l, c, d, I_l, m_b, b_x, b_z, I_b, L0v, *_ = P
-        th = self.theta_eq(L0)
-        z_leg = -d * np.sin(th) + c * np.cos(th)
-        z_body = L0v * np.cos(th) + b_z
-        return float((m_l * z_leg + m_b * z_body) / (m_l + m_b))
-
     # --------------------------------------------------------------------- dynamics
     def deriv(self, X, T: float, Tp: float, L0: float | None = None) -> np.ndarray:
         """Nonlinear state derivative, X = [theta, theta_dot, x, x_dot, phi, phi_dot]."""
@@ -243,9 +235,6 @@ class SerialPlant:
         r = np.asarray(self.sym["f_rhs"](x, th, ph, xd, thd, phd, T, Tp, *P), dtype=float).ravel()
         xdd, thdd, phdd = np.linalg.solve(M, r)
         return np.array([thd, thdd, xd, xdd, phd, phdd])
-
-    def mass_matrix(self, theta: float, phi: float = 0.0, L0: float | None = None) -> np.ndarray:
-        return np.asarray(self.sym["f_Mq"](theta, phi, *self.params(L0)), dtype=float)
 
     def linearize(self, L0: float | None = None):
         """A (6x6), B (6x2) at the equilibrium (theta_eq(L0), phi = 0, T = 0, Tp = Tp_eq)."""

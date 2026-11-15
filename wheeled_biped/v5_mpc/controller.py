@@ -24,8 +24,8 @@ NAME = "MPC"
 
 # MPC weights and settings; the q_* / r_* rules are the v5 LQI8's (v5_lqi), so the two differ in structure only
 MPC_DEFAULTS = dict(
-    dt_mpc=0.01, n_steps=30,        # 0.3 s horizon + DARE terminal cost
-    n_con=10,                       # motor-torque constraints on the first 0.1 s of moves
+    dt_mpc=0.01, n_steps=30,        # 30 x 10 ms after the fine first blocks (0.31 s horizon) + DARE terminal cost
+    n_con=10,                       # motor-torque constraints on the first 10 moves (about 68 ms)
     u_limit=0.75,                   # of each motor's peak (AKE60-8: 9.4 of 12.5 N m; the tests judge 10)
     q_theta=0.3, q_thetad=3.0, q_v=0.5, q_phi=0.15, q_phid=3.0, q_int=0.2,
     q_att=0.2, q_pos=0.5,           # the full controller: z2 static tilt, z3 position integral (None = off)
@@ -41,7 +41,7 @@ class PlanV5MpcConfig(PlanV5Config):
 
 
 class PlanV5Mpc(PlanV5):
-    """PlanV5 with the MPC in place of the LQI8 (Plan4LQI8._make_law)."""
+    """PlanV5 with the MPC in place of the LQI8 (ClosedLoop._make_law)."""
 
     @staticmethod
     def default_config():
@@ -61,10 +61,8 @@ def _classes():
     return PlanV5MpcConfig, PlanV5Mpc
 
 
-# the stages of v5_mpc/TEST: the same states as v5_lqi's stages, here as the MPC's prediction model
+# the controller v5_mpc/TEST judges: the same states as v5_lqi's, here as the MPC's prediction model
 STAGES = (
-    Stage("mpc", "MPC (6상태)", dict(mpc_kwargs=dict(q_att=None, q_pos=None)), _classes),
-    Stage("mpc_ipos", "MPC + ∫위치", dict(mpc_kwargs=dict(q_att=None, q_pos=0.5)), _classes),
     Stage("mpc_ipos_itilt", "MPC + ∫위치 + ∫기울기", dict(mpc_kwargs=dict(q_att=0.2, q_pos=0.5)), _classes),
 )
 FULL_STAGE = "mpc_ipos_itilt"

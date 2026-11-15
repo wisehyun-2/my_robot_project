@@ -6,24 +6,24 @@
 
 Source: the Fusion export ../export/parts_step/<name>.step (robot frame, Fusion world axes (robot y, z, x); v5run.exports).
   * v5 parts (new in v5, detailed sheets): thigh, shank (PETG FDM print since 11-02; L / R separate parts, the sheets draw
-    the right one = CAD +y, the left one has its own STEP), the 6061 hub inserts (hip, knee), the 6061 backing ring (11-02,
-    one part for hip / knee, L / R) and the 6061 knee cap (no hip cap since 11-02).  Each is moved to its own
+    the right one = CAD +y, the left one has its own STEP), the hub inserts (hip, knee), the backing ring (11-02,
+    one part for hip / knee, L / R) and the knee cap (no hip cap since 11-02).  Each is moved to its own
     frame (links: origin = upper joint axis on the inner face, X towards the lower joint, Z outboard; round parts:
     origin on the axis at the face named in the sheet, Z outboard, X = CAD +x, the knee side) and dimensioned from params /
-    legs_v5; the hole tables are read back from the geometry.  Part names follow the robot: front = rocker switch = CAD -x,
+    legs_v5; the hole tables are read back from the geometry.  Part names follow the robot: front = CAD -x,
     _L = CAD -y (user 11-08).
   * the other designed parts (v4 parts used unchanged: cups, hub flange, rim, shells, top plate, tray, deck, saddles,
     splice tabs, hip plate, spine bars, rails, stator clamp ring, magnet spacer): one sheet each, three hidden-line views
-    along the robot axes with the overall sizes, material / process from the v4 notes.  The machined ones also have the
-    fully dimensioned v2 drawings (v2/drawings, from robot_cad_v2/manufacturing), copied when the solid is unchanged.
-Views are hidden-line projections (hlr_gmsh.py, from robot_cad_v3/manufacturing); dimensions, tables and notes are written
-here.  Explanatory production drawings for quotes; the STEP is the master geometry.
+    along the robot axes with the overall sizes.  Hip plate, spine bar, rail, clamp ring and magnet spacer also have the
+    fully dimensioned v2 drawings (v2/drawings); the sheet points to them when the solid is unchanged (V2_DRAWING).
+Every part is printed in PLA / PETG (user 11-09, again 11-15: no metal parts): material, process and finishing in the title
+blocks are those of ../BOM.md.  Views are hidden-line projections (hlr_gmsh.py); dimensions, tables and notes are written
+here.  Dimension reference for printing and fitting; the STEP / STL is the master geometry.
 """
 import argparse
 import math
 import os
 import pathlib
-import shutil
 import sys
 import unicodedata
 from unittest import mock
@@ -36,7 +36,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib import font_manager  # noqa: E402
 from matplotlib.backends.backend_pdf import PdfPages  # noqa: E402
-from matplotlib.patches import Circle, PathPatch, Polygon  # noqa: E402
+from matplotlib.patches import PathPatch, Polygon  # noqa: E402
 from matplotlib.path import Path  # noqa: E402
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -61,16 +61,20 @@ import gmsh  # noqa: E402
 SRC = V5 / 'export' / 'parts_step'
 STEP_DIR = HERE / 'step'
 PDF_DIR = HERE / 'drawings'
-V2_DRAW = HERE / 'v2'                                 # the v2 drawings / STEPs of V2_COPY (from robot_cad_v2/manufacturing)
-DATE = '2026-11-08'
+V2_DRAW = HERE / 'v2'                                 # the v2 drawings / STEPs of V2_DRAWING (from robot_cad_v2/manufacturing)
+DATE = '2026-11-15'
+RHO_PRINT = P.PETG_RHO / 1000.0                       # g/cm3 of a solid PETG print (the masses in the notes)
 PROJECT = 'WheelBiped v5'
 
-for f in (r'C:\Windows\Fonts\malgun.ttf', '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc'):
+FONT_TTF = True
+for f in (r'C:\Windows\Fonts\malgun.ttf', '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc',
+          '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc'):      # Windows PC, then the Ubuntu laptop's Korean font
     if os.path.exists(f):
         font_manager.fontManager.addfont(f)
         plt.rcParams['font.family'] = font_manager.FontProperties(fname=f).get_name()
+        FONT_TTF = 'opentype' not in f      # the Noto CJK file holds CFF outlines: embedded as Type 42 it opens in few viewers
         break
-plt.rcParams.update({'hatch.linewidth': 0.3, 'hatch.color': 'black', 'pdf.fonttype': 42})
+plt.rcParams.update({'hatch.linewidth': 0.3, 'hatch.color': 'black', 'pdf.fonttype': 42 if FONT_TTF else 3})
 
 LW_VIS, LW_HID, LW_THIN = 0.7, 0.3, 0.3
 FS, FS_S = 7.5, 6.0
@@ -279,7 +283,7 @@ class Sheet:
                  ('재질', info['재질'], '수량', info['수량']),
                  ('공정', info['공정'], '척도', info['척도']),
                  ('후처리', info.get('후처리', '-'), '투상', '3각법'),
-                 ('STEP', info['step'], '일반 공차', info.get('공차', 'KS B ISO 2768-mK')),
+                 ('STEP', info['step'], '일반 공차', info['공차']),
                  ('프로젝트', PROJECT + ' (robot_cad_v5)', '작성일', DATE)]
         cw = (16.0, 106.0, 18.0, 50.0)
         hh = rh * len(rows_)
@@ -413,8 +417,8 @@ def hole_rows(holes, z_name='Z', skip=lambda h: False):
 
 
 # ----------------------------------------------------------------------------- detailed v5 sheets
-def info_v5(name, scale, mass_g, shared, extra):
-    base = {'step': 'step/%s_R.step, %s_L.step' % (name, name), '척도': scale}
+def info_v5(name, scale, shared, extra):
+    base = {'step': 'step/%s_R.step, %s_L.step' % (name, name), '척도': scale, '공차': '출력 ±0.2 (끼움 자리는 주기)'}
     base.update(extra)
     if '수량' not in base:
         base['수량'] = '2개 (왼쪽·오른쪽 같은 부품)' if shared else '왼쪽 1 + 오른쪽 1 (서로 다른 부품)'
@@ -427,11 +431,10 @@ def link_sheets(name, pdf, png_dir, res):
     thigh = name == 'thigh'
     path_drawn = STEP_DIR / ('%s_R.step' % name)
     L = P.L1 if thigh else P.L2
-    r_a, r_b = (LV.THIGH if thigh else LV.SHANK)[0][1], (LV.THIGH if thigh else LV.SHANK)[1][1]
+    r_a = (LV.THIGH if thigh else LV.SHANK)[0][1]
     y0 = LV.Y_TF if thigh else LV.Y_SI
     zf = (LV.SPAR[1] if thigh else LV.Y_SH) - y0                  # outer face Z
-    mass = res['vol'] / 1000
-    extra = {'재질': 'PETG (FDM, 11-02) — calc/strength_v5.md', '공정': 'FDM 한 덩어리: 벽 3.5 둘레선, 채움 100 %, 닫힌 칸',
+    extra = {'재질': 'PETG 권장(모터 열, BOM.md 3절)', '공정': 'FDM 한 덩어리: 벽 3.5 둘레선, 채움 100 %, 닫힌 칸',
              '후처리': 'M2.5 열압입 인서트, 끼움 자리 다듬기', '공차': '출력 ±0.2 (끼워맞춤은 주기)'}
     j_up, j_lo = ('hip', '무릎') if thigh else ('무릎', '바퀴')
 
@@ -457,7 +460,7 @@ def link_sheets(name, pdf, png_dir, res):
     if thigh:
         S.dim(VB.pt((L, -P.HOUSING_R, 0)), VB.pt((L, P.HOUSING_R, 0)), VB.box[1] + 8, 'Ø%.0f (컵 립 끼움)'
               % (2 * P.HOUSING_R), horizontal=False)
-    S.title_block('%s 오른쪽 (%s_R)' % (title, name), number + ' (1/3)', info_v5(name, '1:1', mass, False, extra))
+    S.title_block('%s 오른쪽 (%s_R)' % (title, name), number + ' (1/3)', info_v5(name, '1:1', False, extra))
     finish(S, pdf, png_dir, name + '_1')
 
     # ---- sheet 2: section through both joint axes (Y = 0), Z levels, notes
@@ -475,7 +478,7 @@ def link_sheets(name, pdf, png_dir, res):
     S.table(20.0, 128.0, [('Z', 14), ('면 (y = 로봇 오른쪽 다리의 CAD y)', 96)], zrows, title='두께 방향 면 높이 (Z, 안쪽 면 Z0, +Z = 바깥)',
             row_h=4.0)
     S.notes(150.0, 128.0, link_notes(name), width=118)
-    S.title_block('%s 오른쪽 (%s_R)' % (title, name), number + ' (2/3)', info_v5(name, '1:1', mass, False, extra))
+    S.title_block('%s 오른쪽 (%s_R)' % (title, name), number + ' (2/3)', info_v5(name, '1:1', False, extra))
     finish(S, pdf, png_dir, name + '_2')
 
     # ---- sheet 3: hole table (its own sheet since the links are 250 mm: on sheet 1 it covered the lower joint)
@@ -483,7 +486,7 @@ def link_sheets(name, pdf, png_dir, res):
     hr = hole_rows(res['holes'], skip=lambda h: h['d'] > 80 and not h['convex'])
     S.table(20.0, 278.0, [('구멍·원통', 90), ('Ø', 22), ('개', 12), ('위치 (X, Y) 또는 원', 180), ('Z', 50)], hr,
             title='Z 방향 구멍·원통 표 (원점 %s 축 · 안쪽 면, 오른쪽 부품)' % j_up, row_h=5.0, fs=FS)
-    S.title_block('%s 오른쪽 (%s_R)' % (title, name), number + ' (3/3)', info_v5(name, '1:1', mass, False, extra))
+    S.title_block('%s 오른쪽 (%s_R)' % (title, name), number + ' (3/3)', info_v5(name, '1:1', False, extra))
     finish(S, pdf, png_dir, name + '_3')
 
 
@@ -514,17 +517,17 @@ def link_notes(name):
     common = [
         '단위 mm, 3각법.  형상의 원본은 STEP(step/%s_R.step · _L.step, 위 원점·축).  왼쪽 부품은 거울상에 가깝지만 모터 판의 '
         '리드 홈·컵 인서트 각도가 다르므로 _L STEP으로 따로 출력한다.' % name,
-        '닫힌 상자 벽 %.1f, 와렌 리브 %.1f (구멍 없음).  리브가 나눈 칸은 닫힌 빈칸 — 배출 구멍 없음(11-02), FDM 출력 기준 '
-        '(MJF로 뽑으면 칸 속 가루가 빠지지 않는다).' % (LV.WALL, LV.RIB),
+        '닫힌 상자 벽 %.1f, 와렌 리브 %.1f (구멍 없음).  리브가 나눈 칸은 닫힌 빈칸 — 배출 구멍 없음(11-02), FDM 출력 기준.'
+        % (LV.WALL, LV.RIB),
         '열압입 인서트는 M2.5 × 4 (구멍 Ø3.6)만 — 컵 기둥 · 무릎 캡.  hub 인서트는 열압입 인서트 대신 PETG 벽 %.0f mm를 '
-        '6061 받침 링(Ø44 구멍으로 넣음)과 끼워 ISO 10642 M3 × 16 12.9 6개 (r %.0f)로 고정(11-02).' % (LV.WALL_J, LV.FLANGE_BOLT_R),
+        '받침 링(Ø44 구멍으로 넣음)과 끼워 ISO 10642 M3 × 16 6개 (r %.0f)로 고정(11-02).' % (LV.WALL_J, LV.FLANGE_BOLT_R),
         'Ø42.05 파일럿 포켓·Ø47 61807 자리·Ø48.3 플랜지 자리·Ø35 캡 관 구멍은 출력 오차만큼 실물에 맞춰 다듬는다(리머·사포).',
     ]
     if thigh:
         return common + [
             '안 A: 바깥 막대 y %.1f ~ %.1f, 갈래 틈 %.1f — 정강이를 9.5 mm 바깥에 띄워 넣고 안쪽으로 밀어 조립 (11-02 바퀴 묶음을 '
             '2.5 mm 바깥으로 옮겨 막대도 2.5 바깥).' % (LV.SPAR[0], LV.SPAR[1], LV.SPAR[0] - LV.Y_TO),
-            'Ø35 캡 관 구멍: 무릎 캡 관 Ø35 g6에 꼭 맞게 H7 (11-02) — 0.2 작게 뽑고 리머.',
+            'Ø35 캡 관 구멍: 0.2 작게 뽑고 Ø35 H7 리머로 넓혀 무릎 캡 관에 꼭 맞춘다 (11-02).',
             'Ø88 무릎 하우징은 안쪽 면보다 4 mm 나와 있다(컵 립 y 174 ~ 177 자리) — 출력은 바깥 면(평평)을 바닥에.',
             'hip 쪽 Ø44 접근 구멍(받침 링 넣기, hip 출력 나사 조임)은 바깥 면에 열린 채 둔다 — hip 캡 없음(11-02).',
         ]
@@ -564,8 +567,7 @@ def round_sheet(name, pdf, png_dir, res):
     S.notes(290.0, 282.0, round_notes(name, res), width=66)
     S.table(150.0, 128.0, [('구멍·원통', 44), ('Ø', 13), ('개', 6), ('위치 (X, Y) 또는 원', 34), ('Z', 25)],
             hole_rows(res['holes']), title='Z 방향 구멍·원통 표 (원점 = 주기 1의 면, 축 위)', row_h=4.0, fs=FS_S - 0.6)
-    mass = res['vol'] / 1000 * (2.70 if name.startswith(('hub', 'knee')) else 1.01)
-    S.title_block('%s (%s)' % (title, name), number, info_v5(name, '2:1', mass, res['shared'], round_info(name, res, mass)))
+    S.title_block('%s (%s)' % (title, name), number, info_v5(name, '2:1', res['shared'], round_info(name)))
     finish(S, pdf, png_dir, name)
 
 
@@ -573,7 +575,7 @@ def round_z_dims(name):
     if name.startswith('hub_insert'):
         y_li = LV.Y_TF if name.endswith('hip') else LV.Y_SI
         z_fl = y_li - Y_OUT['hip' if name.endswith('hip') else 'knee']
-        return [(0.0, z_fl), (z_fl, z_fl + LV.INSERT_FL[1]), (0.0, P.BEARING_FACE), (-1.4, 0.0)]
+        return [(0.0, z_fl), (z_fl, z_fl + LV.INSERT_FL[1]), (0.0, P.BEARING_FACE), (-LV.INSERT_SPIGOT[1], 0.0)]
     if name == 'hub_ring':
         return [(0.0, LV.RING[2])]
     Lt = LV.SPAR[1] - (LV.Y_SH - LV.BRG[2] + 0.5)                  # knee cap
@@ -584,19 +586,22 @@ def round_r_dims(name):
     if name.startswith('hub_insert'):
         y_li = LV.Y_TF if name.endswith('hip') else LV.Y_SI
         z_fl = y_li - Y_OUT['hip' if name.endswith('hip') else 'knee']
-        return [(14.0, z_fl * 0.5), (LV.INSERT_FL[0], z_fl + 3.0), (5.9, -0.7), (9.0, z_fl + 5.0)]
+        return [(14.0, z_fl * 0.5), (LV.INSERT_FL[0], z_fl + 3.0), (LV.INSERT_SPIGOT[0], -LV.INSERT_SPIGOT[1] / 2), (9.0, z_fl + 5.0)]
     if name == 'hub_ring':
         return [(LV.RING[1], 4.0), (LV.RING[0], 2.0)]
     Lt = LV.SPAR[1] - (LV.Y_SH - LV.BRG[2] + 0.5)                  # knee cap
     return [(LV.CAP_R[1], 6.0), (LV.CAP_R[2], Lt - 1.5), (LV.CAP_R[0], 10.0)]
 
 
-def round_info(name, res, mass):
+def round_info(name):
+    """Material, print settings and finishing of ../BOM.md section 2 (bom.py TAPPED)."""
     if name.startswith('hub_insert'):
-        return {'재질': 'AL6061-T6 환봉 Ø50', '공정': '선반 + MCT (구멍·카운터보어·접시)', '후처리': '흑색 아노다이징 권장 (끼움면 마스킹)'}
+        return {'재질': 'PETG 권장(모터 열)', '공정': 'FDM 채움 100 %, 플랜지 바깥 면(접시 구멍 쪽)을 바닥에',
+                '후처리': 'Ø3 핀 구멍 드릴, 스피곳·플랜지를 실물에 맞춰 다듬기'}
     if name == 'hub_ring':
-        return {'재질': 'AL6061-T6 환봉 Ø45', '공정': '선반 + 드릴 · M3 탭 6', '후처리': '버 제거', '수량': '4개 (hip · 무릎 × 왼 · 오른 같은 부품)'}
-    return {'재질': 'AL6061-T6 환봉 Ø50', '공정': '선반 + 드릴 (M2.5 구멍 3)', '후처리': '흑색 아노다이징 권장'}
+        return {'재질': 'PETG 권장(모터 열)', '공정': 'FDM 채움 100 %, 평평하게', '후처리': 'M3 핸드 탭 6 (Ø2.5 구멍)',
+                '수량': '4개 (hip · 무릎 × 왼 · 오른 같은 부품)'}
+    return {'재질': 'PLA 또는 PETG', '공정': 'FDM 채움 100 %, 플랜지를 바닥에 관을 위로', '후처리': 'Ø35 관을 사포로 맞춤'}
 
 
 def round_notes(name, res):
@@ -606,63 +611,64 @@ def round_notes(name, res):
         j = 'hip' if name.endswith('hip') else '무릎'
         return [
             '단위 mm, 3각법, 원점 = 축 위 모터 출력 면 쪽 끝면(Z0, 스피곳 시작), +Z = 링크 쪽.%s' % rot,
-            '%s 모터(AKE60-8) 출력부에 Ø11.8 h9 스피곳 × %.1f (0/-0.05) — AKE 홈 Ø12 × 1.5보다 %.1f 낮아 Z0 면이 먼저 닿음 (11-08).' % (
-                j, LV.INSERT_SPIGOT[1], 1.5 - LV.INSERT_SPIGOT[1]),
-            '평행핀 구멍 Ø3 N7 × %.1f (+0.2/0) (출력부 핀과 같은 PCD 20, M3와 30° 어긋남) — 핀 Ø3 × 10을 바닥까지 압입, %.1f 돌출 '
-            '(출력부 핀 구멍 깊이 3: 얕게 가공되면 핀이 먼저 바닥에 닿음).' % (P.DOWEL_HOLE, 10 - P.DOWEL_HOLE),
-            '출력 M3 × 16 12.9: Ø3.4 통과 + Ø7.2 카운터보어, 와셔 자리(바닥) Z %.1f ±0.05 — 탭 물림 4.3.' % P.BEARING_FACE,
-            'Ø28 보스 (0/-0.1): 링크 판 Ø30 구멍과 반경 틈 1.0.  플랜지 Ø48 (-0.05/-0.15) → 링크 자리 Ø48.3.',
-            '플랜지 나사 6개: Ø3.4 통과 + Ø%.1f × 90° 접시 (r %.0f, 30° + 60° 간격) — ISO 10642 M3 × 16 12.9 머리가 면과 같게, '
-            'PETG 벽 %.0f를 지나 6061 받침 링 탭에 (11-02).' % (LV.INSERT_CSK, LV.FLANGE_BOLT_R, LV.WALL_J),
-            '버 제거, 모서리 C0.2.  질량 약 %.0f g.' % (res['vol'] / 1000 * 2.70),
+            '%s 모터(AKE60-8) 출력부에 Ø%.1f 스피곳 × %.1f — AKE 홈 Ø12 × 1.5보다 %.1f 낮아 Z0 면이 먼저 닿음 (11-08).  홈에 맞춰 다듬는다.' % (
+                j, 2 * LV.INSERT_SPIGOT[0], LV.INSERT_SPIGOT[1], 1.5 - LV.INSERT_SPIGOT[1]),
+            '평행핀 구멍 Ø3 × %.1f (출력부 핀과 같은 PCD 20, M3와 30° 어긋남) — 출력 뒤 Ø3 드릴로 정리하고 핀 Ø3 × 10을 바닥까지 압입, '
+            '%.1f 돌출 (출력부 핀 구멍 깊이 3: 구멍이 얕으면 핀이 먼저 바닥에 닿음).' % (P.DOWEL_HOLE, 10 - P.DOWEL_HOLE),
+            '출력 M3 × 16: Ø3.4 통과 + Ø7.2 카운터보어, 와셔 자리(바닥) Z %.1f — 탭 물림 4.3.' % P.BEARING_FACE,
+            'Ø28 보스: 링크 판 Ø30 구멍과 반경 틈 1.0.  플랜지 Ø48 → 링크 자리 Ø48.3 (맞춰 다듬기).',
+            '플랜지 나사 6개: Ø3.4 통과 + Ø%.1f × 90° 접시 (r %.0f, 30° + 60° 간격) — ISO 10642 M3 × 16 머리가 면과 같게, '
+            'PETG 벽 %.0f를 지나 받침 링 탭에 (11-02).' % (LV.INSERT_CSK, LV.FLANGE_BOLT_R, LV.WALL_J),
+            '출력 부품(BOM.md 2절).  질량 약 %.0f g (PETG, 채움 100 %%).' % (res['vol'] / 1000 * RHO_PRINT),
         ]
     if name == 'hub_ring':
         return [
             '단위 mm, 3각법, 원점 = 축 위 PETG 벽 쪽 면(Z0), +Z = 링크 바깥 쪽.  hip · 무릎 · 왼쪽 · 오른쪽 같은 부품 4개.',
-            'M3 탭 6개 관통 (r %.0f, 30° + 60° 간격 — hub 인서트 플랜지 구멍과 같은 각도), 탭 길이 %.0f 전체.'
-            % (LV.FLANGE_BOLT_R, LV.RING[2]),
-            'Ø%.0f (-0.05/-0.15) → 링크의 Ø%.0f 접근 구멍에 반경 0.5로 떨어뜨려 넣고, 벽의 Ø3.4 구멍에 맞춰 ISO 10642 M3 × 16 '
-            '12.9 6개로 hub 인서트 플랜지와 PETG 벽 %.0f를 끼움 (조임 약 0.7 N·m + 나사 고정제).'
+            'M3 탭 6개 관통 (r %.0f, 30° + 60° 간격 — hub 인서트 플랜지 구멍과 같은 각도), 탭 길이 %.0f 전체.  Ø2.5 구멍으로 '
+            '출력한 뒤 핸드 탭.' % (LV.FLANGE_BOLT_R, LV.RING[2]),
+            'Ø%.0f → 링크의 Ø%.0f 접근 구멍에 반경 0.5로 떨어뜨려 넣고, 벽의 Ø3.4 구멍에 맞춰 ISO 10642 M3 × 16 '
+            '6개로 hub 인서트 플랜지와 PETG 벽 %.0f를 끼움 (플라스틱 나사산: 나사 고정제 없이 손으로 가볍게, BOM.md 4절).'
             % (2 * LV.RING[1], 2 * LV.BORE_R, LV.WALL_J),
-            '안지름 Ø%.0f: 출력 M3 나사 렌치가 지나감.  버 제거, 모서리 C0.3.  질량 약 %.0f g.' % (2 * LV.RING[0], res['vol'] / 1000 * 2.70),
+            '안지름 Ø%.0f: 출력 M3 나사 렌치가 지나감.  출력 부품(BOM.md 2절).  질량 약 %.0f g (PETG, 채움 100 %%).'
+            % (2 * LV.RING[0], res['vol'] / 1000 * RHO_PRINT),
         ]
     return [                                                        # knee cap
         '단위 mm, 3각법, 원점 = 축 위 관 끝(61807 안, Z0), +Z = 바깥 막대 쪽(플랜지).%s' % rot,
-        '관 Ø35 g6 → 61807 안륜(Ø35), 바깥 막대 구멍 Ø35 H7 (꼭 맞음, 11-02).',
-        '플랜지 Ø46 (-0.05/-0.15) × 3 → 막대 바깥 면 자리 Ø46.4 × 3 (면과 같은 높이).  끝은 2 mm 면으로 막힘.',
+        '관 Ø35 → 61807 안륜(Ø35)과 바깥 막대 구멍 Ø35에 꼭 맞게 사포로 다듬는다 (11-02).',
+        '플랜지 Ø46 × 3 → 막대 바깥 면 자리 Ø46.4 × 3 (면과 같은 높이).  끝은 2 mm 면으로 막힘.',
         'M2.5 구멍 Ø2.8 × 3 (r %.1f, 90° + 120° 간격) — DIN 7984 M2.5 × 8 → 막대 인서트.' % LV.CAP_BOLT_R,
-        '버 제거, 모서리 C0.2.  질량 약 %.0f g.' % (res['vol'] / 1000 * 2.70),
+        '출력 부품(BOM.md 2절).  질량 약 %.0f g (PETG, 채움 100 %%).' % (res['vol'] / 1000 * RHO_PRINT),
     ]
 
 
 # ----------------------------------------------------------------------------- generic sheets (other parts)
-OTHER = {   # stem: (title, material, process, quantity, sides; the first side is the one drawn: CAD +y, +x)
-    'cup_hip': ('hip 드라이버 컵', 'PETG', '3D 프린트 30 %, 바닥(덮개 면)을 바닥에, 서포트는 커넥터 창만', '왼 1 + 오른 1', 'RL'),
-    'cup_knee': ('무릎 드라이버 컵', 'PETG', '3D 프린트 30 %, 바닥을 바닥에, 서포트는 커넥터 창만', '왼 1 + 오른 1', 'RL'),
-    'cup_wheel': ('바퀴 드라이버 컵', 'PETG', '3D 프린트 30 %, 바닥을 바닥에, 서포트는 커넥터 창만', '왼 1 + 오른 1', 'RL'),
-    'hub_flange': ('바퀴 허브 플랜지', 'PETG', '3D 프린트 100 %, 모터 쪽 면을 바닥에, M3 × 5.7 인서트 6', '왼 1 + 오른 1', 'RL'),
-    'rim': ('바퀴 림 (한 조각)', 'PETG', '3D 프린트 벽 6겹 · 채움 40 %, 허브 쪽 평면을 바닥에', '왼 1 + 오른 1', 'RL'),
-    'shell_front': ('몸통 셸 앞', 'PETG 진회색', '3D 프린트 25 %, 바깥 면을 위로', '왼 1 + 오른 1', 'RL'),
-    'shell_mid': ('몸통 셸 가운데 (hip)', 'PETG 진회색', '3D 프린트 25 %, 바깥 면을 위로', '왼 1 + 오른 1', 'RL'),
-    'shell_rear': ('몸통 셸 뒤', 'PETG 진회색', '3D 프린트 25 %, 바깥 면을 위로', '왼 1 + 오른 1', 'RL'),
-    'saddle': ('hip 위 안장', 'PETG 파랑', '3D 프린트 25 %', '왼 1 + 오른 1', 'RL'),
-    'top_plate': ('위판 (짐 판)', 'PETG', '3D 프린트 25 %, M4 열압입 인서트', '1', ''),
+OTHER = {   # stem: (title, material, process, quantity, sides; the first side is the one drawn: CAD +y, +x) - as in ../BOM.md
+    'cup_hip': ('hip 드라이버 컵', 'PETG 권장(모터 열)', '3D 프린트 30 %, 바닥(덮개 면)을 바닥에, 서포트는 커넥터 창만', '왼 1 + 오른 1', 'RL'),
+    'cup_knee': ('무릎 드라이버 컵', 'PETG 권장(모터 열)', '3D 프린트 30 %, 바닥을 바닥에, 서포트는 커넥터 창만', '왼 1 + 오른 1', 'RL'),
+    'cup_wheel': ('바퀴 드라이버 컵', 'PETG 권장(모터 열)', '3D 프린트 30 %, 바닥을 바닥에, 서포트는 커넥터 창만', '왼 1 + 오른 1', 'RL'),
+    'hub_flange': ('바퀴 허브 플랜지', 'PETG 권장(모터 열)', '3D 프린트 100 %, 모터 쪽 면을 바닥에, M3 × 5.7 인서트 6', '왼 1 + 오른 1', 'RL'),
+    'rim': ('바퀴 림 (한 조각)', 'PLA 또는 PETG', '3D 프린트 벽 6겹 · 채움 40 %, 허브 쪽 평면을 바닥에', '왼 1 + 오른 1', 'RL'),
+    'shell_front': ('몸통 셸 앞', 'PLA 또는 PETG, 진회색', '3D 프린트 25 %, 바깥 면을 위로', '왼 1 + 오른 1', 'RL'),
+    'shell_mid': ('몸통 셸 가운데 (hip)', 'PLA 또는 PETG, 진회색', '3D 프린트 25 %, 바깥 면을 위로', '왼 1 + 오른 1', 'RL'),
+    'shell_rear': ('몸통 셸 뒤', 'PLA 또는 PETG, 진회색', '3D 프린트 25 %, 바깥 면을 위로', '왼 1 + 오른 1', 'RL'),
+    'saddle': ('hip 위 안장', 'PLA 또는 PETG, 파랑', '3D 프린트 25 %', '왼 1 + 오른 1', 'RL'),
+    'top_plate': ('위판 (짐 판)', 'PLA 또는 PETG', '3D 프린트 25 %, M4 열압입 인서트', '1', ''),
     'battery_tray': ('배터리 받침', 'PLA 또는 PETG', '3D 프린트 30 %, 두 조각, 긴 옆면을 바닥에 세워서', '왼 1 + 오른 1 (두 조각)', 'LR'),
     'electronics_deck': ('전장 데크', 'PLA 또는 PETG', '3D 프린트 30 %, 두 조각, 보스를 위로', '왼 1 + 오른 1 (두 조각)', 'LR'),
-    'splice_tabs': ('셸 이음판', 'PETG', '3D 프린트 100 %, M3 + 너트', '1 세트', ''),
-    'hip_plate': ('hip 판', 'AL6061-T6 판 10t 이상', '3축 MCT 양면 (v2 도면 WBv2-M01 참고)', '왼 1 + 오른 1', 'RL'),
-    'spine_tube': ('척추 봉', 'AL6061-T6 환봉 Ø16', '선반: 양 끝 면삭 + M5 탭', '2 (앞 · 뒤)', 'BF'),
-    'rail': ('위 레일', 'AL6061-T6 각봉 15 × 15', '양 끝 M4 탭, Ø4.4 관통 4', '2 (앞 · 뒤)', 'BF'),
-    'clamp_ring_stator_D45_t2.0_SUS304': ('고정 링 (고정자)', 'SUS304 2t', '레이저 가공', '4 (무릎·바퀴 × 2)', ''),
-    'magnet_spacer_D9x5.35_(6061)': ('자석 스페이서', 'AL6061 (비자성)', '선반', '6', ''),
-}
+    'splice_tabs': ('셸 이음판', 'PLA 또는 PETG, 진회색', '3D 프린트 100 %, M3 + 너트', '1 세트', ''),
+    'hip_plate': ('hip 판', 'PETG 권장(모터 열)', '3D 프린트 100 %, 안쪽 면(컵 받침 턱)을 바닥에, 출력 뒤 M3 핸드 탭 11', '왼 1 + 오른 1', 'RL'),
+    'spine_tube': ('척추 봉', 'PLA 또는 PETG', '3D 프린트 100 %, 눕혀 대각선으로, 출력 뒤 양 끝 M5 핸드 탭', '2 (앞 · 뒤)', 'BF'),
+    'rail': ('위 레일', 'PLA 또는 PETG', '3D 프린트 100 %, 옆면을 바닥에 대각선으로, 출력 뒤 양 끝 M4 핸드 탭', '2 (앞 · 뒤)', 'BF'),
+    'clamp_ring_stator_D45_t2.0_SUS304': ('고정 링 (고정자)', 'PETG 권장(모터 열)', '3D 프린트 100 %, 평평하게', '4 (무릎·바퀴 × 2)', ''),
+    'magnet_spacer_D9x5.35_(6061)': ('자석 스페이서', 'PETG 권장(모터 열)', '3D 프린트 100 %, 자석 구멍 쪽을 바닥에, 층 0.1 mm', '6', ''),
+}                                              # (the last two file names are the Fusion component names of the v4 code)
 SPLIT = ('battery_tray', 'electronics_deck')   # printed in two pieces, one page each (11-09, split_v5.py)
-V2_COPY = {'hip_plate': ('hip_plate_L', 'hip_plate_R'), 'spine_tube': ('spine_tube',), 'rail': ('rail',),
-           'clamp_ring_stator_D45_t2.0_SUS304': ('clamp_ring_stator',), 'magnet_spacer_D9x5.35_(6061)': ('magnet_spacer',)}
+V2_DRAWING = {'hip_plate': ('hip_plate_L', 'hip_plate_R'), 'spine_tube': ('spine_tube',), 'rail': ('rail',),   # v2/drawings/<name>.pdf
+              'clamp_ring_stator_D45_t2.0_SUS304': ('clamp_ring_stator',), 'magnet_spacer_D9x5.35_(6061)': ('magnet_spacer',)}
 V4_CHANGED = {'battery_tray': 'v4 부품을 가운데 리브 자리(y 0)에서 두 조각으로 나누고 그 리브 대신 이음 턱 두 장을 붙임(split_v5.py, 사용자 11-09)',
               'electronics_deck': 'v4 부품(v5 전장 배치)을 y 80(라즈베리파이와 +y 끝 창 사이)에서 두 조각으로 나누고 이음 턱 두 장을 붙임 — '
                                   '턱은 리브 바깥 면까지(x ±41.5, 셸 바닥 경사와 1.5 mm; split_v5.py, 사용자 11-09)',
-              'shell_front': 'v4 부품에서 스위치 쪽 양옆 세로 모서리만 R30 라운드(v4는 45° 모따기, 사용자 11-02), 앞면 스위치 구멍 없음'
+              'shell_front': 'v4 부품에서 앞쪽(CAD −x) 양옆 세로 모서리만 R30 라운드(v4는 45° 모따기, 사용자 11-02), 앞면 스위치 구멍 없음'
                              '(11-09: 스위치는 셸 가운데 조각 윗면, switch_v5.py)',
               'hub_flange': 'v4 부품에서 평행핀 구멍 3개(Ø3, 출력 쪽 면에서) 깊이 7.0 → %.1f — 핀 Ø3 × 10을 바닥까지 넣으면 %.1f 나와 '
                             '출력부 핀 구멍(깊이 3)에 여유 %.1f, 스피곳 Ø11.8 높이 1.3 → %.1f(출력부 홈 1.5 바닥에서 %.1f 뜸; 사용자 11-08)'
@@ -704,20 +710,20 @@ def _other_page(stem, fn, files, page, pdf, png_dir):
     # first view: from CAD +y (world +X), screen x = CAD -x (world -Z), up = CAD z (world Y)
     fx, fy = 30.0 + k * z1, 72.0 - k * y0
     VF = View(S, src, (1, 0, 0), (0, 0, -1), (fx, fy), k, label='+y(바깥)에서 본 그림', label_dy=7, mesh=(36, 6.0))
-    VT = View(S, src, (0, 1, 0), (0, 0, -1), (fx, VF.box[3] + 18 + k * x1), k, label='위(+z)에서 본 그림', label_dy=7,
-              mesh=(36, 6.0))
-    VS = View(S, src, (0, 0, -1), (-1, 0, 0), (VF.box[1] + 25 + k * x1, fy), k, label='앞(-x, 스위치 쪽)에서 본 그림', label_dy=7,
+    View(S, src, (0, 1, 0), (0, 0, -1), (fx, VF.box[3] + 18 + k * x1), k, label='위(+z)에서 본 그림', label_dy=7, mesh=(36, 6.0))
+    VS = View(S, src, (0, 0, -1), (-1, 0, 0), (VF.box[1] + 25 + k * x1, fy), k, label='앞(-x)에서 본 그림', label_dy=7,
               mesh=(36, 6.0))
     S.dim((VF.box[0], VF.box[2]), (VF.box[1], VF.box[2]), VF.box[2] - 12, '%.1f (x)' % sz)
     S.dim((VF.box[0], VF.box[2]), (VF.box[0], VF.box[3]), VF.box[0] - 6, '%.1f (z)' % sy, horizontal=False)
     S.dim((VS.box[0], VS.box[2]), (VS.box[1], VS.box[2]), VS.box[2] - 12, '%.1f (y)' % sx)
     notes = ['단위 mm, 3각법이 아닌 CAD 축 방향 그림(그림 이름 참고, 로봇 앞 = -x).  전체 크기만 적었다 — 형상의 원본은 STEP (export/parts_step/%s.step, '
              'CAD 좌표).' % ', '.join(files),
-             '부피 %.1f cm³.  %s(robot_cad_v4 코드로 만듦).' % (vol / 1000, V4_CHANGED.get(stem, 'v4와 같은 부품'))]
+             '부피 %.1f cm³.  %s(robot_cad_v5/v4 코드로 만듦).' % (vol / 1000, V4_CHANGED.get(stem, 'v4와 같은 부품'))]
     if sides == 'RL':
         notes.append('왼쪽 부품은 거울상 — export/parts_step/%s_L.step으로 따로 만든다.' % stem)
-    if stem in V2_COPY:
-        notes.append('치수·공차가 다 들어간 가공 도면: drawings/v2_%s.pdf (v2 도면, 같은 형상 확인).' % V2_COPY[stem][0])
+    if stem in V2_DRAWING:
+        notes.append('구멍 위치 같은 자세한 치수: v2/drawings/%s.pdf (v2 도면, 같은 형상 — 그 도면의 재질·공차·후처리 칸은 따르지 않는다).'
+                     % V2_DRAWING[stem][0])
     if stem == 'hip_plate':
         notes.append('v2 도면의 이름은 v2 기준이다: v2의 hip_plate_L이 이 로봇의 hip_plate_R(CAD +y), v2의 hip_plate_R이 hip_plate_L이다.')
     name = '%s (%s)' % (title, stem)
@@ -732,14 +738,15 @@ def _other_page(stem, fn, files, page, pdf, png_dir):
     S.notes(25.0, 52.0, notes, width=110)
     S.title_block(name, 'WBv5-S%02d%s' % (list(OTHER).index(stem) + 1, page),
                   {'재질': mat, '수량': qty, '공정': proc, '척도': '1:%g' % (1 / k) if k < 1 else '1:1',
-                   'step': '../export/parts_step/%s.step' % fn, '공차': 'KS B ISO 2768-mK / 출력 ±0.2'})
+                   'step': '../export/parts_step/%s.step' % fn, '공차': '출력 ±0.2'})
     finish(S, pdf, png_dir, fn if stem in SPLIT else stem)
 
 
-def copy_v2(stem):
-    """Copy the v2 machined drawing when the v2 part-frame solid has the same volume as the v5 export."""
+def check_v2(stem):
+    """Does the v2 drawing still show this part: the v2 part-frame solid has the same volume as the v5 export.
+    [(v2 name, v2 cm3, v5 cm3, same)]"""
     out = []
-    for src in V2_COPY[stem]:
+    for src in V2_DRAWING[stem]:
         pdf = V2_DRAW / 'drawings' / (src + '.pdf')
         stp = V2_DRAW / 'step' / (src + '.step')
         if not (pdf.exists() and stp.exists()):
@@ -752,8 +759,6 @@ def copy_v2(stem):
         vols = [gmsh.model.occ.getMass(3, t) for _d, t in gmsh.model.getEntities(3)]
         v5 = min(vols, key=lambda v: abs(v - v2))
         same = abs(v2 - v5) < 0.002 * v5
-        if same:
-            shutil.copy(pdf, PDF_DIR / ('v2_%s.pdf' % src))
         out.append((src, round(v2 / 1000, 2), round(v5 / 1000, 2), same))
     return out
 
@@ -777,7 +782,7 @@ def main():
         else:
             with PdfPages(PDF_DIR / (name + '.pdf')) as pdf:
                 other_sheet(name, pdf, a.png)
-            print(name, 'ok', copy_v2(name) if name in V2_COPY else '')
+            print(name, 'ok', check_v2(name) if name in V2_DRAWING else '')
 
 
 if __name__ == '__main__':

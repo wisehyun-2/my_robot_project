@@ -1,7 +1,6 @@
-"""Verify the serial-leg three-body plant against the robot's MuJoCo model (the method of docs/plan4_model.md, sec. 5;
-the v5 robot: docs/robot_v5_model.md).
+"""Verify the serial-leg three-body plant against the robot's MuJoCo model (the v5 robot: docs/robot_v5_model.md).
 
-    python -m wbr.models.verify_plan4_plant [--L0 0.46 0.40] [--out results/wheelbiped_v5_model]
+    python -m wbr.models.verify_plant [--L0 0.46 0.40] [--out results/wheelbiped_v5_model]
 
 For every leg length L0 (knee locked = virtual leg rigid, the assumption of the reduced plant):
   1. equilibrium: posture IK(L0, theta_eq), body level; vertical settling; static joint torques from
@@ -11,8 +10,7 @@ For every leg length L0 (knee locked = virtual leg rigid, the assumption of the 
   3. A check : continuous eigenvalues of mjd_transitionFD (log(A_d)/dt) whose eigenvectors lie in the
                symmetric planar subspace, vs. eig(A) of the plant
   4. response: 3 deg rigid tilt, open loop (static torques held), 0.3 s, MuJoCo vs. plant (RK4)
-Outputs <out>/linearization.json, linearization.md and openloop_3deg.png.  (results/plan4_model, the check of
-the upkie model of Plan 4, was removed on 2026-11-14 with that model.)
+Outputs <out>/linearization.json, linearization.md and openloop_3deg.png.
 """
 from __future__ import annotations
 
@@ -279,7 +277,7 @@ def check_L0(mp: MjPlanar, plant: SerialPlant, L0: float, response_T: float = 0.
 
 
 def markdown_table(results, stiff: bool) -> str:
-    """Comparison table for docs/plan4_model.md (Korean headers)."""
+    """Comparison table (Korean headers): linearization.md."""
     lines = [f"접촉 임피던스 {'강성(solimp 0.99/0.999, 대조용)' if stiff else '모델 기본(0.9/0.95)'}; 무릎 잠금 아마추어 {KNEE_LOCK_ARMATURE:g}, 건마찰 0, noslip 0.", "",
              "| L0 [m] | θ_eq [°] | 불안정 극 모델 / MuJoCo [rad/s] | 극 오차 | B 오차 노름 바퀴 / 엉덩이 | B 성분 오차 최대 바퀴 / 엉덩이 | 3° 0.3 s rms θ / φ / x | 선형 구간 rms θ / φ | 정적 엉덩이 토크 모델 / MuJoCo [Nm] | base 잔차 [N] |",
              "|---|---|---|---|---|---|---|---|---|---|"]

@@ -46,19 +46,9 @@ def matrix_to_quat(R: np.ndarray) -> np.ndarray:
     return q / np.linalg.norm(q)
 
 
-def rot_x(angle: float) -> np.ndarray:
-    c, s = math.cos(angle), math.sin(angle)
-    return np.array([[1, 0, 0], [0, c, -s], [0, s, c]])
-
-
 def rot_y(angle: float) -> np.ndarray:
     c, s = math.cos(angle), math.sin(angle)
     return np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
-
-
-def rot_z(angle: float) -> np.ndarray:
-    c, s = math.cos(angle), math.sin(angle)
-    return np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
 
 
 def pitch_frame_in_parent(R_frame_to_parent: np.ndarray) -> float:
@@ -87,11 +77,3 @@ def roll_pitch_yaw(R: np.ndarray):
     roll = math.atan2(R[2, 1], R[2, 2])
     yaw = math.atan2(R[1, 0], R[0, 0])
     return roll, pitch, yaw
-
-
-def quat_to_rpy(q):
-    return roll_pitch_yaw(quat_to_matrix(q))
-
-
-def wrap_to_pi(a: float) -> float:
-    return (a + math.pi) % (2 * math.pi) - math.pi

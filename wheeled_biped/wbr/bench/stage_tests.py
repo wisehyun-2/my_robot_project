@@ -1,19 +1,15 @@
 """Staged balance-controller tests of the v5 robot, shared by both controller folders: v5_lqi/TEST (LQI8) and
 v5_mpc/TEST (MPC).  The scenarios, metrics, limits and the report are the same for both, so their results compare
-one to one; only the stage table differs (register()).
+one to one; only the controller differs (register()).
 
 The robot is the v5 CAD robot with its own URDF (wbr.models.build_v5 from robot_cad_v5/calc: links, joints, masses, inertias, IMU
 pose as in Fusion; AKE60-8 on all six joints) and the IMU chain of the real board (wbr.plans.plan_v5: chip at its place on the hat,
-pi3hat firmware filter, the MCU's complementary filter).  A stage only changes the balance law inside the MCU; the four
-other controllers (height, yaw, roll, split) are the same in every stage and in both folders.  The LQI folder's stages:
+pi3hat firmware filter, the MCU's complementary filter).  A folder only changes the balance law inside the MCU; the four
+other controllers (height, yaw, roll, split) are the same in both folders.  Each folder registers one stage, its full
+controller: lqr_ipos_itilt (LQR states + z3 = integral of the position error + z2 = integral of the static body tilt) and
+mpc_ipos_itilt (the same states as the MPC's prediction model).
 
-    lqr              6 states [theta, theta_dot, v - v_ref, phi, phi_dot, x - x_ref]      (no integral action)
-    lqr_ipos         + z3 = integral of the position error                                 (q_pos)
-    lqr_ipos_itilt   + z2 = integral of the static body tilt                               (q_att) = the full controller
-
-and the MPC folder's the same states as the MPC's prediction model (mpc, mpc_ipos, mpc_ipos_itilt).
-
-Scenarios and metric definitions are those of the acceptance battery (wbr/bench/acceptance.py, docs/합격기준.md):
+Scenarios and metric definitions are in wbr/bench/acceptance.py:
 sensor noise on, the sensor -> torque latency below, true body pitch judged.  Limits that depend on the motors use the
 AKE60-8 (peak 12.5 N m, rated 5 N m).
 
@@ -56,12 +52,11 @@ DISTURBED_T = 60.0 if LONG else 30.0        # stand under a constant disturbance
 G = 9.81
 
 MOTOR = AS.MOTORS["AKE60-8"]
-PEAK_LIMIT = 0.8 * MOTOR.peak               # 10 N m: 80 % of the peak, as the criteria do for upkie's motors
+PEAK_LIMIT = 0.8 * MOTOR.peak               # 10 N m: 80 % of the peak
 LEG_RMS_LIMIT = MOTOR.rated                 # 5 N m continuous
 WHEEL_RMS_LIMIT = 0.5 * MOTOR.rated         # 2.5 N m (criteria: half the continuous torque)
 
-# constant disturbances of the integrator tests (criteria items 12 / 16 / 17, the payload scaled to this robot:
-# 0.3 kg on the 5.3 kg upkie -> 0.5 kg on the 11 kg robot)
+# constant disturbances of the integrator tests (0.5 kg payload on the 11.6 kg robot)
 SLOPE_DEG = 5.0
 IMU_BIAS_DEG = 1.0
 PAYLOAD = (0.5, 0.10, None)                 # mass [kg], ahead of the axle [m], height = the body's COM
@@ -111,7 +106,7 @@ class Robot:
 
     @contextlib.contextmanager
     def plan(self, stage: str, seed: int = 0, slope: float = 0.0, **cfg):
-        """The closed loop of this robot (wbr.plans.plan_v5 on the plan4_lqi8 runtime) with the balance law of `stage`.
+        """The closed loop of this robot (wbr.plans.plan_v5 on the closed_loop runtime) with the balance law of `stage`.
         The module patch of ake_sizing (the model folder) stays active inside the with-block."""
         st = STAGES[stage]
         case = dataclasses.replace(self.case, seed=seed)
@@ -119,8 +114,8 @@ class Robot:
                                    latency_ms=LATENCY_MS, rate_hz=RATE_HZ, **cfg)
         if st.plan_classes is not None:     # another balance law in the same harness (v5_mpc)
             case.plan_classes = st.plan_classes
-        with AS.patched_plan4(case, self.root) as p4:
-            yield AS.make_plan(p4, case, "model", self.root / "model" / self.case.params_file, slope)
+        with AS.patched_runtime(case, self.root) as cl:
+            yield AS.make_plan(cl, case, "model", self.root / "model" / self.case.params_file, slope)
 
 
 @functools.lru_cache(maxsize=1)
@@ -494,7 +489,7 @@ def judge(test_id: str, title: str, stage: str, seed: int, metrics: dict, checks
 class StageTestCase(unittest.TestCase):
     """Base class: STAGE selects the balance law, GROUP is the heading in the report; check() judges one scenario
     for every seed."""
-    STAGE = "lqr"
+    STAGE = ""          # set by the folder's test class
     GROUP = None
     maxDiff = None
 
@@ -512,8 +507,7 @@ class StageTestCase(unittest.TestCase):
 
 
 # ----------------------------------------------------------------------------- the tests of each stage (mix-ins)
-# Limits: docs/합격기준.md where the item exists there (item number in the title); the deviations are listed in
-# README of each folder's TEST/ (v5_lqi/TEST/README.md).  A later stage inherits the mix-ins of the earlier ones, so adding an integrator must not break
+# Limits: v5_lqi/TEST/README.md, section 3.  A later stage inherits the mix-ins of the earlier ones, so adding an integrator must not break
 # what already worked.
 DISTURBANCES = (("slope", f"경사 {SLOPE_DEG:g}°"), ("imu_bias", f"IMU 피치 오차 +{IMU_BIAS_DEG:g}°"),
                 ("payload", f"앞쪽 짐 {PAYLOAD[0]:g} kg (+{100 * PAYLOAD[1]:g} cm)"))
@@ -639,7 +633,7 @@ class OuterLoopTests:
                    [Check("roll_peak_deg", "<=", 1.5, "deg", "턱 구간 롤 최대"), Check("pitch_peak", "<=", 4.0, "deg"), Check("heading_peak_deg", "<=", 8.0, "deg")], h=0.14, side=-1.0)
 
     def test_2_19_curved_bump_20cm(self):
-        """Beyond the legs' range (135 mm between 200 and 335 mm) the body tilts: it must only stay up.  One knee touches its wall, so the peak limit here is the motor's."""
+        """Beyond the legs' range (159 mm between the one-leg walls at 326 and 485 mm) the body tilts: it must only stay up.  One knee touches its wall, so the peak limit here is the motor's."""
         self.check("2-19", "곡선 턱 20 cm, 왼쪽 바퀴, 0.3 m/s", hump_over,
                    [Check("alive", ">=", 1, "", "넘어지지 않음"), Check("knee_flipped", "<=", 0, "", "무릎이 완전 신장 반대쪽으로 넘어가지 않음"), Check("leg_margin_mm", ">=", 5.0, "mm", "완전 신장까지 남은 다리 길이"),
                     Check("roll_peak_deg", "<=", 8.0, "deg", "턱 구간 롤 최대"), Check("roll_top_deg", "<=", 7.0, "deg", "턱 위 평균 롤"), Check("pitch_peak", "<=", 5.0, "deg"),

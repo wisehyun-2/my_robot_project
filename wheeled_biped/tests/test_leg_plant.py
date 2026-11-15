@@ -1,10 +1,8 @@
 """Serial leg, three-body plant, LQI8 reference shaping and the acceptance metrics on the v5 robot's parameters, without
 MuJoCo (this module runs where the mujoco package cannot be loaded).
 
-Moved here on 2026-11-14 from tests/test_plan4.py and tests/test_plan4_safety.py, which ran the same checks on the upkie
-model of Plan 4 (removed that day).  The upkie-specific numbers (docs/plan4_model.md) are replaced by properties that hold
-for any robot or by the v5 robot's plant check (results/wheelbiped_v5_model).  The checks that need the simulator are in
-tests/test_runtime_v5.py.
+The checks are properties that hold for any robot, or the v5 robot's plant check (results/wheelbiped_v5_model).  The checks
+that need the simulator are in tests/test_runtime_v5.py.
 
 Run from wheeled_biped/:  python -m unittest tests.test_leg_plant
 """
@@ -25,7 +23,7 @@ from wbr.controllers.lqi8.plant_serial import SerialPlant, SerialPlantParams
 from wbr.controllers.lqi8.serial_leg import SerialLeg, SerialLegGeometry, du, u
 
 V5_DIR = MODELS_DIR / "wheelbiped_v5"
-PLANT_CHECK = RESULTS_DIR / "wheelbiped_v5_model" / "linearization.json"   # python -m wbr.models.verify_plan4_plant
+PLANT_CHECK = RESULTS_DIR / "wheelbiped_v5_model" / "linearization.json"   # python -m wbr.models.verify_plant
 
 
 @functools.lru_cache(maxsize=1)
@@ -212,13 +210,13 @@ def shape(ctrl: LQI8, v_ref: float, seconds: float, L0: float) -> np.ndarray:
     return out
 
 
-# the runtime's LQI8 settings (wbr.plans.plan4_lqi8.Plan4LQI8.__init__) with an online design instead of the gain table
+# the runtime's LQI8 settings (wbr.plans.closed_loop.ClosedLoop.__init__) with an online design instead of the gain table
 RUNTIME_LQI = dict(table_L0=None, q_int=0.2, q_v=0.5, r_hip_frac=0.3, r_wheel_frac=0.2, v_ramp_rate=2.0, v_ref_tau=0.3,
                    freeze_int_on_ramp=True, freeze_tol=0.05, q_att=0.2, q_pos=0.5)
 
 
 def runtime_lqi8(Ts: float = 1e-3) -> LQI8:
-    """The LQI8 the way the runtime builds it (Plan4LQI8._make_law: LQI8Law fills in the static tilt's g M(L0))."""
+    """The LQI8 the way the runtime builds it (ClosedLoop._make_law: LQI8Law fills in the static tilt's g M(L0))."""
     plant = v5_plant()
     return LQI8Law(plant, Ts=Ts, theta_eq=plant.theta_eq, Tp_ff=plant.Tp_eq(), **RUNTIME_LQI).ctrl
 

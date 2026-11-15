@@ -2,7 +2,7 @@
 
 Fusion -> URDF -> MuJoCo: masses, COM, inertia, joints and the IMU pose must be the CAD's.  IMU: the pi3hat's axes and frames
 (docs/reference.md of mjbots/pi3hat), its firmware filter, and the MCU's attitude filter with the IMU position in it.
-The robot's front is the rocker switch side, the CAD's -x: robot axes = CAD axes turned 180 deg about z (BV.R_ROBOT_FROM_CAD).
+The robot's front is the CAD's -x: robot axes = CAD axes turned 180 deg about z (BV.R_ROBOT_FROM_CAD).
 """
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ import xml.etree.ElementTree as ET
 import mujoco
 import numpy as np
 
-from wbr.common.rotations import quat_to_matrix, rot_y, roll_pitch_yaw
+from wbr.common.rotations import matrix_to_quat, quat_to_matrix, rot_y, roll_pitch_yaw
 from wbr.controllers.diablo_arch.mcu import DiabloMcu
 from wbr.controllers.lqi8.serial_leg import SerialLeg, SerialLegGeometry
 from wbr.models import build_v5 as BV
@@ -23,7 +23,6 @@ from wbr.models.plant_params import set_leg_posture
 from wbr.observers.base_orientation import BaseOrientation
 from wbr.observers.body_attitude import BodyAttitude
 from wbr.observers.pi3hat_ars import G, Pi3HatAttitude, quat_from_euler, steady_covariance
-from wbr.plans import plan4_lqi8 as P4
 from wbr.plans.plan_v5 import PlanV5, PlanV5Config
 
 R_ARS_TO_WORLD = np.diag([1.0, -1.0, -1.0])
@@ -141,7 +140,7 @@ class PlanHasNoUpkieValuesTests(unittest.TestCase):
         R_bi = np.diag([-1.0, -1.0, 1.0])
         tilt = math.radians(5.0)
         R_wi = rot_y(tilt) @ R_bi.T
-        q = P4.matrix_to_quat(R_ARS_TO_WORLD.T @ R_wi)
+        q = matrix_to_quat(R_ARS_TO_WORLD.T @ R_wi)
         R = BaseOrientation(R_bi, R_ARS_TO_WORLD).update(q, np.zeros(3))["rotation_base_to_world"]
         self.assertAlmostEqual(roll_pitch_yaw(R)[1], tilt, places=9)
 

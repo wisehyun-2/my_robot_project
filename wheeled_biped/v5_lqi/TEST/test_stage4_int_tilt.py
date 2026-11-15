@@ -1,9 +1,9 @@
-"""Stage 4 - LQR + position integral + static-tilt integral (z2, q_att): the full balance controller.
+"""The full balance controller: LQR + position integral (z3, q_pos) + static-tilt integral (z2, q_att).
 
-    python -m unittest discover -s v5_lqi/TEST -p "test_stage4*.py" -v        (about 1 minute)
+    python v5_lqi/TEST/run_stages.py --stage 4 --keep-going        (from wheeled_biped/)
 
-Pass = (a) under the same three constant disturbances the TRUE body pitch ends within 0.5 deg of level; (b) the
-position tests of stage 3 and every test of stages 1 and 2 still pass.
+The tests: balance (1-x), outer loops (2-x), position under constant disturbances (3-x) and the TRUE body pitch under the same
+disturbances (4-x).
 """
 from stage_common import BalanceTests, OuterLoopTests, PositionIntegralTests, StageTestCase, TiltIntegralTests
 

@@ -1,10 +1,7 @@
 """Unit tests of the ROS-free core that need no MuJoCo (run: python -m unittest discover -s tests -v).
 
-2026-11-11: Plans 1-3 were removed; their tests (five-bar leg, Plan 1-3 smoke runs, the Plan 1 crouch, the benchmark's
-settle_time) went with them, the LQI8 tests now run on the v5 robot's plant, and the two MCU behaviour tests that used
-the Plan 2 robot (transform-down refusal, motors off after a host-link loss) moved to tests/test_plan4.py.
-2026-11-14: the upkie model of Plan 4 was removed; tests/test_plan4*.py became tests/test_leg_plant.py (no MuJoCo) and
-tests/test_runtime_v5.py (MuJoCo), both on the v5 robot.
+The LQI8 tests run on the v5 robot's plant.  More tests without MuJoCo: tests/test_leg_plant.py; with it: tests/test_runtime_v5.py,
+tests/test_robot_v5.py, tests/test_v5_mpc.py.
 """
 from __future__ import annotations
 

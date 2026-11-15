@@ -13,10 +13,6 @@ recovered when a knee ends on the wrong side of full extension (ake_sizing.knee_
 
 The knee cancels the wheel motor's reaction on the shank (11-06, user decision); over a bump under one wheel the legs yield
 and the IMU roll levels the body, and on a sharp step the wheels hold their speed difference (McuParams.kw_yaw, 11-07).
-
-Until 2026-11-14 this module also built CAD robots without their own URDF (v2 - v4, v5 before 11-07) by stretching the
-upkie model to the CAD lengths (--model / --lateral / --outer-gains upkie), and could switch those three features off
-(--wheel-reaction off, --roll leg-length, --yaw-wheel off: the results before 11-06 / 11-07); both were removed that day.
 """
 from __future__ import annotations
 
@@ -57,8 +53,7 @@ def build_cad_model(case: CadCase, mdir: Path):
     from wbr.models import build_v5 as BV
     urdf_json = Path(case.cad_json).with_name("urdf_data.json")
     if not urdf_json.exists():
-        raise FileNotFoundError(f"{urdf_json}: a CAD robot needs its urdf_data.json (robot_cad_v5: v5run.urdf_export()); "
-                                "the upkie-based route for CAD exports without it was removed on 2026-11-14")
+        raise FileNotFoundError(f"{urdf_json}: a CAD robot needs its urdf_data.json (robot_cad_v5: v5run.urdf_export())")
     params = BV.build(mdir, payload_kg=case.payload_kg, payload_size=case.payload_size, with_meshes=False, motor=case.motor("hip"),
                       limits=case.limits, mass_json=Path(case.cad_json), urdf_json=urdf_json)
     case.params_file = BV.PARAMS_FILE
@@ -104,11 +99,11 @@ YAW_WC = 10.06                  # rad/s, g kp_yaw (g = yaw plant gain W / (2 R I
 YAW_KI = 20.11                  # 1/s^2, g ki_yaw before YAW_KI_RATIO
 FRICTION_COMP_RATIO = 0.8       # stiction compensation / the motor's backdrive torque
 # Split PD (11-07, N m/rad and N m s/rad): a leg hit by a sharp step swings at its hip, and the damping term then takes the other hip to
-# its limit (60 / 3: 11 N m at 1 m/s; damping 2: 8 N m).  The stiffness only goes up: the split mode is close to neutral with the robot's
-# weight on it (peak split in a turn: 2.4 deg at 80, 3.4 at 60, 5.7 at 50, the legs run away at 30).
-SPLIT_KP = 80.0                 # at 175 mm links; scaled with the link length (the split mode's negative stiffness goes with weight x leg length)
-SPLIT_KD = 2.0
-SPLIT_LINK = 0.175
+# its limit, so the damping is kept low.  The stiffness only goes up: the split mode is close to neutral with the robot's weight on it
+# (too soft and the legs run away in a turn).
+SPLIT_KP = 114.28571428571429   # at 250 mm links; scaled with the link length (the split mode's negative stiffness goes with weight x leg length)
+SPLIT_KD = 2.857142857142857
+SPLIT_LINK = 0.25
 LEG_WALL_SCALE = 0.5            # soft walls of the leg range against compliant_roll_gains: the knee peak on a 14-20 cm bump 8-12 -> 6-10 N m
 LQR_R_WHEEL = 0.116             # LQR torque weight of the wheels: this share of m g R
 LQR_R_HIP = 0.296               # LQR torque weight of the hips: this share of m g LQR_R_HIP_ARM

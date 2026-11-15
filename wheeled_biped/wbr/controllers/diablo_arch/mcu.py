@@ -1,4 +1,4 @@
-"""DIABLO-style real-time controller ("MCU program") of the serial-leg wheel biped (the v5 robot; wbr.plans.plan4_lqi8 assembles it).
+"""DIABLO-style real-time controller ("MCU program") of the serial-leg wheel biped (the v5 robot; wbr.plans.closed_loop assembles it).
 
 Mirrors the DIABLO architecture (arXiv 2407.21500, diablo_ros2): a 1 kHz loop on the real-time
 board reads the IMU and the six motors, estimates the body/leg state (the IMU through the board's frame adapter and the
@@ -9,9 +9,6 @@ leg force from the IMU roll), the knee's wheel-reaction feed-forward, a speed li
 PD between the legs, with command timeouts (host link).
 The host (ROS 2) only provides MotionCtrl set-points; the robot stands even if the host dies.  The robot has no auxiliary
 wheels: it is always in STAND, a transform-down request is refused.
-(Until 2026-11-11 it also ran Plans 2 / 3 on the DIABLO-lite five-bar legs.  On 2026-11-14 what the v5 robot does not use
-was removed: the CAR / transition modes, the motors-off after a host-link loss, the leg-length-difference roll, the F_ff /
-cos(lean) leg force and the switches of the v5 features (git history).)
 """
 from __future__ import annotations
 
@@ -31,20 +28,21 @@ from wbr.observers.base_orientation import BaseOrientation
 
 @dataclass
 class McuParams:
+    """The robot's values below are the v5 robot's (models/wheelbiped_v5), rounded; the runtime passes the exact ones."""
     dt: float = 1e-3
-    wheel_radius: float = 0.065
-    track: float = 0.38                 # distance between wheel centers
-    mass_total: float = 6.0
-    mass_wheels: float = 1.0
-    L_min: float = 0.12
-    L_max: float = 0.26
-    L_stand: float = 0.198
+    wheel_radius: float = 0.101
+    track: float = 0.54                 # distance between wheel centers
+    mass_total: float = 11.597
+    mass_wheels: float = 2.1125
+    L_min: float = 0.372
+    L_max: float = 0.485
+    L_stand: float = 0.46
     height_gain: float = 0.06           # m per unit of the `up` command
-    kp_leg: float = 400.0               # N/m
-    kd_leg: float = 10.0                # N s/m
-    kp_yaw: float = 2.5                 # N m per rad/s of yaw rate error
-    ki_yaw: float = 4.0                 # N m per rad
-    yaw_int_limit: float = 0.5          # rad, clamp of the yaw-rate error integral (ki_yaw * limit = max steady torque)
+    kp_leg: float = 1503.0              # N/m
+    kd_leg: float = 75.1                # N s/m
+    kp_yaw: float = 1.76                # N m per rad/s of yaw rate error
+    ki_yaw: float = 10.58               # N m per rad
+    yaw_int_limit: float = 1.0          # rad, clamp of the yaw-rate error integral (ki_yaw * limit = max steady torque)
     kw_yaw: float = 0.0                 # N m per rad/s of (v_right - v_left) / track error (11-07; 0 = off).  A wheel stopped by
                                         # a sharp step turned the robot before the gyro saw it (the leg splits first), and the
                                         # gyro gain cannot go up: 3 x kp_yaw shakes the legs.  This term acts on the wheels' own
@@ -61,13 +59,13 @@ class McuParams:
                                         # 1 rad/s its rate reads 0.13 rad/s low and the yaw loop keeps the robot turning at that rate
     arm_pitch: float = math.radians(3)  # arm() only accepts an upright robot
     arm_leg_angle: float = math.radians(20)  # ... whose legs hang under it: |world leg angle| below this on both sides (arm_refusal)
-    kp_split: float = 15.0              # N m/rad on the left-right leg angle difference (anti-split)
-    kd_split: float = 0.8
+    kp_split: float = 114.3             # N m/rad on the left-right leg angle difference (anti-split)
+    kd_split: float = 2.86
     max_forward: float = 1.0            # m/s (DIABLO normal speed mode)
     max_yaw_rate: float = 2.0           # rad/s
     fall_pitch: float = math.radians(34)  # design report FAULT threshold
-    tau_hip_max: float = 12.0
-    tau_wheel_max: float = 5.0
+    tau_hip_max: float = 12.5
+    tau_wheel_max: float = 12.5
     leg_rate: float = 0.25              # m/s leg length ramp
     leg_force: Optional[Callable[[float, float], float]] = None     # static force per leg from (L0, world lean): SerialPlant.static_leg_force (required)
     friction_comp_Nm: float = 0.0       # hip stiction compensation: +fc * tanh((Tp - Tp_ff) / width) in the direction the
@@ -92,7 +90,7 @@ class McuParams:
     friction_comp_static_tau: float = 1.0  # s (> 0): the compensation acts on (Tp - Tp_ff) and T minus their own low-pass
                                         # with this time constant.  A static holding-torque change (payload, mass error,
                                         # slope) is then not taken for an intended motion; comparing with the fixed Tp_ff
-                                        # added a constant +-2 fc (0.16 N m) to the hip torque in those cases (Plan 4)
+                                        # added a constant +-2 fc to the hip torque in those cases
     # The knee also cancels the wheel motor's reaction on the shank (SerialLeg.wheel_reaction_ratio), which otherwise moves
     # the leg length, with the commanded wheel torque, like the hip term that vmc_torques adds for Tp (11-06).
     # Compliant roll (11-07): the leg-length PD only holds the MEAN length, so a leg pressed by a bump under one wheel
@@ -263,7 +261,7 @@ class DiabloMcu:
 
     # ------------------------------------------------------------- estimator
     def _filtered_servo(self, servo: Dict[str, dict]) -> Dict[str, dict]:
-        """Replace the driver velocities by position differences over vel_window_s (Plan 4 jitter fix: the 14-bit
+        """Replace the driver velocities by position differences over vel_window_s (jitter fix: the 14-bit
         encoder differentiated over one 1 kHz step has +-0.38 rad/s quantisation noise which the LQI8 theta_dot gain
         turned into 0.1 N m rms wheel torque chatter; over 5 ms the noise is 5x lower at 2.5 ms extra delay)."""
         n = int(round(self.p.vel_window_s / self.p.dt))
@@ -310,9 +308,6 @@ class DiabloMcu:
             if not math.isfinite(s["velocity"]):
                 return f"servo.{name}.velocity"
         return None
-
-    def _sample_valid(self, obs: dict) -> bool:
-        return self._invalid_channel(obs) is None
 
     def _sample_dt(self, t_obs) -> float:
         """Time since the last sample the estimator integrated, from the samples' own time stamps, for the gyro paths
@@ -492,9 +487,9 @@ class DiabloMcu:
             self.yaw_ref_limited = 0.0
             self.roll_force_int = 0.0
             self.leg_force_cmd = {}             # no leg force in the safe state
-            self.telemetry ={"mode": int(self.mode), "fault": self.fault, "armed": self.armed, "L_ref": self.L_ref.value,
-                              "v_ref": 0.0, "in_control": self.link.in_control, "tau_yaw": 0.0, "T": 0.0, "Tp": 0.0,
-                              "tau_split": 0.0, "d_theta": 0.0}
+            self.telemetry = {"mode": int(self.mode), "fault": self.fault, "armed": self.armed, "L_ref": self.L_ref.value,
+                               "v_ref": 0.0, "in_control": self.link.in_control, "tau_yaw": 0.0, "T": 0.0, "Tp": 0.0,
+                               "tau_split": 0.0, "d_theta": 0.0}
             self.law.compute(e, dict(v_ref=0.0, yaw_rate_ref=0.0, pitch_ref=0.0, L_ref=self.L_ref.value, balance=False,
                                      tau_yaw=0.0), self)
             return {j: torque_command(0.0, 0.0) for j in self.left_joints + self.right_joints}
@@ -536,7 +531,7 @@ class DiabloMcu:
 
         T, Tp = law_out["T"], law_out["Tp"]
         Tp_ff = law_out.get("Tp_ff", 0.0)
-        # stiction compensation (Plan 4): only a quasi-static aid -- faded out with the body pitch rate so that it adds
+        # stiction compensation: only a quasi-static aid -- faded out with the body pitch rate so that it adds
         # no gain to the balance loop (review r1 M1)
         fc_gate = 1.0 / (1.0 + (e.pitch_rate / p.friction_comp_rate_gate) ** 2)
         dev = Tp - Tp_ff                                # break the hip stiction in the intended direction

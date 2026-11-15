@@ -19,7 +19,7 @@ FLANGE_D = 8.0               # below the floor underside
 HOLE_R = 1.7                 # M3 clearance Ø3.4
 BOLTS_X = {'battery_tray': (-22.0, 22.0), 'electronics_deck': (-25.0, 25.0)}
 DECK_FLANGE_X = 41.5         # deck flanges end at the ribs' outer faces (torso.deck ribs x +-40, 3 wide): at the full width 55 the
-                             # flange's switch-side end cut 1.4 mm into shell_mid's floor, which rises from x -34 towards the switch
+                             # flange's front (CAD -x) end cut 1.4 mm into shell_mid's floor, which rises from x -34 towards the front
                              # face (11-09 interference check); at 41.5 the floor is 1.5 mm below the flange
 SCREW_L = 10                 # 2 flanges 6 + nut 2.4 -> 1.6 proud
 SCREW = 'FX ISO 7380 M3x%d split' % SCREW_L

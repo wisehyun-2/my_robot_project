@@ -7,10 +7,6 @@ make_plan puts the torque-speed limit on top of the plan's servo model and recor
 the tire normal forces and the wheel slip (wheel-centre speed along the floor - rim speed) every step; run_case runs the
 scenario set of the motor check (stand, tilt, push, velocity, yaw, height range, slopes) on the robot built by
 ake_cad.build_cad_model.  yaw_plant_gain / roll_plant_gain: the plants the outer loops are scaled with (ake_cad.v5_gains).
-
-Until 2026-11-14 this module was also the motor and wheel-diameter study of 10-24 on the upkie leg geometry
-(docs/ake_motor_sizing.md, results/ake_sizing: `python -m wbr.bench.ake_sizing`, `--clearance`); the upkie model, the study
-and its results were removed that day (git history).
 """
 from __future__ import annotations
 
@@ -139,23 +135,23 @@ def build_model(case: Case, mdir: Path):
 
 
 @contextlib.contextmanager
-def patched_plan4(case: Case, root: Path):
-    """wbr.plans.plan4_lqi8.MODELS_DIR -> root for the duration: the plan reads its model folder (make_plan's model_dir)
-    there.  (Until 2026-11-14 it also patched Plan 4's wheel radius, track and torque limits for the upkie route.)"""
-    import wbr.plans.plan4_lqi8 as p4
-    saved = p4.MODELS_DIR
+def patched_runtime(case: Case, root: Path):
+    """wbr.plans.closed_loop.MODELS_DIR -> root for the duration: the plan reads its model folder (make_plan's model_dir)
+    there."""
+    import wbr.plans.closed_loop as cl
+    saved = cl.MODELS_DIR
     try:
-        p4.MODELS_DIR = root
-        yield p4
+        cl.MODELS_DIR = root
+        yield cl
     finally:
-        p4.MODELS_DIR = saved
+        cl.MODELS_DIR = saved
 
 
 def available(case: Case, kind: str, tau: float, w: float) -> float:
     return case.motor(kind).available(tau, w, case.volt) if case.limits else 1e4
 
 
-def make_plan(p4, case: Case, model_dir: str, params_json: Path, slope: float = 0.0):
+def make_plan(cl, case: Case, model_dir: str, params_json: Path, slope: float = 0.0):
     kw = dict(model_dir=model_dir, params_json=str(params_json), latency_ms=2.0, noise=True, seed=case.seed,
               slope_deg=slope, friction_comp_Nm=0.8 * case.motor("hip").backdrive,
               friction_comp_wheel_Nm=0.8 * case.motor("wheel").backdrive)
@@ -297,9 +293,9 @@ def run_case(case: Case) -> dict:
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         params = build_model(case, root / "model")
-        with patched_plan4(case, root) as p4:
+        with patched_runtime(case, root) as cl:
             params_json = root / "model" / case.params_file
-            plan = make_plan(p4, case, "model", params_json)
+            plan = make_plan(cl, case, "model", params_json)
             q = case.quick
             S: Dict[str, dict] = {}
             Ls, Lmin, Lmax = plan.mcu.p.L_stand, plan.mcu.p.L_min, plan.mcu.p.L_max
@@ -322,7 +318,7 @@ def run_case(case: Case) -> dict:
                     break
             S["height_full_range"] = stats(plan, case)
             for slope in ([10] if q else [5, 10, 15]):
-                sp = make_plan(p4, case, "model", params_json, slope)
+                sp = make_plan(cl, case, "model", params_json, slope)
                 fresh(sp); run_for(sp, 6.0); S[f"slope_{slope}_stand"] = stats(sp, case, 0.0, 3.0)
                 for name, V in (("up", 0.5), ("down", -0.5)):
                     fresh(sp); run_for(sp, 2.0) and run_for(sp, 4.0, V) and run_for(sp, 2.0)

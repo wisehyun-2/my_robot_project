@@ -3,8 +3,7 @@ with the torque limits).  Gains are designed on a leg-length grid at start-up an
 with table_L0=None the controller re-designs online whenever the leg length changes by > 1 cm.
 State xs = [theta, theta_dot, v - v_ref, phi, phi_dot, z1 (, z2, z3)], z1 = int(v - v_ref) (the position error),
 z2 = int(static body tilt) (q_att), z3 = int(z1) (q_pos); outputs u = [T, Tp] = -K xs (total wheel torque, total hip torque).
-With q_att = q_pos = None it is the 6-state controller of the design report (section 8, "MineLQI6"), as Plan 2 runs it;
-the v5 robot runs all 8 states (as Plan 4 did on the upkie model, removed 2026-11-14).  Named LQI6 until 2026-11-10.
+With q_att = q_pos = None it is a 6-state controller; the v5 robot runs all 8 states.
 """
 from __future__ import annotations
 
@@ -47,10 +46,7 @@ class LQI8:
                  theta + phi), of a body COM offset (payload) and of a slope.  Driving it to zero levels the body.
           q_pos  z3 = int(z1) = int(position error): constant force / torque disturbances (slope, payload, IMU
                  bias) are absorbed without a steady position offset (z1 alone ends displaced by T_d / K_z).
-        The v5 robot runs both (docs/plan4_lqi8.md).  Removed on 2026-11-14 as unused by v5 (git history): the state
-        predictor (pred_steps), the plain tracking of a host-shaped reference (Plan 4's MPC host), the reference
-        acceleration feed-forward (a_ff), the second-order pre-filter (v_ref_order) and the faster integration while
-        standing still (quiet_boost_*)."""
+        The v5 robot runs both."""
         self.plant = plant
         self.Ts = Ts
         self.q_att, self.q_pos, self.att_gM = q_att, q_pos, att_gM

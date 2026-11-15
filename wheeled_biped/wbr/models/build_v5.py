@@ -1,4 +1,4 @@
-"""URDF and MuJoCo model of the v5 robot, from the Fusion model only: no upkie file, mesh, mass or joint convention goes in.
+"""URDF and MuJoCo model of the v5 robot, from the Fusion model only.
 
 Inputs (written by robot_cad_v5/fusion/v5run.py):
     robot_cad_v5/calc/mass_properties.json     save_mass_json(): mass, COM, inertia of each link at the nominal pose
@@ -11,11 +11,10 @@ Outputs (models/wheelbiped_v5):
     description.json                           what the plan needs besides: tyre, track, motor limits, joint signs, IMU mount
 
 Frames: all link frames are parallel to the base frame at q = 0, which is the straight-leg pose.  Base frame: origin at the
-midpoint of the hip axes (the DIABLO paper's body frame), x forward, y left, z up.  The robot's front is the rocker switch side
-(user, 2026-11-07), which is the CAD's -x: the base axes are the CAD axes turned 180 deg about z and the knees point backwards.  The
-part names follow the robot (user, 2026-11-08): _L parts are its left = CAD -y, shell_front is on the switch side.  All six joint
-axes are +y, so a positive joint angle is the controller's u-convention on both sides (JOINT_SIGNS all +1): upkie's mirrored joints
-and its sign table do not exist here.  The real motors get the same signs through moteus' output sign.
+midpoint of the hip axes (the DIABLO paper's body frame), x forward, y left, z up.  The robot's front is the CAD's -x
+(user, 2026-11-07): the base axes are the CAD axes turned 180 deg about z and the knees point backwards.  The
+part names follow the robot (user, 2026-11-08): _L parts are its left = CAD -y, shell_front is at its front.  All six joint
+axes are +y, so a positive joint angle is the controller's u-convention on both sides (JOINT_SIGNS all +1).  The real motors get the same signs through moteus' output sign.
 
     python -m wbr.models.build_v5
 """
@@ -45,7 +44,7 @@ DESCRIPTION_FILE = "description.json"
 JOINTS = ["left_hip", "left_knee", "left_wheel", "right_hip", "right_knee", "right_wheel"]
 JOINT_SIGNS = {j: 1.0 for j in JOINTS}
 SIDES = (("left", 1.0, "L"), ("right", -1.0, "R"))     # robot side, sign of its y, suffix of its parts in the CAD
-R_ROBOT_FROM_CAD = np.diag([-1.0, -1.0, 1.0])           # front = the switch side = CAD -x, 180 deg about z
+R_ROBOT_FROM_CAD = np.diag([-1.0, -1.0, 1.0])           # front = CAD -x: 180 deg about z
 KNEE_SIGN = +1.0                                        # SerialLegGeometry: the knees are behind the hip -> axle line
 MOTOR: Motor = AKE60_8                  # all six joints
 IMU_CHIP = "BMI088"                     # the footprint the firmware tries first
@@ -53,8 +52,8 @@ IMU_CHIP = "BMI088"                     # the footprint the firmware tries first
 DAMPING = {"hip": 0.02, "knee": 0.02, "wheel": 0.001}       # N m s/rad
 TIRE_FRICTION = [1.0, 0.005, 0.0001]    # sliding, torsional, rolling; condim 4 (one contact point of the rounded tyre)
 MESH_TRIANGLES = {"base": 30000, "thigh": 8000, "shank": 8000, "wheel": 8000}
-# Leg range [m] from the link length (links 250 mm, user 2026-11-07).  The same distances from the straight leg as on the 175 mm robot (310 and
-# 335 of 350 mm), so the standing knee moment arm stays small: 98 mm at 460 mm against 139 mm at the 175 mm robot's knee angle.  The lowest pose is set
+# Leg range [m] from the link length (links 250 mm, user 2026-11-07): standing 40 mm and the top 15 mm short of the straight leg (500 mm),
+# so the standing knee moment arm stays small (98 mm at 460 mm).  The lowest pose is set
 # by the knee: this moment arm gives 10 N m (80 % of the motor's peak) standing with 5 kg on top.
 STAND_FROM_STRAIGHT = 0.040
 TOP_FROM_STRAIGHT = 0.015
@@ -128,7 +127,7 @@ class V5Geometry:
             self.frames[f"{side}_thigh"] = (np.array([0.0, s * self.y_hip, self.Z_hip]), self.t1, f"femur_{k}")
             self.frames[f"{side}_shank"] = (np.array([kx, s * self.y_knee, kz]), self.t2, f"tibia_{k}")
             self.frames[f"{side}_wheel_link"] = (np.array([0.0, s * self.y_wheel, self.R]), self.t2, f"wheel_{k}")
-            # data from before the names followed the switch side (hub version 10 or earlier) would mirror the robot without a word
+            # data from before the names followed the robot (hub version 10 or earlier) would mirror the robot without a word
             assert s * self.cad["links"][f"wheel_{k}"]["com"][1] < 0.0, ("export names and CAD side disagree: re-export from a renamed model", k)
         self._check_joints(kz)
 
@@ -182,13 +181,15 @@ def write_stl(path: Path, tri: np.ndarray) -> None:
 
 
 def simplify(tri: np.ndarray, target: int) -> np.ndarray:
-    """Fewer triangles for the visual mesh when fast_simplification can be imported; otherwise the mesh as it is."""
+    """Fewer triangles for the visual mesh (fast_simplification, a dependency in pyproject.toml).  Without the package the
+    meshes would be written 3 to 4 times larger than the committed ones, so that is an error, not a fallback."""
     if len(tri) <= target:
         return tri
     try:
         import fast_simplification
-    except Exception:
-        return tri
+    except ImportError as e:
+        raise ImportError("wbr.models.build_v5 needs the fast_simplification package for the visual meshes: "
+                          "pip install -e . (or pip install fast-simplification)") from e
     pts, inv = np.unique(np.round(tri.reshape(-1, 3), 7), axis=0, return_inverse=True)
     faces = inv.reshape(-1, 3)
     p2, f2 = fast_simplification.simplify(pts.astype(np.float32), faces.astype(np.int32), target_count=target)
@@ -392,14 +393,17 @@ def build(out_dir: Path = OUT_DIR, payload_kg: float = 0.0, payload_size=(0.20, 
     params.to_json(out_dir / PARAMS_FILE)
     imu_pos, R_bi = g.imu()
     desc = dict(robot=NAME, wheel_radius=g.R, track=2.0 * g.tyre_y, tau_wheel_max=motor.peak, tau_leg_max=motor.peak, joint_signs=JOINT_SIGNS,
-                knee_sign=KNEE_SIGN, front="rocker switch side (CAD -x)",
+                knee_sign=KNEE_SIGN, front="CAD -x",
                 imu=dict(chip=IMU_CHIP, position_in_base=imu_pos.tolist(), R_base_to_imu=R_bi.tolist()),
                 payload_kg=payload_kg)
     (out_dir / DESCRIPTION_FILE).write_text(json.dumps(desc, indent=1), encoding="utf-8")
     return params
 
 
-def main() -> None:
+def main(argv=None) -> None:
+    import argparse
+    argparse.ArgumentParser(description="Rebuild models/wheelbiped_v5 (URDF, MJCF, meshes, plant_params.json, description.json) from "
+                                        "robot_cad_v5/calc/*.json and export/links_stl.  It OVERWRITES the committed model files.").parse_args(argv)
     from wbr.bench import ake_cad as AC
     params = build(OUT_DIR, with_meshes=True, verbose=True)
     desc = json.loads((OUT_DIR / DESCRIPTION_FILE).read_text(encoding="utf-8"))

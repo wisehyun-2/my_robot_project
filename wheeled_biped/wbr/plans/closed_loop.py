@@ -1,9 +1,9 @@
-"""The closed-loop runtime shared by the robot plans: a robot's MuJoCo model + the LQI8 controller designed on the
-serial-leg three-body plant (plant_serial.py), inside the DIABLO-style host / MCU split.  The robot itself (model folder,
-joint signs, wheel radius, track, motor limits, IMU mount, payload placement) comes from a subclass: wbr.plans.plan_v5.PlanV5.
+"""The closed-loop runtime: a robot's MuJoCo model + the LQI8 controller designed on the serial-leg three-body plant
+(plant_serial.py), inside the DIABLO-style host / MCU split.  The robot itself (model folder, joint signs, wheel radius,
+track, motor limits, IMU mount, payload placement) comes from a subclass: wbr.plans.plan_v5.PlanV5.
 
-Named after Plan 4, which ran this on the upkie model; the upkie model, Plan 4's acceptance battery and its stage-2 MPC
-host were removed on 2026-11-14 (git history).  The defaults of Plan4Config are the tuning PlanV5Config starts from.
+The gain defaults of ClosedLoopConfig are the v5 robot's values, rounded; the exact ones are computed from the plant
+(wbr.bench.ake_cad.v5_gains) and stored in models/wheelbiped_v5/description.json, which PlanV5Config.from_model reads.
 
 Runtime structure:
   MCU program (DiabloMcu, `rate_hz` = 1 kHz or 200 Hz): estimator -> LQI8 balance law (T, Tp) -> leg
@@ -13,8 +13,7 @@ A sign adapter (the robot's joint signs) converts observations and torque comman
 "u-convention" of the leg model.
 
 Disturbances the controller does not know: slope_deg (floor pitched about +y, positive = uphill in +x), payload (extra point
-mass on the body), pitch_bias_deg (IMU offset), floor_bump / floor_humps (under one wheel).  (The mass and friction scales,
-the LQI8 state predictor and the switches of the v5 features were removed on 2026-11-14 as unused by v5.)
+mass on the body), pitch_bias_deg (IMU offset), floor_bump / floor_humps (under one wheel).
 """
 from __future__ import annotations
 
@@ -26,7 +25,7 @@ import mujoco
 import numpy as np
 
 from wbr import MODELS_DIR
-from wbr.common.rotations import matrix_to_quat, quat_to_matrix, roll_pitch_yaw
+from wbr.common.rotations import quat_to_matrix, roll_pitch_yaw
 from wbr.common.servo import ServoCommand, ServoModel, ServoProperties
 from wbr.controllers.diablo_arch.host_link import HostEmulator, HostLink, HostLinkParams
 from wbr.controllers.diablo_arch.mcu import DiabloMcu, McuParams
@@ -42,7 +41,7 @@ PARAMS_FILE = "plant_params.json"   # plant parameters in the model folder (wbr.
 
 
 @dataclass
-class Plan4Config:
+class ClosedLoopConfig:
     rate_hz: float = 1000.0          # MCU / balancer rate (1000 or 200)
     host_hz: float = 50.0
     latency_ms: float = 0.0
@@ -53,30 +52,30 @@ class Plan4Config:
     scene: str = "scene.xml"
     model_dir: str = ""              # model folder under models/: set by the robot's config (PlanV5Config)
     lqi_kwargs: Optional[dict] = None
-    kp_leg: float = 800.0            # N/m   leg length PD (per leg)
-    kd_leg: float = 40.0             # N s/m
-    kp_yaw: float = 0.4              # N m per rad/s
-    ki_yaw: float = 0.8
-    yaw_int_limit: float = 1.0       # rad: ki_yaw * limit = 0.8 N m steady differential torque against the tire scrub
-    kw_yaw: float = 0.0              # N m per rad/s of wheel-speed-difference yaw rate error (see McuParams)
+    kp_leg: float = 1503.0           # N/m   leg length PD (per leg)
+    kd_leg: float = 75.1             # N s/m
+    kp_yaw: float = 1.76             # N m per rad/s
+    ki_yaw: float = 10.58
+    yaw_int_limit: float = 1.0       # rad: ki_yaw * limit = the largest steady differential torque against the tire scrub
+    kw_yaw: float = 8.82             # N m per rad/s of wheel-speed-difference yaw rate error (see McuParams)
     yaw_ref_rate: float = 3.0        # rad/s^2, see McuParams
     yaw_offset_tau: float = 0.0      # s, see McuParams (the v5 robot's pi3hat chain: wbr.plans.plan_v5)
     attitude_tau: float = 5.0        # s (> 0), see McuParams
-    kp_split: float = 60.0           # anti-split PD (N m/rad): light serial legs must be held together firmly, otherwise
-    kd_split: float = 3.0            # differential wheel torque splits the legs instead of yawing (v5: wbr.bench.ake_cad.v5_gains)
-    friction_comp_Nm: float = 0.08   # hip stiction compensation per hip (model frictionloss 0.1 Nm)
-    friction_comp_wheel_Nm: float = 0.016   # wheel stiction compensation per wheel (model 0.02 Nm)
+    kp_split: float = 114.3          # anti-split PD (N m/rad): light serial legs must be held together firmly, otherwise
+    kd_split: float = 2.86           # differential wheel torque splits the legs instead of yawing (v5: wbr.bench.ake_cad.v5_gains)
+    friction_comp_Nm: float = 0.096  # hip stiction compensation per hip: 0.8 x the AKE60 back-drive torque (0.12 N m)
+    friction_comp_wheel_Nm: float = 0.096   # wheel stiction compensation per wheel, the same
     vel_window_s: float = 0.005      # MCU joint velocities from quantised-position differences over 5 ms (wheel-jitter fix:
                                      # the 1-step differentiated 14-bit encoder noise became 0.1 N m rms wheel torque chatter)
     friction_comp_static_tau: float = 1.0   # s, see McuParams: a payload / mass error changes the static hip torque;
-                                     # comparing with the fixed Tp_ff then added a constant 0.16 N m (2 x 0.08)
-    kp_roll_force: float = 0.0       # N/rad, gains and limits of the compliant roll: wbr.bench.ake_cad.compliant_roll_gains
-    ki_roll_force: float = 0.0
-    kd_roll_force: float = 0.0
+                                     # comparing with the fixed Tp_ff then added a constant 2 x friction_comp_Nm
+    kp_roll_force: float = 577.0     # N/rad, gains and limits of the compliant roll: wbr.bench.ake_cad.compliant_roll_gains
+    ki_roll_force: float = 346.0
+    kd_roll_force: float = 71.9
     roll_force_limit: Optional[float] = None   # None: the static leg force, where a wheel is just unloaded
-    roll_force_int_limit: float = 0.0
-    kp_leg_limit: float = 0.0
-    kd_leg_limit: float = 0.0
+    roll_force_int_limit: float = 15.4
+    kp_leg_limit: float = 6011.0
+    kd_leg_limit: float = 112.7
     friction_comp_rate_gate: float = 0.1    # rad/s (> 0): the stiction compensation fades with the body pitch rate (review r1
                                      # M1: the relay term sustained a 13 Hz limit cycle from 12 ms latency; with the
                                      # gate 12 ms recovers cleanly, standing quality unchanged)
@@ -99,11 +98,11 @@ class Plan4Config:
     params_json: Optional[str] = None
 
 
-class Plan4LQI8:
+class ClosedLoop:
     """The shared runtime.  A robot plan (wbr.plans.plan_v5.PlanV5) supplies what is the robot's: default_config,
     _robot_constants, _lqi_design, _make_noise, _observe (the IMU chain) and _add_payload."""
 
-    def __init__(self, cfg: Plan4Config | None = None, law=None):
+    def __init__(self, cfg: ClosedLoopConfig | None = None, law=None):
         self.cfg = cfg or self.default_config()
         c = self.cfg
         self.dt = 1.0 / c.rate_hz
@@ -125,9 +124,8 @@ class Plan4LQI8:
         self.standing_base_z = None
 
         # controller -------------------------------------------------------------------------
-        # (tuned on Plan 4's upkie model; the robot plan's _lqi_design adds the gain-table grid table_L0 and the torque
-        # weights r_wheel_frac / r_hip_frac)
-        # LQI8 weights of docs/plan4_lqi8.md: stronger velocity integral (position holding against joint stiction);
+        # (the robot plan's _lqi_design adds the gain-table grid table_L0 and the torque weights r_wheel_frac / r_hip_frac)
+        # LQI8 weights: stronger velocity integral (position holding against joint stiction);
         # velocity reference shaped by a 2 m/s^2
         # ramp + 0.3 s pre-filter with the integrator frozen while the reference moves (overshoot < 10 %).
         # q_att: 7th state = integral of the static body tilt e_att (encoders + actuator torques, IMU-bias free), so
@@ -137,7 +135,7 @@ class Plan4LQI8:
         # q_int 0.2 / q_pos 0.5: velocity-integral + position-error integral hold the position against constant
         # disturbance torques (5 deg slope, payload, IMU bias) without a 10-20 cm offset;
         # freeze_tol 0.05 lets the integrators resume once the shaped reference is within 0.05 m/s of the target
-        # (uphill velocity steps otherwise keep a 0.15 m/s error).  docs/plan4_lqi8.md
+        # (uphill velocity steps otherwise keep a 0.15 m/s error).
         lqi_kwargs = dict(q_int=0.2, q_v=0.5, v_ramp_rate=2.0, v_ref_tau=0.3, freeze_int_on_ramp=True, freeze_tol=0.05,
                           q_att=0.2, q_pos=0.5)
         lqi_kwargs.update(self._lqi_design())
@@ -173,7 +171,7 @@ class Plan4LQI8:
 
     def _make_law(self, lqi_kwargs: dict):
         """The balance law inside the MCU: the LQI8 here; a subclass may put another controller in its place
-        (v5_mpc/plan.py: the MPC of the v5 robot).  Called once in __init__, after the plant is built."""
+        (v5_mpc/controller.py: the MPC of the v5 robot).  Called once in __init__, after the plant is built."""
         return LQI8Law(self.plant, Ts=self.dt, theta_eq=self.plant.theta_eq, Tp_ff=self.plant.Tp_eq(), **lqi_kwargs)
 
     def _needs_spec_edit(self) -> bool:
@@ -181,7 +179,7 @@ class Plan4LQI8:
 
     def _static_leg_force(self) -> float:
         """Static force along one virtual leg at the standing length, upright: the body weight plus the part of the leg
-        weight carried at the leg COM height (c / L0), see docs/plan4_model.md.  The default roll force limit (a wheel
+        weight carried at the leg COM height (c / L0).  The default roll force limit (a wheel
         just unloaded); the leg loop itself uses SerialPlant.static_leg_force at the actual length and lean."""
         p = self.params
         leg = p.leg.at(p.L0)

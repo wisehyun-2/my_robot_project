@@ -18,18 +18,14 @@ NAME = 'power_dist_r4.5b'
 OLD_NAME = 'mjpower_ss'
 MASS = 0.036                 # kg (mjbots shop page)
 T = 1.5                      # PCB
-HOLES = (37.0, 22.0)         # +- X, +- Y of the 4 M2.5 holes (74 x 44)
-SIZE = (80.0, 50.0)
+HOLES = (37.0, 22.0)         # +- X, +- Y of the 4 M2.5 holes (74 x 44); the board is 80 x 50
 
 # connectors in the board frame (mm, from the STEP): XT30-F output centres (silkscreen P-numbers not checked: no wiring in
-# v5), housing top; XT90-M face centre at -X; PH-4 switch, PH-3 CAN, ZH-6, PH-5 header top centres
+# v5), housing top; XT90-M face centre at -X; PH-4 switch header top centre
 OUT = {'P1': (28.0, 12.0), 'P2': (36.0, 12.0), 'P3': (28.0, 0.0), 'P4': (36.0, 0.0), 'P5': (28.0, -12.0), 'P6': (36.0, -12.0)}
 XT30_TOP = 11.0
 XT90 = (-40.0, 6.0, 7.0)
 PH4 = (-5.4, 22.0, 8.5)
-CAN = ((-36.3, -10.0, 8.5), (-27.7, -10.0, 8.5))
-SWD = (-17.6, -22.4, 8.5)
-GPIO = (-3.4, -22.4, 8.65)
 
 # the STEP is one solid; it is split into the PCB and the connector groups (board frame boxes, disjoint)
 GROUPS = (('pcb (STEP)', (-41.0, 41.0, -26.0, 26.0, -5.0, T), 'FR4 PCB', 'pcb black'),

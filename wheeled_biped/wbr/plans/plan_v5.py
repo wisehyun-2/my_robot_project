@@ -1,12 +1,12 @@
 """The v5 robot's closed loop: its own URDF model (wbr.models.build_v5), the DIABLO-style MCU with the LQI8 designed on that model,
 and the IMU the way the real board delivers it.
 
-Same runtime structure as Plan 4 (the class is shared), but nothing of upkie's: model, joint signs, tyre, track, motor limits, IMU
-mount come from description.json, written from the Fusion model; the gains from wbr.bench.ake_cad.v5_gains.
+The runtime is wbr.plans.closed_loop.ClosedLoop; the robot's own values -- model, joint signs, tyre, track, motor limits, IMU
+mount -- come from description.json, written from the Fusion model; the gains from wbr.bench.ake_cad.v5_gains.
 
 IMU chain:
     MuJoCo site "imu" at the chip on the pi3hat, raw axes of the board (+x CAN / HDMI = the robot's rear, +y USB = its right,
-    +z Pi -> hat = up; the front is the rocker switch side):
+    +z Pi -> hat = up; the robot's front is the CAD -x side):
     gyro and specific force there, with the lever arm to the rest of the robot -> sensor noise -> the firmware's attitude filter
     (wbr.observers.pi3hat_ars) -> quaternion IMU -> ARS frame and bias-corrected rate -> sample delay -> MCU (BaseOrientation with
     this robot's R_base_to_imu).
@@ -18,17 +18,18 @@ import math
 from dataclasses import dataclass
 from typing import Optional
 
+import mujoco
 import numpy as np
 
-from wbr.common.rotations import quat_to_matrix, roll_pitch_yaw, rot_y
+from wbr.common.rotations import matrix_to_quat, quat_to_matrix, roll_pitch_yaw, rot_y
 from wbr.models import build_v5 as BV
 from wbr.observers.pi3hat_ars import Pi3HatAttitude
-from wbr.plans import plan4_lqi8 as P4
+from wbr.plans import closed_loop as CL
 from wbr.plans.common import SensorNoise
 
 
 @dataclass
-class PlanV5Config(P4.Plan4Config):
+class PlanV5Config(CL.ClosedLoopConfig):
     model_dir: str = BV.OUT_DIR.name
     yaw_offset_tau: float = 20.0    # s: yaw rate from the raw gyro, offset learned against the wheels at standstill (McuParams)
     attitude_tau: float = 5.0       # s: the MCU's complementary filter with the IMU position in it (wbr.observers.body_attitude)
@@ -54,7 +55,7 @@ class PlanV5Config(P4.Plan4Config):
         return cls(**args)
 
 
-class PlanV5(P4.Plan4LQI8):
+class PlanV5(CL.ClosedLoop):
     torso_body = "base"
 
     @staticmethod
@@ -62,7 +63,7 @@ class PlanV5(P4.Plan4LQI8):
         return PlanV5Config.from_model()
 
     def _robot_constants(self) -> dict:
-        d = json.loads((P4.MODELS_DIR / self.cfg.model_dir / BV.DESCRIPTION_FILE).read_text(encoding="utf-8"))
+        d = json.loads((CL.MODELS_DIR / self.cfg.model_dir / BV.DESCRIPTION_FILE).read_text(encoding="utf-8"))
         self.description = d
         self.R_base_to_imu = np.array(d["imu"]["R_base_to_imu"])
         pos = np.array(d["imu"]["position_in_base"]) if self.cfg.imu_position_mm is None else np.array(self.cfg.imu_position_mm) / 1000.0
@@ -98,7 +99,7 @@ class PlanV5(P4.Plan4LQI8):
         body.ipos = [0.0, 0.0, 0.0]
         body.inertia = [1e-5, 1e-5, 1e-5]
         body.explicitinertial = True
-        g = body.add_geom(name="payload_vis", type=P4.mujoco.mjtGeom.mjGEOM_SPHERE, size=[0.03, 0, 0], rgba=[1, 0.2, 0.2, 0.8])
+        g = body.add_geom(name="payload_vis", type=mujoco.mjtGeom.mjGEOM_SPHERE, size=[0.03, 0, 0], rgba=[1, 0.2, 0.2, 0.8])
         g.contype = 0
         g.conaffinity = 0
         g.mass = 0.0
@@ -117,7 +118,7 @@ class PlanV5(P4.Plan4LQI8):
         Its heading zero is the board's own x axis, whichever way the board is mounted on the robot."""
         yaw = roll_pitch_yaw(R_wi)[2]
         c, s = math.cos(yaw), math.sin(yaw)
-        q = P4.matrix_to_quat(self.R_ARS_TO_WORLD.T @ np.array([[c, s, 0.0], [-s, c, 0.0], [0.0, 0.0, 1.0]]) @ R_wi)
+        q = matrix_to_quat(self.R_ARS_TO_WORLD.T @ np.array([[c, s, 0.0], [-s, c, 0.0], [0.0, 0.0, 1.0]]) @ R_wi)
         return -q if q[1] < 0.0 else q
 
     def _observe(self) -> dict:
@@ -138,7 +139,7 @@ class PlanV5(P4.Plan4LQI8):
             self._ars = Pi3HatAttitude(self.dt)
             self._ars.start_converged(self._board_start_attitude(R_wi))
         self._ars.process(noisy["imu"]["angular_velocity"], noisy["imu"]["linear_acceleration"])
-        noisy["imu"]["orientation"] = P4.matrix_to_quat(quat_to_matrix(self._ars.quaternion) @ R_extra)
+        noisy["imu"]["orientation"] = matrix_to_quat(quat_to_matrix(self._ars.quaternion) @ R_extra)
         noisy["imu"]["angular_velocity"] = self._ars.rate_rps
         noisy["imu"]["bias_rps"] = self._ars.bias_rps
         obs = self.delay.push(noisy)

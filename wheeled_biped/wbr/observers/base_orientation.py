@@ -1,6 +1,5 @@
 """IMU frame adapter of the MCU: base orientation from the pi3hat's quaternion.  Port of upkie's spine observer
-BaseOrientation (upkie/cpp/observers/BaseOrientation.h, Apache-2.0).  This file was wbr/observers/upkie_observers.py
-until 2026-11-14.
+BaseOrientation (upkie/cpp/observers/BaseOrientation.h, Apache-2.0).
 
 BaseOrientation : pitch of the base w.r.t. the world vertical (positive = leaning forward) and
                   body angular velocity, from an IMU quaternion (orientation of the IMU in the ARS frame)

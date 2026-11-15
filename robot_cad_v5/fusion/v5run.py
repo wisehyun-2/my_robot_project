@@ -1,20 +1,21 @@
-"""robot_cad_v5 = the v4 robot (robot_cad_v4/fusion, git 681ad00) with the wheels turned outboard and MJF PA12 legs
+"""robot_cad_v5 = the v4 robot (the v4 code in ../v4/fusion) with the wheels turned outboard and printed PETG legs
 (legs_v5.py, concept A "monolith", chosen by the user 11-01).  The torso, hip plates, motors, cups, wheels and
-fasteners are built by the v4 code; this module only swaps the links.  No wiring in the model (user 11-01: all cables
-removed; the external leg route that was tried is harness_v5.py in git 5a01c18); the rocker switch stays.
-The robot's front is the rocker switch side = CAD -x, so its left is CAD -y: see "part names" below (v4 names it the other way).
+fasteners are built by the v4 code; this module swaps the links and applies the v5 patches (power board, two-piece tray / deck,
+switch on the top).  No wiring in the model (user 11-01: all cables removed; the external leg route that was tried is
+harness_v5.py in git 5a01c18).  Every part is printed in PLA / PETG (user 11-09, again 11-15: no metal parts).
+The robot's front is CAD -x (the side away from the knees), so its left is CAD -y: see "part names" below (v4 names it the other way).
 
 Run each step in its own MCP script (put this folder on sys.path, import v5run):
     v5run.build()            # makes a NEW document (attribute wbv5 / tag): v4 robot without harness, v4 links and
-                             # output clamp rings removed, parts named from the switch side, v5 legs added
-    v5run.rename_to_robot()  # hub file, once (11-08): an older version's part and joint names turned to the switch side
+                             # output clamp rings removed, parts named for the robot (front = CAD -x), v5 legs added
+    v5run.rename_to_robot()  # hub file, once (11-08): an older version's part and joint names turned to the robot's (front = CAD -x)
     v5run.turn()             # wheel groups outboard - last and in its own script: in the build script the new parts'
                              # bounding boxes are stale and the per-part decision goes wrong, and adding parts to a
                              # link (cadlib.IdentityParent) resets turned children (idempotent: a second run turns 0)
     v5run.relegs()           # instead of build(): in the opened hub file, only the leg parts rebuilt (then turn())
     v5run.shift()            # hub file only, once (11-02): the turned wheel groups 2.5 mm further out (legs_v5
                              # WHEEL_SHIFT; build() + turn() place them there directly) - before relegs()
-    v5run.reshell()          # hub file: only the shell pieces rebuilt (plan corners on the switch side rounded, user 11-02; then
+    v5run.reshell()          # hub file: only the shell pieces rebuilt (plan corners at the front (CAD -x) rounded, user 11-02; then
                              # turn(): the deletion reverts the AKE60 stators)
     v5run.relayout()         # hub file: deck rebuilt, Pi / pi3hat / power board / fan placed with the IMU on the centre line (11-07; then turn());
                              # 11-08: the power board is the power_dist r4.5b (pdist_v5.py), an mjpower-ss is swapped for it
@@ -24,7 +25,7 @@ Run each step in its own MCP script (put this folder on sys.path, import v5run):
                              # (switch_v5.py; shell pieces rebuilt; unjoint() first, then turn(), joints(), robot_mass())
     v5run.drop_grommets()    # hub file (11-09): the 2 shell grommets out, the Ø16 cable holes stay (same route as reswitch)
     v5run.relink()           # hub file, once (11-07): links 175 -> 250 mm, every part moves with its joint (then relegs(), turn())
-    v5run.deepen_hub_dowels()  # hub file, once (11-08): wheel hub flange dowel holes 7.0 -> 7.5 and the pins with them
+    v5run.deepen_hub_dowels()  # hub file, once (11-08): wheel hub flange dowel holes 7.0 -> HUB_DOWEL_HOLE (8.0) and the pins with them
                              # (unjoint() first, then turn(), joints(); build() makes them so from HUB_DOWEL_HOLE)
     v5run.joints()           # last step of a model change: 6 as-built revolute joints (the design becomes parametric;
                              # torso grounded, every nested part grounded to its parent). Rebuild steps above and
@@ -35,7 +36,7 @@ Run each step in its own MCP script (put this folder on sys.path, import v5run):
     v5run.rib_check()        # every rib joined to its walls (point sampling), closed cells (voids)
     v5run.interference()     # 6 poses
     v5run.images()           # ../images (legs, robot, truss sections)
-    v5run.robot_mass()       # v4 print densities (PETG parts) + tyre 721 g, robot mass / COM
+    v5run.robot_mass()       # v4 print densities (the v4 printed parts) + tyre 721 g, robot mass / COM
     v5run.urdf_export()      # ../calc/urdf_data.json + ../export/links_stl (one STL per link) for wbr.models.build_v5 (URDF)
     v5run.export()           # ../export/WheelBiped_v5.f3d
     v5run.exports()          # ../export/WheelBiped_v5_assembly.step, parts_step/*.step, parts_stl/*.stl (then
@@ -65,11 +66,16 @@ V4 = os.path.join(BASE, 'v4', 'fusion')              # the v4 code, moved here f
 IMG = os.path.join(BASE, 'images')
 EXP = os.path.join(BASE, 'export')
 TAG = ('wbv5', 'tag', 'wbv5_robot')
-NAMES_TAG = ('wbv5', 'names', 'switch_side_front')   # on a design whose parts are named from the switch side
+NAMES_TAG = ('wbv5', 'names', 'switch_side_front')   # on a design whose parts are named for the robot (front = CAD -x).  The value is
+                                                     # the attribute stored in the hub document: keep it as it is
 SIDES = ((1, 'R'), (-1, 'L'))                        # (sign of CAD y, part suffix): the front is CAD -x, so +y is the robot's right
 LOOK ={'main': 'black satin', 'insert': 'alu', 'ring': 'alu', 'bearing': 'steel', 'cap': 'dark grey'}
 MAT = {'main': 'PETG print', 'insert': 'Al6061', 'ring': 'Al6061', 'bearing': 'Steel', 'cap': 'Al6061'}   # links PETG
-                                                 # FDM since 11-02 (user; MJF PA12 before), printed solid (walls 3.5)
+                                                 # FDM since 11-02 (user), printed solid (walls 3.5).  The hub inserts, backing
+                                                 # rings and knee caps are printed too (user 11-09 / 11-15: no metal parts) but
+                                                 # still carry a metal material here, like the v4 hip plates, spine bars,
+                                                 # rails, clamp rings and magnet spacers: the model mass is about 0.89 kg too
+                                                 # high until these are set to the print density in Fusion (README 5)
 V5_PARTS = ('thigh', 'shank', 'kneecap', 'kneebearing')
 HUB_DOWEL_HOLE = VP.HUB_DOWEL_HOLE                # wheel hub flange dowel holes (v5_params, 11-08 user)
 POSES = tuple((L0 * LL.SCALE, hip) for L0, hip in ((310, 0), (200, 0), (240, -60), (240, 60), (335, 0), (200, -80)))    # (L0 mm, hip deg):
@@ -115,7 +121,6 @@ def load():
     for k in ('params', 'cadlib', 'legs'):
         assert M[k].__file__.lower().startswith(V4.lower()), (k, M[k].__file__)
     assert legs_v5.__file__.lower().startswith(HERE.lower()), legs_v5.__file__
-    _pa12(M['cadlib'])
     M['torso'].centre_imu()                        # v5's electronics layout (11-07); v4 keeps the Pi on the -y side
     sys.modules.pop('pdist_v5', None)
     import pdist_v5
@@ -132,10 +137,6 @@ def load():
     switch_v5.patch(M)                             # rocker switch on the hip-section top, centre line (11-09 user)
     M['switch_v5'] = switch_v5
     return M
-
-
-def _pa12(C):
-    C.MATERIALS.setdefault('PA12 MJF', ('PrismMaterial-023', 1010.0))       # HP MJF PA12 1.01 g/cm3
 
 
 def doc():
@@ -161,8 +162,8 @@ def _new_doc():
 
 
 # ----------------------------------------------------------------------------- part names
-# The v4 code names parts as if +x were the front: +y = _L, +x = shell_front, rail_F, spine_tube_F.  This robot's front is the rocker switch
-# side = -x (user 11-07), so its left is -y, and every name that says a side or an end says the opposite one in the v4 code (user 11-08).  The
+# The v4 code names parts as if +x were the front: +y = _L, +x = shell_front, rail_F, spine_tube_F.  This robot's front is CAD -x, the
+# side away from the knees (user 11-07), so its left is -y, and every name that says a side or an end says the opposite one in the v4 code (user 11-08).  The
 # v4 files stay as they are: what they build is renamed here.  CAD coordinates do not change, only names.
 _OTHER = {'L': 'R', 'R': 'L', 'F': 'B', 'B': 'F', 'front': 'rear', 'rear': 'front'}
 
@@ -194,7 +195,7 @@ def _name_parts(comps):
 
 
 def rename_to_robot():
-    """The whole document, once: components, bodies and joints named from the switch side.  Nothing moves.  Does nothing on a design that has
+    """The whole document, once: components, bodies and joints named for the robot (front = CAD -x).  Nothing moves.  Does nothing on a design that has
     it (NAMES_TAG), so a second run cannot swap them back.  Returns the number of components renamed."""
     d = adsk.fusion.Design.cast(doc().products.itemByProductType('DesignProductType'))
     if d.attributes.itemByName(NAMES_TAG[0], NAMES_TAG[1]):
@@ -269,10 +270,9 @@ def turn_wheels(M):
 def build():
     _new_doc()
     M = load()
-    M['v4run'].build(with_harness=False, rear_round=True, centre_imu=True)   # no wiring (user 11-01), round shell corners on the switch side
+    M['v4run'].build(with_harness=False, rear_round=True, centre_imu=True)   # no wiring (user 11-01), round shell corners at the front (CAD -x)
                                                    # (11-02), the IMU on the centre line (11-07)
     C, LV = M['cadlib'], M['legs_v5']             # (v4run.build reloaded the v4 modules in place)
-    _pa12(C)
     M['finalize'].show_all()
     rename_to_robot()                              # before SIDES is used on the v4 parts
     Ms = load()                                    # fresh modules (v4run.build reloaded them without the v5 patches)
@@ -287,7 +287,7 @@ def build():
                 if o.component.name == name + k:
                     dropped.append(o.component.name)
                     o.deleteMe()
-    for o in list(C.design().rootComponent.allOccurrences):      # the 6061 hub inserts replace the output rings
+    for o in list(C.design().rootComponent.allOccurrences):      # the hub inserts replace the output rings
         if o.component.name.startswith('clamp ring output') and o.assemblyContext is not None \
                 and o.assemblyContext.component.name != '_library':
             dropped.append(o.component.name)
@@ -401,7 +401,7 @@ SHELL_PARTS = ('shell_', 'saddle_', 'splice_tabs')
 
 def reshell():
     """Rebuild only the torso shell pieces (front / mid / rear sections, saddles, splice tabs) in the v5 document - the
-    hub file - with the plan corners on the switch side rounded (shell.REAR_ROUND, the v4 code's rear, user 11-02: v4 keeps its 45 deg
+    hub file - with the plan corners at the front (CAD -x) rounded (shell.REAR_ROUND, the v4 code's rear, user 11-02: v4 keeps its 45 deg
     chamfers).  The shell screws, grommets and nuts stay (nothing they sit on moves).  Run turn() afterwards in its own script.
     Since 11-09 the shell has its switch hole on the top (switch_v5): on a document whose switch is still on the face, run reswitch()."""
     doc()
@@ -465,7 +465,7 @@ def drop_grommets():
 
 def reswitch():
     """Hub file (11-09, user: the rocker switch on the torso top, centre line, just behind the payload plate - switch_v5): the shell
-    pieces rebuilt (no hole on the switch-side face, a 19 x 13 hole across shell_mid_L / _R on the top) and the switch moved there.
+    pieces rebuilt (no hole on the front (CAD -x) face, a 19 x 13 hole across shell_mid_L / _R on the top) and the switch moved there.
     Direct design only: unjoint() first, then this, turn() in its own script, joints(), robot_mass()."""
     doc()
     M = load()
@@ -759,9 +759,9 @@ def _dowel_holes(body):
 
 
 def deepen_hub_dowels(depth=None):
-    """Hub file migration (11-08, user): the wheel hub flange dowel holes 7.0 -> HUB_DOWEL_HOLE deep, and each wheel's
-    3 pins moved to the new hole bottoms (pressed to the bottom: 2.5 instead of 3.0 proud into the AKE output's 3 mm
-    holes, as the hip / knee inserts).  build() makes them so from params.HUB_DOWEL_HOLE; this changes an existing
+    """Hub file migration (11-08, user): the wheel hub flange dowel holes 7.0 -> HUB_DOWEL_HOLE (8.0) deep, and each wheel's
+    3 pins moved to the new hole bottoms (pressed to the bottom: 2.0 instead of 3.0 proud into the AKE output's 3 mm
+    holes; the hip / knee inserts' pins stand 2.5 proud).  build() makes them so from params.HUB_DOWEL_HOLE; this changes an existing
     document.  Measured on the bodies (any turn state); a second run changes nothing.  Route: unjoint(), this, turn(),
     joints()."""
     doc()
@@ -1143,7 +1143,7 @@ def snap(name, eye, target, fit=True):
 
 
 def images():
-    """Leg views (+y leg alone), robot views and truss sections (+y links cut at y 199 / 229.5, looking from
+    """Leg views (+y leg alone), robot views and truss sections (+y links cut at y 199 / 232, looking from
     outboard: the plain ribs and the closed cells)."""
     doc()
     M = load()
@@ -1195,8 +1195,9 @@ def images():
 
 
 def robot_mass():
-    """v4 workflow: PETG parts at their print density, tyre 721 g (the PA12 legs are modelled hollow: material
-    density as is), then the mass report (run in a separate script from the build: stale physical properties)."""
+    """v4 workflow: the v4 printed parts at their print density (check.apply_print_mass), tyre 721 g, then the mass
+    report (run in a separate script from the build: stale physical properties).  The v5 links are solid PETG bodies and
+    keep their material density; the parts still modelled as metal keep theirs too (see MAT)."""
     doc()
     M = load()
     _nominal(M)
@@ -1237,7 +1238,7 @@ def save_mass_json(path=None, apply_print=False):
     ty = [(m, c) for path, m, c, _i in groups['wheel_' + SIDES[0][1]] if 'tyre M365' in path]     # the +y wheel
     y_meas = sum(m * c[1] for m, c in ty) / sum(m for m, c in ty)
     assert abs(y_meas - y_tyre) < 0.5, ('tyre centre', y_meas, y_tyre)
-    out = dict(units="mm, kg, kg mm^2 about the COM, CAD axes (+x knee side, +y the _R parts, z up, floor origin; the robot's front is the rocker switch side = -x, wbr.models.build_v5 turns them)",
+    out = dict(units="mm, kg, kg mm^2 about the COM, CAD axes (+x knee side, +y the _R parts, z up, floor origin; the robot's front is -x, wbr.models.build_v5 turns them)",
                pose=dict(L0=P.L0, L1=P.L1, L2=P.L2, R_wheel=P.R_WHEEL, Z_hip=P.Z_HIP, phi_deg=math.degrees(P.PHI),
                          knee=(P.KNEE_X, P.KNEE_Z), top_plate_z=P.Z_HIP + P.RAIL_Z + P.RAIL_S / 2 + P.TOP_PLATE[2],
                          tyre_centre_y=y_tyre, tyre_centre_y_model=y_meas, wheel_offset=P.wheel_offset(),
@@ -1322,7 +1323,7 @@ def urdf_export(out=None):
     for j in root.asBuiltJoints:
         v = j.geometry.primaryAxisVector
         J[j.name] = dict(origin=list(f2r(j.geometry.origin)), axis=[v.z, v.x, v.y])
-    data = dict(units="mm, CAD axes (+x knee side, +y the _R parts, z up, floor origin; the robot's front is the rocker switch side = -x, wbr.models.build_v5 turns them), nominal pose",
+    data = dict(units="mm, CAD axes (+x knee side, +y the _R parts, z up, floor origin; the robot's front is -x, wbr.models.build_v5 turns them), nominal pose",
                 imu=imu_pose(), joints=J,
                 joint_y=dict(hip=P.YW, knee=LV.Y_MSH - 13.75, wheel=2 * LV.Y_MSH - P.tyre_centre_y()),
                 tyre=dict(radius=P.R_WHEEL, width=P.TYRE_W, centre_y=2 * LV.Y_MSH - P.tyre_centre_y()),
@@ -1351,14 +1352,17 @@ def export():
 
 
 LEG_FILE = {'main': None, 'insert': 'hub_insert_', 'ring': 'hub_ring_', 'cap': 'knee_cap'}
+NOT_EXPORTED = ('clamp ring output',)          # v4 part: v5 has no instance of it (build() drops them), only its _library master is left
+BOUGHT_BODIES = ('magnet ',)                   # bodies of an exported component that are bought: the AKE magnet in the magnet spacer
 
 
 def exports():
     """STEP / STL of the v5 model: export/WheelBiped_v5_assembly.step (whole robot) and one file per designed part in
-    export/parts_step + parts_stl - the v4 designed parts (finalize.design_parts, component STEP as v4) and every body
-    of the v5 leg components on its own (thigh_L -> thigh_L + hub_insert_hip_L, shank_L -> shank_L +
-    hub_insert_knee_L, kneecap_L -> knee_cap_L; the 61807 is bought), in robot coordinates (Fusion world, nominal
-    pose).  The single bodies go through a scratch document closed unsaved, so the robot document is not changed."""
+    export/parts_step + parts_stl - the v4 designed parts (finalize.design_parts, component STEP as v4; not the parts v5
+    does not use, NOT_EXPORTED, and no STL of a bought body, BOUGHT_BODIES) and every body of the v5 leg components on
+    its own (thigh_L -> thigh_L + hub_insert_hip_L, shank_L -> shank_L + hub_insert_knee_L, kneecap_L -> knee_cap_L; the
+    61807 is bought), in robot coordinates (Fusion world, nominal pose).  The single bodies go through a scratch document
+    closed unsaved, so the robot document is not changed."""
     doc()
     M = load()
     C, F = M['cadlib'], M['finalize']
@@ -1385,7 +1389,7 @@ def exports():
     em.execute(em.createSTEPExportOptions(os.path.join(EXP, 'WheelBiped_v5_assembly.step'), d.rootComponent))
     done.append('WheelBiped_v5_assembly.step')
     for name in sorted(F.design_parts()):
-        if name.startswith(V5_PARTS):
+        if name.startswith(V5_PARTS + NOT_EXPORTED):
             continue
         comp = C.find_comp(name)
         safe = F._file_name(name)
@@ -1393,7 +1397,8 @@ def exports():
         done.append(safe + '.step')
         solids = [b for b in comp.bRepBodies if b.isSolid]
         for b in solids:
-            stl(b, safe if len(solids) == 1 else safe + '__' + F._file_name(b.name))
+            if not b.name.startswith(BOUGHT_BODIES):
+                stl(b, safe if len(solids) == 1 else safe + '__' + F._file_name(b.name))
     singles = []
     for o in v5_occs(C):
         link, k = o.component.name.rsplit('_', 1)
