@@ -16,8 +16,6 @@
 ## git
 - 작업을 시작하기 전에 `git pull`로 다른 컴퓨터의 변경을 받는다. 브랜치는 `ros2-v5` 하나다.
 - **커밋·푸시는 사용자가 요청할 때만 한다.**
-  - 올리지 않은 변경을 남긴 채 끝낼 때는 그렇다고 알린다. 다른 컴퓨터로 넘어가기 전에 올려야 한다.
-  - 커밋 메시지 끝에 `Co-Authored-By: Claude <실제로 작업한 모델 이름> <noreply@anthropic.com>`를 붙인다(예: `Claude Opus 5.5`).
 - 부분 클론(`git config remote.origin.partialclonefilter`가 `blob:none`)에서는 이력 전체의 내용을 훑는 명령을 쓰지 않는다. `.git`이 수백 MB 커진다.
   - 쓰지 않는 명령: `git log -S`, `git log -p`, `git rev-list --objects --all` 등
 
