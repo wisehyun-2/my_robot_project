@@ -3,9 +3,10 @@ name: obsidian_arrange
 description: >-
   Fix broken Markdown formatting in Obsidian notes—such as unclosed or missing
   fenced code blocks, malformed or unspaced tables, missing heading hierarchy,
-  and inline code spans—while preserving all original content and Obsidian
-  syntax. Use when the user invokes /obsidian_arrange or asks to clean up or
-  fix broken Markdown, code blocks, or tables in Obsidian notes.
+  and inline code spans—and convert polite endings (~합니다/~입니다) into concise
+  plain declarative endings (~이다/~한다) while preserving all original content
+  and Obsidian syntax. Use when the user invokes /obsidian_arrange or asks to
+  clean up or fix broken Markdown, code blocks, or tables in Obsidian notes.
 ---
 
 # Obsidian Arrange (`/obsidian_arrange`)
@@ -36,6 +37,13 @@ Obsidian 마크다운 노트에서 깨지거나 누락된 마크다운 서식(�
 - `1. ...`, `2. ...` 형태나 요약/주의사항 섹션처럼 문단 제목 역할을 하는 줄에 적절한 헤딩(`##`, `###`)을 부여합니다.
 - 헤딩과 본문 사이, 목록(`-`, `*`, `1.`) 앞뒤에 적절한 빈 줄을 두어 문단 구분이 명확히 렌더링되도록 합니다.
 
-### 5. 최종 점검 및 보고
-- 수정된 파일에 닫히지 않은 코드 블록이나 열 수가 어긋난 표가 없는지 확인합니다.
-- 수정한 파일의 클릭 가능한 링크와 함께 변경된 서식 항목(코드 블록, 표, 제목, 인라인 코드 등)을 간결하게 요약해 보고합니다.
+### 5. 문체 통일 (경어체 → 평서체 `~이다` / `~한다`)
+- 노트 본문의 경어체(`~합니다`, `~입니다`, `~됩니다`, `~있습니다`, `~하세요` 등)를 간결한 기술 노트용 평서체(`~한다`, `~이다`, `~된다`, `~있다`, `~해야 한다` 등)로 일관되게 변환합니다.
+- 변환 시 문장의 의미나 뉘앙스가 바뀌지 않도록 자연스럽게 다듬습니다.
+  - 예: `"사용합니다."` → `"사용한다."`, `"방지할 수 있습니다."` → `"방지할 수 있다."`, `"범위 지정 연산자입니다."` → `"범위 지정 연산자이다."`
+- 표 셀이나 목록 항목의 서술형 문장도 동일한 평서체로 통일하되, 원래 명사형(예: `"이름 충돌 방지"`)으로 끝나는 항목은 억지로 어미를 붙이지 않고 그대로 둡니다.
+- **예외**: 코드 블록 내부의 주석·문자열, 직접 인용문(`"..."` 안의 대사나 원문)은 원형을 보존합니다.
+
+### 6. 최종 점검 및 보고
+- 수정된 파일에 닫히지 않은 코드 블록이나 열 수가 어긋난 표가 없는지, 문체 변환이 누락된 경어체가 남아 있지 않은지 확인합니다.
+- 수정한 파일의 클릭 가능한 링크와 함께 변경된 서식 및 문체 정리 내역을 간결하게 요약해 보고합니다.
