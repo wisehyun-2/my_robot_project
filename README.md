@@ -87,8 +87,8 @@ ROS에 의존하지 않는 Python 패키지 `wbr`이 중심이다. `README.md`�
 
 ### `.claude/skills/` — Claude Code 스킬
 
-- `orchestrator`, `code_grammar`, `code_schema` 세 개가 있다.
-- 11-15에 루트 `skills/`에서 옮겼다. Claude Code는 `.claude/skills/`만 읽는다. 새 세션부터 뜬다.
+- `orchestrator`, `code_grammar`, `code_schema`, `obsidian_arrange` 네 개가 있다.
+- 11-15에 기존 세 개를 루트 `skills/`에서 옮겼고, 11-20에 `obsidian_arrange`도 `.claude/skills/`로 옮겼다. Claude Code는 `.claude/skills/`만 읽는다. 새 세션부터 뜬다.
 
 ## 컴퓨터
 
