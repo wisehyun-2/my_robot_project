@@ -47,7 +47,7 @@ Agent 도구로 워커를 띄운다:
   - 보고 형식: 바꾼 파일 목록, 핵심 변경 요약, 실행한 테스트와 결과, 남은 문제
 
 ### 3. Gemini 4 Neon 교차 검토
-각 워커 결과(코드 변경이 있는 경우)를 Gemini 4 Argon에게 검토받는다. 읽기 전용으로만 돌린다(`--yolo` 금지).
+각 워커 결과(코드 변경이 있는 경우)를 Gemini 4 Neon에게 검토받는다. 읽기 전용으로만 돌린다(`--yolo` 금지).
 
 ```bash
 AGY_DELEGATE="$(command -v agy-delegate || ls ~/.claude/plugins/cache/antigravity-for-claude-code/antigravity/*/bin/agy-delegate 2>/dev/null | tail -1)"
@@ -55,7 +55,7 @@ AGY_DELEGATE="$(command -v agy-delegate || ls ~/.claude/plugins/cache/antigravit
   echo "다음 변경을 코드 리뷰해줘. 버그, 요구사항 누락, 엣지 케이스, 위험한 가정을 심각도 순으로 나열하고 각 항목에 파일:줄과 근거를 달아줘. 문제가 없으면 없다고 해."
   echo "## 작업 목표와 완료 조건"; echo "<여기에 목표/완료 조건>"
   echo "## 변경 내용"; git diff
-} | "$AGY_DELEGATE" --model "Gemini 4 Argon (High)" --digest --dir "$PWD" --timeout 10m -
+} | "$AGY_DELEGATE" --model "Gemini 4 Neon (High)" --digest --dir "$PWD" --timeout 10m -
 ```
 
 - worktree 워커라면 그 worktree에서 `git diff`를 뜬다. 변경이 없는 조사형 작업은 결과 요약을 대신 넣는다.
