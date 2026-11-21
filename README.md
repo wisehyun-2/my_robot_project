@@ -5,6 +5,9 @@
 
 ## 지금 하는 일 (2026-11-15)
 
+- **먼저 ros2_control을 공부한다(2026-11-21 사용자).** 가이드는 `wheeled_biped/docs/ros2_control_study/`(목차는 그 폴더의 README)다.
+  - 참조 저장소 `references/bumperbot_odometry_control`의 bumperbot 패키지를 빈 작업 공간에서 손으로 다시 만든다.
+  - 연습 코드는 저장소 밖 `~/bumperbot_ws`에 둔다(v5 코드가 아니다). 공부가 끝나면 v5 패키지를 처음부터 쓴다(가이드 13장).
 - **v5 로봇의 ROS 2 Jazzy 패키지를 만든다.** 기준 문서는 `wheeled_biped/ros2_ws/README.md`다.
   - 0절: 두 컴퓨터 작업법
   - 2절: 정해진 것
@@ -79,6 +82,7 @@ ROS에 의존하지 않는 Python 패키지 `wbr`이 중심이다. `README.md`�
   - DDT·TITA: `ddt_ros2_control`, `TITA_ROS2_Control_Sim`, `TITA-Development-Manual`
   - DIABLO: `diablo_ros2`, `diablo_sdk`, `diablo-sdk-docs`
   - README 1절 (d)의 11-12에 더한 다섯 개: `tita_hardware_ros2_control`, `pi3hat_hw_bartlomiej`, `pi3hat_robotic_systems`, `pi3hat_hw_glevine`, `ros2_control_demos`
+  - 11-21에 더한 것: `bumperbot_odometry_control`(ros2_control 학습 가이드의 기준 코드)
 - 11-14에 지운 것
   - `upkie_parts`, `upkie_description`: upkie 모델을 쓰지 않는다.
   - `mjlab_upkie`, `Col_DIABLO_Issac_RL`: 강화학습, 범위 밖.

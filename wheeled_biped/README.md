@@ -58,7 +58,8 @@ v5_lqi/, v5_mpc/  균형 제어기 두 개와 단계 시험
 tests/            단위 시험
 models/           로봇 기술(wheelbiped_v5)
 ros2_ws/          ROS 2 패키지 계획(README만)
-docs/             robot_v5_model.md(모델·IMU 경로·바깥 루프의 기록과 설계 근거), bringup_step0.md(실물 설정 순서·부호·영점·IMU 시험)
+docs/             robot_v5_model.md(모델·IMU 경로·바깥 루프의 기록과 설계 근거), bringup_step0.md(실물 설정 순서·부호·영점·IMU 시험),
+                  ros2_control_study/(ros2_control 학습 가이드. 2026-11-21. v5 코드가 아니라 공부용 문서다. 목차는 그 폴더의 README)
 results/          wheelbiped_v5_model(플랜트 대조). 모터 점검 결과(ake_cad_v5)는 저장해 두지 않는다
 ```
 

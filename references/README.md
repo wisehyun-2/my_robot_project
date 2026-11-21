@@ -53,6 +53,7 @@ git add references/<이름>        # 그다음 이 표와, 그 저장소의 줄 
 | `pi3hat_robotic_systems` | `github.com/CentroEPiaggio/pi3hat_robotic_systems` | `168a9b4` (2026-03-31) | 최상위 파일 없음 | moteus + power dist를 읽는 예. **읽기만** |
 | `pi3hat_hw_glevine` | `github.com/G-Levine/pi3hat_hardware_interface` | `da07dcb` (2024-02-21) | MIT | root에서 FastDDS 공유 메모리 문제와 UDP 프로필 |
 | `ros2_control_demos` | `github.com/ros-controls/ros2_control_demos` (브랜치 `jazzy`) | `5b8777c` (2026-11-10) | Apache-2.0 | Jazzy 방식 하드웨어·제어기 공식 예제 |
+| `bumperbot_odometry_control` | `github.com/AntoBrandi/Self-Driving-and-ROS-2-Learn-by-Doing-Odometry-Control` (브랜치 `main`) | `30c9361` (2025-09-30) | Apache-2.0 | ros2_control 학습 가이드(`wheeled_biped/docs/ros2_control_study/`)의 기준 코드. 섹션 폴더마다 그 시점의 `bumperbot_ws` 전체가 들어 있다(약 150 MB, 대부분 메시) |
 
 `pi3hat` ~ `diablo-sdk-docs`의 커밋은 11-14 이전부터 Windows PC에서 읽던 사본과 같다. 아래 다섯 개(`tita_hardware_ros2_control`, `pi3hat_hw_*`, `pi3hat_robotic_systems`, `ros2_control_demos`)는 11-14에 그때의 최신 커밋으로 처음 고정했다. 노트북의 예전 사본(`~/references`)과 커밋이 다를 수 있다.
 

@@ -67,3 +67,7 @@
 	url = https://github.com/ros-controls/ros2_control_demos.git
 	branch = jazzy
 	shallow = true
+[submodule "references/bumperbot_odometry_control"]
+	path = references/bumperbot_odometry_control
+	url = https://github.com/AntoBrandi/Self-Driving-and-ROS-2-Learn-by-Doing-Odometry-Control.git
+	shallow = true
